@@ -33,9 +33,9 @@
 
 즉 입력은 그냥 문자열이 아니라,
 
-$
+$$
 x = (\text{text}, \text{speaker info}, \text{context}, \text{memory cues})
-$
+$$
 
 처럼 볼 수 있다.
 

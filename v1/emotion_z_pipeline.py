@@ -391,7 +391,7 @@ class EmotionDynamicsNet:
         return NeuronState(
             neuron_id=neuron_id,
             neuron_type=neuron_type,
-            v_th=self.rng.uniform(0.55, 0.95),
+            v_th=self.rng.uniform(0.25, 0.55),
             v_mem=self.rng.uniform(0.45, 0.80),
             preferred_emo=base_emo,
         )
@@ -516,7 +516,7 @@ class EmotionDynamicsNet:
         for j in range(self.n_total):
             incoming += self.weights[j][idx] * prev_outputs[j]
         emo_drive = cosine_similarity(E, neuron.preferred_emo)
-        stim_drive = 0.45 * mean_vec(u) + 0.25 * mean_vec(h)
+        stim_drive = 0.75  * mean_vec(u) + 0.45 * mean_vec(h)
         type_bias = 0.0
         if neuron.neuron_type == "exc":
             type_bias = 0.08 * h[0]
@@ -574,7 +574,7 @@ class EmotionDynamicsNet:
                     continue
 
                 v_in = self._compute_membrane_potential(i, prev_outputs, E, u, h)
-                fired = float(v_in > neuron.v_th)
+                fired = float(v_in >= neuron.v_th)
                 outputs.append(fired)
                 neuron.recent_spikes.append(int(fired))
                 neuron.recent_spikes = neuron.recent_spikes[-self.config.homeo_window :]

@@ -1,5 +1,3 @@
-# EmoNet Latest Code
-
 # EmoNet Latest
 
 이 폴더는 대화에서 합의한 설계를 바탕으로 만든 **실행 가능한 PyTorch MVP 코드**입니다.
@@ -40,8 +38,3 @@ python -m emonet.infer --text "왜 이렇게 일이 많지" --latent_dim 64
 - 이 버전은 **MVP / 연구용 골격 코드**입니다.
 - pseudo-labeling용 LLM judge 연동은 오프라인 파이프라인으로 분리하는 것이 안전해서, 코드에는 stub/helper 형태만 넣었습니다.
 - 구조 기반 community detection은 `networkx.greedy_modularity_communities`를 사용한 근사 구현입니다. Leiden 전용 구현이 필요하면 별도 의존성을 추가하면 됩니다.
-
-
-## 기본 실행 시간 설정
-- 기본 `t_max`는 **4**로 낮춰 두었다.
-- 전체 설계 실험값인 `24`가 필요하면 `AppConfig().dynamics.t_max = 24`로 올리면 된다.

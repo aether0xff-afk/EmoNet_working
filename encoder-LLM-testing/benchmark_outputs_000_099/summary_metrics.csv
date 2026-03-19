@@ -1,0 +1,4 @@
+﻿provider,provider_label,samples,accuracy,macro_precision,macro_recall,macro_f1
+anthropic,Claude Sonnet,300,0.016666666666666666,0.025252525252525252,0.013227513227513227,0.01736111111111111
+gemini,Gemini,23,0.0,0.0,0.0,0.0
+openai,ChatGPT,300,0.0,0.0,0.0,0.0

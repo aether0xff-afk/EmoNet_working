@@ -1,0 +1,4 @@
+﻿provider,provider_label,mean_consistency,n_samples_used
+openai,ChatGPT,0.9766666666666666,100
+anthropic,Claude Sonnet,0.9299999999999998,100
+gemini,Gemini,0.8095238095238095,7

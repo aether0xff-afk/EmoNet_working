@@ -1,0 +1,2 @@
+﻿provider,provider_label,sample_id,run_idx,text,gt_label,pred_label,correct,raw_response,error
+gemini,Gemini,0,0,[HS01] 일은 왜 해도 해도 끝이 없을까? 화가 난다. [SEP] [SS01] 많이 힘드시겠어요. 주위에 의논할 상대가 있나요? [SEP] [HS02] 그냥 내가 해결하는 게 나아. 남들한테 부담 주고 싶지도 않고. [SEP] [SS02] 혼자 해결하기로 했군요. 혼자서 해결하기 힘들면 주위에 의논할 사람을 찾아보세요.,E18,,0,,gemini 최종 실패: 429 Client Error: Too Many Requests for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyCellFiwRu3akPVaJbYLYmugwWjZ0vMwrI

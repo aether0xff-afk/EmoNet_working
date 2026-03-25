@@ -1,11 +1,25 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Literal, Optional, Sequence
 import math
 import re
 
 import numpy as np
+
+try:
+    import joblib
+    from sklearn.decomposition import TruncatedSVD
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.linear_model import Ridge
+    from sklearn.pipeline import Pipeline
+except ImportError:
+    joblib = None
+    TruncatedSVD = None
+    TfidfVectorizer = None
+    Ridge = None
+    Pipeline = None
 
 try:
     import torch
@@ -16,6 +30,7 @@ except ImportError:
 
 
 TORCH_AVAILABLE = torch is not None
+SKLEARN_AVAILABLE = TfidfVectorizer is not None
 
 STIM_DIM = 4
 BRANCH_FEATURE_DIM = 6
@@ -178,6 +193,7 @@ class EmoNetConfig:
     z_dim: int = 64
     s_dim: int = 32
     topk_branches: int = 4
+    z_encoder_mode: Literal["stat", "transformer"] = "stat"
 
     n_layers: int = 2
     n_heads: int = 4
@@ -195,8 +211,65 @@ class EmoNetConfig:
             raise ValueError(f"s_dim must match STYLE_AXES ({len(STYLE_AXES)})")
 
 
+def _project_root() -> Path:
+    return Path(__file__).resolve().parents[1]
+
+
+def _workspace_root() -> Path:
+    return _project_root().parent
+
+
+@dataclass(slots=True)
+class StimEncoderConfig:
+    dataset_csv: Path = field(
+        default_factory=lambda: _workspace_root()
+        / "encoder-ML testing"
+        / "out_benchmark"
+        / "dataset_for_regression.csv"
+    )
+    benchmark_csv: Path = field(
+        default_factory=lambda: _workspace_root()
+        / "encoder-ML testing"
+        / "out_benchmark"
+        / "benchmark_results_20260305_180830.csv"
+    )
+    model_cache_path: Path = field(
+        default_factory=lambda: _project_root() / "artifacts" / "ridge_stim_encoder.joblib"
+    )
+    prefer_model: str = "Ridge"
+    ridge_alpha: float = 2.0
+    random_state: int = 42
+    force_refit: bool = False
+    max_samples: Optional[int] = None
+
+
+class SafeTruncatedSVD:
+    def __init__(self, n_components: int = 300, random_state: int = 42):
+        self.n_components = int(n_components)
+        self.random_state = int(random_state)
+        self._svd: Optional[TruncatedSVD] = None
+
+    def fit(self, X, y=None):
+        if TruncatedSVD is None:
+            raise RuntimeError("scikit-learn is required for SVD-backed stimulus encoding")
+        n_features = int(X.shape[1])
+        safe = min(self.n_components, max(1, n_features - 1))
+        self._svd = TruncatedSVD(n_components=safe, random_state=self.random_state)
+        self._svd.fit(X)
+        return self
+
+    def transform(self, X):
+        if self._svd is None:
+            raise RuntimeError("SafeTruncatedSVD is not fitted")
+        return self._svd.transform(X)
+
+    def fit_transform(self, X, y=None):
+        self.fit(X, y)
+        return self.transform(X)
+
+
 class StimEncoder:
-    POSITIVE_WORDS = {
+    POSITIVE_HINTS = {
         "good",
         "great",
         "happy",
@@ -207,8 +280,47 @@ class StimEncoder:
         "success",
         "fun",
         "energy",
+        "좋",
+        "기쁘",
+        "행복",
+        "신나",
+        "즐겁",
+        "감사",
+        "고맙",
+        "다행",
+        "웃",
+        "설렌",
     }
-    CALM_WORDS = {
+    GAIN_HINTS = {
+        "success",
+        "win",
+        "reward",
+        "progress",
+        "achieve",
+        "해냈",
+        "성공",
+        "합격",
+        "좋아졌",
+        "기회",
+        "보상",
+        "늘었",
+        "이겼",
+    }
+    AGENCY_HINTS = {
+        "decide",
+        "control",
+        "can do",
+        "handle",
+        "choose",
+        "결정",
+        "통제",
+        "할 수",
+        "직접",
+        "해결",
+        "주도",
+        "선택",
+    }
+    CALM_HINTS = {
         "calm",
         "steady",
         "safe",
@@ -217,35 +329,144 @@ class StimEncoder:
         "peace",
         "settle",
         "stable",
-        "restored",
-        "comfortable",
+        "편안",
+        "차분",
+        "안정",
+        "괜찮",
+        "평온",
+        "진정",
     }
-    ALERT_WORDS = {
+    SAFETY_HINTS = {
+        "support",
+        "trust",
+        "together",
+        "warm",
+        "safe",
+        "도와",
+        "믿",
+        "함께",
+        "응원",
+        "위로",
+        "안전",
+        "다정",
+    }
+    THREAT_HINTS = {
         "urgent",
-        "now",
-        "must",
-        "immediately",
-        "warning",
         "risk",
-        "issue",
+        "warning",
         "critical",
-        "asap",
-        "alert",
+        "danger",
+        "must",
+        "불안",
+        "위험",
+        "압박",
+        "긴장",
+        "무섭",
+        "화가",
+        "짜증",
+        "분노",
+        "억울",
+        "답답",
     }
-    REST_WORDS = {
-        "sleep",
-        "night",
-        "dream",
-        "rest",
+    ALERT_HINTS = {
+        "alert",
+        "asap",
+        "immediately",
+        "issue",
+        "deadline",
+        "지금",
+        "당장",
+        "빨리",
+        "즉시",
+        "문제",
+        "경고",
+        "불길",
+    }
+    FATIGUE_HINTS = {
         "tired",
+        "burnout",
+        "sleep",
+        "rest",
+        "slow",
+        "피곤",
+        "지쳤",
+        "힘들",
+        "번아웃",
+        "소진",
+        "잠",
+        "졸",
+        "쉬고",
+        "무기력",
+    }
+    REST_HINTS = {
+        "night",
+        "bed",
+        "dream",
         "quiet",
         "late",
-        "dark",
-        "slow",
-        "bed",
+        "밤",
+        "잠",
+        "휴식",
+        "쉬고",
+        "누워",
+        "졸리",
+        "새벽",
     }
 
     WORD_RE = re.compile(r"\b\w+\b", flags=re.UNICODE)
+
+    def __init__(self, config: Optional[StimEncoderConfig] = None):
+        self.config = config or StimEncoderConfig()
+        self.pipeline: Optional[Pipeline] = None
+        self.vector_name = "char_tfidf"
+        self.vector_kind = "char"
+        self.use_svd = False
+        self.svd_dim = 300
+        self._loaded = False
+
+    def fit(self) -> None:
+        if not SKLEARN_AVAILABLE or joblib is None:
+            raise RuntimeError("scikit-learn and joblib are required for ridge stimulus encoding")
+
+        self._choose_vector_setup()
+        df = self._load_dataset()
+        targets = self._build_proxy_targets(df["text"].astype(str).tolist(), df["y"].astype(float).to_numpy())
+
+        self.pipeline = self._build_pipeline()
+        self.pipeline.fit(df["text"].astype(str).to_numpy(), targets)
+
+        cache_path = self.config.model_cache_path
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        joblib.dump(
+            {
+                "pipeline": self.pipeline,
+                "vector_name": self.vector_name,
+                "vector_kind": self.vector_kind,
+                "use_svd": self.use_svd,
+                "svd_dim": self.svd_dim,
+                "config": self.config,
+            },
+            cache_path,
+        )
+        self._loaded = True
+
+    def ensure_fitted(self) -> None:
+        if self.pipeline is not None:
+            return
+        if not SKLEARN_AVAILABLE or joblib is None:
+            raise RuntimeError("scikit-learn and joblib are required for ridge stimulus encoding")
+
+        cache_path = self.config.model_cache_path
+        if cache_path.exists() and not self.config.force_refit:
+            artifact = joblib.load(cache_path)
+            self.pipeline = artifact["pipeline"]
+            self.vector_name = artifact.get("vector_name", self.vector_name)
+            self.vector_kind = artifact.get("vector_kind", self.vector_kind)
+            self.use_svd = artifact.get("use_svd", self.use_svd)
+            self.svd_dim = artifact.get("svd_dim", self.svd_dim)
+            self._loaded = True
+            return
+        self.fit()
 
     def encode(self, text: str | Sequence[float] | np.ndarray) -> np.ndarray:
         if isinstance(text, np.ndarray):
@@ -255,33 +476,104 @@ class StimEncoder:
         if not isinstance(text, str):
             raise TypeError("StimEncoder expects a string or a 4D stim vector")
 
-        lowered = text.lower()
-        tokens = self.WORD_RE.findall(lowered)
-        token_count = len(tokens)
-        letters = sum(ch.isalpha() for ch in text)
-        uppercase = sum(ch.isupper() for ch in text)
-        uppercase_ratio = uppercase / max(1, letters)
+        self.ensure_fitted()
+        if self.pipeline is None:
+            raise RuntimeError("Stimulus encoder pipeline is not fitted")
 
-        exclamations = min(text.count("!") / 3.0, 1.0)
-        questions = min(text.count("?") / 3.0, 1.0)
-        positive_hits = sum(token in self.POSITIVE_WORDS for token in tokens)
-        calm_hits = sum(token in self.CALM_WORDS for token in tokens)
-        alert_hits = sum(token in self.ALERT_WORDS for token in tokens)
-        rest_hits = sum(token in self.REST_WORDS for token in tokens)
+        predicted = np.asarray(self.pipeline.predict([text])[0], dtype=np.float32).reshape(STIM_DIM)
+        return clamp_stim_vec(predicted)
 
-        token_scale = min(token_count / 24.0, 1.0)
-        positive_scale = min(positive_hits / 3.0, 1.0)
-        calm_scale = min(calm_hits / 3.0, 1.0)
-        alert_scale = min(alert_hits / 3.0, 1.0)
-        rest_scale = min(rest_hits / 3.0, 1.0)
+    def _choose_vector_setup(self) -> None:
+        benchmark_csv = self.config.benchmark_csv
+        if benchmark_csv.exists():
+            import pandas as pd
 
-        dopamine = 0.20 + 0.35 * positive_scale + 0.20 * exclamations + 0.10 * token_scale
-        serotonin = 0.20 + 0.45 * calm_scale + 0.05 * (1.0 - exclamations) + 0.05 * (1.0 - questions)
-        norepinephrine = 0.15 + 0.45 * alert_scale + 0.15 * questions + 0.15 * uppercase_ratio + 0.10 * exclamations
-        melatonin = 0.10 + 0.50 * rest_scale + 0.10 * max(0.0, 0.25 - token_scale)
+            df = pd.read_csv(benchmark_csv)
+            if "status" in df.columns:
+                df = df[df["status"] == "ok"].copy()
+            if len(df) > 0 and "model" in df.columns:
+                preferred = df[df["model"] == self.config.prefer_model].copy()
+                if len(preferred) > 0:
+                    df = preferred
+            if len(df) > 0 and "RMSE(mean)" in df.columns:
+                df = df.sort_values(["RMSE(mean)", "MAE(mean)"], ascending=[True, True]).reset_index(drop=True)
+                vector_name = str(df.iloc[0].get("vector", self.vector_name))
+                self.vector_name = vector_name
+                self.vector_kind = "char" if "char" in vector_name.lower() else "word"
+                self.use_svd = "svd" in vector_name.lower()
+                if self.use_svd:
+                    digits = "".join(ch for ch in vector_name if ch.isdigit())
+                    if digits:
+                        self.svd_dim = int(digits)
 
-        stim_vec = np.asarray([dopamine, serotonin, norepinephrine, melatonin], dtype=np.float32)
-        return clamp_stim_vec(stim_vec)
+    def _build_pipeline(self) -> Pipeline:
+        if TfidfVectorizer is None or Ridge is None or Pipeline is None:
+            raise RuntimeError("scikit-learn is required for ridge stimulus encoding")
+
+        steps: list[tuple[str, Any]] = [("tfidf", self._make_vectorizer(self.vector_kind))]
+        if self.use_svd:
+            steps.append(("svd", SafeTruncatedSVD(self.svd_dim, self.config.random_state)))
+        steps.append(("model", Ridge(alpha=self.config.ridge_alpha, random_state=self.config.random_state)))
+        return Pipeline(steps)
+
+    def _load_dataset(self):
+        import pandas as pd
+
+        dataset_csv = self.config.dataset_csv
+        if not dataset_csv.exists():
+            raise FileNotFoundError(f"dataset_for_regression.csv not found: {dataset_csv}")
+        df = pd.read_csv(dataset_csv)
+        for column in ("text", "y"):
+            if column not in df.columns:
+                raise ValueError(f"'{column}' column not found in {dataset_csv}")
+        if self.config.max_samples is not None and self.config.max_samples > 0 and len(df) > self.config.max_samples:
+            df = df.sample(n=self.config.max_samples, random_state=self.config.random_state).reset_index(drop=True)
+        return df
+
+    @classmethod
+    def _make_vectorizer(cls, kind: str) -> TfidfVectorizer:
+        if TfidfVectorizer is None:
+            raise RuntimeError("scikit-learn is required for ridge stimulus encoding")
+        if kind == "word":
+            return TfidfVectorizer(analyzer="word", ngram_range=(1, 2), min_df=2, max_df=0.95, dtype=np.float32)
+        if kind == "char":
+            return TfidfVectorizer(analyzer="char", ngram_range=(3, 5), min_df=2, max_df=0.95, dtype=np.float32)
+        raise ValueError("vector_kind must be 'word' or 'char'")
+
+    @classmethod
+    def _build_proxy_targets(cls, texts: list[str], base_scores: np.ndarray) -> np.ndarray:
+        stim_targets = np.zeros((len(texts), STIM_DIM), dtype=np.float32)
+        for idx, (text, base_score) in enumerate(zip(texts, base_scores, strict=False)):
+            lowered = str(text).lower()
+            token_count = len(cls.WORD_RE.findall(lowered))
+            punctuation = min((lowered.count("!") + lowered.count("?")) / 4.0, 1.0)
+            pressure = min(token_count / 40.0, 1.0)
+
+            positive = cls._hint_fraction(lowered, cls.POSITIVE_HINTS)
+            gain = cls._hint_fraction(lowered, cls.GAIN_HINTS)
+            agency = cls._hint_fraction(lowered, cls.AGENCY_HINTS)
+            calm = cls._hint_fraction(lowered, cls.CALM_HINTS)
+            safety = cls._hint_fraction(lowered, cls.SAFETY_HINTS)
+            threat = cls._hint_fraction(lowered, cls.THREAT_HINTS)
+            alert = cls._hint_fraction(lowered, cls.ALERT_HINTS)
+            fatigue = cls._hint_fraction(lowered, cls.FATIGUE_HINTS)
+            rest = cls._hint_fraction(lowered, cls.REST_HINTS)
+
+            score = float(np.clip(base_score, 0.0, 1.0))
+            dopamine = 0.35 * score + 0.25 * gain + 0.20 * agency + 0.15 * positive + 0.05 * punctuation
+            serotonin = 0.20 + 0.25 * score + 0.25 * calm + 0.25 * safety - 0.10 * threat
+            norepinephrine = 0.20 + 0.35 * (1.0 - score) + 0.20 * threat + 0.15 * alert + 0.10 * punctuation
+            melatonin = 0.10 + 0.30 * fatigue + 0.25 * rest + 0.20 * (1.0 - score) + 0.10 * pressure
+
+            stim_targets[idx] = clamp_stim_vec(
+                np.asarray([dopamine, serotonin, norepinephrine, melatonin], dtype=np.float32)
+            )
+        return stim_targets
+
+    @staticmethod
+    def _hint_fraction(text: str, hints: set[str]) -> float:
+        hits = sum(1 for token in hints if token in text)
+        return min(hits / 3.0, 1.0)
 
     @staticmethod
     def _validate_stim_vec(stim_vec: np.ndarray) -> np.ndarray:
@@ -604,16 +896,71 @@ else:
             raise RuntimeError("torch is required to regress s from z")
 
 
+class NumpyBranchEncoder:
+    def __init__(self, config: EmoNetConfig):
+        self.config = config
+        self.feature_dim = 8 * BRANCH_FEATURE_DIM + 3
+        rng = np.random.default_rng(config.seed)
+        scale = 1.0 / math.sqrt(self.feature_dim)
+        self.projection = rng.normal(0.0, scale, size=(self.feature_dim, config.z_dim)).astype(np.float32)
+        self.bias = rng.normal(0.0, 0.05, size=(config.z_dim,)).astype(np.float32)
+
+    def encode(self, branch_tensor: np.ndarray) -> np.ndarray:
+        features = self._summarize_branch(branch_tensor)
+        latent = np.tanh(features @ self.projection + self.bias)
+        return latent.astype(np.float32)
+
+    def _summarize_branch(self, branch_tensor: np.ndarray) -> np.ndarray:
+        arr = np.asarray(branch_tensor, dtype=np.float32)
+        if arr.ndim != 2 or arr.shape[1] != BRANCH_FEATURE_DIM:
+            raise ValueError(f"branch tensor must have shape [seq_len, {BRANCH_FEATURE_DIM}]")
+
+        seq_len = arr.shape[0]
+        mean = arr.mean(axis=0)
+        std = arr.std(axis=0)
+        min_value = arr.min(axis=0)
+        max_value = arr.max(axis=0)
+        first = arr[0]
+        last = arr[-1]
+        delta = last - first
+
+        if seq_len > 1:
+            ticks = np.linspace(0.0, 1.0, seq_len, dtype=np.float32)
+            centered_ticks = ticks - ticks.mean()
+            denom = float(np.dot(centered_ticks, centered_ticks) + 1e-8)
+            centered = arr - mean
+            slopes = (centered_ticks[:, None] * centered).sum(axis=0) / denom
+        else:
+            slopes = np.zeros(BRANCH_FEATURE_DIM, dtype=np.float32)
+
+        extras = np.asarray(
+            [
+                float(seq_len) / float(self.config.max_ticks),
+                float(mean[4]) if BRANCH_FEATURE_DIM > 4 else 0.0,
+                float(last[4]) if BRANCH_FEATURE_DIM > 4 else 0.0,
+            ],
+            dtype=np.float32,
+        )
+        return np.concatenate([mean, std, min_value, max_value, first, last, delta, slopes, extras], axis=0)
+
+
 class EmoNet:
-    def __init__(self, config: Optional[EmoNetConfig] = None):
+    def __init__(
+        self,
+        config: Optional[EmoNetConfig] = None,
+        stim_encoder_config: Optional[StimEncoderConfig] = None,
+        stim_encoder: Optional[StimEncoder] = None,
+    ):
         self.config = config or EmoNetConfig()
         self.rng = np.random.default_rng(self.config.seed)
         self.graph = EmoNetGraph(self.config, self.rng)
-        self.stim_encoder = StimEncoder()
+        self.stim_encoder = stim_encoder or StimEncoder(stim_encoder_config)
         self.branch_extractor = BranchExtractor()
 
         self.z_encoder = DominantBranchEncoder(self.config) if TORCH_AVAILABLE else None
+        self.numpy_branch_encoder = NumpyBranchEncoder(self.config)
         self.z_to_s_regressor = ZtoSRegressor(self.config) if TORCH_AVAILABLE else None
+        self.use_torch_z_encoder = self.config.z_encoder_mode == "transformer" and TORCH_AVAILABLE
 
         self.last_base_stim_vec = np.zeros(STIM_DIM, dtype=np.float32)
         self.pending_signals: dict[int, list[float]] = {}
@@ -786,7 +1133,7 @@ class EmoNet:
 
     def dominant_branch_to_tensor(
         self, dominant_branch: Optional[list[DominantBranchStep]] = None
-    ) -> np.ndarray | Any:
+    ) -> np.ndarray:
         branch = dominant_branch or self.dominant_branch or self.build_dominant_branch()
         features: list[np.ndarray] = []
         for step in branch:
@@ -803,19 +1150,20 @@ class EmoNet:
         if not features:
             features.append(np.zeros(BRANCH_FEATURE_DIM, dtype=np.float32))
 
-        branch_tensor = np.stack(features, axis=0)
-        if TORCH_AVAILABLE:
-            return torch.from_numpy(branch_tensor)
-        return branch_tensor
+        return np.stack(features, axis=0).astype(np.float32, copy=False)
 
     def encode_z(self, branch_tensor: Optional[Any] = None) -> Any:
-        if not TORCH_AVAILABLE or self.z_encoder is None:
-            raise RuntimeError("torch is required for z encoding")
-
         tensor = branch_tensor if branch_tensor is not None else self.dominant_branch_to_tensor()
-        if not isinstance(tensor, torch.Tensor):
-            tensor = torch.as_tensor(tensor, dtype=torch.float32)
-        return self.z_encoder(tensor.float())
+        if self.use_torch_z_encoder:
+            if self.z_encoder is None or not TORCH_AVAILABLE:
+                raise RuntimeError("torch transformer encoder is not available")
+            if not isinstance(tensor, torch.Tensor):
+                tensor = torch.as_tensor(tensor, dtype=torch.float32)
+            return self.z_encoder(tensor.float())
+
+        if TORCH_AVAILABLE and isinstance(tensor, torch.Tensor):
+            tensor = tensor.detach().cpu().numpy()
+        return self.numpy_branch_encoder.encode(np.asarray(tensor, dtype=np.float32))
 
     def regress_s(self, z: Optional[Any] = None) -> Any:
         if not TORCH_AVAILABLE or self.z_to_s_regressor is None:
@@ -833,13 +1181,12 @@ class EmoNet:
         dominant_branch = self.build_dominant_branch()
         branch_tensor = self.dominant_branch_to_tensor(dominant_branch)
         z = self.encode_z(branch_tensor)
-        s = self.regress_s(z)
         return {
             "stim_vec": base_stim_vec,
             "pruned_branch_log": pruned_branch_log,
             "dominant_branch": dominant_branch,
+            "branch_tensor": branch_tensor,
             "z": z,
-            "s": s,
         }
 
     def format_style_prompt(self, s: Sequence[float] | np.ndarray | Any) -> str:

@@ -1,2 +1,7 @@
 torch
 networkx
+
+
+
+cd C:\Users\esl01\OneDrive\문서\GitHub\EmoNet_working\v3
+>> python -m emonet.cli export-z --input-json ".\Dataset\감성대화말뭉치(최종데이터)_Training.json" --output-csv "out_z.csv" 

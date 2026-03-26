@@ -2,13 +2,21 @@ import csv
 import json
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 from emonet import EmoNet, EmoNetConfig, StimEncoderConfig
-from emonet.cli import export_z_from_json_stream
+from emonet.cli import (
+    build_balanced_subset,
+    command_build_llm_subset,
+    export_z_from_json_stream,
+    extract_json_block,
+    label_subset_with_local_model,
+    normalize_style_dict,
+)
 
 
 def write_csv(path: Path, rows: list[list[str]]) -> None:
@@ -131,6 +139,118 @@ class EmoNetSmokeTests(unittest.TestCase):
             self.assertIn("z_63", df.columns)
             self.assertIn("dopamine", df.columns)
             self.assertIn("dominant_branch_len", df.columns)
+
+    def test_build_balanced_subset_and_prompt_jsonl(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            input_csv = temp_dir / "out_z_training.csv"
+            output_csv = temp_dir / "subset.csv"
+            prompt_jsonl = temp_dir / "subset_prompts.jsonl"
+
+            df = pd.DataFrame(
+                [
+                    {"text": f"text {i}", "talk_id": f"t{i}", "label": "E10" if i < 4 else "E20", **{f"z_{j}": float(i + j) for j in range(64)}}
+                    for i in range(8)
+                ]
+            )
+            df.to_csv(input_csv, index=False, encoding="utf-8-sig")
+
+            subset = build_balanced_subset(df, target_size=4, label_column="label", seed=7)
+            self.assertEqual(len(subset), 4)
+            self.assertIn("sample_id", subset.columns)
+            self.assertEqual(set(subset["label"].unique()), {"E10", "E20"})
+
+            class Args:
+                pass
+
+            args = Args()
+            args.input_csv = str(input_csv)
+            args.output_csv = str(output_csv)
+            args.prompt_jsonl = str(prompt_jsonl)
+            args.target_size = 4
+            args.label_column = "label"
+            args.seed = 7
+            command_build_llm_subset(args)
+
+            saved = pd.read_csv(output_csv)
+            self.assertEqual(len(saved), 4)
+            lines = prompt_jsonl.read_text(encoding="utf-8").strip().splitlines()
+            self.assertEqual(len(lines), 4)
+            payload = json.loads(lines[0])
+            self.assertIn("generation_prompt", payload)
+
+    def test_json_extraction_and_style_normalization(self) -> None:
+        payload = extract_json_block("prefix\n{\"s\": {\"verbosity\": 1.2, \"sentence_length\": -0.2}}\nsuffix")
+        style = normalize_style_dict(payload, "s")
+        self.assertEqual(style["verbosity"], 1.0)
+        self.assertEqual(style["sentence_length"], 0.0)
+        self.assertEqual(len(style), 32)
+
+    def test_label_subset_with_local_model(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            output_csv = temp_dir / "labeled.csv"
+            df = pd.DataFrame(
+                [
+                    {
+                        "sample_id": "s_000000",
+                        "text": "example text",
+                        "talk_id": "t1",
+                        "label": "E10",
+                        **{f"z_{j}": float(j) / 64.0 for j in range(64)},
+                    }
+                ]
+            )
+
+            generation_response = json.dumps(
+                {
+                    "s": {axis: 0.5 for axis in [
+                        "verbosity", "sentence_length", "pace", "fragmentation", "repetition", "rhythmicity",
+                        "directness", "explicitness", "specificity", "abstraction", "certainty", "logicality",
+                        "warmth", "distance", "politeness", "formality", "cooperativeness", "dominance",
+                        "calmness", "tension", "positivity", "heaviness", "urgency", "emotional_openness",
+                        "softness", "sharpness", "playfulness", "seriousness", "metaphoricity", "plainness",
+                        "initiative", "reflectiveness"
+                    ]},
+                    "response": "예시 응답",
+                },
+                ensure_ascii=False,
+            )
+            rating_response = json.dumps(
+                {
+                    "s_hat": {axis: 0.55 for axis in [
+                        "verbosity", "sentence_length", "pace", "fragmentation", "repetition", "rhythmicity",
+                        "directness", "explicitness", "specificity", "abstraction", "certainty", "logicality",
+                        "warmth", "distance", "politeness", "formality", "cooperativeness", "dominance",
+                        "calmness", "tension", "positivity", "heaviness", "urgency", "emotional_openness",
+                        "softness", "sharpness", "playfulness", "seriousness", "metaphoricity", "plainness",
+                        "initiative", "reflectiveness"
+                    ]},
+                    "notes": "ok",
+                },
+                ensure_ascii=False,
+            )
+
+            with patch("emonet.cli.call_openai_compatible_chat", side_effect=[generation_response, rating_response]):
+                label_subset_with_local_model(
+                    df=df,
+                    output_csv=output_csv,
+                    base_url="http://127.0.0.1:8000/v1",
+                    model_name="gpt-oss-20b",
+                    generation_temperature=0.7,
+                    rating_temperature=0.1,
+                    max_tokens=1200,
+                    timeout_sec=30,
+                    progress_every=1,
+                    limit=None,
+                )
+
+            saved = pd.read_csv(output_csv)
+            self.assertEqual(len(saved), 1)
+            self.assertIn("llm_response", saved.columns)
+            self.assertIn("s_0", saved.columns)
+            self.assertIn("s_hat_31", saved.columns)
+            self.assertIn("consistency_l1", saved.columns)
 
 
 if __name__ == "__main__":

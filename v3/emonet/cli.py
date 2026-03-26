@@ -4,6 +4,8 @@ import argparse
 import json
 from pathlib import Path
 import time
+import urllib.error
+import urllib.request
 
 import numpy as np
 import pandas as pd
@@ -223,6 +225,389 @@ def export_z_from_json_stream(
     )
 
 
+def build_balanced_subset(
+    df: pd.DataFrame,
+    target_size: int,
+    label_column: str = "label",
+    seed: int = 42,
+) -> pd.DataFrame:
+    if target_size <= 0:
+        raise ValueError("target_size must be positive")
+    if len(df) <= target_size:
+        return df.sample(frac=1.0, random_state=seed).reset_index(drop=True)
+    if label_column not in df.columns:
+        return df.sample(n=target_size, random_state=seed).reset_index(drop=True)
+
+    rng = np.random.default_rng(seed)
+    groups = {label: group.copy() for label, group in df.groupby(label_column, dropna=False)}
+    label_keys = sorted(groups.keys(), key=lambda x: str(x))
+    base_quota = max(1, target_size // max(1, len(label_keys)))
+
+    selected_indices: list[int] = []
+    used_indices: set[int] = set()
+
+    for label in label_keys:
+        group = groups[label]
+        take = min(len(group), base_quota)
+        if take <= 0:
+            continue
+        chosen = group.sample(n=take, random_state=seed)
+        indices = chosen.index.tolist()
+        selected_indices.extend(indices)
+        used_indices.update(indices)
+
+    remaining = target_size - len(selected_indices)
+    if remaining > 0:
+        leftovers = df.loc[~df.index.isin(list(used_indices))]
+        if len(leftovers) > 0:
+            take = min(remaining, len(leftovers))
+            chosen = leftovers.sample(n=take, random_state=seed + 1)
+            selected_indices.extend(chosen.index.tolist())
+            used_indices.update(chosen.index.tolist())
+
+    subset = df.loc[selected_indices].copy()
+    if len(subset) > target_size:
+        subset = subset.sample(n=target_size, random_state=seed)
+
+    subset = subset.sample(frac=1.0, random_state=seed).reset_index(drop=True)
+    subset.insert(0, "sample_id", [f"s_{i:06d}" for i in range(len(subset))])
+    return subset
+
+
+def make_generation_prompt(record: dict[str, object]) -> str:
+    text = str(record.get("text", "")).strip()
+    z_values = [record[key] for key in sorted(record.keys()) if str(key).startswith("z_")]
+    z_lines = "\n".join(f"{key}={float(record[key]):.6f}" for key in sorted(record.keys()) if str(key).startswith("z_"))
+    return "\n".join(
+        [
+            "[TASK]",
+            "주어진 대화 입력에 대해 어울리는 응답 스타일 벡터 s 와 예시 응답 1개를 생성하라.",
+            "",
+            "[INPUT_TEXT]",
+            text,
+            "",
+            "[LATENT_Z]",
+            z_lines if z_values else "(none)",
+            "",
+            "[OUTPUT_FORMAT]",
+            "JSON only.",
+            '{',
+            '  "s": {"verbosity": 0.0, "sentence_length": 0.0, "...": 0.0},',
+            '  "response": "string"',
+            '}',
+            "",
+            "[CONSTRAINTS]",
+            "- s 는 32축 모두 0~1 범위 실수로 채운다.",
+            "- response 는 입력 내용과 정합적이어야 한다.",
+            "- 과장하지 말고 자연스러운 한국어로 쓴다.",
+            "- z 는 직접 설명하지 말고 내부 상태 힌트로만 사용한다.",
+        ]
+    )
+
+
+def make_rating_prompt(record: dict[str, object], response: str) -> str:
+    text = str(record.get("text", "")).strip()
+    return "\n".join(
+        [
+            "[TASK]",
+            "아래 입력과 응답을 보고 응답의 스타일 벡터 s_hat 를 32축 0~1 값으로 평가하라.",
+            "",
+            "[INPUT_TEXT]",
+            text,
+            "",
+            "[RESPONSE]",
+            response.strip(),
+            "",
+            "[OUTPUT_FORMAT]",
+            "JSON only.",
+            '{',
+            '  "s_hat": {"verbosity": 0.0, "sentence_length": 0.0, "...": 0.0},',
+            '  "notes": "short string"',
+            '}',
+            "",
+            "[CONSTRAINTS]",
+            "- 내용 적합성보다 응답의 말투와 표현 특성만 평가한다.",
+            "- 각 축은 반드시 0~1 범위로 준다.",
+            "- notes 는 한 문장으로 짧게 쓴다.",
+        ]
+    )
+
+
+def command_build_llm_subset(args: argparse.Namespace) -> None:
+    input_csv = Path(args.input_csv)
+    output_csv = Path(args.output_csv)
+    prompt_jsonl = Path(args.prompt_jsonl) if args.prompt_jsonl else None
+    df = pd.read_csv(input_csv)
+
+    required = {"text", "talk_id"}
+    missing = sorted(required - set(df.columns))
+    if missing:
+        raise ValueError(f"missing required columns: {', '.join(missing)}")
+
+    subset = build_balanced_subset(
+        df=df,
+        target_size=args.target_size,
+        label_column=args.label_column,
+        seed=args.seed,
+    )
+    output_csv.parent.mkdir(parents=True, exist_ok=True)
+    subset.to_csv(output_csv, index=False, encoding="utf-8-sig")
+
+    if prompt_jsonl is not None:
+        prompt_jsonl.parent.mkdir(parents=True, exist_ok=True)
+        with prompt_jsonl.open("w", encoding="utf-8") as handle:
+            for row in subset.to_dict(orient="records"):
+                payload = {
+                    "sample_id": row["sample_id"],
+                    "talk_id": row.get("talk_id", ""),
+                    "generation_prompt": make_generation_prompt(row),
+                }
+                handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
+
+    label_counts = subset[args.label_column].value_counts(dropna=False).to_dict() if args.label_column in subset.columns else {}
+    print(
+        json.dumps(
+            {
+                "rows": int(len(subset)),
+                "output_csv": str(output_csv),
+                "prompt_jsonl": str(prompt_jsonl) if prompt_jsonl else None,
+                "label_counts": label_counts,
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
+
+
+STYLE_AXIS_NAMES = [
+    "verbosity",
+    "sentence_length",
+    "pace",
+    "fragmentation",
+    "repetition",
+    "rhythmicity",
+    "directness",
+    "explicitness",
+    "specificity",
+    "abstraction",
+    "certainty",
+    "logicality",
+    "warmth",
+    "distance",
+    "politeness",
+    "formality",
+    "cooperativeness",
+    "dominance",
+    "calmness",
+    "tension",
+    "positivity",
+    "heaviness",
+    "urgency",
+    "emotional_openness",
+    "softness",
+    "sharpness",
+    "playfulness",
+    "seriousness",
+    "metaphoricity",
+    "plainness",
+    "initiative",
+    "reflectiveness",
+]
+
+
+def extract_json_block(text: str) -> dict:
+    stripped = text.strip()
+    try:
+        return json.loads(stripped)
+    except json.JSONDecodeError:
+        pass
+
+    start = stripped.find("{")
+    end = stripped.rfind("}")
+    if start == -1 or end == -1 or end <= start:
+        raise ValueError("no JSON object found in model output")
+    candidate = stripped[start : end + 1]
+    return json.loads(candidate)
+
+
+def normalize_style_dict(style_dict: dict, key_name: str) -> dict[str, float]:
+    if key_name not in style_dict or not isinstance(style_dict[key_name], dict):
+        raise ValueError(f"missing '{key_name}' object in model output")
+    result: dict[str, float] = {}
+    for axis in STYLE_AXIS_NAMES:
+        value = float(style_dict[key_name].get(axis, 0.0))
+        result[axis] = float(np.clip(value, 0.0, 1.0))
+    return result
+
+
+def call_openai_compatible_chat(
+    base_url: str,
+    model_name: str,
+    prompt: str,
+    temperature: float,
+    max_tokens: int,
+    timeout_sec: int,
+) -> str:
+    url = base_url.rstrip("/") + "/chat/completions"
+    payload = {
+        "model": model_name,
+        "messages": [
+            {"role": "system", "content": "Return JSON only."},
+            {"role": "user", "content": prompt},
+        ],
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    }
+    data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    request = urllib.request.Request(
+        url,
+        data=data,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    with urllib.request.urlopen(request, timeout=timeout_sec) as response:
+        body = json.loads(response.read().decode("utf-8"))
+    choices = body.get("choices", [])
+    if not choices:
+        raise ValueError("no choices returned from local model server")
+    message = choices[0].get("message", {})
+    content = message.get("content", "")
+    if not isinstance(content, str):
+        raise ValueError("invalid content returned from local model server")
+    return content
+
+
+def compute_consistency(style_a: dict[str, float], style_b: dict[str, float]) -> float:
+    values = [abs(style_a[axis] - style_b[axis]) for axis in STYLE_AXIS_NAMES]
+    return float(np.mean(values))
+
+
+def label_subset_with_local_model(
+    df: pd.DataFrame,
+    output_csv: Path,
+    base_url: str,
+    model_name: str,
+    generation_temperature: float,
+    rating_temperature: float,
+    max_tokens: int,
+    timeout_sec: int,
+    progress_every: int,
+    limit: int | None,
+) -> None:
+    rows = []
+    total = len(df) if limit is None else min(len(df), limit)
+    start_time = time.perf_counter()
+
+    for idx, record in enumerate(df.to_dict(orient="records"), start=1):
+        if limit is not None and idx > limit:
+            break
+
+        generation_prompt = make_generation_prompt(record)
+        generation_raw = call_openai_compatible_chat(
+            base_url=base_url,
+            model_name=model_name,
+            prompt=generation_prompt,
+            temperature=generation_temperature,
+            max_tokens=max_tokens,
+            timeout_sec=timeout_sec,
+        )
+        generation_obj = extract_json_block(generation_raw)
+        style = normalize_style_dict(generation_obj, "s")
+        response_text = str(generation_obj.get("response", "")).strip()
+
+        rating_prompt = make_rating_prompt(record, response_text)
+        rating_raw = call_openai_compatible_chat(
+            base_url=base_url,
+            model_name=model_name,
+            prompt=rating_prompt,
+            temperature=rating_temperature,
+            max_tokens=max_tokens,
+            timeout_sec=timeout_sec,
+        )
+        rating_obj = extract_json_block(rating_raw)
+        style_hat = normalize_style_dict(rating_obj, "s_hat")
+        consistency_l1 = compute_consistency(style, style_hat)
+
+        row = dict(record)
+        row["llm_response"] = response_text
+        row["generation_raw_json"] = json.dumps(generation_obj, ensure_ascii=False)
+        row["rating_raw_json"] = json.dumps(rating_obj, ensure_ascii=False)
+        row["consistency_l1"] = consistency_l1
+        row["keep_sample"] = bool(consistency_l1 <= 0.12)
+        for axis_idx, axis in enumerate(STYLE_AXIS_NAMES):
+            row[f"s_{axis_idx}"] = style[axis]
+            row[f"s_hat_{axis_idx}"] = style_hat[axis]
+        rows.append(row)
+
+        if progress_every > 0 and idx % progress_every == 0:
+            elapsed = max(1e-8, time.perf_counter() - start_time)
+            print(f"processed {idx}/{total} rows ({idx / elapsed:.2f} rows/s)")
+
+    result_df = pd.DataFrame(rows)
+    output_csv.parent.mkdir(parents=True, exist_ok=True)
+    result_df.to_csv(output_csv, index=False, encoding="utf-8-sig")
+    elapsed = time.perf_counter() - start_time
+    print(
+        json.dumps(
+            {
+                "rows": int(len(result_df)),
+                "kept_rows": int(result_df["keep_sample"].sum()) if len(result_df) else 0,
+                "output_csv": str(output_csv),
+                "elapsed_sec": round(elapsed, 3),
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
+
+
+def command_label_local(args: argparse.Namespace) -> None:
+    input_csv = Path(args.input_csv)
+    output_csv = Path(args.output_csv)
+    df = pd.read_csv(input_csv)
+    if "text" not in df.columns:
+        raise ValueError("input subset CSV must contain a 'text' column")
+    label_subset_with_local_model(
+        df=df,
+        output_csv=output_csv,
+        base_url=args.base_url,
+        model_name=args.model_name,
+        generation_temperature=args.generation_temperature,
+        rating_temperature=args.rating_temperature,
+        max_tokens=args.max_tokens,
+        timeout_sec=args.timeout_sec,
+        progress_every=args.progress_every,
+        limit=args.limit,
+    )
+    output_csv.parent.mkdir(parents=True, exist_ok=True)
+    subset.to_csv(output_csv, index=False, encoding="utf-8-sig")
+
+    if prompt_jsonl is not None:
+        prompt_jsonl.parent.mkdir(parents=True, exist_ok=True)
+        with prompt_jsonl.open("w", encoding="utf-8") as handle:
+            for row in subset.to_dict(orient="records"):
+                payload = {
+                    "sample_id": row["sample_id"],
+                    "talk_id": row.get("talk_id", ""),
+                    "generation_prompt": make_generation_prompt(row),
+                }
+                handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
+
+    label_counts = subset[args.label_column].value_counts(dropna=False).to_dict() if args.label_column in subset.columns else {}
+    print(
+        json.dumps(
+            {
+                "rows": int(len(subset)),
+                "output_csv": str(output_csv),
+                "prompt_jsonl": str(prompt_jsonl) if prompt_jsonl else None,
+                "label_counts": label_counts,
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
+
+
 def command_export_z(args: argparse.Namespace) -> None:
     model = build_model(args)
     output_csv = Path(args.output_csv)
@@ -284,6 +669,28 @@ def build_parser() -> argparse.ArgumentParser:
     export_parser.add_argument("--progress-every", type=int, default=100)
     export_parser.add_argument("--resume", action="store_true")
     export_parser.set_defaults(func=command_export_z)
+
+    subset_parser = subparsers.add_parser("build-llm-subset")
+    subset_parser.add_argument("--input-csv", required=True)
+    subset_parser.add_argument("--output-csv", required=True)
+    subset_parser.add_argument("--prompt-jsonl", default=None)
+    subset_parser.add_argument("--target-size", type=int, default=2000)
+    subset_parser.add_argument("--label-column", default="label")
+    subset_parser.add_argument("--seed", type=int, default=42)
+    subset_parser.set_defaults(func=command_build_llm_subset)
+
+    local_parser = subparsers.add_parser("label-local")
+    local_parser.add_argument("--input-csv", required=True)
+    local_parser.add_argument("--output-csv", required=True)
+    local_parser.add_argument("--base-url", default="http://127.0.0.1:8000/v1")
+    local_parser.add_argument("--model-name", default="gpt-oss-20b")
+    local_parser.add_argument("--generation-temperature", type=float, default=0.7)
+    local_parser.add_argument("--rating-temperature", type=float, default=0.1)
+    local_parser.add_argument("--max-tokens", type=int, default=1200)
+    local_parser.add_argument("--timeout-sec", type=int, default=180)
+    local_parser.add_argument("--progress-every", type=int, default=10)
+    local_parser.add_argument("--limit", type=int, default=None)
+    local_parser.set_defaults(func=command_label_local)
 
     return parser
 

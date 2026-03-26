@@ -8,15 +8,18 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from emonet import EmoNet, EmoNetConfig, StimEncoderConfig
+from emonet import EmoNet, EmoNetConfig, LinearZtoSDecoder, StimEncoderConfig
 from emonet.cli import (
+    STYLE_AXIS_NAMES,
     build_balanced_subset,
+    command_predict_s,
     command_build_llm_subset,
     export_z_from_json_stream,
     extract_json_block,
     label_subset_with_local_model,
     normalize_style_dict,
     request_json_response,
+    train_zs_decoder_from_dataframe,
 )
 
 
@@ -181,11 +184,16 @@ class EmoNetSmokeTests(unittest.TestCase):
             self.assertIn("generation_prompt", payload)
 
     def test_json_extraction_and_style_normalization(self) -> None:
-        payload = extract_json_block("prefix\n{\"s\": {\"verbosity\": 1.2, \"sentence_length\": -0.2}}\nsuffix")
+        style_payload = {axis: 0.5 for axis in STYLE_AXIS_NAMES}
+        style_payload["verbosity"] = 1.2
+        style_payload["sentence_length"] = -0.2
+        payload = extract_json_block(f"prefix\n{json.dumps({'s': style_payload})}\nsuffix")
         style = normalize_style_dict(payload, "s")
         self.assertEqual(style["verbosity"], 1.0)
         self.assertEqual(style["sentence_length"], 0.0)
         self.assertEqual(len(style), 32)
+        with self.assertRaises(ValueError):
+            normalize_style_dict({"s": {"verbosity": 0.3}}, "s", expected_axes=["verbosity", "sentence_length"])
 
     def test_label_subset_with_local_model(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir_name:
@@ -203,36 +211,16 @@ class EmoNetSmokeTests(unittest.TestCase):
                 ]
             )
 
-            generation_response = json.dumps(
-                {
-                    "s": {axis: 0.5 for axis in [
-                        "verbosity", "sentence_length", "pace", "fragmentation", "repetition", "rhythmicity",
-                        "directness", "explicitness", "specificity", "abstraction", "certainty", "logicality",
-                        "warmth", "distance", "politeness", "formality", "cooperativeness", "dominance",
-                        "calmness", "tension", "positivity", "heaviness", "urgency", "emotional_openness",
-                        "softness", "sharpness", "playfulness", "seriousness", "metaphoricity", "plainness",
-                        "initiative", "reflectiveness"
-                    ]},
-                    "response": "예시 응답",
-                },
-                ensure_ascii=False,
-            )
-            rating_response = json.dumps(
-                {
-                    "s_hat": {axis: 0.55 for axis in [
-                        "verbosity", "sentence_length", "pace", "fragmentation", "repetition", "rhythmicity",
-                        "directness", "explicitness", "specificity", "abstraction", "certainty", "logicality",
-                        "warmth", "distance", "politeness", "formality", "cooperativeness", "dominance",
-                        "calmness", "tension", "positivity", "heaviness", "urgency", "emotional_openness",
-                        "softness", "sharpness", "playfulness", "seriousness", "metaphoricity", "plainness",
-                        "initiative", "reflectiveness"
-                    ]},
-                    "notes": "ok",
-                },
-                ensure_ascii=False,
-            )
+            generation_response = json.dumps({"response": "예시 응답"}, ensure_ascii=False)
+            block_responses = []
+            for block_idx in range(0, len(STYLE_AXIS_NAMES), 8):
+                block_axes = STYLE_AXIS_NAMES[block_idx : block_idx + 8]
+                block_responses.append(json.dumps({"s": {axis: 0.5 for axis in block_axes}}, ensure_ascii=False))
+            for block_idx in range(0, len(STYLE_AXIS_NAMES), 8):
+                block_axes = STYLE_AXIS_NAMES[block_idx : block_idx + 8]
+                block_responses.append(json.dumps({"s_hat": {axis: 0.55 for axis in block_axes}}, ensure_ascii=False))
 
-            with patch("emonet.cli.call_openai_compatible_chat", side_effect=[generation_response, rating_response]):
+            with patch("emonet.cli.call_openai_compatible_chat", side_effect=[generation_response, *block_responses]):
                 label_subset_with_local_model(
                     df=df,
                     output_csv=output_csv,
@@ -246,14 +234,50 @@ class EmoNetSmokeTests(unittest.TestCase):
                     limit=None,
                     max_retries=1,
                     keep_failures=True,
+                    block_size=8,
+                    keep_threshold=0.12,
                 )
 
             saved = pd.read_csv(output_csv)
             self.assertEqual(len(saved), 1)
             self.assertIn("llm_response", saved.columns)
+            self.assertIn("generation_status", saved.columns)
+            self.assertIn("s_block1_status", saved.columns)
+            self.assertIn("s_hat_block4_status", saved.columns)
             self.assertIn("s_0", saved.columns)
             self.assertIn("s_hat_31", saved.columns)
             self.assertIn("consistency_l1", saved.columns)
+            self.assertEqual(saved.loc[0, "status"], "ok")
+            self.assertEqual(saved.loc[0, "generation_status"], "ok")
+            self.assertEqual(saved.loc[0, "s_block1_status"], "ok")
+            self.assertEqual(saved.loc[0, "s_hat_block4_status"], "ok")
+
+    def test_request_json_response_retries_on_schema_validation(self) -> None:
+        with patch(
+            "emonet.cli.call_openai_compatible_chat",
+            side_effect=[
+                "{\"s\": {\"dim0\": 0.2}}",
+                "{\"s\": {\"verbosity\": 0.2, \"sentence_length\": 0.3}}",
+            ],
+        ):
+            payload, raw = request_json_response(
+                base_url="http://127.0.0.1:8000/v1",
+                model_name="gpt-oss-20b",
+                prompt="test",
+                temperature=0.1,
+                max_tokens=100,
+                timeout_sec=30,
+                max_retries=1,
+                validator=lambda body: normalize_style_dict(
+                    body,
+                    "s",
+                    expected_axes=["verbosity", "sentence_length"],
+                ),
+                retry_instruction="축 이름을 그대로 다시 출력하라.",
+            )
+        self.assertEqual(payload["verbosity"], 0.2)
+        self.assertEqual(payload["sentence_length"], 0.3)
+        self.assertEqual(raw, "{\"s\": {\"verbosity\": 0.2, \"sentence_length\": 0.3}}")
 
     def test_request_json_response_retries_once(self) -> None:
         with patch("emonet.cli.call_openai_compatible_chat", side_effect=["not json", "{\"ok\": true}"]):
@@ -268,6 +292,72 @@ class EmoNetSmokeTests(unittest.TestCase):
             )
         self.assertTrue(payload["ok"])
         self.assertEqual(raw, "{\"ok\": true}")
+
+    def test_train_and_predict_zs_regressor(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            model_path = temp_dir / "z_to_s_decoder.npz"
+            input_csv = temp_dir / "zs_train.csv"
+            predict_input_csv = temp_dir / "zs_predict.csv"
+            predict_output_csv = temp_dir / "zs_predict_out.csv"
+
+            rng = np.random.default_rng(7)
+            rows = []
+            for idx in range(24):
+                z = rng.random(64, dtype=np.float32)
+                s = []
+                for axis_idx in range(32):
+                    signal = 0.65 * float(z[axis_idx]) + 0.20 * float(z[(axis_idx + 7) % 64]) + 0.05
+                    s.append(float(np.clip(signal, 0.0, 1.0)))
+                row = {
+                    "sample_id": f"s_{idx:06d}",
+                    "text": f"synthetic text {idx}",
+                    "talk_id": f"t{idx}",
+                    "keep_sample": idx % 5 != 0,
+                }
+                row.update({f"z_{j}": float(z[j]) for j in range(64)})
+                row.update({f"s_{j}": float(s[j]) for j in range(32)})
+                rows.append(row)
+
+            train_df = pd.DataFrame(rows)
+            train_df.to_csv(input_csv, index=False, encoding="utf-8-sig")
+
+            summary = train_zs_decoder_from_dataframe(
+                df=train_df,
+                model_path=model_path,
+                z_dim=64,
+                s_dim=32,
+                ridge_alpha=1.0,
+                seed=7,
+                val_ratio=0.2,
+                use_all_rows=False,
+            )
+            self.assertTrue(model_path.exists())
+            self.assertEqual(summary["input_rows"], 24)
+            self.assertGreater(summary["rows_used"], 10)
+            self.assertIsNotNone(summary["val_mae"])
+
+            decoder = LinearZtoSDecoder.load(model_path)
+            pred = decoder.predict(train_df.loc[0, [f"z_{j}" for j in range(64)]].to_numpy(dtype=np.float32))
+            self.assertEqual(pred.shape, (32,))
+
+            train_df[[f"z_{j}" for j in range(64)]].head(3).to_csv(predict_input_csv, index=False, encoding="utf-8-sig")
+
+            class Args:
+                pass
+
+            args = Args()
+            args.input_csv = str(predict_input_csv)
+            args.output_csv = str(predict_output_csv)
+            args.model_path = str(model_path)
+            args.z_dim = 64
+            args.output_prefix = "s_pred_"
+            command_predict_s(args)
+
+            predicted_df = pd.read_csv(predict_output_csv)
+            self.assertEqual(len(predicted_df), 3)
+            self.assertIn("s_pred_0", predicted_df.columns)
+            self.assertIn("s_pred_31", predicted_df.columns)
 
 
 if __name__ == "__main__":

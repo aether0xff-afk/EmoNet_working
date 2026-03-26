@@ -13,9 +13,11 @@ from .core import (
     NeuronState,
     NumpyBranchEncoder,
     NodeStepState,
+    LinearZtoSDecoder,
     StimEncoder,
     StimEncoderConfig,
     TickRecord,
+    ZSDecoderConfig,
     ZtoSRegressor,
 )
 
@@ -34,8 +36,10 @@ __all__ = [
     "NeuronState",
     "NumpyBranchEncoder",
     "NodeStepState",
+    "LinearZtoSDecoder",
     "StimEncoder",
     "StimEncoderConfig",
     "TickRecord",
+    "ZSDecoderConfig",
     "ZtoSRegressor",
 ]

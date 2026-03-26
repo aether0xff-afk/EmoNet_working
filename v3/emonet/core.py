@@ -243,6 +243,127 @@ class StimEncoderConfig:
     max_samples: Optional[int] = None
 
 
+@dataclass(slots=True)
+class ZSDecoderConfig:
+    model_path: Path = field(default_factory=lambda: _project_root() / "artifacts" / "z_to_s_decoder.npz")
+    ridge_alpha: float = 1.0
+
+
+class LinearZtoSDecoder:
+    def __init__(
+        self,
+        config: Optional[ZSDecoderConfig] = None,
+        z_dim: int = 64,
+        s_dim: int = len(STYLE_AXES),
+    ):
+        self.config = config or ZSDecoderConfig()
+        self.z_dim = int(z_dim)
+        self.s_dim = int(s_dim)
+        self.x_mean: Optional[np.ndarray] = None
+        self.x_scale: Optional[np.ndarray] = None
+        self.y_bias: Optional[np.ndarray] = None
+        self.weights: Optional[np.ndarray] = None
+
+    @property
+    def fitted(self) -> bool:
+        return (
+            self.x_mean is not None
+            and self.x_scale is not None
+            and self.y_bias is not None
+            and self.weights is not None
+        )
+
+    def fit(self, z: np.ndarray, s: np.ndarray) -> "LinearZtoSDecoder":
+        z_arr = np.asarray(z, dtype=np.float32)
+        s_arr = np.asarray(s, dtype=np.float32)
+        if z_arr.ndim != 2:
+            raise ValueError(f"z must be 2D [n_samples, z_dim], got {z_arr.shape}")
+        if s_arr.ndim != 2:
+            raise ValueError(f"s must be 2D [n_samples, s_dim], got {s_arr.shape}")
+        if z_arr.shape[0] != s_arr.shape[0]:
+            raise ValueError("z and s must have the same number of rows")
+        if z_arr.shape[1] != self.z_dim:
+            raise ValueError(f"expected z_dim={self.z_dim}, got {z_arr.shape[1]}")
+        if s_arr.shape[1] != self.s_dim:
+            raise ValueError(f"expected s_dim={self.s_dim}, got {s_arr.shape[1]}")
+        if z_arr.shape[0] < 2:
+            raise ValueError("at least 2 rows are required to fit z->s decoder")
+
+        self.x_mean = z_arr.mean(axis=0, dtype=np.float64).astype(np.float32)
+        x_scale = z_arr.std(axis=0, dtype=np.float64).astype(np.float32)
+        x_scale = np.where(x_scale < 1e-6, 1.0, x_scale).astype(np.float32)
+        self.x_scale = x_scale
+        self.y_bias = s_arr.mean(axis=0, dtype=np.float64).astype(np.float32)
+
+        z_norm = (z_arr - self.x_mean) / self.x_scale
+        centered_targets = s_arr - self.y_bias
+
+        gram = z_norm.T @ z_norm
+        ridge = float(self.config.ridge_alpha) * np.eye(self.z_dim, dtype=np.float32)
+        rhs = z_norm.T @ centered_targets
+        self.weights = np.linalg.solve(gram + ridge, rhs).astype(np.float32)
+        return self
+
+    def predict(self, z: np.ndarray) -> np.ndarray:
+        if not self.fitted or self.x_mean is None or self.x_scale is None or self.y_bias is None or self.weights is None:
+            raise RuntimeError("z->s decoder is not fitted")
+        z_arr = np.asarray(z, dtype=np.float32)
+        squeeze_batch = z_arr.ndim == 1
+        if squeeze_batch:
+            z_arr = z_arr.reshape(1, -1)
+        if z_arr.ndim != 2 or z_arr.shape[1] != self.z_dim:
+            raise ValueError(f"z must have shape [n_samples, {self.z_dim}]")
+        z_norm = (z_arr - self.x_mean) / self.x_scale
+        pred = z_norm @ self.weights + self.y_bias
+        pred = np.clip(pred, 0.0, 1.0).astype(np.float32)
+        return pred[0] if squeeze_batch else pred
+
+    def mean_absolute_error(self, z: np.ndarray, s: np.ndarray) -> float:
+        pred = self.predict(z)
+        target = np.asarray(s, dtype=np.float32)
+        if pred.shape != target.shape:
+            raise ValueError(f"prediction and target shapes must match, got {pred.shape} vs {target.shape}")
+        return float(np.mean(np.abs(pred - target)))
+
+    def save(self, path: Optional[Path] = None) -> Path:
+        if not self.fitted or self.x_mean is None or self.x_scale is None or self.y_bias is None or self.weights is None:
+            raise RuntimeError("z->s decoder is not fitted")
+        target_path = Path(path) if path is not None else self.config.model_path
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        with target_path.open("wb") as handle:
+            np.savez(
+                handle,
+                z_dim=np.asarray(self.z_dim, dtype=np.int32),
+                s_dim=np.asarray(self.s_dim, dtype=np.int32),
+                ridge_alpha=np.asarray(self.config.ridge_alpha, dtype=np.float32),
+                x_mean=self.x_mean,
+                x_scale=self.x_scale,
+                y_bias=self.y_bias,
+                weights=self.weights,
+            )
+        return target_path
+
+    @classmethod
+    def load(cls, path: Path) -> "LinearZtoSDecoder":
+        model_path = Path(path)
+        if not model_path.exists():
+            raise FileNotFoundError(f"z->s decoder model not found: {model_path}")
+        with np.load(model_path, allow_pickle=False) as payload:
+            decoder = cls(
+                config=ZSDecoderConfig(
+                    model_path=model_path,
+                    ridge_alpha=float(payload["ridge_alpha"]),
+                ),
+                z_dim=int(payload["z_dim"]),
+                s_dim=int(payload["s_dim"]),
+            )
+            decoder.x_mean = np.asarray(payload["x_mean"], dtype=np.float32)
+            decoder.x_scale = np.asarray(payload["x_scale"], dtype=np.float32)
+            decoder.y_bias = np.asarray(payload["y_bias"], dtype=np.float32)
+            decoder.weights = np.asarray(payload["weights"], dtype=np.float32)
+        return decoder
+
+
 class SafeTruncatedSVD:
     def __init__(self, n_components: int = 300, random_state: int = 42):
         self.n_components = int(n_components)

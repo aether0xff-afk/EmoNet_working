@@ -4,13 +4,14 @@ import argparse
 import json
 from pathlib import Path
 import time
+from typing import Callable
 import urllib.error
 import urllib.request
 
 import numpy as np
 import pandas as pd
 
-from .core import EmoNet, EmoNetConfig, StimEncoderConfig
+from .core import EmoNet, EmoNetConfig, LinearZtoSDecoder, StimEncoderConfig, ZSDecoderConfig
 
 
 def build_stim_config(args: argparse.Namespace) -> StimEncoderConfig:
@@ -48,6 +49,9 @@ def command_infer(args: argparse.Namespace) -> None:
         "dominant_branch_len": len(outputs["dominant_branch"]),
         "z": np.asarray(outputs["z"], dtype=float).tolist(),
     }
+    if args.zs_model_path:
+        decoder = LinearZtoSDecoder.load(Path(args.zs_model_path))
+        result["s_pred"] = np.asarray(decoder.predict(np.asarray(outputs["z"], dtype=np.float32)), dtype=float).tolist()
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
 
@@ -111,6 +115,28 @@ def resolve_text_column(df: pd.DataFrame, requested: str | None) -> str:
 
     available = ", ".join(map(str, df.columns.tolist()))
     raise ValueError(f"text column not found. available columns: {available}")
+
+
+def resolve_indexed_columns(df: pd.DataFrame, prefix: str, expected_dim: int | None = None) -> list[str]:
+    columns = {str(column) for column in df.columns}
+    if expected_dim is not None:
+        expected = [f"{prefix}{idx}" for idx in range(expected_dim)]
+        missing = [column for column in expected if column not in columns]
+        if missing:
+            raise ValueError(f"missing required columns: {', '.join(missing)}")
+        return expected
+
+    indexed: list[tuple[int, str]] = []
+    for column in columns:
+        if not column.startswith(prefix):
+            continue
+        suffix = column[len(prefix) :]
+        if suffix.isdigit():
+            indexed.append((int(suffix), column))
+    if not indexed:
+        raise ValueError(f"no indexed columns found with prefix '{prefix}'")
+    indexed.sort(key=lambda item: item[0])
+    return [column for _, column in indexed]
 
 
 def export_z_from_dataframe(model: EmoNet, df: pd.DataFrame, text_column: str, output_csv: Path) -> None:
@@ -273,66 +299,6 @@ def build_balanced_subset(
     subset.insert(0, "sample_id", [f"s_{i:06d}" for i in range(len(subset))])
     return subset
 
-
-def make_generation_prompt(record: dict[str, object]) -> str:
-    text = str(record.get("text", "")).strip()
-    z_values = [record[key] for key in sorted(record.keys()) if str(key).startswith("z_")]
-    z_lines = "\n".join(f"{key}={float(record[key]):.6f}" for key in sorted(record.keys()) if str(key).startswith("z_"))
-    return "\n".join(
-        [
-            "[TASK]",
-            "주어진 대화 입력에 대해 어울리는 응답 스타일 벡터 s 와 예시 응답 1개를 생성하라.",
-            "",
-            "[INPUT_TEXT]",
-            text,
-            "",
-            "[LATENT_Z]",
-            z_lines if z_values else "(none)",
-            "",
-            "[OUTPUT_FORMAT]",
-            "JSON only.",
-            '{',
-            '  "s": {"verbosity": 0.0, "sentence_length": 0.0, "...": 0.0},',
-            '  "response": "string"',
-            '}',
-            "",
-            "[CONSTRAINTS]",
-            "- s 는 32축 모두 0~1 범위 실수로 채운다.",
-            "- response 는 입력 내용과 정합적이어야 한다.",
-            "- 과장하지 말고 자연스러운 한국어로 쓴다.",
-            "- z 는 직접 설명하지 말고 내부 상태 힌트로만 사용한다.",
-        ]
-    )
-
-
-def make_rating_prompt(record: dict[str, object], response: str) -> str:
-    text = str(record.get("text", "")).strip()
-    return "\n".join(
-        [
-            "[TASK]",
-            "아래 입력과 응답을 보고 응답의 스타일 벡터 s_hat 를 32축 0~1 값으로 평가하라.",
-            "",
-            "[INPUT_TEXT]",
-            text,
-            "",
-            "[RESPONSE]",
-            response.strip(),
-            "",
-            "[OUTPUT_FORMAT]",
-            "JSON only.",
-            '{',
-            '  "s_hat": {"verbosity": 0.0, "sentence_length": 0.0, "...": 0.0},',
-            '  "notes": "short string"',
-            '}',
-            "",
-            "[CONSTRAINTS]",
-            "- 내용 적합성보다 응답의 말투와 표현 특성만 평가한다.",
-            "- 각 축은 반드시 0~1 범위로 준다.",
-            "- notes 는 한 문장으로 짧게 쓴다.",
-        ]
-    )
-
-
 def command_build_llm_subset(args: argparse.Namespace) -> None:
     input_csv = Path(args.input_csv)
     output_csv = Path(args.output_csv)
@@ -379,6 +345,123 @@ def command_build_llm_subset(args: argparse.Namespace) -> None:
     )
 
 
+def train_zs_decoder_from_dataframe(
+    df: pd.DataFrame,
+    model_path: Path,
+    z_dim: int,
+    s_dim: int,
+    ridge_alpha: float,
+    seed: int,
+    val_ratio: float,
+    use_all_rows: bool,
+) -> dict[str, object]:
+    original_rows = len(df)
+    keep_filtered_rows = 0
+    if not use_all_rows and "keep_sample" in df.columns:
+        keep_mask = df["keep_sample"].fillna(False).astype(bool)
+        keep_filtered_rows = int((~keep_mask).sum())
+        df = df.loc[keep_mask].copy()
+
+    z_columns = resolve_indexed_columns(df, "z_", expected_dim=z_dim)
+    s_columns = resolve_indexed_columns(df, "s_", expected_dim=s_dim)
+
+    before_dropna = len(df)
+    df = df.dropna(subset=z_columns + s_columns).reset_index(drop=True)
+    dropped_missing_rows = before_dropna - len(df)
+    if len(df) < 2:
+        raise ValueError("at least 2 clean labeled rows are required to fit z->s regressor")
+
+    z_matrix = df[z_columns].to_numpy(dtype=np.float32)
+    s_matrix = df[s_columns].to_numpy(dtype=np.float32)
+    rng = np.random.default_rng(seed)
+    indices = rng.permutation(len(df))
+
+    val_rows = 0
+    train_rows = len(df)
+    train_mae = None
+    val_mae = None
+    if 0.0 < val_ratio < 1.0 and len(df) >= 5:
+        tentative_val = int(round(len(df) * val_ratio))
+        val_rows = min(max(1, tentative_val), len(df) - 2)
+        train_rows = len(df) - val_rows
+        val_idx = indices[:val_rows]
+        train_idx = indices[val_rows:]
+        eval_decoder = LinearZtoSDecoder(
+            config=ZSDecoderConfig(model_path=model_path, ridge_alpha=ridge_alpha),
+            z_dim=z_dim,
+            s_dim=s_dim,
+        )
+        eval_decoder.fit(z_matrix[train_idx], s_matrix[train_idx])
+        train_mae = eval_decoder.mean_absolute_error(z_matrix[train_idx], s_matrix[train_idx])
+        val_mae = eval_decoder.mean_absolute_error(z_matrix[val_idx], s_matrix[val_idx])
+
+    decoder = LinearZtoSDecoder(
+        config=ZSDecoderConfig(model_path=model_path, ridge_alpha=ridge_alpha),
+        z_dim=z_dim,
+        s_dim=s_dim,
+    )
+    decoder.fit(z_matrix, s_matrix)
+    saved_path = decoder.save(model_path)
+    return {
+        "input_rows": int(original_rows),
+        "rows_after_keep_filter": int(original_rows - keep_filtered_rows),
+        "rows_used": int(len(df)),
+        "keep_filtered_rows": int(keep_filtered_rows),
+        "dropped_missing_rows": int(dropped_missing_rows),
+        "train_rows": int(train_rows),
+        "val_rows": int(val_rows),
+        "train_mae": None if train_mae is None else round(float(train_mae), 6),
+        "val_mae": None if val_mae is None else round(float(val_mae), 6),
+        "z_dim": int(z_dim),
+        "s_dim": int(s_dim),
+        "model_path": str(saved_path),
+    }
+
+
+def command_fit_zs_regressor(args: argparse.Namespace) -> None:
+    input_csv = Path(args.input_csv)
+    model_path = Path(args.model_path)
+    df = pd.read_csv(input_csv)
+    summary = train_zs_decoder_from_dataframe(
+        df=df,
+        model_path=model_path,
+        z_dim=args.z_dim,
+        s_dim=args.s_dim,
+        ridge_alpha=args.ridge_alpha,
+        seed=args.seed,
+        val_ratio=args.val_ratio,
+        use_all_rows=args.use_all_rows,
+    )
+    print(json.dumps(summary, ensure_ascii=False, indent=2))
+
+
+def command_predict_s(args: argparse.Namespace) -> None:
+    input_csv = Path(args.input_csv)
+    output_csv = Path(args.output_csv)
+    df = pd.read_csv(input_csv)
+    z_columns = resolve_indexed_columns(df, "z_", expected_dim=args.z_dim)
+    decoder = LinearZtoSDecoder.load(Path(args.model_path))
+    predictions = decoder.predict(df[z_columns].to_numpy(dtype=np.float32))
+
+    for axis_idx in range(predictions.shape[1]):
+        df[f"{args.output_prefix}{axis_idx}"] = predictions[:, axis_idx]
+
+    output_csv.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(output_csv, index=False, encoding="utf-8-sig")
+    print(
+        json.dumps(
+            {
+                "rows": int(len(df)),
+                "output_csv": str(output_csv),
+                "model_path": str(args.model_path),
+                "output_prefix": args.output_prefix,
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
+
+
 STYLE_AXIS_NAMES = [
     "verbosity",
     "sentence_length",
@@ -415,6 +498,20 @@ STYLE_AXIS_NAMES = [
 ]
 
 
+def build_style_blocks(block_size: int) -> list[list[str]]:
+    if block_size <= 0:
+        raise ValueError("block_size must be positive")
+    return [STYLE_AXIS_NAMES[idx : idx + block_size] for idx in range(0, len(STYLE_AXIS_NAMES), block_size)]
+
+
+def format_style_axes(block_axes: list[str]) -> str:
+    lines = []
+    for axis in block_axes:
+        axis_idx = STYLE_AXIS_NAMES.index(axis) + 1
+        lines.append(f"{axis_idx}. {axis}")
+    return "\n".join(lines)
+
+
 def extract_json_block(text: str) -> dict:
     stripped = text.strip()
     try:
@@ -438,14 +535,20 @@ def request_json_response(
     max_tokens: int,
     timeout_sec: int,
     max_retries: int,
-) -> tuple[dict, str]:
+    validator: Callable[[dict], object] | None = None,
+    retry_instruction: str | None = None,
+) -> tuple[object, str]:
     last_raw = ""
+    last_error = ""
     for attempt in range(max_retries + 1):
         retry_suffix = ""
         if attempt > 0:
             retry_suffix = (
                 "\n\n[RETRY_INSTRUCTION]\n"
-                "직전 응답은 JSON 형식이 아니었다. 설명 없이 JSON object 하나만 다시 출력하라."
+                + (
+                    retry_instruction
+                    or "직전 응답은 JSON 형식이 아니었다. 설명 없이 JSON object 하나만 다시 출력하라."
+                )
             )
         raw = call_openai_compatible_chat(
             base_url=base_url,
@@ -457,20 +560,51 @@ def request_json_response(
         )
         last_raw = raw
         try:
-            return extract_json_block(raw), raw
-        except Exception:
+            payload = extract_json_block(raw)
+            if not isinstance(payload, dict):
+                raise ValueError("model output must be a JSON object")
+            if validator is not None:
+                return validator(payload), raw
+            return payload, raw
+        except Exception as exc:
+            last_error = str(exc)
             continue
-    raise ValueError(f"no JSON object found in model output after retries. raw={last_raw[:500]}")
+    raise ValueError(f"no JSON object found in model output after retries: {last_error}. raw={last_raw[:500]}")
 
 
-def normalize_style_dict(style_dict: dict, key_name: str) -> dict[str, float]:
+def normalize_style_dict(style_dict: dict, key_name: str, expected_axes: list[str] | None = None) -> dict[str, float]:
     if key_name not in style_dict or not isinstance(style_dict[key_name], dict):
         raise ValueError(f"missing '{key_name}' object in model output")
+    axes = STYLE_AXIS_NAMES if expected_axes is None else expected_axes
+    style_payload = style_dict[key_name]
+    missing_axes = [axis for axis in axes if axis not in style_payload]
+    extra_axes = sorted(str(axis) for axis in style_payload.keys() if axis not in axes)
+    if missing_axes or extra_axes:
+        problems = []
+        if missing_axes:
+            problems.append(f"missing axes: {', '.join(missing_axes)}")
+        if extra_axes:
+            problems.append(f"unexpected axes: {', '.join(extra_axes)}")
+        raise ValueError(f"invalid '{key_name}' keys ({'; '.join(problems)})")
     result: dict[str, float] = {}
-    for axis in STYLE_AXIS_NAMES:
-        value = float(style_dict[key_name].get(axis, 0.0))
+    for axis in axes:
+        value = style_payload[axis]
+        try:
+            value = float(value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"axis '{axis}' must be numeric") from exc
         result[axis] = float(np.clip(value, 0.0, 1.0))
     return result
+
+
+def normalize_response_text(payload: dict) -> str:
+    response = payload.get("response", "")
+    if not isinstance(response, str):
+        raise ValueError("'response' must be a string")
+    response = response.strip()
+    if not response:
+        raise ValueError("empty 'response' returned from model output")
+    return response
 
 
 def call_openai_compatible_chat(
@@ -515,6 +649,113 @@ def compute_consistency(style_a: dict[str, float], style_b: dict[str, float]) ->
     return float(np.mean(values))
 
 
+def make_generation_prompt(record: dict[str, object]) -> str:
+    text = str(record.get("text", "")).strip()
+    z_values = [record[key] for key in sorted(record.keys()) if str(key).startswith("z_")]
+    z_lines = "\n".join(f"{key}={float(record[key]):.6f}" for key in sorted(record.keys()) if str(key).startswith("z_"))
+    return "\n".join(
+        [
+            "[TASK]",
+            "주어진 대화 입력에 대해 어울리는 응답 1개를 생성하라.",
+            "",
+            "[INPUT_TEXT]",
+            text,
+            "",
+            "[LATENT_Z]",
+            z_lines if z_values else "(none)",
+            "",
+            "[OUTPUT_FORMAT]",
+            "JSON only.",
+            '{',
+            '  "response": "string"',
+            '}',
+            "",
+            "[CONSTRAINTS]",
+            "- response 는 입력 내용과 정합적이어야 한다.",
+            "- 과장하지 말고 자연스러운 한국어로 쓴다.",
+            "- z 는 직접 설명하지 말고 내부 상태 힌트로만 사용한다.",
+            "- 설명 문장 없이 JSON object 하나만 출력한다.",
+        ]
+    )
+
+
+def make_style_block_prompt(
+    record: dict[str, object],
+    response: str,
+    block_axes: list[str],
+    key_name: str,
+) -> str:
+    text = str(record.get("text", "")).strip()
+    example_lines = "\n".join(f'    "{axis}": 0.0' + ("," if idx < len(block_axes) - 1 else "") for idx, axis in enumerate(block_axes))
+    return "\n".join(
+        [
+            "[TASK]",
+            f"아래 입력과 응답을 보고 응답 스타일을 {len(block_axes)}개 축으로 평가하라.",
+            "",
+            "[INPUT_TEXT]",
+            text,
+            "",
+            "[RESPONSE]",
+            response.strip(),
+            "",
+            "[STYLE_AXES]",
+            format_style_axes(block_axes),
+            "",
+            "[OUTPUT_FORMAT]",
+            "JSON only.",
+            "{",
+            f'  "{key_name}": {{',
+            example_lines,
+            "  }",
+            "}",
+            "",
+            "[CONSTRAINTS]",
+            "- 반드시 위 STYLE_AXES에 적힌 축 이름만 그대로 사용한다.",
+            "- 축 이름을 바꾸거나 dim0 같은 별칭으로 바꾸지 않는다.",
+            "- 각 축은 반드시 0~1 범위 실수로 준다.",
+            "- 설명 없이 JSON object 하나만 출력한다.",
+        ]
+    )
+
+
+def run_style_block_pass(
+    record: dict[str, object],
+    response_text: str,
+    block_axes: list[str],
+    key_name: str,
+    base_url: str,
+    model_name: str,
+    temperature: float,
+    max_tokens: int,
+    timeout_sec: int,
+    max_retries: int,
+) -> tuple[dict[str, float], str]:
+    prompt = make_style_block_prompt(
+        record=record,
+        response=response_text,
+        block_axes=block_axes,
+        key_name=key_name,
+    )
+    style_values, raw = request_json_response(
+        base_url=base_url,
+        model_name=model_name,
+        prompt=prompt,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        timeout_sec=timeout_sec,
+        max_retries=max_retries,
+        validator=lambda payload: normalize_style_dict(payload, key_name, expected_axes=block_axes),
+        retry_instruction=(
+            "직전 응답의 JSON key 또는 값 형식이 잘못되었다. "
+            f"반드시 '{key_name}' object 안에 다음 축만 그대로 넣어라: {', '.join(block_axes)}. "
+            "설명 없이 JSON object 하나만 다시 출력하라."
+        ),
+    )
+    if not isinstance(style_values, dict):
+        raise ValueError("validated style payload must be a dict")
+    return style_values, raw
+
+
 def label_subset_with_local_model(
     df: pd.DataFrame,
     output_csv: Path,
@@ -528,19 +769,30 @@ def label_subset_with_local_model(
     limit: int | None,
     max_retries: int,
     keep_failures: bool,
+    block_size: int,
+    keep_threshold: float,
 ) -> None:
     rows = []
     total = len(df) if limit is None else min(len(df), limit)
     start_time = time.perf_counter()
+    style_blocks = build_style_blocks(block_size)
 
     for idx, record in enumerate(df.to_dict(orient="records"), start=1):
         if limit is not None and idx > limit:
             break
 
         row = dict(record)
+        row["status"] = "error"
+        row["generation_status"] = "pending"
+        row["error_message"] = ""
+        for block_idx in range(1, len(style_blocks) + 1):
+            row[f"s_block{block_idx}_status"] = "pending"
+            row[f"s_hat_block{block_idx}_status"] = "pending"
+            row[f"s_block{block_idx}_raw_output"] = ""
+            row[f"s_hat_block{block_idx}_raw_output"] = ""
         try:
             generation_prompt = make_generation_prompt(record)
-            generation_obj, generation_raw = request_json_response(
+            response_text, generation_raw = request_json_response(
                 base_url=base_url,
                 model_name=model_name,
                 prompt=generation_prompt,
@@ -548,39 +800,68 @@ def label_subset_with_local_model(
                 max_tokens=max_tokens,
                 timeout_sec=timeout_sec,
                 max_retries=max_retries,
+                validator=normalize_response_text,
+                retry_instruction=(
+                    "직전 응답의 JSON 형식이 잘못되었거나 response 문자열이 비어 있었다. "
+                    "반드시 {'response': '...'} 형식의 JSON object 하나만 다시 출력하라."
+                ),
             )
-            style = normalize_style_dict(generation_obj, "s")
-            response_text = str(generation_obj.get("response", "")).strip()
+            if not isinstance(response_text, str):
+                raise ValueError("validated response must be a string")
+            row["generation_status"] = "ok"
+            row["llm_response"] = response_text
+            row["generation_raw_output"] = generation_raw
 
-            rating_prompt = make_rating_prompt(record, response_text)
-            rating_obj, rating_raw = request_json_response(
-                base_url=base_url,
-                model_name=model_name,
-                prompt=rating_prompt,
-                temperature=rating_temperature,
-                max_tokens=max_tokens,
-                timeout_sec=timeout_sec,
-                max_retries=max_retries,
-            )
-            style_hat = normalize_style_dict(rating_obj, "s_hat")
+            style: dict[str, float] = {}
+            style_hat: dict[str, float] = {}
+
+            for block_idx, block_axes in enumerate(style_blocks, start=1):
+                block_style, block_raw = run_style_block_pass(
+                    record=record,
+                    response_text=response_text,
+                    block_axes=block_axes,
+                    key_name="s",
+                    base_url=base_url,
+                    model_name=model_name,
+                    temperature=rating_temperature,
+                    max_tokens=max_tokens,
+                    timeout_sec=timeout_sec,
+                    max_retries=max_retries,
+                )
+                row[f"s_block{block_idx}_status"] = "ok"
+                row[f"s_block{block_idx}_raw_output"] = block_raw
+                style.update(block_style)
+
+            for block_idx, block_axes in enumerate(style_blocks, start=1):
+                block_style_hat, block_raw = run_style_block_pass(
+                    record=record,
+                    response_text=response_text,
+                    block_axes=block_axes,
+                    key_name="s_hat",
+                    base_url=base_url,
+                    model_name=model_name,
+                    temperature=rating_temperature,
+                    max_tokens=max_tokens,
+                    timeout_sec=timeout_sec,
+                    max_retries=max_retries,
+                )
+                row[f"s_hat_block{block_idx}_status"] = "ok"
+                row[f"s_hat_block{block_idx}_raw_output"] = block_raw
+                style_hat.update(block_style_hat)
+
             consistency_l1 = compute_consistency(style, style_hat)
 
             row["status"] = "ok"
-            row["llm_response"] = response_text
-            row["generation_raw_json"] = json.dumps(generation_obj, ensure_ascii=False)
-            row["rating_raw_json"] = json.dumps(rating_obj, ensure_ascii=False)
             row["consistency_l1"] = consistency_l1
-            row["keep_sample"] = bool(consistency_l1 <= 0.12)
+            row["keep_sample"] = bool(consistency_l1 <= keep_threshold)
             for axis_idx, axis in enumerate(STYLE_AXIS_NAMES):
                 row[f"s_{axis_idx}"] = style[axis]
                 row[f"s_hat_{axis_idx}"] = style_hat[axis]
             rows.append(row)
         except Exception as exc:
             if keep_failures:
-                row["status"] = "error"
-                row["llm_response"] = ""
-                row["generation_raw_json"] = ""
-                row["rating_raw_json"] = ""
+                row["llm_response"] = row.get("llm_response", "")
+                row["generation_raw_output"] = row.get("generation_raw_output", "")
                 row["consistency_l1"] = np.nan
                 row["keep_sample"] = False
                 row["error_message"] = str(exc)
@@ -629,6 +910,8 @@ def command_label_local(args: argparse.Namespace) -> None:
         limit=args.limit,
         max_retries=args.max_retries,
         keep_failures=args.keep_failures,
+        block_size=args.block_size,
+        keep_threshold=args.keep_threshold,
     )
 
 
@@ -680,6 +963,7 @@ def build_parser() -> argparse.ArgumentParser:
     infer_parser = subparsers.add_parser("infer")
     add_common_options(infer_parser)
     infer_parser.add_argument("--text", required=True)
+    infer_parser.add_argument("--zs-model-path", default=None)
     infer_parser.set_defaults(func=command_infer)
 
     export_parser = subparsers.add_parser("export-z")
@@ -703,6 +987,25 @@ def build_parser() -> argparse.ArgumentParser:
     subset_parser.add_argument("--seed", type=int, default=42)
     subset_parser.set_defaults(func=command_build_llm_subset)
 
+    fit_zs_parser = subparsers.add_parser("fit-zs-regressor")
+    fit_zs_parser.add_argument("--input-csv", required=True)
+    fit_zs_parser.add_argument("--model-path", required=True)
+    fit_zs_parser.add_argument("--z-dim", type=int, default=64)
+    fit_zs_parser.add_argument("--s-dim", type=int, default=32)
+    fit_zs_parser.add_argument("--ridge-alpha", type=float, default=1.0)
+    fit_zs_parser.add_argument("--val-ratio", type=float, default=0.1)
+    fit_zs_parser.add_argument("--seed", type=int, default=42)
+    fit_zs_parser.add_argument("--use-all-rows", action="store_true")
+    fit_zs_parser.set_defaults(func=command_fit_zs_regressor)
+
+    predict_s_parser = subparsers.add_parser("predict-s")
+    predict_s_parser.add_argument("--input-csv", required=True)
+    predict_s_parser.add_argument("--output-csv", required=True)
+    predict_s_parser.add_argument("--model-path", required=True)
+    predict_s_parser.add_argument("--z-dim", type=int, default=64)
+    predict_s_parser.add_argument("--output-prefix", default="s_pred_")
+    predict_s_parser.set_defaults(func=command_predict_s)
+
     local_parser = subparsers.add_parser("label-local")
     local_parser.add_argument("--input-csv", required=True)
     local_parser.add_argument("--output-csv", required=True)
@@ -715,6 +1018,8 @@ def build_parser() -> argparse.ArgumentParser:
     local_parser.add_argument("--progress-every", type=int, default=10)
     local_parser.add_argument("--limit", type=int, default=None)
     local_parser.add_argument("--max-retries", type=int, default=2)
+    local_parser.add_argument("--block-size", type=int, default=8)
+    local_parser.add_argument("--keep-threshold", type=float, default=0.12)
     local_parser.add_argument("--keep-failures", action="store_true")
     local_parser.set_defaults(func=command_label_local)
 

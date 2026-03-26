@@ -430,6 +430,39 @@ def extract_json_block(text: str) -> dict:
     return json.loads(candidate)
 
 
+def request_json_response(
+    base_url: str,
+    model_name: str,
+    prompt: str,
+    temperature: float,
+    max_tokens: int,
+    timeout_sec: int,
+    max_retries: int,
+) -> tuple[dict, str]:
+    last_raw = ""
+    for attempt in range(max_retries + 1):
+        retry_suffix = ""
+        if attempt > 0:
+            retry_suffix = (
+                "\n\n[RETRY_INSTRUCTION]\n"
+                "직전 응답은 JSON 형식이 아니었다. 설명 없이 JSON object 하나만 다시 출력하라."
+            )
+        raw = call_openai_compatible_chat(
+            base_url=base_url,
+            model_name=model_name,
+            prompt=prompt + retry_suffix,
+            temperature=temperature if attempt == 0 else 0.0,
+            max_tokens=max_tokens,
+            timeout_sec=timeout_sec,
+        )
+        last_raw = raw
+        try:
+            return extract_json_block(raw), raw
+        except Exception:
+            continue
+    raise ValueError(f"no JSON object found in model output after retries. raw={last_raw[:500]}")
+
+
 def normalize_style_dict(style_dict: dict, key_name: str) -> dict[str, float]:
     if key_name not in style_dict or not isinstance(style_dict[key_name], dict):
         raise ValueError(f"missing '{key_name}' object in model output")
@@ -493,6 +526,8 @@ def label_subset_with_local_model(
     timeout_sec: int,
     progress_every: int,
     limit: int | None,
+    max_retries: int,
+    keep_failures: bool,
 ) -> None:
     rows = []
     total = len(df) if limit is None else min(len(df), limit)
@@ -502,42 +537,56 @@ def label_subset_with_local_model(
         if limit is not None and idx > limit:
             break
 
-        generation_prompt = make_generation_prompt(record)
-        generation_raw = call_openai_compatible_chat(
-            base_url=base_url,
-            model_name=model_name,
-            prompt=generation_prompt,
-            temperature=generation_temperature,
-            max_tokens=max_tokens,
-            timeout_sec=timeout_sec,
-        )
-        generation_obj = extract_json_block(generation_raw)
-        style = normalize_style_dict(generation_obj, "s")
-        response_text = str(generation_obj.get("response", "")).strip()
-
-        rating_prompt = make_rating_prompt(record, response_text)
-        rating_raw = call_openai_compatible_chat(
-            base_url=base_url,
-            model_name=model_name,
-            prompt=rating_prompt,
-            temperature=rating_temperature,
-            max_tokens=max_tokens,
-            timeout_sec=timeout_sec,
-        )
-        rating_obj = extract_json_block(rating_raw)
-        style_hat = normalize_style_dict(rating_obj, "s_hat")
-        consistency_l1 = compute_consistency(style, style_hat)
-
         row = dict(record)
-        row["llm_response"] = response_text
-        row["generation_raw_json"] = json.dumps(generation_obj, ensure_ascii=False)
-        row["rating_raw_json"] = json.dumps(rating_obj, ensure_ascii=False)
-        row["consistency_l1"] = consistency_l1
-        row["keep_sample"] = bool(consistency_l1 <= 0.12)
-        for axis_idx, axis in enumerate(STYLE_AXIS_NAMES):
-            row[f"s_{axis_idx}"] = style[axis]
-            row[f"s_hat_{axis_idx}"] = style_hat[axis]
-        rows.append(row)
+        try:
+            generation_prompt = make_generation_prompt(record)
+            generation_obj, generation_raw = request_json_response(
+                base_url=base_url,
+                model_name=model_name,
+                prompt=generation_prompt,
+                temperature=generation_temperature,
+                max_tokens=max_tokens,
+                timeout_sec=timeout_sec,
+                max_retries=max_retries,
+            )
+            style = normalize_style_dict(generation_obj, "s")
+            response_text = str(generation_obj.get("response", "")).strip()
+
+            rating_prompt = make_rating_prompt(record, response_text)
+            rating_obj, rating_raw = request_json_response(
+                base_url=base_url,
+                model_name=model_name,
+                prompt=rating_prompt,
+                temperature=rating_temperature,
+                max_tokens=max_tokens,
+                timeout_sec=timeout_sec,
+                max_retries=max_retries,
+            )
+            style_hat = normalize_style_dict(rating_obj, "s_hat")
+            consistency_l1 = compute_consistency(style, style_hat)
+
+            row["status"] = "ok"
+            row["llm_response"] = response_text
+            row["generation_raw_json"] = json.dumps(generation_obj, ensure_ascii=False)
+            row["rating_raw_json"] = json.dumps(rating_obj, ensure_ascii=False)
+            row["consistency_l1"] = consistency_l1
+            row["keep_sample"] = bool(consistency_l1 <= 0.12)
+            for axis_idx, axis in enumerate(STYLE_AXIS_NAMES):
+                row[f"s_{axis_idx}"] = style[axis]
+                row[f"s_hat_{axis_idx}"] = style_hat[axis]
+            rows.append(row)
+        except Exception as exc:
+            if keep_failures:
+                row["status"] = "error"
+                row["llm_response"] = ""
+                row["generation_raw_json"] = ""
+                row["rating_raw_json"] = ""
+                row["consistency_l1"] = np.nan
+                row["keep_sample"] = False
+                row["error_message"] = str(exc)
+                rows.append(row)
+            else:
+                raise
 
         if progress_every > 0 and idx % progress_every == 0:
             elapsed = max(1e-8, time.perf_counter() - start_time)
@@ -578,33 +627,8 @@ def command_label_local(args: argparse.Namespace) -> None:
         timeout_sec=args.timeout_sec,
         progress_every=args.progress_every,
         limit=args.limit,
-    )
-    output_csv.parent.mkdir(parents=True, exist_ok=True)
-    subset.to_csv(output_csv, index=False, encoding="utf-8-sig")
-
-    if prompt_jsonl is not None:
-        prompt_jsonl.parent.mkdir(parents=True, exist_ok=True)
-        with prompt_jsonl.open("w", encoding="utf-8") as handle:
-            for row in subset.to_dict(orient="records"):
-                payload = {
-                    "sample_id": row["sample_id"],
-                    "talk_id": row.get("talk_id", ""),
-                    "generation_prompt": make_generation_prompt(row),
-                }
-                handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
-
-    label_counts = subset[args.label_column].value_counts(dropna=False).to_dict() if args.label_column in subset.columns else {}
-    print(
-        json.dumps(
-            {
-                "rows": int(len(subset)),
-                "output_csv": str(output_csv),
-                "prompt_jsonl": str(prompt_jsonl) if prompt_jsonl else None,
-                "label_counts": label_counts,
-            },
-            ensure_ascii=False,
-            indent=2,
-        )
+        max_retries=args.max_retries,
+        keep_failures=args.keep_failures,
     )
 
 
@@ -690,6 +714,8 @@ def build_parser() -> argparse.ArgumentParser:
     local_parser.add_argument("--timeout-sec", type=int, default=180)
     local_parser.add_argument("--progress-every", type=int, default=10)
     local_parser.add_argument("--limit", type=int, default=None)
+    local_parser.add_argument("--max-retries", type=int, default=2)
+    local_parser.add_argument("--keep-failures", action="store_true")
     local_parser.set_defaults(func=command_label_local)
 
     return parser

@@ -16,6 +16,7 @@ from emonet.cli import (
     extract_json_block,
     label_subset_with_local_model,
     normalize_style_dict,
+    request_json_response,
 )
 
 
@@ -243,6 +244,8 @@ class EmoNetSmokeTests(unittest.TestCase):
                     timeout_sec=30,
                     progress_every=1,
                     limit=None,
+                    max_retries=1,
+                    keep_failures=True,
                 )
 
             saved = pd.read_csv(output_csv)
@@ -251,6 +254,20 @@ class EmoNetSmokeTests(unittest.TestCase):
             self.assertIn("s_0", saved.columns)
             self.assertIn("s_hat_31", saved.columns)
             self.assertIn("consistency_l1", saved.columns)
+
+    def test_request_json_response_retries_once(self) -> None:
+        with patch("emonet.cli.call_openai_compatible_chat", side_effect=["not json", "{\"ok\": true}"]):
+            payload, raw = request_json_response(
+                base_url="http://127.0.0.1:8000/v1",
+                model_name="gpt-oss-20b",
+                prompt="test",
+                temperature=0.7,
+                max_tokens=100,
+                timeout_sec=30,
+                max_retries=1,
+            )
+        self.assertTrue(payload["ok"])
+        self.assertEqual(raw, "{\"ok\": true}")
 
 
 if __name__ == "__main__":

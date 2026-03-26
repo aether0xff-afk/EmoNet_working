@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+import time
 
 import numpy as np
 import pandas as pd
@@ -78,6 +79,25 @@ def load_training_json_as_dataframe(input_json: Path) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def load_training_json_records(input_json: Path):
+    with input_json.open("r", encoding="utf-8") as handle:
+        data = json.load(handle)
+
+    for item in data:
+        profile = item.get("profile", {})
+        emotion = profile.get("emotion", {})
+        talk = item.get("talk", {})
+        talk_id = talk.get("id", {})
+        content = talk.get("content", {})
+        yield {
+            "text": flatten_dialogue_text(content),
+            "label": emotion.get("type", ""),
+            "persona_id": profile.get("persona-id", ""),
+            "talk_id": talk_id.get("talk-id", ""),
+            "profile_id": talk_id.get("profile-id", ""),
+        }
+
+
 def resolve_text_column(df: pd.DataFrame, requested: str | None) -> str:
     if requested and requested in df.columns:
         return requested
@@ -113,6 +133,96 @@ def export_z_from_dataframe(model: EmoNet, df: pd.DataFrame, text_column: str, o
     print(json.dumps({"rows": int(len(df)), "output_csv": str(output_csv)}, ensure_ascii=False, indent=2))
 
 
+def build_output_row(source_row: dict, outputs: dict[str, object]) -> dict[str, object]:
+    row = dict(source_row)
+    z = np.asarray(outputs["z"], dtype=np.float32).reshape(-1)
+    stim = np.asarray(outputs["stim_vec"], dtype=np.float32).reshape(-1)
+    for dim, value in enumerate(z):
+        row[f"z_{dim}"] = float(value)
+    for dim, name in enumerate(("dopamine", "serotonin", "norepinephrine", "melatonin")):
+        row[name] = float(stim[dim])
+    row["dominant_branch_len"] = int(len(outputs["dominant_branch"]))
+    return row
+
+
+def flush_rows(rows: list[dict[str, object]], output_csv: Path, write_header: bool) -> bool:
+    if not rows:
+        return write_header
+    chunk_df = pd.DataFrame(rows)
+    output_csv.parent.mkdir(parents=True, exist_ok=True)
+    mode = "w" if write_header else "a"
+    chunk_df.to_csv(output_csv, mode=mode, index=False, encoding="utf-8-sig", header=write_header)
+    return False
+
+
+def load_existing_ids(output_csv: Path) -> set[str]:
+    if not output_csv.exists():
+        return set()
+    existing = pd.read_csv(output_csv, usecols=["talk_id"]) if output_csv.stat().st_size > 0 else pd.DataFrame()
+    if "talk_id" not in existing.columns:
+        return set()
+    return {str(value) for value in existing["talk_id"].dropna().astype(str)}
+
+
+def export_z_from_json_stream(
+    model: EmoNet,
+    input_json: Path,
+    output_csv: Path,
+    limit: int | None,
+    chunk_size: int,
+    progress_every: int,
+    resume: bool,
+) -> None:
+    rows_to_write: list[dict[str, object]] = []
+    processed = 0
+    written = 0
+    skipped = 0
+    write_header = not output_csv.exists() or not resume
+    existing_ids = load_existing_ids(output_csv) if resume else set()
+    start_time = time.perf_counter()
+
+    if resume and existing_ids:
+        print(f"resume mode: skipping {len(existing_ids)} existing talk_id rows")
+
+    for source_row in load_training_json_records(input_json):
+        talk_id = str(source_row.get("talk_id", ""))
+        if existing_ids and talk_id and talk_id in existing_ids:
+            skipped += 1
+            continue
+
+        outputs = model.forward(str(source_row["text"]))
+        rows_to_write.append(build_output_row(source_row, outputs))
+        processed += 1
+        written += 1
+
+        if progress_every > 0 and processed % progress_every == 0:
+            elapsed = max(1e-8, time.perf_counter() - start_time)
+            print(f"processed {processed} rows ({processed / elapsed:.2f} rows/s)")
+
+        if len(rows_to_write) >= chunk_size:
+            write_header = flush_rows(rows_to_write, output_csv, write_header)
+            rows_to_write.clear()
+
+        if limit is not None and processed >= limit:
+            break
+
+    write_header = flush_rows(rows_to_write, output_csv, write_header)
+    elapsed = time.perf_counter() - start_time
+    print(
+        json.dumps(
+            {
+                "processed": processed,
+                "written": written,
+                "skipped": skipped,
+                "output_csv": str(output_csv),
+                "elapsed_sec": round(elapsed, 3),
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
+
+
 def command_export_z(args: argparse.Namespace) -> None:
     model = build_model(args)
     output_csv = Path(args.output_csv)
@@ -123,17 +233,22 @@ def command_export_z(args: argparse.Namespace) -> None:
 
     if args.input_json is not None:
         input_json = Path(args.input_json)
-        df = load_training_json_as_dataframe(input_json)
-        text_column = "text"
+        export_z_from_json_stream(
+            model=model,
+            input_json=input_json,
+            output_csv=output_csv,
+            limit=args.limit,
+            chunk_size=args.chunk_size,
+            progress_every=args.progress_every,
+            resume=args.resume,
+        )
     else:
         input_csv = Path(args.input_csv)
         df = pd.read_csv(input_csv)
         text_column = resolve_text_column(df, text_column)
-
-    if args.limit is not None and args.limit > 0:
-        df = df.head(args.limit).copy()
-
-    export_z_from_dataframe(model, df, text_column, output_csv)
+        if args.limit is not None and args.limit > 0:
+            df = df.head(args.limit).copy()
+        export_z_from_dataframe(model, df, text_column, output_csv)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -165,6 +280,9 @@ def build_parser() -> argparse.ArgumentParser:
     export_parser.add_argument("--text-column", default="text")
     export_parser.add_argument("--output-csv", required=True)
     export_parser.add_argument("--limit", type=int, default=None)
+    export_parser.add_argument("--chunk-size", type=int, default=256)
+    export_parser.add_argument("--progress-every", type=int, default=100)
+    export_parser.add_argument("--resume", action="store_true")
     export_parser.set_defaults(func=command_export_z)
 
     return parser

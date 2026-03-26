@@ -1,11 +1,14 @@
 import csv
+import json
 import tempfile
 import unittest
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 
 from emonet import EmoNet, EmoNetConfig, StimEncoderConfig
+from emonet.cli import export_z_from_json_stream
 
 
 def write_csv(path: Path, rows: list[list[str]]) -> None:
@@ -83,6 +86,51 @@ class EmoNetSmokeTests(unittest.TestCase):
             self.assertEqual(tuple(outputs["stim_vec"].shape), (4,))
             self.assertEqual(tuple(outputs["branch_tensor"].shape)[1], 6)
             self.assertEqual(tuple(outputs["z"].shape), (64,))
+
+    def test_export_z_from_json_stream_writes_rows(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            stim_config = self.make_stim_encoder_config(temp_dir)
+            model = EmoNet(EmoNetConfig(seed=13), stim_encoder_config=stim_config)
+
+            input_json = temp_dir / "dialogs.json"
+            output_csv = temp_dir / "out_z.csv"
+            dialogs = [
+                {
+                    "profile": {"persona-id": "p1", "emotion": {"type": "E10"}},
+                    "talk": {
+                        "id": {"talk-id": "t1", "profile-id": "p1"},
+                        "content": {"HS01": "urgent alert", "SS01": "calm down", "HS02": "", "SS02": "", "HS03": "", "SS03": ""},
+                    },
+                },
+                {
+                    "profile": {"persona-id": "p2", "emotion": {"type": "E20"}},
+                    "talk": {
+                        "id": {"talk-id": "t2", "profile-id": "p2"},
+                        "content": {"HS01": "i need rest", "SS01": "take a break", "HS02": "", "SS02": "", "HS03": "", "SS03": ""},
+                    },
+                },
+            ]
+            input_json.write_text(json.dumps(dialogs, ensure_ascii=False), encoding="utf-8")
+
+            export_z_from_json_stream(
+                model=model,
+                input_json=input_json,
+                output_csv=output_csv,
+                limit=None,
+                chunk_size=1,
+                progress_every=1,
+                resume=False,
+            )
+
+            df = pd.read_csv(output_csv)
+            self.assertEqual(len(df), 2)
+            self.assertIn("text", df.columns)
+            self.assertIn("talk_id", df.columns)
+            self.assertIn("z_0", df.columns)
+            self.assertIn("z_63", df.columns)
+            self.assertIn("dopamine", df.columns)
+            self.assertIn("dominant_branch_len", df.columns)
 
 
 if __name__ == "__main__":

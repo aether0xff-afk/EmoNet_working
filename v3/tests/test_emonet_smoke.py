@@ -199,6 +199,7 @@ class EmoNetSmokeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir_name:
             temp_dir = Path(temp_dir_name)
             output_csv = temp_dir / "labeled.csv"
+            active_axes = STYLE_AXIS_NAMES[:16]
             df = pd.DataFrame(
                 [
                     {
@@ -213,11 +214,11 @@ class EmoNetSmokeTests(unittest.TestCase):
 
             generation_response = json.dumps({"response": "예시 응답"}, ensure_ascii=False)
             block_responses = []
-            for block_idx in range(0, len(STYLE_AXIS_NAMES), 8):
-                block_axes = STYLE_AXIS_NAMES[block_idx : block_idx + 8]
+            for block_idx in range(0, len(active_axes), 8):
+                block_axes = active_axes[block_idx : block_idx + 8]
                 block_responses.append(json.dumps({"s": {axis: 0.5 for axis in block_axes}}, ensure_ascii=False))
-            for block_idx in range(0, len(STYLE_AXIS_NAMES), 8):
-                block_axes = STYLE_AXIS_NAMES[block_idx : block_idx + 8]
+            for block_idx in range(0, len(active_axes), 8):
+                block_axes = active_axes[block_idx : block_idx + 8]
                 block_responses.append(json.dumps({"s_hat": {axis: 0.55 for axis in block_axes}}, ensure_ascii=False))
 
             with patch("emonet.cli.call_openai_compatible_chat", side_effect=[generation_response, *block_responses]):
@@ -235,6 +236,7 @@ class EmoNetSmokeTests(unittest.TestCase):
                     max_retries=1,
                     keep_failures=True,
                     block_size=8,
+                    style_dim=16,
                     keep_threshold=0.12,
                 )
 
@@ -243,14 +245,16 @@ class EmoNetSmokeTests(unittest.TestCase):
             self.assertIn("llm_response", saved.columns)
             self.assertIn("generation_status", saved.columns)
             self.assertIn("s_block1_status", saved.columns)
-            self.assertIn("s_hat_block4_status", saved.columns)
+            self.assertIn("s_hat_block2_status", saved.columns)
             self.assertIn("s_0", saved.columns)
-            self.assertIn("s_hat_31", saved.columns)
+            self.assertIn("s_hat_15", saved.columns)
             self.assertIn("consistency_l1", saved.columns)
             self.assertEqual(saved.loc[0, "status"], "ok")
             self.assertEqual(saved.loc[0, "generation_status"], "ok")
             self.assertEqual(saved.loc[0, "s_block1_status"], "ok")
-            self.assertEqual(saved.loc[0, "s_hat_block4_status"], "ok")
+            self.assertEqual(saved.loc[0, "s_hat_block2_status"], "ok")
+            self.assertEqual(saved.loc[0, "style_dim"], 16)
+            self.assertNotIn("s_16", saved.columns)
 
     def test_request_json_response_retries_on_schema_validation(self) -> None:
         with patch(
@@ -306,7 +310,7 @@ class EmoNetSmokeTests(unittest.TestCase):
             for idx in range(24):
                 z = rng.random(64, dtype=np.float32)
                 s = []
-                for axis_idx in range(32):
+                for axis_idx in range(16):
                     signal = 0.65 * float(z[axis_idx]) + 0.20 * float(z[(axis_idx + 7) % 64]) + 0.05
                     s.append(float(np.clip(signal, 0.0, 1.0)))
                 row = {
@@ -316,7 +320,7 @@ class EmoNetSmokeTests(unittest.TestCase):
                     "keep_sample": idx % 5 != 0,
                 }
                 row.update({f"z_{j}": float(z[j]) for j in range(64)})
-                row.update({f"s_{j}": float(s[j]) for j in range(32)})
+                row.update({f"s_{j}": float(s[j]) for j in range(16)})
                 rows.append(row)
 
             train_df = pd.DataFrame(rows)
@@ -326,7 +330,7 @@ class EmoNetSmokeTests(unittest.TestCase):
                 df=train_df,
                 model_path=model_path,
                 z_dim=64,
-                s_dim=32,
+                s_dim=16,
                 ridge_alpha=1.0,
                 seed=7,
                 val_ratio=0.2,
@@ -339,7 +343,7 @@ class EmoNetSmokeTests(unittest.TestCase):
 
             decoder = LinearZtoSDecoder.load(model_path)
             pred = decoder.predict(train_df.loc[0, [f"z_{j}" for j in range(64)]].to_numpy(dtype=np.float32))
-            self.assertEqual(pred.shape, (32,))
+            self.assertEqual(pred.shape, (16,))
 
             train_df[[f"z_{j}" for j in range(64)]].head(3).to_csv(predict_input_csv, index=False, encoding="utf-8-sig")
 
@@ -357,7 +361,7 @@ class EmoNetSmokeTests(unittest.TestCase):
             predicted_df = pd.read_csv(predict_output_csv)
             self.assertEqual(len(predicted_df), 3)
             self.assertIn("s_pred_0", predicted_df.columns)
-            self.assertIn("s_pred_31", predicted_df.columns)
+            self.assertIn("s_pred_15", predicted_df.columns)
 
 
 if __name__ == "__main__":

@@ -349,7 +349,7 @@ def train_zs_decoder_from_dataframe(
     df: pd.DataFrame,
     model_path: Path,
     z_dim: int,
-    s_dim: int,
+    s_dim: int | None,
     ridge_alpha: float,
     seed: int,
     val_ratio: float,
@@ -364,6 +364,7 @@ def train_zs_decoder_from_dataframe(
 
     z_columns = resolve_indexed_columns(df, "z_", expected_dim=z_dim)
     s_columns = resolve_indexed_columns(df, "s_", expected_dim=s_dim)
+    inferred_s_dim = len(s_columns)
 
     before_dropna = len(df)
     df = df.dropna(subset=z_columns + s_columns).reset_index(drop=True)
@@ -389,7 +390,7 @@ def train_zs_decoder_from_dataframe(
         eval_decoder = LinearZtoSDecoder(
             config=ZSDecoderConfig(model_path=model_path, ridge_alpha=ridge_alpha),
             z_dim=z_dim,
-            s_dim=s_dim,
+            s_dim=inferred_s_dim,
         )
         eval_decoder.fit(z_matrix[train_idx], s_matrix[train_idx])
         train_mae = eval_decoder.mean_absolute_error(z_matrix[train_idx], s_matrix[train_idx])
@@ -398,7 +399,7 @@ def train_zs_decoder_from_dataframe(
     decoder = LinearZtoSDecoder(
         config=ZSDecoderConfig(model_path=model_path, ridge_alpha=ridge_alpha),
         z_dim=z_dim,
-        s_dim=s_dim,
+        s_dim=inferred_s_dim,
     )
     decoder.fit(z_matrix, s_matrix)
     saved_path = decoder.save(model_path)
@@ -413,7 +414,7 @@ def train_zs_decoder_from_dataframe(
         "train_mae": None if train_mae is None else round(float(train_mae), 6),
         "val_mae": None if val_mae is None else round(float(val_mae), 6),
         "z_dim": int(z_dim),
-        "s_dim": int(s_dim),
+        "s_dim": int(inferred_s_dim),
         "model_path": str(saved_path),
     }
 
@@ -497,19 +498,78 @@ STYLE_AXIS_NAMES = [
     "reflectiveness",
 ]
 
+STYLE_AXIS_DESCRIPTIONS = {
+    "verbosity": "짧고 절제됨 <-> 길고 많이 말함",
+    "sentence_length": "짧은 문장 위주 <-> 긴 문장 위주",
+    "pace": "느리고 신중함 <-> 빠르고 몰아침",
+    "fragmentation": "완결된 문장 <-> 끊긴 조각 문장",
+    "repetition": "반복 거의 없음 <-> 표현 반복 많음",
+    "rhythmicity": "리듬감 약함 <-> 리듬감 뚜렷함",
+    "directness": "에둘러 말함 <-> 직접적으로 말함",
+    "explicitness": "암시적 <-> 명시적",
+    "specificity": "두루뭉술함 <-> 구체적",
+    "abstraction": "구체적/현실적 <-> 추상적/개념적",
+    "certainty": "조심스럽고 유보적 <-> 단정적이고 확신함",
+    "logicality": "연상적/감각적 <-> 논리적/정리됨",
+    "warmth": "차갑고 건조함 <-> 따뜻하고 배려함",
+    "distance": "가깝고 친밀함 <-> 거리감 있고 분리됨",
+    "politeness": "무뚝뚝함 <-> 공손함",
+    "formality": "구어체/일상체 <-> 문어체/격식체",
+    "cooperativeness": "비협조적 <-> 협조적",
+    "dominance": "유순함 <-> 주도적/통제적",
+    "calmness": "동요됨 <-> 차분함",
+    "tension": "느슨함 <-> 긴장감 높음",
+    "positivity": "부정적 <-> 긍정적",
+    "heaviness": "가벼움 <-> 무거움",
+    "urgency": "여유로움 <-> 급박함",
+    "emotional_openness": "감정 노출 적음 <-> 감정 노출 큼",
+    "softness": "딱딱함 <-> 부드러움",
+    "sharpness": "둔하고 완만함 <-> 날카롭고 예리함",
+    "playfulness": "장난기 없음 <-> 장난기 많음",
+    "seriousness": "가벼움 <-> 진지함",
+    "metaphoricity": "직설적 표현 <-> 비유적 표현",
+    "plainness": "꾸밈 많음 <-> 평이하고 담백함",
+    "initiative": "수동적 <-> 먼저 이끔",
+    "reflectiveness": "즉흥적 <-> 성찰적",
+}
 
-def build_style_blocks(block_size: int) -> list[list[str]]:
+STYLE_SCORE_LEVELS = np.asarray([0.0, 0.25, 0.5, 0.75, 1.0], dtype=np.float32)
+
+
+def resolve_style_axes(style_dim: int | None = None) -> list[str]:
+    if style_dim is None:
+        return list(STYLE_AXIS_NAMES)
+    if style_dim <= 0:
+        raise ValueError("style_dim must be positive")
+    if style_dim > len(STYLE_AXIS_NAMES):
+        raise ValueError(f"style_dim must be <= {len(STYLE_AXIS_NAMES)}")
+    return list(STYLE_AXIS_NAMES[:style_dim])
+
+
+def build_style_blocks(block_size: int, style_axes: list[str]) -> list[list[str]]:
     if block_size <= 0:
         raise ValueError("block_size must be positive")
-    return [STYLE_AXIS_NAMES[idx : idx + block_size] for idx in range(0, len(STYLE_AXIS_NAMES), block_size)]
+    return [style_axes[idx : idx + block_size] for idx in range(0, len(style_axes), block_size)]
 
 
-def format_style_axes(block_axes: list[str]) -> str:
+def format_style_axes(block_axes: list[str], active_axes: list[str]) -> str:
     lines = []
     for axis in block_axes:
-        axis_idx = STYLE_AXIS_NAMES.index(axis) + 1
-        lines.append(f"{axis_idx}. {axis}")
+        axis_idx = active_axes.index(axis) + 1
+        description = STYLE_AXIS_DESCRIPTIONS.get(axis, "")
+        suffix = f" ({description})" if description else ""
+        lines.append(f"{axis_idx}. {axis}{suffix}")
     return "\n".join(lines)
+
+
+def format_score_levels() -> str:
+    return ", ".join(f"{float(value):.2f}" for value in STYLE_SCORE_LEVELS)
+
+
+def quantize_style_value(value: float) -> float:
+    value = float(np.clip(value, 0.0, 1.0))
+    idx = int(np.argmin(np.abs(STYLE_SCORE_LEVELS - value)))
+    return float(STYLE_SCORE_LEVELS[idx])
 
 
 def extract_json_block(text: str) -> dict:
@@ -575,7 +635,7 @@ def request_json_response(
 def normalize_style_dict(style_dict: dict, key_name: str, expected_axes: list[str] | None = None) -> dict[str, float]:
     if key_name not in style_dict or not isinstance(style_dict[key_name], dict):
         raise ValueError(f"missing '{key_name}' object in model output")
-    axes = STYLE_AXIS_NAMES if expected_axes is None else expected_axes
+    axes = resolve_style_axes() if expected_axes is None else expected_axes
     style_payload = style_dict[key_name]
     missing_axes = [axis for axis in axes if axis not in style_payload]
     extra_axes = sorted(str(axis) for axis in style_payload.keys() if axis not in axes)
@@ -593,7 +653,7 @@ def normalize_style_dict(style_dict: dict, key_name: str, expected_axes: list[st
             value = float(value)
         except (TypeError, ValueError) as exc:
             raise ValueError(f"axis '{axis}' must be numeric") from exc
-        result[axis] = float(np.clip(value, 0.0, 1.0))
+        result[axis] = quantize_style_value(value)
     return result
 
 
@@ -644,8 +704,22 @@ def call_openai_compatible_chat(
     return content
 
 
-def compute_consistency(style_a: dict[str, float], style_b: dict[str, float]) -> float:
-    values = [abs(style_a[axis] - style_b[axis]) for axis in STYLE_AXIS_NAMES]
+def ensure_model_server_ready(base_url: str, timeout_sec: int) -> None:
+    models_url = base_url.rstrip("/") + "/models"
+    request = urllib.request.Request(models_url, method="GET")
+    try:
+        with urllib.request.urlopen(request, timeout=min(timeout_sec, 10)) as response:
+            if response.status >= 500:
+                raise ValueError(f"model server returned HTTP {response.status} for {models_url}")
+    except urllib.error.HTTPError as exc:
+        if exc.code not in (404, 405):
+            raise ConnectionError(f"model server check failed: HTTP {exc.code} for {models_url}") from exc
+    except urllib.error.URLError as exc:
+        raise ConnectionError(f"model server is not reachable at {base_url}: {exc}") from exc
+
+
+def compute_consistency(style_a: dict[str, float], style_b: dict[str, float], active_axes: list[str]) -> float:
+    values = [abs(style_a[axis] - style_b[axis]) for axis in active_axes]
     return float(np.mean(values))
 
 
@@ -673,6 +747,9 @@ def make_generation_prompt(record: dict[str, object]) -> str:
             "[CONSTRAINTS]",
             "- response 는 입력 내용과 정합적이어야 한다.",
             "- 과장하지 말고 자연스러운 한국어로 쓴다.",
+            "- 응답은 2~4문장으로 쓴다.",
+            "- 한 응답 안에서 상충하는 말투를 섞지 말고 하나의 톤을 유지한다.",
+            "- 마크다운, bullet, 번호 목록, 따옴표 인용을 쓰지 않는다.",
             "- z 는 직접 설명하지 말고 내부 상태 힌트로만 사용한다.",
             "- 설명 문장 없이 JSON object 하나만 출력한다.",
         ]
@@ -683,6 +760,7 @@ def make_style_block_prompt(
     record: dict[str, object],
     response: str,
     block_axes: list[str],
+    active_axes: list[str],
     key_name: str,
 ) -> str:
     text = str(record.get("text", "")).strip()
@@ -699,7 +777,13 @@ def make_style_block_prompt(
             response.strip(),
             "",
             "[STYLE_AXES]",
-            format_style_axes(block_axes),
+            format_style_axes(block_axes, active_axes),
+            "",
+            "[SCORING_RULES]",
+            f"- 각 축 값은 다음 5개 값 중 하나만 사용한다: {format_score_levels()}",
+            "- 0.00 = 왼쪽 성향이 거의 없음, 0.50 = 중간, 1.00 = 오른쪽 성향이 매우 강함",
+            "- 응답 표면의 문체만 보고 판단한다. 내용 정답 여부나 화자의 내면 상태는 추정하지 않는다.",
+            "- 애매하면 극단값 대신 0.25, 0.50, 0.75 중 하나를 고른다.",
             "",
             "[OUTPUT_FORMAT]",
             "JSON only.",
@@ -712,7 +796,7 @@ def make_style_block_prompt(
             "[CONSTRAINTS]",
             "- 반드시 위 STYLE_AXES에 적힌 축 이름만 그대로 사용한다.",
             "- 축 이름을 바꾸거나 dim0 같은 별칭으로 바꾸지 않는다.",
-            "- 각 축은 반드시 0~1 범위 실수로 준다.",
+            f"- 각 축은 반드시 다음 값 중 하나로만 준다: {format_score_levels()}",
             "- 설명 없이 JSON object 하나만 출력한다.",
         ]
     )
@@ -722,6 +806,7 @@ def run_style_block_pass(
     record: dict[str, object],
     response_text: str,
     block_axes: list[str],
+    active_axes: list[str],
     key_name: str,
     base_url: str,
     model_name: str,
@@ -734,6 +819,7 @@ def run_style_block_pass(
         record=record,
         response=response_text,
         block_axes=block_axes,
+        active_axes=active_axes,
         key_name=key_name,
     )
     style_values, raw = request_json_response(
@@ -770,12 +856,15 @@ def label_subset_with_local_model(
     max_retries: int,
     keep_failures: bool,
     block_size: int,
+    style_dim: int,
     keep_threshold: float,
 ) -> None:
     rows = []
     total = len(df) if limit is None else min(len(df), limit)
     start_time = time.perf_counter()
-    style_blocks = build_style_blocks(block_size)
+    active_axes = resolve_style_axes(style_dim)
+    style_blocks = build_style_blocks(block_size, active_axes)
+    ensure_model_server_ready(base_url, timeout_sec)
 
     for idx, record in enumerate(df.to_dict(orient="records"), start=1):
         if limit is not None and idx > limit:
@@ -820,6 +909,7 @@ def label_subset_with_local_model(
                     record=record,
                     response_text=response_text,
                     block_axes=block_axes,
+                    active_axes=active_axes,
                     key_name="s",
                     base_url=base_url,
                     model_name=model_name,
@@ -837,6 +927,7 @@ def label_subset_with_local_model(
                     record=record,
                     response_text=response_text,
                     block_axes=block_axes,
+                    active_axes=active_axes,
                     key_name="s_hat",
                     base_url=base_url,
                     model_name=model_name,
@@ -849,12 +940,13 @@ def label_subset_with_local_model(
                 row[f"s_hat_block{block_idx}_raw_output"] = block_raw
                 style_hat.update(block_style_hat)
 
-            consistency_l1 = compute_consistency(style, style_hat)
+            consistency_l1 = compute_consistency(style, style_hat, active_axes)
 
             row["status"] = "ok"
             row["consistency_l1"] = consistency_l1
             row["keep_sample"] = bool(consistency_l1 <= keep_threshold)
-            for axis_idx, axis in enumerate(STYLE_AXIS_NAMES):
+            row["style_dim"] = len(active_axes)
+            for axis_idx, axis in enumerate(active_axes):
                 row[f"s_{axis_idx}"] = style[axis]
                 row[f"s_hat_{axis_idx}"] = style_hat[axis]
             rows.append(row)
@@ -864,6 +956,7 @@ def label_subset_with_local_model(
                 row["generation_raw_output"] = row.get("generation_raw_output", "")
                 row["consistency_l1"] = np.nan
                 row["keep_sample"] = False
+                row["style_dim"] = len(active_axes)
                 row["error_message"] = str(exc)
                 rows.append(row)
             else:
@@ -911,6 +1004,7 @@ def command_label_local(args: argparse.Namespace) -> None:
         max_retries=args.max_retries,
         keep_failures=args.keep_failures,
         block_size=args.block_size,
+        style_dim=args.style_dim,
         keep_threshold=args.keep_threshold,
     )
 
@@ -991,7 +1085,7 @@ def build_parser() -> argparse.ArgumentParser:
     fit_zs_parser.add_argument("--input-csv", required=True)
     fit_zs_parser.add_argument("--model-path", required=True)
     fit_zs_parser.add_argument("--z-dim", type=int, default=64)
-    fit_zs_parser.add_argument("--s-dim", type=int, default=32)
+    fit_zs_parser.add_argument("--s-dim", type=int, default=None)
     fit_zs_parser.add_argument("--ridge-alpha", type=float, default=1.0)
     fit_zs_parser.add_argument("--val-ratio", type=float, default=0.1)
     fit_zs_parser.add_argument("--seed", type=int, default=42)
@@ -1019,6 +1113,7 @@ def build_parser() -> argparse.ArgumentParser:
     local_parser.add_argument("--limit", type=int, default=None)
     local_parser.add_argument("--max-retries", type=int, default=2)
     local_parser.add_argument("--block-size", type=int, default=8)
+    local_parser.add_argument("--style-dim", type=int, default=32)
     local_parser.add_argument("--keep-threshold", type=float, default=0.12)
     local_parser.add_argument("--keep-failures", action="store_true")
     local_parser.set_defaults(func=command_label_local)

@@ -12,6 +12,7 @@ from emonet import EmoNet, EmoNetConfig, LinearZtoSDecoder, StimEncoderConfig
 from emonet.cli import (
     STYLE_AXIS_NAMES,
     build_balanced_subset,
+    command_e2e_check,
     command_predict_s,
     command_generate_response,
     command_generate_response_batch,
@@ -424,6 +425,111 @@ class EmoNetSmokeTests(unittest.TestCase):
             self.assertIn("llm_response", saved.columns)
             self.assertIn("macro_tension", saved.columns)
             self.assertIn("s_pred_31", saved.columns)
+            self.assertTrue(log_jsonl.exists())
+
+    def test_command_e2e_check_success(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            report_json = temp_dir / "e2e_report.json"
+            output_csv = temp_dir / "e2e_runs.csv"
+            log_jsonl = temp_dir / "e2e_runs.jsonl"
+
+            class Args:
+                pass
+
+            args = Args()
+            args.dataset_csv = None
+            args.benchmark_csv = None
+            args.model_cache_path = None
+            args.max_samples = None
+            args.force_refit = False
+            args.seed = 42
+            args.z_dim = 64
+            args.zs_model_path = str(temp_dir / "decoder.npz")
+            args.base_url = "http://127.0.0.1:11434/v1"
+            args.model_name = "gpt-oss:20b"
+            args.response_temperature = 0.5
+            args.max_tokens = 300
+            args.timeout_sec = 30
+            args.prompt_template = None
+            args.log_jsonl = str(log_jsonl)
+            args.text = "지금 너무 예민하고 피곤해."
+            args.report_json = str(report_json)
+            args.output_csv = str(output_csv)
+
+            with patch("emonet.cli.ensure_model_server_ready"), patch(
+                "emonet.cli.build_model", return_value=self.FakeGenerativeModel()
+            ), patch("emonet.cli.LinearZtoSDecoder.load", return_value=self.FakeDecoder()), patch(
+                "emonet.cli.call_openai_compatible_chat", return_value="조금 쉬면서 호흡을 가다듬어 보세요."
+            ):
+                command_e2e_check(args)
+
+            report = json.loads(report_json.read_text(encoding="utf-8"))
+            self.assertEqual(report["overall_status"], "passed")
+            self.assertEqual(report["stage_status"]["text_to_z"], "passed")
+            self.assertEqual(report["stage_status"]["z_to_s_pred"], "passed")
+            self.assertEqual(report["stage_status"]["s_pred_text_to_llm_response"], "passed")
+            self.assertEqual(report["stage_status"]["artifact_logging"], "passed")
+            self.assertEqual(report["result"]["llm_response"], "조금 쉬면서 호흡을 가다듬어 보세요.")
+
+            saved = pd.read_csv(output_csv)
+            self.assertEqual(len(saved), 1)
+            self.assertEqual(saved.loc[0, "overall_status"], "passed")
+            self.assertEqual(saved.loc[0, "stage4_status"], "passed")
+            self.assertTrue(log_jsonl.exists())
+            self.assertEqual(len(log_jsonl.read_text(encoding="utf-8").strip().splitlines()), 1)
+
+    def test_command_e2e_check_records_llm_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            report_json = temp_dir / "e2e_report.json"
+            output_csv = temp_dir / "e2e_runs.csv"
+            log_jsonl = temp_dir / "e2e_runs.jsonl"
+
+            class Args:
+                pass
+
+            args = Args()
+            args.dataset_csv = None
+            args.benchmark_csv = None
+            args.model_cache_path = None
+            args.max_samples = None
+            args.force_refit = False
+            args.seed = 42
+            args.z_dim = 64
+            args.zs_model_path = str(temp_dir / "decoder.npz")
+            args.base_url = "http://127.0.0.1:11434/v1"
+            args.model_name = "gpt-oss:20b"
+            args.response_temperature = 0.5
+            args.max_tokens = 300
+            args.timeout_sec = 30
+            args.prompt_template = None
+            args.log_jsonl = str(log_jsonl)
+            args.text = "지금 너무 예민하고 피곤해."
+            args.report_json = str(report_json)
+            args.output_csv = str(output_csv)
+
+            with patch("emonet.cli.build_model", return_value=self.FakeGenerativeModel()), patch(
+                "emonet.cli.LinearZtoSDecoder.load", return_value=self.FakeDecoder()
+            ), patch(
+                "emonet.cli.ensure_model_server_ready",
+                side_effect=ConnectionError("model server is not reachable at http://127.0.0.1:11434/v1"),
+            ):
+                command_e2e_check(args)
+
+            report = json.loads(report_json.read_text(encoding="utf-8"))
+            self.assertEqual(report["overall_status"], "failed")
+            self.assertEqual(report["stage_status"]["text_to_z"], "passed")
+            self.assertEqual(report["stage_status"]["z_to_s_pred"], "passed")
+            self.assertEqual(report["stage_status"]["s_pred_text_to_llm_response"], "failed")
+            self.assertEqual(report["stage_status"]["artifact_logging"], "passed")
+            self.assertEqual(report["failure"]["stage_id"], "s_pred_text_to_llm_response")
+            self.assertEqual(report["failure"]["category"], "llm_server_unreachable")
+
+            saved = pd.read_csv(output_csv)
+            self.assertEqual(len(saved), 1)
+            self.assertEqual(saved.loc[0, "overall_status"], "failed")
+            self.assertEqual(saved.loc[0, "failure_category"], "llm_server_unreachable")
             self.assertTrue(log_jsonl.exists())
 
     def test_train_and_predict_zs_regressor(self) -> None:

@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 import json
 from pathlib import Path
 import time
-from typing import Callable
+from typing import Any, Callable
 import urllib.error
 import urllib.request
 
@@ -1173,6 +1173,400 @@ def append_jsonl(output_path: Path, rows: list[dict[str, object]]) -> None:
             handle.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
+def append_csv_rows(output_path: Path, rows: list[dict[str, object]]) -> None:
+    if not rows:
+        return
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    chunk_df = pd.DataFrame(rows)
+    write_header = not output_path.exists() or output_path.stat().st_size == 0
+    mode = "w" if write_header else "a"
+    chunk_df.to_csv(output_path, mode=mode, index=False, encoding="utf-8-sig", header=write_header)
+
+
+def categorize_validation_error(exc: Exception) -> str:
+    message = str(exc).lower()
+    if isinstance(exc, ConnectionError):
+        return "llm_server_unreachable"
+    if isinstance(exc, FileNotFoundError):
+        return "artifact_or_input_missing"
+    if isinstance(exc, PermissionError):
+        return "filesystem_permission_error"
+    if isinstance(exc, urllib.error.HTTPError):
+        return "llm_http_error"
+    if isinstance(exc, urllib.error.URLError):
+        return "network_error"
+    if isinstance(exc, RuntimeError):
+        if "scikit-learn" in message or "joblib" in message:
+            return "dependency_missing"
+        if "not fitted" in message:
+            return "model_not_ready"
+        return "runtime_error"
+    if isinstance(exc, ValueError):
+        if "missing required columns" in message or "column not found" in message or "text column not found" in message:
+            return "input_schema_error"
+        if "json" in message or "response" in message:
+            return "model_output_invalid"
+        if "shape" in message or "z_dim" in message or "s_dim" in message:
+            return "shape_mismatch"
+        return "validation_error"
+    return exc.__class__.__name__.lower()
+
+
+def build_validation_stage_result(
+    stage_id: str,
+    title: str,
+    status: str,
+    criteria: list[str],
+    observed: dict[str, Any] | None = None,
+    failure_category: str | None = None,
+    error_message: str | None = None,
+) -> dict[str, object]:
+    return {
+        "stage_id": stage_id,
+        "title": title,
+        "status": status,
+        "criteria": list(criteria),
+        "observed": {} if observed is None else observed,
+        "failure_category": failure_category,
+        "error_message": error_message,
+    }
+
+
+def build_e2e_validation_row(report: dict[str, object]) -> dict[str, object]:
+    result = dict(report.get("result", {}))
+    stage_status = dict(report.get("stage_status", {}))
+    failure = dict(report.get("failure", {}))
+    return {
+        "timestamp_utc": report.get("timestamp_utc", ""),
+        "input_text": report.get("input_text", ""),
+        "overall_status": report.get("overall_status", ""),
+        "stage1_status": stage_status.get("text_to_z", ""),
+        "stage2_status": stage_status.get("z_to_s_pred", ""),
+        "stage3_status": stage_status.get("s_pred_text_to_llm_response", ""),
+        "stage4_status": stage_status.get("artifact_logging", ""),
+        "failure_stage": failure.get("stage_id", ""),
+        "failure_category": failure.get("category", ""),
+        "failure_message": failure.get("message", ""),
+        "dominant_branch_len": result.get("dominant_branch_len", ""),
+        "stim_dim": len(result.get("stim_vec", [])) if isinstance(result.get("stim_vec"), list) else 0,
+        "z_dim": len(result.get("z", [])) if isinstance(result.get("z"), list) else 0,
+        "s_pred_dim": len(result.get("s_pred", [])) if isinstance(result.get("s_pred"), list) else 0,
+        "llm_response": result.get("llm_response", ""),
+        "style_summary_text": result.get("style_summary_text", ""),
+        "stim_vec_json": json.dumps(result.get("stim_vec", []), ensure_ascii=False),
+        "z_json": json.dumps(result.get("z", []), ensure_ascii=False),
+        "s_pred_json": json.dumps(result.get("s_pred", []), ensure_ascii=False),
+        "style_tags_json": json.dumps(result.get("style_tags", []), ensure_ascii=False),
+        "style_summary_json": json.dumps(result.get("style_summary", {}), ensure_ascii=False),
+        "report_json_path": str(report.get("report_json_path", "")),
+    }
+
+
+def first_failed_stage(stages: list[dict[str, object]]) -> dict[str, object] | None:
+    for stage in stages:
+        if stage.get("status") == "failed":
+            return stage
+    return None
+
+
+def command_e2e_check(args: argparse.Namespace) -> None:
+    report_json = Path(args.report_json)
+    output_csv = Path(args.output_csv)
+    log_jsonl = Path(args.log_jsonl)
+    timestamp = utc_timestamp()
+    report: dict[str, object] = {
+        "timestamp_utc": timestamp,
+        "input_text": args.text,
+        "decoder_model_path": str(args.zs_model_path),
+        "llm_base_url": args.base_url,
+        "llm_model_name": args.model_name,
+        "report_json_path": str(report_json),
+        "output_csv_path": str(output_csv),
+        "log_jsonl_path": str(log_jsonl),
+        "overall_status": "failed",
+        "stage_status": {},
+        "failure": {},
+        "stages": [],
+        "result": {
+            "input_text": args.text,
+            "decoder_model_path": str(args.zs_model_path),
+            "llm_model_name": args.model_name,
+        },
+    }
+
+    stage_map: dict[str, dict[str, object]] = {}
+
+    def record_stage(stage: dict[str, object]) -> None:
+        stage_id = str(stage["stage_id"])
+        stage_map[stage_id] = stage
+
+    text_to_z_criteria = [
+        "stim_vec must be length 4 with finite values in [0, 1]",
+        "dominant_branch_len must be at least 1",
+        f"z must be length {args.z_dim} with finite values",
+    ]
+    try:
+        model = build_model(args)
+        outputs = model.forward(args.text)
+        stim_vec = np.asarray(outputs["stim_vec"], dtype=np.float32).reshape(-1)
+        z = np.asarray(outputs["z"], dtype=np.float32).reshape(-1)
+        dominant_branch_len = int(len(outputs["dominant_branch"]))
+        failures = []
+        if stim_vec.shape != (4,):
+            failures.append(f"stim_vec shape must be (4,), got {tuple(stim_vec.shape)}")
+        if not np.all(np.isfinite(stim_vec)):
+            failures.append("stim_vec contains non-finite values")
+        if np.any((stim_vec < 0.0) | (stim_vec > 1.0)):
+            failures.append("stim_vec contains values outside [0, 1]")
+        if dominant_branch_len < 1:
+            failures.append("dominant_branch_len must be >= 1")
+        if z.shape != (args.z_dim,):
+            failures.append(f"z shape must be ({args.z_dim},), got {tuple(z.shape)}")
+        if not np.all(np.isfinite(z)):
+            failures.append("z contains non-finite values")
+        if failures:
+            raise ValueError("; ".join(failures))
+        report["result"]["stim_vec"] = stim_vec.astype(float).tolist()
+        report["result"]["dominant_branch_len"] = dominant_branch_len
+        report["result"]["z"] = z.astype(float).tolist()
+        record_stage(
+            build_validation_stage_result(
+                stage_id="text_to_z",
+                title="text -> stim_vec -> EmoNet -> z",
+                status="passed",
+                criteria=text_to_z_criteria,
+                observed={
+                    "stim_dim": int(stim_vec.shape[0]),
+                    "stim_min": round(float(stim_vec.min()), 6),
+                    "stim_max": round(float(stim_vec.max()), 6),
+                    "dominant_branch_len": dominant_branch_len,
+                    "z_dim": int(z.shape[0]),
+                    "z_abs_max": round(float(np.abs(z).max()), 6),
+                },
+            )
+        )
+    except Exception as exc:
+        record_stage(
+            build_validation_stage_result(
+                stage_id="text_to_z",
+                title="text -> stim_vec -> EmoNet -> z",
+                status="failed",
+                criteria=text_to_z_criteria,
+                failure_category=categorize_validation_error(exc),
+                error_message=str(exc),
+            )
+        )
+
+    z_to_s_criteria = [
+        "decoder artifact must load successfully",
+        "s_pred must be finite and each value must be in [0, 1]",
+        "s_pred must contain at least one style axis",
+    ]
+    if stage_map["text_to_z"]["status"] == "passed":
+        try:
+            decoder = LinearZtoSDecoder.load(Path(args.zs_model_path))
+            z_arr = np.asarray(report["result"]["z"], dtype=np.float32)
+            s_pred = np.asarray(decoder.predict(z_arr), dtype=np.float32).reshape(-1)
+            failures = []
+            if s_pred.size <= 0:
+                failures.append("s_pred must contain at least one value")
+            if not np.all(np.isfinite(s_pred)):
+                failures.append("s_pred contains non-finite values")
+            if np.any((s_pred < 0.0) | (s_pred > 1.0)):
+                failures.append("s_pred contains values outside [0, 1]")
+            if failures:
+                raise ValueError("; ".join(failures))
+            style_dict = style_vector_to_dict(s_pred.tolist(), STYLE_AXIS_NAMES[: len(s_pred)])
+            style_summary = build_style_summary(style_dict)
+            style_tags = build_style_tags(style_dict)
+            report["result"]["s_pred"] = s_pred.astype(float).tolist()
+            report["result"]["style_tags"] = list(style_tags)
+            report["result"]["style_summary"] = dict(style_summary)
+            report["result"]["style_summary_text"] = summarize_style_summary(style_summary)
+            record_stage(
+                build_validation_stage_result(
+                    stage_id="z_to_s_pred",
+                    title="z -> s_pred",
+                    status="passed",
+                    criteria=z_to_s_criteria,
+                    observed={
+                        "s_pred_dim": int(s_pred.shape[0]),
+                        "s_pred_min": round(float(s_pred.min()), 6),
+                        "s_pred_max": round(float(s_pred.max()), 6),
+                    },
+                )
+            )
+        except Exception as exc:
+            record_stage(
+                build_validation_stage_result(
+                    stage_id="z_to_s_pred",
+                    title="z -> s_pred",
+                    status="failed",
+                    criteria=z_to_s_criteria,
+                    failure_category=categorize_validation_error(exc),
+                    error_message=str(exc),
+                )
+            )
+    else:
+        record_stage(
+            build_validation_stage_result(
+                stage_id="z_to_s_pred",
+                title="z -> s_pred",
+                status="skipped",
+                criteria=z_to_s_criteria,
+                error_message="skipped because text_to_z failed",
+            )
+        )
+
+    llm_criteria = [
+        "LLM server must be reachable",
+        "llm_response must be a non-empty plain-text string",
+        "style_prompt, style_summary, and s_pred must all be available together",
+    ]
+    if stage_map["z_to_s_pred"]["status"] == "passed":
+        try:
+            style_dict = style_vector_to_dict(
+                report["result"]["s_pred"],
+                STYLE_AXIS_NAMES[: len(report["result"]["s_pred"])],
+            )
+            style_summary = dict(report["result"]["style_summary"])
+            style_tags = list(report["result"]["style_tags"])
+            ensure_model_server_ready(args.base_url, args.timeout_sec)
+            response_text, style_prompt = generate_response_from_style(
+                base_url=args.base_url,
+                model_name=args.model_name,
+                input_text=args.text,
+                style_dict=style_dict,
+                style_tags=style_tags,
+                style_summary=style_summary,
+                temperature=args.response_temperature,
+                max_tokens=args.max_tokens,
+                timeout_sec=args.timeout_sec,
+                template_path=Path(args.prompt_template) if args.prompt_template else None,
+            )
+            if not isinstance(response_text, str) or not response_text.strip():
+                raise ValueError("llm_response must be a non-empty string")
+            report["result"]["style_prompt"] = style_prompt
+            report["result"]["llm_response"] = response_text.strip()
+            record_stage(
+                build_validation_stage_result(
+                    stage_id="s_pred_text_to_llm_response",
+                    title="s_pred + input_text -> LLM response",
+                    status="passed",
+                    criteria=llm_criteria,
+                    observed={
+                        "response_length": len(report["result"]["llm_response"]),
+                        "style_tag_count": len(style_tags),
+                        "style_summary_keys": sorted(style_summary.keys()),
+                    },
+                )
+            )
+        except Exception as exc:
+            record_stage(
+                build_validation_stage_result(
+                    stage_id="s_pred_text_to_llm_response",
+                    title="s_pred + input_text -> LLM response",
+                    status="failed",
+                    criteria=llm_criteria,
+                    failure_category=categorize_validation_error(exc),
+                    error_message=str(exc),
+                )
+            )
+    else:
+        record_stage(
+            build_validation_stage_result(
+                stage_id="s_pred_text_to_llm_response",
+                title="s_pred + input_text -> LLM response",
+                status="skipped",
+                criteria=llm_criteria,
+                error_message="skipped because z_to_s_pred failed",
+            )
+        )
+
+    report["stages"] = [
+        stage_map["text_to_z"],
+        stage_map["z_to_s_pred"],
+        stage_map["s_pred_text_to_llm_response"],
+    ]
+    failed_stage = first_failed_stage(report["stages"])
+    report["failure"] = (
+        {}
+        if failed_stage is None
+        else {
+            "stage_id": failed_stage["stage_id"],
+            "category": failed_stage.get("failure_category"),
+            "message": failed_stage.get("error_message"),
+        }
+    )
+
+    artifact_criteria = [
+        "report JSON must be written",
+        "validation CSV row must be appended",
+        "validation JSONL log row must be appended",
+    ]
+    try:
+        stage_map["artifact_logging"] = build_validation_stage_result(
+            stage_id="artifact_logging",
+            title="로그/산출물 저장",
+            status="passed",
+            criteria=artifact_criteria,
+            observed={
+                "report_json": str(report_json),
+                "output_csv": str(output_csv),
+                "log_jsonl": str(log_jsonl),
+            },
+        )
+        report["stages"].append(stage_map["artifact_logging"])
+        report["stage_status"] = {str(stage["stage_id"]): str(stage["status"]) for stage in report["stages"]}
+        report["overall_status"] = "passed" if all(stage["status"] == "passed" for stage in report["stages"]) else "failed"
+        report["failure"] = (
+            {}
+            if first_failed_stage(report["stages"]) is None
+            else {
+                "stage_id": first_failed_stage(report["stages"])["stage_id"],
+                "category": first_failed_stage(report["stages"]).get("failure_category"),
+                "message": first_failed_stage(report["stages"]).get("error_message"),
+            }
+        )
+        validation_row = build_e2e_validation_row(report)
+        append_csv_rows(output_csv, [validation_row])
+        append_jsonl(log_jsonl, [validation_row])
+        report_json.parent.mkdir(parents=True, exist_ok=True)
+        report_json.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception as exc:
+        failed_artifact_stage = build_validation_stage_result(
+            stage_id="artifact_logging",
+            title="로그/산출물 저장",
+            status="failed",
+            criteria=artifact_criteria,
+            observed={
+                "report_json": str(report_json),
+                "output_csv": str(output_csv),
+                "log_jsonl": str(log_jsonl),
+            },
+            failure_category=categorize_validation_error(exc),
+            error_message=str(exc),
+        )
+        if len(report["stages"]) == 3:
+            report["stages"].append(failed_artifact_stage)
+        else:
+            report["stages"][-1] = failed_artifact_stage
+        report["stage_status"] = {str(stage["stage_id"]): str(stage["status"]) for stage in report["stages"]}
+        report["overall_status"] = "failed"
+        report["failure"] = {
+            "stage_id": failed_artifact_stage["stage_id"],
+            "category": failed_artifact_stage.get("failure_category"),
+            "message": failed_artifact_stage.get("error_message"),
+        }
+        try:
+            report_json.parent.mkdir(parents=True, exist_ok=True)
+            report_json.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+        except Exception:
+            pass
+
+    print(json.dumps(report, ensure_ascii=False, indent=2))
+
+
 def make_style_block_prompt(
     record: dict[str, object],
     response: str,
@@ -1467,7 +1861,7 @@ def build_parser() -> argparse.ArgumentParser:
         subparser.add_argument("--seed", type=int, default=42)
         subparser.add_argument("--z-dim", dest="z_dim", type=int, default=64)
 
-    def add_generation_options(subparser: argparse.ArgumentParser) -> None:
+    def add_generation_options(subparser: argparse.ArgumentParser, log_jsonl_default: str | None = None) -> None:
         add_common_options(subparser)
         subparser.add_argument("--zs-model-path", required=True)
         subparser.add_argument("--base-url", default="http://127.0.0.1:11434/v1")
@@ -1476,7 +1870,7 @@ def build_parser() -> argparse.ArgumentParser:
         subparser.add_argument("--max-tokens", type=int, default=600)
         subparser.add_argument("--timeout-sec", type=int, default=180)
         subparser.add_argument("--prompt-template", default=None)
-        subparser.add_argument("--log-jsonl", default=None)
+        subparser.add_argument("--log-jsonl", default=log_jsonl_default)
 
     fit_parser = subparsers.add_parser("fit-stim")
     add_common_options(fit_parser)
@@ -1493,6 +1887,13 @@ def build_parser() -> argparse.ArgumentParser:
     generate_parser.add_argument("--text", required=True)
     generate_parser.add_argument("--output-json", default=None)
     generate_parser.set_defaults(func=command_generate_response)
+
+    e2e_parser = subparsers.add_parser("e2e-check")
+    add_generation_options(e2e_parser, log_jsonl_default=str(Path("outputs") / "validation" / "e2e_check_runs.jsonl"))
+    e2e_parser.add_argument("--text", required=True)
+    e2e_parser.add_argument("--report-json", default=str(Path("outputs") / "validation" / "e2e_check_report.json"))
+    e2e_parser.add_argument("--output-csv", default=str(Path("outputs") / "validation" / "e2e_check_runs.csv"))
+    e2e_parser.set_defaults(func=command_e2e_check)
 
     batch_generate_parser = subparsers.add_parser("generate-response-batch")
     add_generation_options(batch_generate_parser)

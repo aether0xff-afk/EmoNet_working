@@ -21,6 +21,12 @@ Generated files are organized under `outputs/`.
 - `artifacts/ridge_stim_encoder.joblib`
 - `artifacts/zs/z_to_s_decoder.npz`
 
+## Validation Outputs
+
+- `outputs/validation/e2e_check_report.json`
+- `outputs/validation/e2e_check_runs.csv`
+- `outputs/validation/e2e_check_runs.jsonl`
+
 ## Recommended Commands
 
 ```powershell
@@ -59,4 +65,10 @@ python -m emonet.cli predict-s `
   --input-csv .\outputs\z\out_z_training.csv `
   --output-csv .\outputs\z\out_z_training_with_s_pred.csv `
   --model-path .\artifacts\zs\z_to_s_decoder.npz
+```
+
+```powershell
+python -m emonet.cli e2e-check `
+  --text "지금 너무 예민하고 피곤해." `
+  --zs-model-path .\artifacts\z_to_s_decoder.npz
 ```

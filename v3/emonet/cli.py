@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import json
 from pathlib import Path
 import time
@@ -443,9 +444,10 @@ def command_predict_s(args: argparse.Namespace) -> None:
     z_columns = resolve_indexed_columns(df, "z_", expected_dim=args.z_dim)
     decoder = LinearZtoSDecoder.load(Path(args.model_path))
     predictions = decoder.predict(df[z_columns].to_numpy(dtype=np.float32))
-
-    for axis_idx in range(predictions.shape[1]):
-        df[f"{args.output_prefix}{axis_idx}"] = predictions[:, axis_idx]
+    pred_df = pd.DataFrame(
+        {f"{args.output_prefix}{axis_idx}": predictions[:, axis_idx] for axis_idx in range(predictions.shape[1])}
+    )
+    df = pd.concat([df.reset_index(drop=True), pred_df], axis=1)
 
     output_csv.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(output_csv, index=False, encoding="utf-8-sig")
@@ -456,6 +458,147 @@ def command_predict_s(args: argparse.Namespace) -> None:
                 "output_csv": str(output_csv),
                 "model_path": str(args.model_path),
                 "output_prefix": args.output_prefix,
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
+
+
+def command_generate_response(args: argparse.Namespace) -> None:
+    ensure_model_server_ready(args.base_url, args.timeout_sec)
+    model = build_model(args)
+    decoder = LinearZtoSDecoder.load(Path(args.zs_model_path))
+    profile = infer_style_profile(model=model, decoder=decoder, text=args.text)
+    response_text, style_prompt = generate_response_from_style(
+        base_url=args.base_url,
+        model_name=args.model_name,
+        input_text=args.text,
+        style_dict=profile["style_dict"],
+        style_tags=profile["style_tags"],
+        style_summary=profile["style_summary"],
+        temperature=args.response_temperature,
+        max_tokens=args.max_tokens,
+        timeout_sec=args.timeout_sec,
+        template_path=Path(args.prompt_template) if args.prompt_template else None,
+    )
+    result = {
+        "input_text": args.text,
+        "stim_vec": np.asarray(profile["stim_vec"], dtype=float).tolist(),
+        "dominant_branch_len": int(profile["dominant_branch_len"]),
+        "z": np.asarray(profile["z"], dtype=float).tolist(),
+        "s_pred": np.asarray(profile["s_pred"], dtype=float).tolist(),
+        "style_tags": list(profile["style_tags"]),
+        "style_summary": dict(profile["style_summary"]),
+        "style_summary_text": str(profile["style_summary_text"]),
+        "style_prompt": style_prompt,
+        "llm_response": response_text,
+        "decoder_model_path": str(args.zs_model_path),
+        "llm_model_name": args.model_name,
+        "timestamp_utc": utc_timestamp(),
+    }
+    if args.output_json:
+        output_json = Path(args.output_json)
+        output_json.parent.mkdir(parents=True, exist_ok=True)
+        output_json.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+    if args.log_jsonl:
+        append_jsonl(Path(args.log_jsonl), [serialize_generation_log(result)])
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+
+
+def command_generate_response_batch(args: argparse.Namespace) -> None:
+    ensure_model_server_ready(args.base_url, args.timeout_sec)
+    model = build_model(args)
+    decoder = LinearZtoSDecoder.load(Path(args.zs_model_path))
+    input_csv = Path(args.input_csv)
+    output_csv = Path(args.output_csv)
+    df = pd.read_csv(input_csv)
+    text_column = resolve_text_column(df, args.text_column)
+    if args.limit is not None and args.limit > 0:
+        df = df.head(args.limit).copy()
+
+    rows: list[dict[str, object]] = []
+    jsonl_rows: list[dict[str, object]] = []
+    start_time = time.perf_counter()
+    for idx, record in enumerate(df.to_dict(orient="records"), start=1):
+        text = str(record.get(text_column, "")).strip()
+        if not text:
+            row = dict(record)
+            row["status"] = "error"
+            row["error_message"] = f"empty text column '{text_column}'"
+            rows.append(row)
+            continue
+
+        try:
+            profile = infer_style_profile(model=model, decoder=decoder, text=text)
+            response_text, style_prompt = generate_response_from_style(
+                base_url=args.base_url,
+                model_name=args.model_name,
+                input_text=text,
+                style_dict=profile["style_dict"],
+                style_tags=profile["style_tags"],
+                style_summary=profile["style_summary"],
+                temperature=args.response_temperature,
+                max_tokens=args.max_tokens,
+                timeout_sec=args.timeout_sec,
+                template_path=Path(args.prompt_template) if args.prompt_template else None,
+            )
+            row = dict(record)
+            row["status"] = "ok"
+            row["error_message"] = ""
+            row["style_tags"] = json.dumps(profile["style_tags"], ensure_ascii=False)
+            row["style_summary_text"] = str(profile["style_summary_text"])
+            row["style_summary_json"] = json.dumps(profile["style_summary"], ensure_ascii=False)
+            row["style_prompt"] = style_prompt
+            row["llm_response"] = response_text
+            row["decoder_model_path"] = str(args.zs_model_path)
+            row["llm_model_name"] = args.model_name
+            row["timestamp_utc"] = utc_timestamp()
+            for axis_idx, value in enumerate(np.asarray(profile["s_pred"], dtype=np.float32).reshape(-1)):
+                row[f"s_pred_{axis_idx}"] = float(value)
+            for macro_name, score in dict(profile["style_summary"]).items():
+                row[f"macro_{macro_name}"] = float(score)
+            rows.append(row)
+            jsonl_rows.append(
+                serialize_generation_log(
+                    {
+                    "input_text": text,
+                    "talk_id": record.get("talk_id", ""),
+                    "stim_vec": np.asarray(profile["stim_vec"], dtype=float).tolist(),
+                    "z": np.asarray(profile["z"], dtype=float).tolist(),
+                    "s_pred": np.asarray(profile["s_pred"], dtype=float).tolist(),
+                    "style_tags": list(profile["style_tags"]),
+                    "style_summary": dict(profile["style_summary"]),
+                    "style_prompt": style_prompt,
+                    "llm_response": response_text,
+                    "decoder_model_path": str(args.zs_model_path),
+                    "llm_model_name": args.model_name,
+                    "timestamp_utc": row["timestamp_utc"],
+                    }
+                )
+            )
+        except Exception as exc:
+            row = dict(record)
+            row["status"] = "error"
+            row["error_message"] = str(exc)
+            rows.append(row)
+
+        if args.progress_every > 0 and idx % args.progress_every == 0:
+            elapsed = max(1e-8, time.perf_counter() - start_time)
+            print(f"processed {idx}/{len(df)} rows ({idx / elapsed:.2f} rows/s)")
+
+    result_df = pd.DataFrame(rows)
+    output_csv.parent.mkdir(parents=True, exist_ok=True)
+    result_df.to_csv(output_csv, index=False, encoding="utf-8-sig")
+    if args.log_jsonl:
+        append_jsonl(Path(args.log_jsonl), jsonl_rows)
+    print(
+        json.dumps(
+            {
+                "rows": int(len(result_df)),
+                "ok_rows": int((result_df.get("status") == "ok").sum()) if len(result_df) else 0,
+                "output_csv": str(output_csv),
+                "log_jsonl": args.log_jsonl,
             },
             ensure_ascii=False,
             indent=2,
@@ -535,6 +678,63 @@ STYLE_AXIS_DESCRIPTIONS = {
 
 STYLE_SCORE_LEVELS = np.asarray([0.0, 0.25, 0.5, 0.75, 1.0], dtype=np.float32)
 
+STYLE_TAG_LABELS = {
+    "verbosity": ("간결함", "장문형"),
+    "sentence_length": ("짧은문장", "긴문장"),
+    "pace": ("느린호흡", "빠른전개"),
+    "fragmentation": ("정돈된문장", "파편적문장"),
+    "repetition": ("반복적음", "반복강함"),
+    "rhythmicity": ("리듬약함", "리듬강함"),
+    "directness": ("완곡함", "직설적"),
+    "explicitness": ("암시적", "명시적"),
+    "specificity": ("포괄적", "구체적"),
+    "abstraction": ("현실적", "추상적"),
+    "certainty": ("유보적", "확신형"),
+    "logicality": ("감각중심", "논리적"),
+    "warmth": ("건조함", "따뜻함"),
+    "distance": ("친밀함", "거리감"),
+    "politeness": ("무뚝뚝함", "공손함"),
+    "formality": ("구어체", "격식체"),
+    "cooperativeness": ("단독지향", "협조적"),
+    "dominance": ("유순함", "주도적"),
+    "calmness": ("동요됨", "차분함"),
+    "tension": ("이완됨", "긴장높음"),
+    "positivity": ("부정적", "긍정적"),
+    "heaviness": ("가벼움", "무게감"),
+    "urgency": ("여유있음", "긴급함"),
+    "emotional_openness": ("감정절제", "감정개방"),
+    "softness": ("단단함", "부드러움"),
+    "sharpness": ("완만함", "날카로움"),
+    "playfulness": ("진중함", "장난기"),
+    "seriousness": ("가벼움", "진지함"),
+    "metaphoricity": ("직설표현", "비유표현"),
+    "plainness": ("꾸밈있음", "담백함"),
+    "initiative": ("수동적", "주도적"),
+    "reflectiveness": ("즉흥적", "성찰적"),
+}
+
+STYLE_MACRO_AXES = {
+    "energy": [("pace", 1.0), ("urgency", 0.9), ("initiative", 0.8), ("verbosity", 0.5)],
+    "tension": [("tension", 1.0), ("urgency", 0.8), ("calmness", -0.9), ("heaviness", 0.4)],
+    "warmth": [("warmth", 1.0), ("softness", 0.8), ("cooperativeness", 0.7), ("positivity", 0.6)],
+    "directness": [("directness", 1.0), ("explicitness", 0.9), ("sharpness", 0.6), ("certainty", 0.5)],
+    "formality": [("formality", 1.0), ("politeness", 0.8), ("distance", 0.6), ("plainness", 0.4)],
+    "emotional_openness": [("emotional_openness", 1.0), ("reflectiveness", 0.7), ("warmth", 0.5)],
+    "seriousness": [("seriousness", 1.0), ("heaviness", 0.8), ("playfulness", -0.8)],
+    "structure": [("logicality", 1.0), ("specificity", 0.8), ("fragmentation", -0.7), ("sentence_length", 0.3)],
+}
+
+STYLE_MACRO_LABELS = {
+    "energy": "에너지",
+    "tension": "긴장",
+    "warmth": "따뜻함",
+    "directness": "직설성",
+    "formality": "형식성",
+    "emotional_openness": "감정개방성",
+    "seriousness": "무게감",
+    "structure": "구조화",
+}
+
 
 def resolve_style_axes(style_dim: int | None = None) -> list[str]:
     if style_dim is None:
@@ -570,6 +770,83 @@ def quantize_style_value(value: float) -> float:
     value = float(np.clip(value, 0.0, 1.0))
     idx = int(np.argmin(np.abs(STYLE_SCORE_LEVELS - value)))
     return float(STYLE_SCORE_LEVELS[idx])
+
+
+def style_vector_to_dict(values: np.ndarray | list[float], axis_names: list[str] | None = None) -> dict[str, float]:
+    axes = resolve_style_axes(len(values) if axis_names is None else len(axis_names))
+    if axis_names is not None:
+        axes = axis_names
+    arr = np.asarray(values, dtype=np.float32).reshape(-1)
+    if len(arr) != len(axes):
+        raise ValueError(f"style vector length {len(arr)} does not match axis count {len(axes)}")
+    return {axis: float(np.clip(arr[idx], 0.0, 1.0)) for idx, axis in enumerate(axes)}
+
+
+def compute_macro_style_scores(style_dict: dict[str, float]) -> dict[str, float]:
+    scores: dict[str, float] = {}
+    for macro_name, terms in STYLE_MACRO_AXES.items():
+        numerator = 0.0
+        denom = 0.0
+        for axis_name, weight in terms:
+            if axis_name not in style_dict:
+                continue
+            axis_value = float(style_dict[axis_name])
+            value = axis_value if weight >= 0.0 else 1.0 - axis_value
+            numerator += abs(weight) * value
+            denom += abs(weight)
+        scores[macro_name] = float(np.clip(numerator / max(denom, 1e-8), 0.0, 1.0))
+    return scores
+
+
+def describe_macro_level(score: float) -> str:
+    if score >= 0.75:
+        return "매우 높음"
+    if score >= 0.60:
+        return "높음"
+    if score <= 0.25:
+        return "매우 낮음"
+    if score <= 0.40:
+        return "낮음"
+    return "중간"
+
+
+def build_style_tags(style_dict: dict[str, float], max_tags: int = 8) -> list[str]:
+    scored_tags: list[tuple[float, str]] = []
+    for axis_name, value in style_dict.items():
+        labels = STYLE_TAG_LABELS.get(axis_name)
+        if labels is None:
+            continue
+        intensity = abs(float(value) - 0.5)
+        if intensity < 0.18:
+            continue
+        label = labels[1] if value >= 0.5 else labels[0]
+        scored_tags.append((intensity, label))
+    scored_tags.sort(key=lambda item: item[0], reverse=True)
+    return [label for _, label in scored_tags[:max_tags]]
+
+
+def build_style_summary(style_dict: dict[str, float]) -> dict[str, float]:
+    return compute_macro_style_scores(style_dict)
+
+
+def summarize_style_summary(style_summary: dict[str, float], top_n: int = 4) -> str:
+    ranked = sorted(style_summary.items(), key=lambda item: abs(item[1] - 0.5), reverse=True)
+    parts = []
+    for macro_name, score in ranked[:top_n]:
+        label = STYLE_MACRO_LABELS.get(macro_name, macro_name)
+        parts.append(f"{label} {describe_macro_level(score)}")
+    return ", ".join(parts)
+
+
+def format_style_summary_lines(style_summary: dict[str, float]) -> list[str]:
+    return [
+        f"{STYLE_MACRO_LABELS.get(name, name)}={float(score):.4f} ({describe_macro_level(score)})"
+        for name, score in style_summary.items()
+    ]
+
+
+def utc_timestamp() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
 def extract_json_block(text: str) -> dict:
@@ -674,12 +951,13 @@ def call_openai_compatible_chat(
     temperature: float,
     max_tokens: int,
     timeout_sec: int,
+    system_prompt: str = "Return JSON only.",
 ) -> str:
     url = base_url.rstrip("/") + "/chat/completions"
     payload = {
         "model": model_name,
         "messages": [
-            {"role": "system", "content": "Return JSON only."},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt},
         ],
         "temperature": temperature,
@@ -754,6 +1032,145 @@ def make_generation_prompt(record: dict[str, object]) -> str:
             "- 설명 문장 없이 JSON object 하나만 출력한다.",
         ]
     )
+
+
+def _default_response_generation_template() -> str:
+    return "\n".join(
+        [
+            "[ROLE]",
+            "당신은 감정 상태에 맞는 말투와 리듬으로 답하는 한국어 응답 생성기다.",
+            "",
+            "[USER_INPUT]",
+            "{{input_text}}",
+            "",
+            "[STYLE_TAGS]",
+            "{{style_tags}}",
+            "",
+            "[STYLE_SUMMARY]",
+            "{{style_summary_lines}}",
+            "",
+            "[STYLE_VECTOR]",
+            "{{style_vector_lines}}",
+            "",
+            "[INSTRUCTIONS]",
+            "- 사용자 입력의 내용에 직접 답한다.",
+            "- STYLE_TAGS와 STYLE_SUMMARY에 맞춰 말투와 표현 밀도를 조절한다.",
+            "- 스타일을 설명하지 말고, 그 스타일로 자연스럽게 답한다.",
+            "- 한국어 평문으로만 3~6문장 이내로 답한다.",
+            "- bullet, markdown, JSON, 코드블록을 쓰지 않는다.",
+        ]
+    )
+
+
+def render_template(template: str, variables: dict[str, str]) -> str:
+    rendered = template
+    for key, value in variables.items():
+        rendered = rendered.replace(f"{{{{{key}}}}}", value)
+    return rendered
+
+
+def load_response_generation_template(template_path: Path | None = None) -> str:
+    if template_path is not None and template_path.exists():
+        return template_path.read_text(encoding="utf-8")
+    default_path = Path(__file__).resolve().parents[1] / "prompts" / "response_generation_prompt.md"
+    if default_path.exists():
+        return default_path.read_text(encoding="utf-8")
+    return _default_response_generation_template()
+
+
+def format_style_vector_lines(style_dict: dict[str, float]) -> str:
+    return "\n".join(f"{axis}={float(value):.4f}" for axis, value in style_dict.items())
+
+
+def build_response_generation_prompt(
+    input_text: str,
+    style_dict: dict[str, float],
+    style_tags: list[str],
+    style_summary: dict[str, float],
+    template_path: Path | None = None,
+) -> str:
+    template = load_response_generation_template(template_path)
+    return render_template(
+        template,
+        {
+            "input_text": input_text.strip(),
+            "style_tags": ", ".join(style_tags) if style_tags else "(none)",
+            "style_summary_lines": "\n".join(format_style_summary_lines(style_summary)),
+            "style_vector_lines": format_style_vector_lines(style_dict),
+        },
+    )
+
+
+def infer_style_profile(
+    model: EmoNet,
+    decoder: LinearZtoSDecoder,
+    text: str,
+) -> dict[str, object]:
+    outputs = model.forward(text)
+    z = np.asarray(outputs["z"], dtype=np.float32).reshape(-1)
+    s_pred = np.asarray(decoder.predict(z), dtype=np.float32).reshape(-1)
+    style_dict = style_vector_to_dict(s_pred.tolist(), STYLE_AXIS_NAMES[: len(s_pred)])
+    style_summary = build_style_summary(style_dict)
+    style_tags = build_style_tags(style_dict)
+    return {
+        "stim_vec": np.asarray(outputs["stim_vec"], dtype=np.float32).reshape(-1),
+        "dominant_branch_len": len(outputs["dominant_branch"]),
+        "z": z,
+        "s_pred": s_pred,
+        "style_dict": style_dict,
+        "style_tags": style_tags,
+        "style_summary": style_summary,
+        "style_summary_text": summarize_style_summary(style_summary),
+    }
+
+
+def generate_response_from_style(
+    base_url: str,
+    model_name: str,
+    input_text: str,
+    style_dict: dict[str, float],
+    style_tags: list[str],
+    style_summary: dict[str, float],
+    temperature: float,
+    max_tokens: int,
+    timeout_sec: int,
+    template_path: Path | None = None,
+) -> tuple[str, str]:
+    prompt = build_response_generation_prompt(
+        input_text=input_text,
+        style_dict=style_dict,
+        style_tags=style_tags,
+        style_summary=style_summary,
+        template_path=template_path,
+    )
+    response = call_openai_compatible_chat(
+        base_url=base_url,
+        model_name=model_name,
+        prompt=prompt,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        timeout_sec=timeout_sec,
+        system_prompt="Return a plain Korean response only. Do not return JSON.",
+    ).strip()
+    return response, prompt
+
+
+def serialize_generation_log(record: dict[str, object]) -> dict[str, object]:
+    payload = dict(record)
+    for key in ("stim_vec", "z", "s_pred", "style_tags"):
+        if key in payload:
+            payload[key] = json.dumps(payload[key], ensure_ascii=False)
+    if "style_summary" in payload and isinstance(payload["style_summary"], dict):
+        payload["style_summary_json"] = json.dumps(payload["style_summary"], ensure_ascii=False)
+        del payload["style_summary"]
+    return payload
+
+
+def append_jsonl(output_path: Path, rows: list[dict[str, object]]) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("a", encoding="utf-8") as handle:
+        for row in rows:
+            handle.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
 def make_style_block_prompt(
@@ -1050,6 +1467,17 @@ def build_parser() -> argparse.ArgumentParser:
         subparser.add_argument("--seed", type=int, default=42)
         subparser.add_argument("--z-dim", dest="z_dim", type=int, default=64)
 
+    def add_generation_options(subparser: argparse.ArgumentParser) -> None:
+        add_common_options(subparser)
+        subparser.add_argument("--zs-model-path", required=True)
+        subparser.add_argument("--base-url", default="http://127.0.0.1:11434/v1")
+        subparser.add_argument("--model-name", default="gpt-oss:20b")
+        subparser.add_argument("--response-temperature", type=float, default=0.5)
+        subparser.add_argument("--max-tokens", type=int, default=600)
+        subparser.add_argument("--timeout-sec", type=int, default=180)
+        subparser.add_argument("--prompt-template", default=None)
+        subparser.add_argument("--log-jsonl", default=None)
+
     fit_parser = subparsers.add_parser("fit-stim")
     add_common_options(fit_parser)
     fit_parser.set_defaults(func=command_fit_stim)
@@ -1059,6 +1487,21 @@ def build_parser() -> argparse.ArgumentParser:
     infer_parser.add_argument("--text", required=True)
     infer_parser.add_argument("--zs-model-path", default=None)
     infer_parser.set_defaults(func=command_infer)
+
+    generate_parser = subparsers.add_parser("generate-response")
+    add_generation_options(generate_parser)
+    generate_parser.add_argument("--text", required=True)
+    generate_parser.add_argument("--output-json", default=None)
+    generate_parser.set_defaults(func=command_generate_response)
+
+    batch_generate_parser = subparsers.add_parser("generate-response-batch")
+    add_generation_options(batch_generate_parser)
+    batch_generate_parser.add_argument("--input-csv", required=True)
+    batch_generate_parser.add_argument("--output-csv", required=True)
+    batch_generate_parser.add_argument("--text-column", default="text")
+    batch_generate_parser.add_argument("--limit", type=int, default=None)
+    batch_generate_parser.add_argument("--progress-every", type=int, default=10)
+    batch_generate_parser.set_defaults(func=command_generate_response_batch)
 
     export_parser = subparsers.add_parser("export-z")
     add_common_options(export_parser)

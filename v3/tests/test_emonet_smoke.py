@@ -13,7 +13,11 @@ from emonet.cli import (
     STYLE_AXIS_NAMES,
     build_balanced_subset,
     command_predict_s,
+    command_generate_response,
+    command_generate_response_batch,
     command_build_llm_subset,
+    build_style_summary,
+    build_style_tags,
     export_z_from_json_stream,
     extract_json_block,
     label_subset_with_local_model,
@@ -30,6 +34,22 @@ def write_csv(path: Path, rows: list[list[str]]) -> None:
 
 
 class EmoNetSmokeTests(unittest.TestCase):
+    class FakeGenerativeModel:
+        def forward(self, text: str):
+            z = np.linspace(0.0, 1.0, 64, dtype=np.float32)
+            return {
+                "stim_vec": np.asarray([0.2, 0.4, 0.6, 0.8], dtype=np.float32),
+                "dominant_branch": [object(), object()],
+                "z": z,
+            }
+
+    class FakeDecoder:
+        def predict(self, z):
+            arr = np.asarray(z, dtype=np.float32)
+            if arr.ndim == 1:
+                return np.linspace(0.1, 0.9, 32, dtype=np.float32)
+            return np.tile(np.linspace(0.1, 0.9, 32, dtype=np.float32), (arr.shape[0], 1))
+
     def make_stim_encoder_config(self, temp_dir: Path) -> StimEncoderConfig:
         dataset_csv = temp_dir / "dataset_for_regression.csv"
         benchmark_csv = temp_dir / "benchmark_results.csv"
@@ -221,7 +241,9 @@ class EmoNetSmokeTests(unittest.TestCase):
                 block_axes = active_axes[block_idx : block_idx + 8]
                 block_responses.append(json.dumps({"s_hat": {axis: 0.55 for axis in block_axes}}, ensure_ascii=False))
 
-            with patch("emonet.cli.call_openai_compatible_chat", side_effect=[generation_response, *block_responses]):
+            with patch("emonet.cli.ensure_model_server_ready"), patch(
+                "emonet.cli.call_openai_compatible_chat", side_effect=[generation_response, *block_responses]
+            ):
                 label_subset_with_local_model(
                     df=df,
                     output_csv=output_csv,
@@ -279,8 +301,8 @@ class EmoNetSmokeTests(unittest.TestCase):
                 ),
                 retry_instruction="축 이름을 그대로 다시 출력하라.",
             )
-        self.assertEqual(payload["verbosity"], 0.2)
-        self.assertEqual(payload["sentence_length"], 0.3)
+        self.assertEqual(payload["verbosity"], 0.25)
+        self.assertEqual(payload["sentence_length"], 0.25)
         self.assertEqual(raw, "{\"s\": {\"verbosity\": 0.2, \"sentence_length\": 0.3}}")
 
     def test_request_json_response_retries_once(self) -> None:
@@ -296,6 +318,113 @@ class EmoNetSmokeTests(unittest.TestCase):
             )
         self.assertTrue(payload["ok"])
         self.assertEqual(raw, "{\"ok\": true}")
+
+    def test_build_style_tags_and_summary(self) -> None:
+        style = {axis: 0.5 for axis in STYLE_AXIS_NAMES}
+        style["tension"] = 1.0
+        style["warmth"] = 0.0
+        style["directness"] = 0.75
+        tags = build_style_tags(style, max_tags=5)
+        summary = build_style_summary(style)
+        self.assertIn("긴장높음", tags)
+        self.assertIn("건조함", tags)
+        self.assertIn("tension", summary)
+        self.assertIn("warmth", summary)
+
+    def test_command_generate_response(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            output_json = temp_dir / "response.json"
+            log_jsonl = temp_dir / "response_log.jsonl"
+
+            class Args:
+                pass
+
+            args = Args()
+            args.dataset_csv = None
+            args.benchmark_csv = None
+            args.model_cache_path = None
+            args.max_samples = None
+            args.force_refit = False
+            args.seed = 42
+            args.z_dim = 64
+            args.zs_model_path = str(temp_dir / "decoder.npz")
+            args.base_url = "http://127.0.0.1:11434/v1"
+            args.model_name = "gpt-oss:20b"
+            args.response_temperature = 0.5
+            args.max_tokens = 300
+            args.timeout_sec = 30
+            args.prompt_template = None
+            args.log_jsonl = str(log_jsonl)
+            args.text = "지금 너무 예민하고 피곤해."
+            args.output_json = str(output_json)
+
+            with patch("emonet.cli.ensure_model_server_ready"), patch(
+                "emonet.cli.build_model", return_value=self.FakeGenerativeModel()
+            ), patch("emonet.cli.LinearZtoSDecoder.load", return_value=self.FakeDecoder()), patch(
+                "emonet.cli.call_openai_compatible_chat", return_value="조금 쉬어가면서 우선순위를 다시 정리해 보세요."
+            ):
+                command_generate_response(args)
+
+            payload = json.loads(output_json.read_text(encoding="utf-8"))
+            self.assertEqual(payload["llm_response"], "조금 쉬어가면서 우선순위를 다시 정리해 보세요.")
+            self.assertIn("style_tags", payload)
+            self.assertIn("style_summary", payload)
+            self.assertTrue(log_jsonl.exists())
+
+    def test_command_generate_response_batch(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            input_csv = temp_dir / "batch_input.csv"
+            output_csv = temp_dir / "batch_output.csv"
+            log_jsonl = temp_dir / "batch_log.jsonl"
+            pd.DataFrame(
+                [
+                    {"talk_id": "t1", "text": "너무 불안해."},
+                    {"talk_id": "t2", "text": "조금 기쁘기도 해."},
+                ]
+            ).to_csv(input_csv, index=False, encoding="utf-8-sig")
+
+            class Args:
+                pass
+
+            args = Args()
+            args.dataset_csv = None
+            args.benchmark_csv = None
+            args.model_cache_path = None
+            args.max_samples = None
+            args.force_refit = False
+            args.seed = 42
+            args.z_dim = 64
+            args.zs_model_path = str(temp_dir / "decoder.npz")
+            args.base_url = "http://127.0.0.1:11434/v1"
+            args.model_name = "gpt-oss:20b"
+            args.response_temperature = 0.5
+            args.max_tokens = 300
+            args.timeout_sec = 30
+            args.prompt_template = None
+            args.log_jsonl = str(log_jsonl)
+            args.input_csv = str(input_csv)
+            args.output_csv = str(output_csv)
+            args.text_column = "text"
+            args.limit = None
+            args.progress_every = 1
+
+            with patch("emonet.cli.ensure_model_server_ready"), patch(
+                "emonet.cli.build_model", return_value=self.FakeGenerativeModel()
+            ), patch("emonet.cli.LinearZtoSDecoder.load", return_value=self.FakeDecoder()), patch(
+                "emonet.cli.call_openai_compatible_chat", side_effect=["응답 하나", "응답 둘"]
+            ):
+                command_generate_response_batch(args)
+
+            saved = pd.read_csv(output_csv)
+            self.assertEqual(len(saved), 2)
+            self.assertIn("style_tags", saved.columns)
+            self.assertIn("style_summary_text", saved.columns)
+            self.assertIn("llm_response", saved.columns)
+            self.assertIn("macro_tension", saved.columns)
+            self.assertIn("s_pred_31", saved.columns)
+            self.assertTrue(log_jsonl.exists())
 
     def test_train_and_predict_zs_regressor(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir_name:

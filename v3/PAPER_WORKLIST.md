@@ -83,7 +83,7 @@ python -m emonet.cli predict-s `
   - `HS+SS` 입력 vs `HS only`
   - `STYLE_SUMMARY` 포함 vs 제거
   - `STYLE_TAGS` 포함 vs 제거
-  - current 32축 vs raw affect 축 확장 버전
+  - current 32축 vs raw affect + 표정 변화 축 확장 버전
 
 ## 지금 바로 논문에 넣을 수 있는 현재 결론
 

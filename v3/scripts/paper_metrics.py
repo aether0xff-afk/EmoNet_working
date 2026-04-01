@@ -116,25 +116,31 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", default=".")
     parser.add_argument("--output-json", default="outputs/paper/paper_metrics_snapshot.json")
+    parser.add_argument("--llm-subset-csv", default=None)
+    parser.add_argument("--labeled-csv", default=None)
+    parser.add_argument("--labeled-summary-key", default="labeled_target_ollama")
     args = parser.parse_args()
 
     root = Path(args.root)
     output_json = Path(args.output_json)
+    llm_subset_csv = Path(args.llm_subset_csv) if args.llm_subset_csv else root / "outputs" / "llm" / "llm_subset.csv"
+    labeled_csv = Path(args.labeled_csv) if args.labeled_csv else root / "outputs" / "llm" / "llm_subset_labeled_200_ollama.csv"
 
     files = {
         "z_train": root / "outputs" / "z" / "out_z_training.csv",
-        "llm_subset": root / "outputs" / "llm" / "llm_subset.csv",
+        "llm_subset": llm_subset_csv,
         "labeled_50_ollama": root / "outputs" / "llm" / "llm_subset_labeled_50_ollama.csv",
         "labeled_200_ollama": root / "outputs" / "llm" / "llm_subset_labeled_200_ollama.csv",
     }
+    files[args.labeled_summary_key] = labeled_csv
 
     metrics: dict[str, object] = {"summaries": {}}
     for name, path in files.items():
         metrics["summaries"][name] = summarize_csv(path)
 
-    labeled_200 = pd.read_csv(files["labeled_200_ollama"])
-    metrics["decoder_eval"] = evaluate_decoder(labeled_200, seeds=[7, 13, 21, 42, 84], val_rows=19)
-    metrics["style_bias"] = summarize_style_bias(labeled_200)
+    labeled_df = pd.read_csv(labeled_csv)
+    metrics["decoder_eval"] = evaluate_decoder(labeled_df, seeds=[7, 13, 21, 42, 84], val_rows=19)
+    metrics["style_bias"] = summarize_style_bias(labeled_df)
 
     output_json.parent.mkdir(parents=True, exist_ok=True)
     output_json.write_text(json.dumps(metrics, ensure_ascii=False, indent=2), encoding="utf-8")

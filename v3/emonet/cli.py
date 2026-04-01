@@ -184,13 +184,13 @@ def flush_rows(rows: list[dict[str, object]], output_csv: Path, write_header: bo
     return False
 
 
-def load_existing_ids(output_csv: Path) -> set[str]:
+def load_existing_ids(output_csv: Path, column_name: str = "talk_id") -> set[str]:
     if not output_csv.exists():
         return set()
-    existing = pd.read_csv(output_csv, usecols=["talk_id"]) if output_csv.stat().st_size > 0 else pd.DataFrame()
-    if "talk_id" not in existing.columns:
+    existing = pd.read_csv(output_csv, usecols=[column_name]) if output_csv.stat().st_size > 0 else pd.DataFrame()
+    if column_name not in existing.columns:
         return set()
-    return {str(value) for value in existing["talk_id"].dropna().astype(str)}
+    return {str(value) for value in existing[column_name].dropna().astype(str)}
 
 
 def export_z_from_json_stream(
@@ -491,6 +491,7 @@ def command_generate_response(args: argparse.Namespace) -> None:
         "style_tags": list(profile["style_tags"]),
         "style_summary": dict(profile["style_summary"]),
         "style_summary_text": str(profile["style_summary_text"]),
+        "expression_cues_text": str(profile["expression_cues_text"]),
         "style_prompt": style_prompt,
         "llm_response": response_text,
         "decoder_model_path": str(args.zs_model_path),
@@ -549,6 +550,7 @@ def command_generate_response_batch(args: argparse.Namespace) -> None:
             row["style_tags"] = json.dumps(profile["style_tags"], ensure_ascii=False)
             row["style_summary_text"] = str(profile["style_summary_text"])
             row["style_summary_json"] = json.dumps(profile["style_summary"], ensure_ascii=False)
+            row["expression_cues_text"] = str(profile["expression_cues_text"])
             row["style_prompt"] = style_prompt
             row["llm_response"] = response_text
             row["decoder_model_path"] = str(args.zs_model_path)
@@ -569,6 +571,7 @@ def command_generate_response_batch(args: argparse.Namespace) -> None:
                     "s_pred": np.asarray(profile["s_pred"], dtype=float).tolist(),
                     "style_tags": list(profile["style_tags"]),
                     "style_summary": dict(profile["style_summary"]),
+                    "expression_cues_text": str(profile["expression_cues_text"]),
                     "style_prompt": style_prompt,
                     "llm_response": response_text,
                     "decoder_model_path": str(args.zs_model_path),
@@ -845,6 +848,52 @@ def format_style_summary_lines(style_summary: dict[str, float]) -> list[str]:
     ]
 
 
+def compute_facial_expression_score(style_dict: dict[str, float]) -> float:
+    terms = [
+        ("emotional_openness", 1.0),
+        ("tension", 0.9),
+        ("directness", 0.5),
+        ("urgency", 0.4),
+        ("warmth", 0.3),
+        ("softness", 0.2),
+        ("sharpness", 0.2),
+    ]
+    numerator = 0.0
+    denom = 0.0
+    for axis_name, weight in terms:
+        if axis_name not in style_dict:
+            continue
+        numerator += abs(weight) * float(style_dict[axis_name])
+        denom += abs(weight)
+    if denom <= 0.0:
+        return 0.5
+    return float(np.clip(numerator / denom, 0.0, 1.0))
+
+
+def describe_facial_expression_mode(style_dict: dict[str, float]) -> str:
+    softness = float(style_dict.get("softness", 0.5))
+    sharpness = float(style_dict.get("sharpness", 0.5))
+    warmth = float(style_dict.get("warmth", 0.5))
+    tension = float(style_dict.get("tension", 0.5))
+    if sharpness >= max(softness, warmth) + 0.12:
+        return "날 선 얼굴 단서"
+    if softness >= sharpness + 0.12 or warmth >= 0.68:
+        return "부드러운 얼굴 단서"
+    if tension >= 0.68:
+        return "굳은 얼굴 단서"
+    return "절제된 얼굴 단서"
+
+
+def format_expression_cue_lines(style_dict: dict[str, float]) -> list[str]:
+    facial_score = compute_facial_expression_score(style_dict)
+    facial_mode = describe_facial_expression_mode(style_dict)
+    return [f"표정 변화={facial_score:.4f} ({describe_macro_level(facial_score)}, {facial_mode})"]
+
+
+def summarize_expression_cues(style_dict: dict[str, float]) -> str:
+    return ", ".join(format_expression_cue_lines(style_dict))
+
+
 def utc_timestamp() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -1027,6 +1076,7 @@ def make_generation_prompt(record: dict[str, object]) -> str:
             "- 과장하지 말고 자연스러운 한국어로 쓴다.",
             "- 응답은 2~4문장으로 쓴다.",
             "- 한 응답 안에서 상충하는 말투를 섞지 말고 하나의 톤을 유지한다.",
+            "- 감정 표현 수단으로 어휘, 문장 리듬과 함께 필요하면 짧은 표정 변화 단서를 활용할 수 있다.",
             "- 마크다운, bullet, 번호 목록, 따옴표 인용을 쓰지 않는다.",
             "- z 는 직접 설명하지 말고 내부 상태 힌트로만 사용한다.",
             "- 설명 문장 없이 JSON object 하나만 출력한다.",
@@ -1049,12 +1099,16 @@ def _default_response_generation_template() -> str:
             "[STYLE_SUMMARY]",
             "{{style_summary_lines}}",
             "",
+            "[EXPRESSION_CUES]",
+            "{{expression_cue_lines}}",
+            "",
             "[STYLE_VECTOR]",
             "{{style_vector_lines}}",
             "",
             "[INSTRUCTIONS]",
             "- 사용자 입력의 내용에 직접 답한다.",
             "- STYLE_TAGS와 STYLE_SUMMARY에 맞춰 말투와 표현 밀도를 조절한다.",
+            "- 필요하면 EXPRESSION_CUES를 참고해 짧은 표정 변화 단서를 자연스럽게 녹인다.",
             "- 스타일을 설명하지 말고, 그 스타일로 자연스럽게 답한다.",
             "- 한국어 평문으로만 3~6문장 이내로 답한다.",
             "- bullet, markdown, JSON, 코드블록을 쓰지 않는다.",
@@ -1096,6 +1150,7 @@ def build_response_generation_prompt(
             "input_text": input_text.strip(),
             "style_tags": ", ".join(style_tags) if style_tags else "(none)",
             "style_summary_lines": "\n".join(format_style_summary_lines(style_summary)),
+            "expression_cue_lines": "\n".join(format_expression_cue_lines(style_dict)),
             "style_vector_lines": format_style_vector_lines(style_dict),
         },
     )
@@ -1121,6 +1176,7 @@ def infer_style_profile(
         "style_tags": style_tags,
         "style_summary": style_summary,
         "style_summary_text": summarize_style_summary(style_summary),
+        "expression_cues_text": summarize_expression_cues(style_dict),
     }
 
 
@@ -1173,14 +1229,24 @@ def append_jsonl(output_path: Path, rows: list[dict[str, object]]) -> None:
             handle.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
-def append_csv_rows(output_path: Path, rows: list[dict[str, object]]) -> None:
+def append_csv_rows(
+    output_path: Path,
+    rows: list[dict[str, object]],
+    columns: list[str] | None = None,
+) -> None:
     if not rows:
         return
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    chunk_df = pd.DataFrame(rows)
+    chunk_df = pd.DataFrame(rows, columns=columns)
     write_header = not output_path.exists() or output_path.stat().st_size == 0
     mode = "w" if write_header else "a"
     chunk_df.to_csv(output_path, mode=mode, index=False, encoding="utf-8-sig", header=write_header)
+
+
+def load_csv_columns(output_csv: Path) -> list[str]:
+    if not output_csv.exists() or output_csv.stat().st_size == 0:
+        return []
+    return pd.read_csv(output_csv, nrows=0).columns.tolist()
 
 
 def categorize_validation_error(exc: Exception) -> str:
@@ -1253,6 +1319,7 @@ def build_e2e_validation_row(report: dict[str, object]) -> dict[str, object]:
         "s_pred_dim": len(result.get("s_pred", [])) if isinstance(result.get("s_pred"), list) else 0,
         "llm_response": result.get("llm_response", ""),
         "style_summary_text": result.get("style_summary_text", ""),
+        "expression_cues_text": result.get("expression_cues_text", ""),
         "stim_vec_json": json.dumps(result.get("stim_vec", []), ensure_ascii=False),
         "z_json": json.dumps(result.get("z", []), ensure_ascii=False),
         "s_pred_json": json.dumps(result.get("s_pred", []), ensure_ascii=False),
@@ -1383,6 +1450,7 @@ def command_e2e_check(args: argparse.Namespace) -> None:
             report["result"]["style_tags"] = list(style_tags)
             report["result"]["style_summary"] = dict(style_summary)
             report["result"]["style_summary_text"] = summarize_style_summary(style_summary)
+            report["result"]["expression_cues_text"] = summarize_expression_cues(style_dict)
             record_stage(
                 build_validation_stage_result(
                     stage_id="z_to_s_pred",
@@ -1594,6 +1662,7 @@ def make_style_block_prompt(
             f"- 각 축 값은 다음 5개 값 중 하나만 사용한다: {format_score_levels()}",
             "- 0.00 = 왼쪽 성향이 거의 없음, 0.50 = 중간, 1.00 = 오른쪽 성향이 매우 강함",
             "- 응답 표면의 문체만 보고 판단한다. 내용 정답 여부나 화자의 내면 상태는 추정하지 않는다.",
+            "- 응답에 표정 변화 같은 명시적 비언어 단서가 있으면 그것도 표현 특성으로 반영한다.",
             "- 애매하면 극단값 대신 0.25, 0.50, 0.75 중 하나를 고른다.",
             "",
             "[OUTPUT_FORMAT]",
@@ -1653,6 +1722,55 @@ def run_style_block_pass(
     return style_values, raw
 
 
+def build_label_output_columns(input_columns: list[str], block_count: int, style_dim: int) -> list[str]:
+    columns = list(input_columns)
+    columns.extend(
+        [
+            "status",
+            "generation_status",
+            "llm_response",
+            "generation_raw_output",
+            "consistency_l1",
+            "keep_sample",
+            "style_dim",
+            "error_message",
+        ]
+    )
+    for block_idx in range(1, block_count + 1):
+        columns.extend(
+            [
+                f"s_block{block_idx}_status",
+                f"s_block{block_idx}_raw_output",
+                f"s_hat_block{block_idx}_status",
+                f"s_hat_block{block_idx}_raw_output",
+            ]
+        )
+    columns.extend([f"s_{axis_idx}" for axis_idx in range(style_dim)])
+    columns.extend([f"s_hat_{axis_idx}" for axis_idx in range(style_dim)])
+    return columns
+
+
+def initialize_label_output_row(record: dict[str, object], block_count: int, style_dim: int) -> dict[str, object]:
+    row = dict(record)
+    row["status"] = "error"
+    row["generation_status"] = "pending"
+    row["llm_response"] = ""
+    row["generation_raw_output"] = ""
+    row["consistency_l1"] = np.nan
+    row["keep_sample"] = False
+    row["style_dim"] = style_dim
+    row["error_message"] = ""
+    for block_idx in range(1, block_count + 1):
+        row[f"s_block{block_idx}_status"] = "pending"
+        row[f"s_block{block_idx}_raw_output"] = ""
+        row[f"s_hat_block{block_idx}_status"] = "pending"
+        row[f"s_hat_block{block_idx}_raw_output"] = ""
+    for axis_idx in range(style_dim):
+        row[f"s_{axis_idx}"] = np.nan
+        row[f"s_hat_{axis_idx}"] = np.nan
+    return row
+
+
 def label_subset_with_local_model(
     df: pd.DataFrame,
     output_csv: Path,
@@ -1669,27 +1787,52 @@ def label_subset_with_local_model(
     block_size: int,
     style_dim: int,
     keep_threshold: float,
+    flush_every: int,
+    resume: bool,
 ) -> None:
-    rows = []
-    total = len(df) if limit is None else min(len(df), limit)
     start_time = time.perf_counter()
     active_axes = resolve_style_axes(style_dim)
     style_blocks = build_style_blocks(block_size, active_axes)
+    block_count = len(style_blocks)
+    output_columns = build_label_output_columns(df.columns.tolist(), block_count, len(active_axes))
+    resume_key = "sample_id" if "sample_id" in df.columns else "talk_id" if "talk_id" in df.columns else None
+    existing_ids = load_existing_ids(output_csv, resume_key) if resume and resume_key else set()
+    existing_rows = len(existing_ids)
+    existing_kept = 0
+    if resume and output_csv.exists():
+        existing_columns = load_csv_columns(output_csv)
+        if existing_columns and existing_columns != output_columns:
+            raise ValueError(
+                "existing output CSV schema does not match current labeling configuration; "
+                "start a fresh output file or use matching options"
+            )
+        if output_csv.stat().st_size > 0:
+            existing_df = pd.read_csv(output_csv, usecols=lambda name: name in {resume_key, "keep_sample"} if resume_key else name == "keep_sample")
+            if "keep_sample" in existing_df.columns:
+                existing_kept = int(existing_df["keep_sample"].fillna(False).astype(bool).sum())
+    elif output_csv.exists():
+        output_csv.unlink()
+
+    remaining_rows = max(0, len(df) - len(existing_ids)) if existing_ids else len(df)
+    total = remaining_rows if limit is None else min(remaining_rows, limit)
+    pending_rows: list[dict[str, object]] = []
+    processed = 0
+    written = 0
+    skipped = 0
+    kept_this_run = 0
     ensure_model_server_ready(base_url, timeout_sec)
 
-    for idx, record in enumerate(df.to_dict(orient="records"), start=1):
-        if limit is not None and idx > limit:
+    for record in df.to_dict(orient="records"):
+        if limit is not None and processed >= limit:
             break
 
-        row = dict(record)
-        row["status"] = "error"
-        row["generation_status"] = "pending"
-        row["error_message"] = ""
-        for block_idx in range(1, len(style_blocks) + 1):
-            row[f"s_block{block_idx}_status"] = "pending"
-            row[f"s_hat_block{block_idx}_status"] = "pending"
-            row[f"s_block{block_idx}_raw_output"] = ""
-            row[f"s_hat_block{block_idx}_raw_output"] = ""
+        if existing_ids and resume_key:
+            resume_value = str(record.get(resume_key, ""))
+            if resume_value and resume_value in existing_ids:
+                skipped += 1
+                continue
+
+        row = initialize_label_output_row(record, block_count, len(active_axes))
         try:
             generation_prompt = make_generation_prompt(record)
             response_text, generation_raw = request_json_response(
@@ -1760,32 +1903,38 @@ def label_subset_with_local_model(
             for axis_idx, axis in enumerate(active_axes):
                 row[f"s_{axis_idx}"] = style[axis]
                 row[f"s_hat_{axis_idx}"] = style_hat[axis]
-            rows.append(row)
+            pending_rows.append(row)
+            kept_this_run += int(row["keep_sample"])
         except Exception as exc:
             if keep_failures:
-                row["llm_response"] = row.get("llm_response", "")
-                row["generation_raw_output"] = row.get("generation_raw_output", "")
                 row["consistency_l1"] = np.nan
                 row["keep_sample"] = False
                 row["style_dim"] = len(active_axes)
                 row["error_message"] = str(exc)
-                rows.append(row)
+                pending_rows.append(row)
             else:
                 raise
 
-        if progress_every > 0 and idx % progress_every == 0:
-            elapsed = max(1e-8, time.perf_counter() - start_time)
-            print(f"processed {idx}/{total} rows ({idx / elapsed:.2f} rows/s)")
+        processed += 1
+        written += 1
 
-    result_df = pd.DataFrame(rows)
-    output_csv.parent.mkdir(parents=True, exist_ok=True)
-    result_df.to_csv(output_csv, index=False, encoding="utf-8-sig")
+        if flush_every > 0 and len(pending_rows) >= flush_every:
+            append_csv_rows(output_csv, pending_rows, columns=output_columns)
+            pending_rows.clear()
+
+        if progress_every > 0 and processed % progress_every == 0:
+            elapsed = max(1e-8, time.perf_counter() - start_time)
+            print(f"processed {processed}/{total} rows ({processed / elapsed:.2f} rows/s)")
+
+    append_csv_rows(output_csv, pending_rows, columns=output_columns)
     elapsed = time.perf_counter() - start_time
     print(
         json.dumps(
             {
-                "rows": int(len(result_df)),
-                "kept_rows": int(result_df["keep_sample"].sum()) if len(result_df) else 0,
+                "rows": int(existing_rows + written),
+                "session_rows": int(written),
+                "skipped_rows": int(skipped),
+                "kept_rows": int(existing_kept + kept_this_run),
                 "output_csv": str(output_csv),
                 "elapsed_sec": round(elapsed, 3),
             },
@@ -1817,6 +1966,8 @@ def command_label_local(args: argparse.Namespace) -> None:
         block_size=args.block_size,
         style_dim=args.style_dim,
         keep_threshold=args.keep_threshold,
+        flush_every=args.flush_every,
+        resume=args.resume,
     )
 
 
@@ -1960,6 +2111,8 @@ def build_parser() -> argparse.ArgumentParser:
     local_parser.add_argument("--style-dim", type=int, default=32)
     local_parser.add_argument("--keep-threshold", type=float, default=0.12)
     local_parser.add_argument("--keep-failures", action="store_true")
+    local_parser.add_argument("--flush-every", type=int, default=10)
+    local_parser.add_argument("--resume", action="store_true")
     local_parser.set_defaults(func=command_label_local)
 
     return parser

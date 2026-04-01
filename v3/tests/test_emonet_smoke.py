@@ -24,6 +24,7 @@ from emonet.cli import (
     label_subset_with_local_model,
     normalize_style_dict,
     request_json_response,
+    summarize_expression_cues,
     train_zs_decoder_from_dataframe,
 )
 
@@ -261,6 +262,8 @@ class EmoNetSmokeTests(unittest.TestCase):
                     block_size=8,
                     style_dim=16,
                     keep_threshold=0.12,
+                    flush_every=1,
+                    resume=False,
                 )
 
             saved = pd.read_csv(output_csv)
@@ -278,6 +281,92 @@ class EmoNetSmokeTests(unittest.TestCase):
             self.assertEqual(saved.loc[0, "s_hat_block2_status"], "ok")
             self.assertEqual(saved.loc[0, "style_dim"], 16)
             self.assertNotIn("s_16", saved.columns)
+
+    def test_label_subset_with_local_model_resume(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            output_csv = temp_dir / "labeled_resume.csv"
+            active_axes = STYLE_AXIS_NAMES[:8]
+            df = pd.DataFrame(
+                [
+                    {
+                        "sample_id": "s_000000",
+                        "text": "example text 0",
+                        "talk_id": "t1",
+                        "label": "E10",
+                        **{f"z_{j}": float(j) / 64.0 for j in range(64)},
+                    },
+                    {
+                        "sample_id": "s_000001",
+                        "text": "example text 1",
+                        "talk_id": "t2",
+                        "label": "E20",
+                        **{f"z_{j}": float(j + 1) / 64.0 for j in range(64)},
+                    },
+                ]
+            )
+
+            row1_responses = [
+                json.dumps({"response": "첫 번째 응답"}, ensure_ascii=False),
+                json.dumps({"s": {axis: 0.4 for axis in active_axes}}, ensure_ascii=False),
+                json.dumps({"s_hat": {axis: 0.45 for axis in active_axes}}, ensure_ascii=False),
+            ]
+            row2_responses = [
+                json.dumps({"response": "두 번째 응답"}, ensure_ascii=False),
+                json.dumps({"s": {axis: 0.6 for axis in active_axes}}, ensure_ascii=False),
+                json.dumps({"s_hat": {axis: 0.55 for axis in active_axes}}, ensure_ascii=False),
+            ]
+
+            with patch("emonet.cli.ensure_model_server_ready"), patch(
+                "emonet.cli.call_openai_compatible_chat", side_effect=row1_responses
+            ):
+                label_subset_with_local_model(
+                    df=df,
+                    output_csv=output_csv,
+                    base_url="http://127.0.0.1:8000/v1",
+                    model_name="gpt-oss-20b",
+                    generation_temperature=0.7,
+                    rating_temperature=0.1,
+                    max_tokens=1200,
+                    timeout_sec=30,
+                    progress_every=1,
+                    limit=1,
+                    max_retries=1,
+                    keep_failures=True,
+                    block_size=8,
+                    style_dim=8,
+                    keep_threshold=0.12,
+                    flush_every=1,
+                    resume=False,
+                )
+
+            with patch("emonet.cli.ensure_model_server_ready"), patch(
+                "emonet.cli.call_openai_compatible_chat", side_effect=row2_responses
+            ):
+                label_subset_with_local_model(
+                    df=df,
+                    output_csv=output_csv,
+                    base_url="http://127.0.0.1:8000/v1",
+                    model_name="gpt-oss-20b",
+                    generation_temperature=0.7,
+                    rating_temperature=0.1,
+                    max_tokens=1200,
+                    timeout_sec=30,
+                    progress_every=1,
+                    limit=None,
+                    max_retries=1,
+                    keep_failures=True,
+                    block_size=8,
+                    style_dim=8,
+                    keep_threshold=0.12,
+                    flush_every=1,
+                    resume=True,
+                )
+
+            saved = pd.read_csv(output_csv)
+            self.assertEqual(len(saved), 2)
+            self.assertEqual(saved["sample_id"].tolist(), ["s_000000", "s_000001"])
+            self.assertEqual(saved["llm_response"].tolist(), ["첫 번째 응답", "두 번째 응답"])
 
     def test_request_json_response_retries_on_schema_validation(self) -> None:
         with patch(
@@ -327,10 +416,12 @@ class EmoNetSmokeTests(unittest.TestCase):
         style["directness"] = 0.75
         tags = build_style_tags(style, max_tags=5)
         summary = build_style_summary(style)
+        expression_cues = summarize_expression_cues(style)
         self.assertIn("긴장높음", tags)
         self.assertIn("건조함", tags)
         self.assertIn("tension", summary)
         self.assertIn("warmth", summary)
+        self.assertIn("표정 변화=", expression_cues)
 
     def test_command_generate_response(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir_name:
@@ -371,6 +462,7 @@ class EmoNetSmokeTests(unittest.TestCase):
             self.assertEqual(payload["llm_response"], "조금 쉬어가면서 우선순위를 다시 정리해 보세요.")
             self.assertIn("style_tags", payload)
             self.assertIn("style_summary", payload)
+            self.assertIn("expression_cues_text", payload)
             self.assertTrue(log_jsonl.exists())
 
     def test_command_generate_response_batch(self) -> None:
@@ -422,6 +514,7 @@ class EmoNetSmokeTests(unittest.TestCase):
             self.assertEqual(len(saved), 2)
             self.assertIn("style_tags", saved.columns)
             self.assertIn("style_summary_text", saved.columns)
+            self.assertIn("expression_cues_text", saved.columns)
             self.assertIn("llm_response", saved.columns)
             self.assertIn("macro_tension", saved.columns)
             self.assertIn("s_pred_31", saved.columns)
@@ -471,11 +564,13 @@ class EmoNetSmokeTests(unittest.TestCase):
             self.assertEqual(report["stage_status"]["s_pred_text_to_llm_response"], "passed")
             self.assertEqual(report["stage_status"]["artifact_logging"], "passed")
             self.assertEqual(report["result"]["llm_response"], "조금 쉬면서 호흡을 가다듬어 보세요.")
+            self.assertIn("expression_cues_text", report["result"])
 
             saved = pd.read_csv(output_csv)
             self.assertEqual(len(saved), 1)
             self.assertEqual(saved.loc[0, "overall_status"], "passed")
             self.assertEqual(saved.loc[0, "stage4_status"], "passed")
+            self.assertIn("expression_cues_text", saved.columns)
             self.assertTrue(log_jsonl.exists())
             self.assertEqual(len(log_jsonl.read_text(encoding="utf-8").strip().splitlines()), 1)
 

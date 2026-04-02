@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
-from dataclasses import replace
+from dataclasses import asdict, replace
 from pathlib import Path
 import sys
 
@@ -403,14 +403,26 @@ def build_neuron_ablation_table(
                 },
             )
         )
-        details[name] = {"metrics": metrics, "features": features, "config": config.__dict__}
+        details[name] = {"metrics": metrics, "features": features, "config": asdict(config)}
     return pd.DataFrame(rows), details
 
 
 def write_outputs(output_dir: Path, prefix: str, table: pd.DataFrame, details: dict[str, object]) -> None:
+    def to_jsonable(value: object) -> object:
+        if isinstance(value, np.ndarray):
+            return value.tolist()
+        if isinstance(value, np.generic):
+            return value.item()
+        if isinstance(value, dict):
+            return {str(key): to_jsonable(item) for key, item in value.items()}
+        if isinstance(value, (list, tuple)):
+            return [to_jsonable(item) for item in value]
+        return value
+
     output_dir.mkdir(parents=True, exist_ok=True)
     table.to_csv(output_dir / f"{prefix}.csv", index=False, encoding="utf-8-sig")
-    (output_dir / f"{prefix}.json").write_text(json.dumps(details, ensure_ascii=False, indent=2), encoding="utf-8")
+    payload = to_jsonable(details)
+    (output_dir / f"{prefix}.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def main() -> None:

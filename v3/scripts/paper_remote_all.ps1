@@ -14,59 +14,82 @@ $decoderPath = ".\artifacts\z_to_s_decoder_$($SubsetSize).npz"
 $predCsv = ".\outputs\z\out_z_training_with_s_pred_$($SubsetSize).csv"
 $metricsPath = ".\outputs\paper\paper_metrics_snapshot_remote_$($SubsetSize).json"
 
+function Invoke-CheckedPython {
+    param(
+        [string[]]$Args
+    )
+
+    & $PythonExe @Args
+    if ($LASTEXITCODE -ne 0) {
+        throw "Python command failed with exit code $LASTEXITCODE: $PythonExe $($Args -join ' ')"
+    }
+}
+
 Write-Host "[1/6] End-to-end success run"
-& $PythonExe -m emonet.cli e2e-check `
-    --text "지금 너무 예민하고 피곤해." `
-    --zs-model-path .\artifacts\z_to_s_decoder.npz `
-    --base-url $BaseUrl `
-    --model-name $ModelName `
-    --report-json .\outputs\validation\e2e_check_report_success.json `
-    --output-csv .\outputs\validation\e2e_check_runs_success.csv `
-    --log-jsonl .\outputs\validation\e2e_check_runs_success.jsonl
+Invoke-CheckedPython @(
+    "-m", "emonet.cli", "e2e-check",
+    "--text", "지금 너무 예민하고 피곤해.",
+    "--zs-model-path", ".\artifacts\z_to_s_decoder.npz",
+    "--base-url", $BaseUrl,
+    "--model-name", $ModelName,
+    "--report-json", ".\outputs\validation\e2e_check_report_success.json",
+    "--output-csv", ".\outputs\validation\e2e_check_runs_success.csv",
+    "--log-jsonl", ".\outputs\validation\e2e_check_runs_success.jsonl"
+)
 
 Write-Host "[2/6] Build balanced subset ($SubsetSize rows target)"
-& $PythonExe -m emonet.cli build-llm-subset `
-    --input-csv .\outputs\z\out_z_training.csv `
-    --output-csv $subsetCsv `
-    --target-size $SubsetSize `
-    --label-column label `
-    --seed 42
+Invoke-CheckedPython @(
+    "-m", "emonet.cli", "build-llm-subset",
+    "--input-csv", ".\outputs\z\out_z_training.csv",
+    "--output-csv", $subsetCsv,
+    "--target-size", "$SubsetSize",
+    "--label-column", "label",
+    "--seed", "42"
+)
 
 Write-Host "[3/6] Label subset rows with resumable checkpoints"
-& $PythonExe -m emonet.cli label-local `
-    --input-csv $subsetCsv `
-    --output-csv $labeledCsv `
-    --base-url $BaseUrl `
-    --model-name $ModelName `
-    --block-size 8 `
-    --style-dim 32 `
-    --generation-temperature 0.4 `
-    --rating-temperature 0.0 `
-    --max-retries 4 `
-    --timeout-sec 180 `
-    --keep-threshold 0.18 `
-    --flush-every $FlushEvery `
-    --resume `
-    --keep-failures
+Invoke-CheckedPython @(
+    "-m", "emonet.cli", "label-local",
+    "--input-csv", $subsetCsv,
+    "--output-csv", $labeledCsv,
+    "--base-url", $BaseUrl,
+    "--model-name", $ModelName,
+    "--block-size", "8",
+    "--style-dim", "32",
+    "--generation-temperature", "0.4",
+    "--rating-temperature", "0.0",
+    "--max-retries", "4",
+    "--timeout-sec", "180",
+    "--keep-threshold", "0.18",
+    "--flush-every", "$FlushEvery",
+    "--resume",
+    "--keep-failures"
+)
 
 Write-Host "[4/6] Fit $SubsetSize-row z-to-s decoder"
-& $PythonExe -m emonet.cli fit-zs-regressor `
-    --input-csv $labeledCsv `
-    --model-path $decoderPath `
-    --val-ratio 0.1
+Invoke-CheckedPython @(
+    "-m", "emonet.cli", "fit-zs-regressor",
+    "--input-csv", $labeledCsv,
+    "--model-path", $decoderPath,
+    "--val-ratio", "0.1"
+)
 
 Write-Host "[5/6] Predict s for full z training set"
-& $PythonExe -m emonet.cli predict-s `
-    --input-csv .\outputs\z\out_z_training.csv `
-    --output-csv $predCsv `
-    --model-path $decoderPath
+Invoke-CheckedPython @(
+    "-m", "emonet.cli", "predict-s",
+    "--input-csv", ".\outputs\z\out_z_training.csv",
+    "--output-csv", $predCsv,
+    "--model-path", $decoderPath
+)
 
 Write-Host "[6/6] Recompute paper metrics snapshot"
-& $PythonExe .\scripts\paper_metrics.py `
-    --output-json $metricsPath `
-    --llm-subset-csv $subsetCsv `
-    --labeled-csv $labeledCsv `
-    --labeled-summary-key "labeled_$($SubsetSize)_ollama"
+Invoke-CheckedPython @(
+    ".\scripts\paper_metrics.py",
+    "--output-json", $metricsPath,
+    "--llm-subset-csv", $subsetCsv,
+    "--labeled-csv", $labeledCsv,
+    "--labeled-summary-key", "labeled_$($SubsetSize)_ollama"
+)
 
 Write-Host "[done] Artifacts"
 Get-ChildItem .\outputs\paper,.\outputs\validation,.\outputs\llm,.\artifacts,.\outputs\z `

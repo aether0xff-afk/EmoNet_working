@@ -1,0 +1,142 @@
+{
+  "summaries": {
+    "z_train": {
+      "path": "v3\\outputs\\z\\out_z_training.csv",
+      "rows": 51628,
+      "cols": 74,
+      "unique_labels": 60
+    },
+    "llm_subset": {
+      "path": "v3\\outputs\\llm\\llm_subset.csv",
+      "rows": 500,
+      "cols": 75,
+      "unique_labels": 60
+    },
+    "labeled_50_ollama": {
+      "path": "v3\\outputs\\llm\\llm_subset_labeled_50_ollama.csv",
+      "rows": 50,
+      "cols": 162,
+      "unique_labels": 37,
+      "kept_rows": 48,
+      "keep_rate": 0.96,
+      "consistency_mean": 0.044382,
+      "consistency_median": 0.042969
+    },
+    "labeled_200_ollama": {
+      "path": "v3\\outputs\\llm\\llm_subset_labeled_200_ollama.csv",
+      "rows": 200,
+      "cols": 163,
+      "unique_labels": 59,
+      "kept_rows": 190,
+      "keep_rate": 0.95,
+      "consistency_mean": 0.099796,
+      "consistency_median": 0.09375
+    },
+    "labeled_target_ollama": {
+      "path": "v3\\outputs\\llm\\llm_subset_labeled_200_ollama.csv",
+      "rows": 200,
+      "cols": 163,
+      "unique_labels": 59,
+      "kept_rows": 190,
+      "keep_rate": 0.95,
+      "consistency_mean": 0.099796,
+      "consistency_median": 0.09375
+    }
+  },
+  "decoder_eval": {
+    "rows_used": 190,
+    "val_rows": 19,
+    "runs": [
+      {
+        "seed": 7,
+        "decoder_mae": 0.140596,
+        "mean_baseline_mae": 0.132384,
+        "gain": -0.008211
+      },
+      {
+        "seed": 13,
+        "decoder_mae": 0.134372,
+        "mean_baseline_mae": 0.130129,
+        "gain": -0.004243
+      },
+      {
+        "seed": 21,
+        "decoder_mae": 0.146876,
+        "mean_baseline_mae": 0.141137,
+        "gain": -0.005739
+      },
+      {
+        "seed": 42,
+        "decoder_mae": 0.14761,
+        "mean_baseline_mae": 0.143826,
+        "gain": -0.003784
+      },
+      {
+        "seed": 84,
+        "decoder_mae": 0.141408,
+        "mean_baseline_mae": 0.137785,
+        "gain": -0.003623
+      }
+    ],
+    "decoder_mae_mean": 0.142172,
+    "baseline_mae_mean": 0.137052,
+    "mean_gain": -0.00512
+  },
+  "style_bias": {
+    "rows_used": 190,
+    "interesting_axes": {
+      "warmth": 0.7776,
+      "politeness": 0.7789,
+      "cooperativeness": 0.9197,
+      "calmness": 0.9184,
+      "softness": 0.9605,
+      "sharpness": 0.0382,
+      "tension": 0.0961,
+      "dominance": 0.1066,
+      "positivity": 0.9092,
+      "seriousness": 0.6961
+    },
+    "top_shifted_axes": [
+      {
+        "axis": "playfulness",
+        "mean": 0.0105
+      },
+      {
+        "axis": "metaphoricity",
+        "mean": 0.0105
+      },
+      {
+        "axis": "plainness",
+        "mean": 0.9645
+      },
+      {
+        "axis": "sharpness",
+        "mean": 0.0382
+      },
+      {
+        "axis": "softness",
+        "mean": 0.9605
+      },
+      {
+        "axis": "cooperativeness",
+        "mean": 0.9197
+      },
+      {
+        "axis": "calmness",
+        "mean": 0.9184
+      },
+      {
+        "axis": "positivity",
+        "mean": 0.9092
+      },
+      {
+        "axis": "tension",
+        "mean": 0.0961
+      },
+      {
+        "axis": "dominance",
+        "mean": 0.1066
+      }
+    ]
+  }
+}

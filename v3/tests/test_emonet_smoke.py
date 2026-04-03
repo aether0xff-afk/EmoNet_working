@@ -8,11 +8,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from emonet import EmoNet, EmoNetConfig, LinearZtoSDecoder, StimEncoderConfig
+from emonet import BranchExtractor, BranchPath, BranchStep, EmoNet, EmoNetConfig, LinearZtoSDecoder, StimEncoderConfig, TORCH_AVAILABLE
 from emonet.cli import (
     STYLE_AXIS_NAMES,
     build_balanced_subset,
+    build_response_generation_prompt,
     command_e2e_check,
+    command_fit_z_encoder,
     command_predict_s,
     command_generate_response,
     command_generate_response_batch,
@@ -24,6 +26,7 @@ from emonet.cli import (
     label_subset_with_local_model,
     normalize_style_dict,
     request_json_response,
+    resolve_style_axes,
     summarize_expression_cues,
     train_zs_decoder_from_dataframe,
 )
@@ -217,6 +220,54 @@ class EmoNetSmokeTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             normalize_style_dict({"s": {"verbosity": 0.3}}, "s", expected_axes=["verbosity", "sentence_length"])
 
+    def test_build_response_generation_prompt_uses_condensed_controls(self) -> None:
+        style = {axis: 0.5 for axis in STYLE_AXIS_NAMES}
+        style["tension"] = 1.0
+        style["warmth"] = 0.0
+        prompt = build_response_generation_prompt(
+            input_text="예시 입력",
+            style_dict=style,
+            style_tags=["긴장높음", "건조함", "직설적", "무게감", "여분태그"],
+            style_summary=build_style_summary(style),
+        )
+        self.assertIn("[STYLE_TAGS]", prompt)
+        self.assertIn("[STYLE_SUMMARY]", prompt)
+        self.assertNotIn("[EXPRESSION_CUES]", prompt)
+        self.assertNotIn("[STYLE_VECTOR]", prompt)
+        self.assertNotIn("여분태그", prompt)
+
+    def test_resolve_extended_style_axes(self) -> None:
+        axes = resolve_style_axes(40, style_profile="extended40")
+        self.assertEqual(len(axes), 40)
+        self.assertIn("hostility", axes)
+        self.assertIn("trust", axes)
+
+    def test_build_dominant_branch_uses_single_best_path(self) -> None:
+        extractor = BranchExtractor()
+        best_path = BranchPath(
+            score=3.0,
+            steps=[
+                BranchStep(tick=0, node_id=1, K=1.2, stim_vec=np.asarray([0.1, 0.2, 0.3, 0.4], dtype=np.float32)),
+                BranchStep(tick=1, node_id=3, K=1.8, stim_vec=np.asarray([0.4, 0.3, 0.2, 0.1], dtype=np.float32)),
+            ],
+        )
+        weaker_path = BranchPath(
+            score=2.0,
+            steps=[
+                BranchStep(tick=0, node_id=2, K=0.9, stim_vec=np.asarray([0.9, 0.1, 0.1, 0.1], dtype=np.float32)),
+            ],
+        )
+        dominant = extractor.build_dominant_branch(
+            topk_paths=[best_path, weaker_path],
+            fallback_stim_vec=np.zeros(4, dtype=np.float32),
+            branch_log=[],
+            topk=2,
+        )
+        self.assertEqual(len(dominant), 2)
+        self.assertAlmostEqual(float(dominant[0].K), 1.2)
+        self.assertTrue(np.allclose(dominant[0].stim_vec, best_path.steps[0].stim_vec))
+        self.assertAlmostEqual(float(dominant[1].K), 1.8)
+
     def test_label_subset_with_local_model(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir_name:
             temp_dir = Path(temp_dir_name)
@@ -280,6 +331,7 @@ class EmoNetSmokeTests(unittest.TestCase):
             self.assertEqual(saved.loc[0, "s_block1_status"], "ok")
             self.assertEqual(saved.loc[0, "s_hat_block2_status"], "ok")
             self.assertEqual(saved.loc[0, "style_dim"], 16)
+            self.assertEqual(saved.loc[0, "style_profile"], "core32")
             self.assertNotIn("s_16", saved.columns)
 
     def test_label_subset_with_local_model_resume(self) -> None:
@@ -464,6 +516,73 @@ class EmoNetSmokeTests(unittest.TestCase):
             self.assertIn("style_summary", payload)
             self.assertIn("expression_cues_text", payload)
             self.assertTrue(log_jsonl.exists())
+
+    @unittest.skipUnless(TORCH_AVAILABLE, "torch is required for transformer z-encoder training")
+    def test_command_fit_z_encoder(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            stim_config = self.make_stim_encoder_config(temp_dir)
+            input_csv = temp_dir / "labeled_for_z_encoder.csv"
+            z_encoder_path = temp_dir / "dominant_branch_encoder.pt"
+            zs_model_path = temp_dir / "z_to_s_decoder.npz"
+            z_output_csv = temp_dir / "learned_z.csv"
+
+            rows = []
+            texts = [
+                "urgent alert and i feel angry",
+                "i am tired and need some rest",
+                "this feels stable and calm",
+                "i am nervous but trying to hold on",
+                "i feel resentful and exhausted",
+                "there is still some relief now",
+            ]
+            for idx, text in enumerate(texts):
+                row = {"text": text, "talk_id": f"t{idx}", "keep_sample": True}
+                for axis_idx in range(8):
+                    row[f"s_{axis_idx}"] = float(((idx + axis_idx) % 5) / 4.0)
+                rows.append(row)
+            pd.DataFrame(rows).to_csv(input_csv, index=False, encoding="utf-8-sig")
+
+            class Args:
+                pass
+
+            args = Args()
+            args.input_csv = str(input_csv)
+            args.text_column = "text"
+            args.dataset_csv = str(stim_config.dataset_csv)
+            args.benchmark_csv = str(stim_config.benchmark_csv)
+            args.model_cache_path = str(stim_config.model_cache_path)
+            args.max_samples = None
+            args.force_refit = True
+            args.seed = 42
+            args.z_dim = 16
+            args.z_encoder_mode = "auto"
+            args.z_encoder_path = str(z_encoder_path)
+            args.zs_model_path = str(zs_model_path)
+            args.z_output_csv = str(z_output_csv)
+            args.style_dim = 8
+            args.style_profile = "core32"
+            args.epochs = 1
+            args.batch_size = 2
+            args.learning_rate = 1e-3
+            args.weight_decay = 0.0
+            args.ridge_alpha = 1.0
+            args.val_ratio = 0.34
+            args.progress_every = 100
+            args.use_all_rows = True
+            args.warm_start_z_encoder = False
+
+            command_fit_z_encoder(args)
+
+            self.assertTrue(z_encoder_path.exists())
+            self.assertTrue(zs_model_path.exists())
+            saved = pd.read_csv(z_output_csv)
+            self.assertIn("z_0", saved.columns)
+            self.assertIn("z_15", saved.columns)
+            decoder = LinearZtoSDecoder.load(zs_model_path)
+            z_columns = [f"z_{idx}" for idx in range(16)]
+            pred = decoder.predict(saved.loc[0, z_columns].to_numpy(dtype=np.float32))
+            self.assertEqual(tuple(pred.shape), (8,))
 
     def test_command_generate_response_batch(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir_name:

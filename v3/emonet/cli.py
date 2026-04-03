@@ -12,7 +12,51 @@ import urllib.request
 import numpy as np
 import pandas as pd
 
-from .core import EmoNet, EmoNetConfig, LinearZtoSDecoder, StimEncoderConfig, ZSDecoderConfig
+try:
+    import torch
+    from torch import nn
+except ImportError:
+    torch = None
+    nn = None
+
+from .core import (
+    BRANCH_FEATURE_DIM,
+    TORCH_AVAILABLE,
+    EmoNet,
+    EmoNetConfig,
+    LinearZtoSDecoder,
+    StimEncoderConfig,
+    ZSDecoderConfig,
+)
+
+
+DEFAULT_Z_ENCODER_MODEL_PATH = Path(__file__).resolve().parents[1] / "artifacts" / "dominant_branch_encoder.pt"
+DEFAULT_STYLE_PROFILE = "core32"
+
+
+def resolve_z_encoder_path(raw_path: str | None) -> Path:
+    return Path(raw_path) if raw_path else DEFAULT_Z_ENCODER_MODEL_PATH
+
+
+def resolve_z_encoder_mode(
+    requested_mode: str,
+    z_encoder_path: Path,
+    *,
+    allow_missing_checkpoint: bool,
+) -> str:
+    mode = str(requested_mode or "auto").strip().lower()
+    if mode not in {"auto", "stat", "transformer"}:
+        raise ValueError("z_encoder_mode must be one of: auto, stat, transformer")
+    if mode == "auto":
+        if TORCH_AVAILABLE and z_encoder_path.exists():
+            return "transformer"
+        return "stat"
+    if mode == "transformer":
+        if not TORCH_AVAILABLE:
+            raise RuntimeError("torch is required to use the transformer z encoder")
+        if not allow_missing_checkpoint and not z_encoder_path.exists():
+            raise FileNotFoundError(f"z encoder checkpoint not found: {z_encoder_path}")
+    return mode
 
 
 def build_stim_config(args: argparse.Namespace) -> StimEncoderConfig:
@@ -30,8 +74,26 @@ def build_stim_config(args: argparse.Namespace) -> StimEncoderConfig:
     return StimEncoderConfig(**kwargs)
 
 
-def build_model(args: argparse.Namespace) -> EmoNet:
-    config = EmoNetConfig(seed=args.seed, z_dim=args.z_dim, z_encoder_mode="stat")
+def build_model(
+    args: argparse.Namespace,
+    *,
+    allow_missing_z_encoder_checkpoint: bool = False,
+    z_encoder_mode_override: str | None = None,
+    load_z_encoder_checkpoint: bool = True,
+) -> EmoNet:
+    z_encoder_path = resolve_z_encoder_path(getattr(args, "z_encoder_path", None))
+    z_encoder_mode = resolve_z_encoder_mode(
+        z_encoder_mode_override or getattr(args, "z_encoder_mode", "auto"),
+        z_encoder_path,
+        allow_missing_checkpoint=allow_missing_z_encoder_checkpoint,
+    )
+    config = EmoNetConfig(
+        seed=args.seed,
+        z_dim=args.z_dim,
+        z_encoder_mode=z_encoder_mode,
+        z_encoder_path=z_encoder_path,
+        load_z_encoder_checkpoint=load_z_encoder_checkpoint,
+    )
     stim_config = build_stim_config(args)
     return EmoNet(config=config, stim_encoder_config=stim_config)
 
@@ -420,6 +482,266 @@ def train_zs_decoder_from_dataframe(
     }
 
 
+def pad_branch_tensor_batch(branch_tensors: list[np.ndarray]) -> tuple["torch.Tensor", "torch.Tensor"]:
+    if torch is None:
+        raise RuntimeError("torch is required to batch dominant-branch tensors")
+    if not branch_tensors:
+        raise ValueError("branch_tensors must not be empty")
+    max_len = max(int(np.asarray(tensor).shape[0]) for tensor in branch_tensors)
+    batch = torch.zeros((len(branch_tensors), max_len, BRANCH_FEATURE_DIM), dtype=torch.float32)
+    attention_mask = torch.zeros((len(branch_tensors), max_len), dtype=torch.bool)
+    for row_idx, branch_tensor in enumerate(branch_tensors):
+        seq = np.asarray(branch_tensor, dtype=np.float32)
+        if seq.ndim != 2 or seq.shape[1] != BRANCH_FEATURE_DIM:
+            raise ValueError(f"branch tensor must have shape [seq_len, {BRANCH_FEATURE_DIM}], got {seq.shape}")
+        seq_len = int(seq.shape[0])
+        batch[row_idx, :seq_len] = torch.as_tensor(seq, dtype=torch.float32)
+        attention_mask[row_idx, :seq_len] = True
+    return batch, attention_mask
+
+
+def encode_branch_tensors(
+    encoder: "nn.Module",
+    branch_tensors: list[np.ndarray],
+    batch_size: int,
+    device: "torch.device",
+) -> np.ndarray:
+    if torch is None:
+        raise RuntimeError("torch is required to encode dominant branches")
+    outputs: list[np.ndarray] = []
+    encoder.eval()
+    with torch.no_grad():
+        for start in range(0, len(branch_tensors), batch_size):
+            batch_tensors = branch_tensors[start : start + batch_size]
+            batch, attention_mask = pad_branch_tensor_batch(batch_tensors)
+            z = encoder(batch.to(device), attention_mask.to(device))
+            outputs.append(z.detach().cpu().numpy().astype(np.float32, copy=False))
+    return np.vstack(outputs) if outputs else np.zeros((0, 0), dtype=np.float32)
+
+
+def train_transformer_z_encoder_from_dataframe(
+    df: pd.DataFrame,
+    model: EmoNet,
+    text_column: str,
+    encoder_model_path: Path,
+    zs_model_path: Path,
+    z_output_csv: Path | None,
+    style_dim: int,
+    style_profile: str,
+    epochs: int,
+    batch_size: int,
+    learning_rate: float,
+    weight_decay: float,
+    ridge_alpha: float,
+    seed: int,
+    val_ratio: float,
+    use_all_rows: bool,
+    progress_every: int,
+) -> dict[str, object]:
+    if torch is None or nn is None or not TORCH_AVAILABLE:
+        raise RuntimeError("torch is required to train the transformer z encoder")
+    if model.z_encoder is None or model.config.z_encoder_mode != "transformer":
+        raise RuntimeError("model must be initialized with transformer z encoder mode")
+    if batch_size <= 0:
+        raise ValueError("batch_size must be positive")
+    if epochs <= 0:
+        raise ValueError("epochs must be positive")
+
+    original_rows = len(df)
+    keep_filtered_rows = 0
+    if not use_all_rows and "keep_sample" in df.columns:
+        keep_mask = df["keep_sample"].fillna(False).astype(bool)
+        keep_filtered_rows = int((~keep_mask).sum())
+        df = df.loc[keep_mask].copy()
+
+    active_axes = resolve_style_axes(style_dim, style_profile=style_profile)
+    s_columns = resolve_indexed_columns(df, "s_", expected_dim=len(active_axes))
+    before_dropna = len(df)
+    df = df.dropna(subset=[text_column] + s_columns).reset_index(drop=True)
+    dropped_missing_rows = before_dropna - len(df)
+    if len(df) < 2:
+        raise ValueError("at least 2 clean labeled rows are required to train the transformer z encoder")
+
+    texts = df[text_column].astype(str).tolist()
+    s_matrix = df[s_columns].to_numpy(dtype=np.float32)
+    branch_tensors: list[np.ndarray] = []
+    feature_start = time.perf_counter()
+    for idx, text in enumerate(texts, start=1):
+        outputs = model.forward(text)
+        branch_tensors.append(np.asarray(outputs["branch_tensor"], dtype=np.float32))
+        if progress_every > 0 and idx % progress_every == 0:
+            elapsed = max(1e-8, time.perf_counter() - feature_start)
+            print(f"prepared {idx}/{len(texts)} branch tensors ({idx / elapsed:.2f} rows/s)")
+
+    rng = np.random.default_rng(seed)
+    indices = rng.permutation(len(df))
+    val_idx = np.asarray([], dtype=np.int64)
+    train_idx = indices
+    if 0.0 < val_ratio < 1.0 and len(df) >= 5:
+        tentative_val = int(round(len(df) * val_ratio))
+        val_rows = min(max(1, tentative_val), len(df) - 2)
+        val_idx = indices[:val_rows]
+        train_idx = indices[val_rows:]
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    encoder = model.z_encoder.to(device)
+    head = nn.Sequential(
+        nn.Linear(model.config.z_dim, 128),
+        nn.ReLU(),
+        nn.Dropout(model.config.dropout),
+        nn.Linear(128, 128),
+        nn.ReLU(),
+        nn.Linear(128, len(active_axes)),
+        nn.Sigmoid(),
+    ).to(device)
+    optimizer = torch.optim.AdamW(
+        list(encoder.parameters()) + list(head.parameters()),
+        lr=float(learning_rate),
+        weight_decay=float(weight_decay),
+    )
+    loss_fn = nn.L1Loss()
+
+    best_metric = float("inf")
+    best_encoder_state = {key: value.detach().cpu().clone() for key, value in encoder.state_dict().items()}
+    best_head_state = {key: value.detach().cpu().clone() for key, value in head.state_dict().items()}
+    best_train_mae = None
+    best_val_mae = None
+
+    for epoch in range(1, max(1, int(epochs)) + 1):
+        shuffled = train_idx[rng.permutation(len(train_idx))]
+        encoder.train()
+        head.train()
+        train_loss_sum = 0.0
+        train_seen = 0
+        for start in range(0, len(shuffled), batch_size):
+            batch_idx = shuffled[start : start + batch_size]
+            batch_tensors = [branch_tensors[int(idx)] for idx in batch_idx]
+            batch, attention_mask = pad_branch_tensor_batch(batch_tensors)
+            targets = torch.as_tensor(s_matrix[batch_idx], dtype=torch.float32, device=device)
+
+            optimizer.zero_grad(set_to_none=True)
+            pred = head(encoder(batch.to(device), attention_mask.to(device)))
+            loss = loss_fn(pred, targets)
+            loss.backward()
+            optimizer.step()
+
+            train_loss_sum += float(loss.item()) * len(batch_idx)
+            train_seen += len(batch_idx)
+
+        train_mae = train_loss_sum / max(train_seen, 1)
+        val_mae = train_mae
+        if len(val_idx) > 0:
+            encoder.eval()
+            head.eval()
+            val_loss_sum = 0.0
+            val_seen = 0
+            with torch.no_grad():
+                for start in range(0, len(val_idx), batch_size):
+                    batch_idx = val_idx[start : start + batch_size]
+                    batch_tensors = [branch_tensors[int(idx)] for idx in batch_idx]
+                    batch, attention_mask = pad_branch_tensor_batch(batch_tensors)
+                    targets = torch.as_tensor(s_matrix[batch_idx], dtype=torch.float32, device=device)
+                    pred = head(encoder(batch.to(device), attention_mask.to(device)))
+                    batch_loss = loss_fn(pred, targets)
+                    val_loss_sum += float(batch_loss.item()) * len(batch_idx)
+                    val_seen += len(batch_idx)
+            val_mae = val_loss_sum / max(val_seen, 1)
+
+        monitored_metric = val_mae if len(val_idx) > 0 else train_mae
+        if monitored_metric <= best_metric:
+            best_metric = monitored_metric
+            best_train_mae = train_mae
+            best_val_mae = None if len(val_idx) == 0 else val_mae
+            best_encoder_state = {key: value.detach().cpu().clone() for key, value in encoder.state_dict().items()}
+            best_head_state = {key: value.detach().cpu().clone() for key, value in head.state_dict().items()}
+
+    encoder.load_state_dict(best_encoder_state)
+    head.load_state_dict(best_head_state)
+    saved_encoder_path = model.save_z_encoder(encoder_model_path)
+
+    z_matrix = encode_branch_tensors(encoder, branch_tensors, batch_size=max(1, int(batch_size)), device=device)
+
+    decoder_train_mae = None
+    decoder_val_mae = None
+    if len(val_idx) > 0:
+        eval_decoder = LinearZtoSDecoder(
+            config=ZSDecoderConfig(model_path=zs_model_path, ridge_alpha=ridge_alpha),
+            z_dim=model.config.z_dim,
+            s_dim=len(active_axes),
+        )
+        eval_decoder.fit(z_matrix[train_idx], s_matrix[train_idx])
+        decoder_train_mae = eval_decoder.mean_absolute_error(z_matrix[train_idx], s_matrix[train_idx])
+        decoder_val_mae = eval_decoder.mean_absolute_error(z_matrix[val_idx], s_matrix[val_idx])
+
+    decoder = LinearZtoSDecoder(
+        config=ZSDecoderConfig(model_path=zs_model_path, ridge_alpha=ridge_alpha),
+        z_dim=model.config.z_dim,
+        s_dim=len(active_axes),
+    )
+    decoder.fit(z_matrix, s_matrix)
+    saved_decoder_path = decoder.save(zs_model_path)
+
+    if z_output_csv is not None:
+        export_df = df.copy()
+        for dim in range(z_matrix.shape[1]):
+            export_df[f"z_{dim}"] = z_matrix[:, dim]
+        z_output_csv.parent.mkdir(parents=True, exist_ok=True)
+        export_df.to_csv(z_output_csv, index=False, encoding="utf-8-sig")
+
+    return {
+        "input_rows": int(original_rows),
+        "rows_after_keep_filter": int(original_rows - keep_filtered_rows),
+        "rows_used": int(len(df)),
+        "keep_filtered_rows": int(keep_filtered_rows),
+        "dropped_missing_rows": int(dropped_missing_rows),
+        "train_rows": int(len(train_idx)),
+        "val_rows": int(len(val_idx)),
+        "style_dim": int(len(active_axes)),
+        "style_profile": str(style_profile),
+        "z_dim": int(model.config.z_dim),
+        "encoder_head_train_mae": None if best_train_mae is None else round(float(best_train_mae), 6),
+        "encoder_head_val_mae": None if best_val_mae is None else round(float(best_val_mae), 6),
+        "decoder_train_mae": None if decoder_train_mae is None else round(float(decoder_train_mae), 6),
+        "decoder_val_mae": None if decoder_val_mae is None else round(float(decoder_val_mae), 6),
+        "encoder_model_path": str(saved_encoder_path),
+        "zs_model_path": str(saved_decoder_path),
+        "z_output_csv": None if z_output_csv is None else str(z_output_csv),
+        "device": str(device),
+    }
+
+
+def command_fit_z_encoder(args: argparse.Namespace) -> None:
+    input_csv = Path(args.input_csv)
+    df = pd.read_csv(input_csv)
+    text_column = resolve_text_column(df, args.text_column)
+    model = build_model(
+        args,
+        allow_missing_z_encoder_checkpoint=True,
+        z_encoder_mode_override="transformer",
+        load_z_encoder_checkpoint=bool(args.warm_start_z_encoder),
+    )
+    summary = train_transformer_z_encoder_from_dataframe(
+        df=df,
+        model=model,
+        text_column=text_column,
+        encoder_model_path=resolve_z_encoder_path(args.z_encoder_path),
+        zs_model_path=Path(args.zs_model_path),
+        z_output_csv=Path(args.z_output_csv) if args.z_output_csv else None,
+        style_dim=args.style_dim,
+        style_profile=args.style_profile,
+        epochs=args.epochs,
+        batch_size=args.batch_size,
+        learning_rate=args.learning_rate,
+        weight_decay=args.weight_decay,
+        ridge_alpha=args.ridge_alpha,
+        seed=args.seed,
+        val_ratio=args.val_ratio,
+        use_all_rows=args.use_all_rows,
+        progress_every=args.progress_every,
+    )
+    print(json.dumps(summary, ensure_ascii=False, indent=2))
+
+
 def command_fit_zs_regressor(args: argparse.Namespace) -> None:
     input_csv = Path(args.input_csv)
     model_path = Path(args.model_path)
@@ -466,10 +788,12 @@ def command_predict_s(args: argparse.Namespace) -> None:
 
 
 def command_generate_response(args: argparse.Namespace) -> None:
+    style_profile = getattr(args, "style_profile", DEFAULT_STYLE_PROFILE)
     ensure_model_server_ready(args.base_url, args.timeout_sec)
     model = build_model(args)
+    model_config = getattr(model, "config", None)
     decoder = LinearZtoSDecoder.load(Path(args.zs_model_path))
-    profile = infer_style_profile(model=model, decoder=decoder, text=args.text)
+    profile = infer_style_profile(model=model, decoder=decoder, text=args.text, style_profile=style_profile)
     response_text, style_prompt = generate_response_from_style(
         base_url=args.base_url,
         model_name=args.model_name,
@@ -495,6 +819,9 @@ def command_generate_response(args: argparse.Namespace) -> None:
         "style_prompt": style_prompt,
         "llm_response": response_text,
         "decoder_model_path": str(args.zs_model_path),
+        "z_encoder_mode": str(getattr(model_config, "z_encoder_mode", "unknown")),
+        "z_encoder_path": str(getattr(model_config, "z_encoder_path", "")),
+        "style_profile": str(style_profile),
         "llm_model_name": args.model_name,
         "timestamp_utc": utc_timestamp(),
     }
@@ -508,8 +835,10 @@ def command_generate_response(args: argparse.Namespace) -> None:
 
 
 def command_generate_response_batch(args: argparse.Namespace) -> None:
+    style_profile = getattr(args, "style_profile", DEFAULT_STYLE_PROFILE)
     ensure_model_server_ready(args.base_url, args.timeout_sec)
     model = build_model(args)
+    model_config = getattr(model, "config", None)
     decoder = LinearZtoSDecoder.load(Path(args.zs_model_path))
     input_csv = Path(args.input_csv)
     output_csv = Path(args.output_csv)
@@ -531,7 +860,7 @@ def command_generate_response_batch(args: argparse.Namespace) -> None:
             continue
 
         try:
-            profile = infer_style_profile(model=model, decoder=decoder, text=text)
+            profile = infer_style_profile(model=model, decoder=decoder, text=text, style_profile=style_profile)
             response_text, style_prompt = generate_response_from_style(
                 base_url=args.base_url,
                 model_name=args.model_name,
@@ -554,6 +883,9 @@ def command_generate_response_batch(args: argparse.Namespace) -> None:
             row["style_prompt"] = style_prompt
             row["llm_response"] = response_text
             row["decoder_model_path"] = str(args.zs_model_path)
+            row["z_encoder_mode"] = str(getattr(model_config, "z_encoder_mode", "unknown"))
+            row["z_encoder_path"] = str(getattr(model_config, "z_encoder_path", ""))
+            row["style_profile"] = str(style_profile)
             row["llm_model_name"] = args.model_name
             row["timestamp_utc"] = utc_timestamp()
             for axis_idx, value in enumerate(np.asarray(profile["s_pred"], dtype=np.float32).reshape(-1)):
@@ -575,6 +907,9 @@ def command_generate_response_batch(args: argparse.Namespace) -> None:
                     "style_prompt": style_prompt,
                     "llm_response": response_text,
                     "decoder_model_path": str(args.zs_model_path),
+                    "z_encoder_mode": str(getattr(model_config, "z_encoder_mode", "unknown")),
+                    "z_encoder_path": str(getattr(model_config, "z_encoder_path", "")),
+                    "style_profile": str(style_profile),
                     "llm_model_name": args.model_name,
                     "timestamp_utc": row["timestamp_utc"],
                     }
@@ -644,6 +979,22 @@ STYLE_AXIS_NAMES = [
     "reflectiveness",
 ]
 
+RAW_AFFECT_AXIS_NAMES = [
+    "hostility",
+    "resentment",
+    "despair",
+    "volatility",
+    "fearfulness",
+    "shame",
+    "relief",
+    "trust",
+]
+
+STYLE_AXIS_PROFILES = {
+    "core32": list(STYLE_AXIS_NAMES),
+    "extended40": list(STYLE_AXIS_NAMES) + list(RAW_AFFECT_AXIS_NAMES),
+}
+
 STYLE_AXIS_DESCRIPTIONS = {
     "verbosity": "짧고 절제됨 <-> 길고 많이 말함",
     "sentence_length": "짧은 문장 위주 <-> 긴 문장 위주",
@@ -677,6 +1028,14 @@ STYLE_AXIS_DESCRIPTIONS = {
     "plainness": "꾸밈 많음 <-> 평이하고 담백함",
     "initiative": "수동적 <-> 먼저 이끔",
     "reflectiveness": "즉흥적 <-> 성찰적",
+    "hostility": "적대감 낮음 <-> 적대감 높음",
+    "resentment": "원망 적음 <-> 원망 강함",
+    "despair": "희망 유지 <-> 절망감 큼",
+    "volatility": "정서 변동 적음 <-> 정서 변동 큼",
+    "fearfulness": "두려움 적음 <-> 두려움 큼",
+    "shame": "수치심 적음 <-> 수치심 큼",
+    "relief": "안도감 적음 <-> 안도감 큼",
+    "trust": "경계함 <-> 신뢰함",
 }
 
 STYLE_SCORE_LEVELS = np.asarray([0.0, 0.25, 0.5, 0.75, 1.0], dtype=np.float32)
@@ -714,6 +1073,14 @@ STYLE_TAG_LABELS = {
     "plainness": ("꾸밈있음", "담백함"),
     "initiative": ("수동적", "주도적"),
     "reflectiveness": ("즉흥적", "성찰적"),
+    "hostility": ("비적대적", "적대적"),
+    "resentment": ("수용적", "원망강함"),
+    "despair": ("희망유지", "절망감"),
+    "volatility": ("안정적", "감정요동"),
+    "fearfulness": ("담대함", "두려움"),
+    "shame": ("자연스러움", "수치심"),
+    "relief": ("긴장유지", "안도감"),
+    "trust": ("경계함", "신뢰함"),
 }
 
 STYLE_MACRO_AXES = {
@@ -725,6 +1092,15 @@ STYLE_MACRO_AXES = {
     "emotional_openness": [("emotional_openness", 1.0), ("reflectiveness", 0.7), ("warmth", 0.5)],
     "seriousness": [("seriousness", 1.0), ("heaviness", 0.8), ("playfulness", -0.8)],
     "structure": [("logicality", 1.0), ("specificity", 0.8), ("fragmentation", -0.7), ("sentence_length", 0.3)],
+    "raw_negative_affect": [
+        ("hostility", 1.0),
+        ("resentment", 0.9),
+        ("despair", 1.0),
+        ("fearfulness", 0.8),
+        ("shame", 0.7),
+        ("trust", -0.6),
+        ("relief", -0.6),
+    ],
 }
 
 STYLE_MACRO_LABELS = {
@@ -736,17 +1112,22 @@ STYLE_MACRO_LABELS = {
     "emotional_openness": "감정개방성",
     "seriousness": "무게감",
     "structure": "구조화",
+    "raw_negative_affect": "원초적부정정동",
 }
 
 
-def resolve_style_axes(style_dim: int | None = None) -> list[str]:
+def resolve_style_axes(style_dim: int | None = None, style_profile: str = DEFAULT_STYLE_PROFILE) -> list[str]:
+    if style_profile not in STYLE_AXIS_PROFILES:
+        valid = ", ".join(sorted(STYLE_AXIS_PROFILES))
+        raise ValueError(f"unknown style_profile '{style_profile}'. valid profiles: {valid}")
+    axes = STYLE_AXIS_PROFILES[style_profile]
     if style_dim is None:
-        return list(STYLE_AXIS_NAMES)
+        return list(axes)
     if style_dim <= 0:
         raise ValueError("style_dim must be positive")
-    if style_dim > len(STYLE_AXIS_NAMES):
-        raise ValueError(f"style_dim must be <= {len(STYLE_AXIS_NAMES)}")
-    return list(STYLE_AXIS_NAMES[:style_dim])
+    if style_dim > len(axes):
+        raise ValueError(f"style_dim must be <= {len(axes)} for style_profile '{style_profile}'")
+    return list(axes[:style_dim])
 
 
 def build_style_blocks(block_size: int, style_axes: list[str]) -> list[list[str]]:
@@ -775,8 +1156,12 @@ def quantize_style_value(value: float) -> float:
     return float(STYLE_SCORE_LEVELS[idx])
 
 
-def style_vector_to_dict(values: np.ndarray | list[float], axis_names: list[str] | None = None) -> dict[str, float]:
-    axes = resolve_style_axes(len(values) if axis_names is None else len(axis_names))
+def style_vector_to_dict(
+    values: np.ndarray | list[float],
+    axis_names: list[str] | None = None,
+    style_profile: str = DEFAULT_STYLE_PROFILE,
+) -> dict[str, float]:
+    axes = resolve_style_axes(len(values) if axis_names is None else len(axis_names), style_profile=style_profile)
     if axis_names is not None:
         axes = axis_names
     arr = np.asarray(values, dtype=np.float32).reshape(-1)
@@ -797,7 +1182,9 @@ def compute_macro_style_scores(style_dict: dict[str, float]) -> dict[str, float]
             value = axis_value if weight >= 0.0 else 1.0 - axis_value
             numerator += abs(weight) * value
             denom += abs(weight)
-        scores[macro_name] = float(np.clip(numerator / max(denom, 1e-8), 0.0, 1.0))
+        if denom <= 0.0:
+            continue
+        scores[macro_name] = float(np.clip(numerator / denom, 0.0, 1.0))
     return scores
 
 
@@ -841,10 +1228,13 @@ def summarize_style_summary(style_summary: dict[str, float], top_n: int = 4) -> 
     return ", ".join(parts)
 
 
-def format_style_summary_lines(style_summary: dict[str, float]) -> list[str]:
+def format_style_summary_lines(style_summary: dict[str, float], top_n: int | None = None) -> list[str]:
+    items = list(style_summary.items())
+    if top_n is not None:
+        items = sorted(items, key=lambda item: abs(item[1] - 0.5), reverse=True)[:top_n]
     return [
         f"{STYLE_MACRO_LABELS.get(name, name)}={float(score):.4f} ({describe_macro_level(score)})"
-        for name, score in style_summary.items()
+        for name, score in items
     ]
 
 
@@ -958,10 +1348,15 @@ def request_json_response(
     raise ValueError(f"no JSON object found in model output after retries: {last_error}. raw={last_raw[:500]}")
 
 
-def normalize_style_dict(style_dict: dict, key_name: str, expected_axes: list[str] | None = None) -> dict[str, float]:
+def normalize_style_dict(
+    style_dict: dict,
+    key_name: str,
+    expected_axes: list[str] | None = None,
+    style_profile: str = DEFAULT_STYLE_PROFILE,
+) -> dict[str, float]:
     if key_name not in style_dict or not isinstance(style_dict[key_name], dict):
         raise ValueError(f"missing '{key_name}' object in model output")
-    axes = resolve_style_axes() if expected_axes is None else expected_axes
+    axes = resolve_style_axes(style_profile=style_profile) if expected_axes is None else expected_axes
     style_payload = style_dict[key_name]
     missing_axes = [axis for axis in axes if axis not in style_payload]
     extra_axes = sorted(str(axis) for axis in style_payload.keys() if axis not in axes)
@@ -1088,7 +1483,7 @@ def _default_response_generation_template() -> str:
     return "\n".join(
         [
             "[ROLE]",
-            "당신은 감정 상태에 맞는 말투와 리듬으로 답하는 한국어 응답 생성기다.",
+            "당신은 감정 상태에 맞는 말투와 밀도로 답하는 한국어 응답 생성기다.",
             "",
             "[USER_INPUT]",
             "{{input_text}}",
@@ -1099,18 +1494,11 @@ def _default_response_generation_template() -> str:
             "[STYLE_SUMMARY]",
             "{{style_summary_lines}}",
             "",
-            "[EXPRESSION_CUES]",
-            "{{expression_cue_lines}}",
-            "",
-            "[STYLE_VECTOR]",
-            "{{style_vector_lines}}",
-            "",
             "[INSTRUCTIONS]",
             "- 사용자 입력의 내용에 직접 답한다.",
-            "- STYLE_TAGS와 STYLE_SUMMARY에 맞춰 말투와 표현 밀도를 조절한다.",
-            "- 필요하면 EXPRESSION_CUES를 참고해 짧은 표정 변화 단서를 자연스럽게 녹인다.",
+            "- STYLE_TAGS와 STYLE_SUMMARY만 참고해 말투, 거리감, 표현 밀도를 조절한다.",
             "- 스타일을 설명하지 말고, 그 스타일로 자연스럽게 답한다.",
-            "- 한국어 평문으로만 3~6문장 이내로 답한다.",
+            "- 한국어 평문으로만 2~5문장 이내로 답한다.",
             "- bullet, markdown, JSON, 코드블록을 쓰지 않는다.",
         ]
     )
@@ -1144,12 +1532,14 @@ def build_response_generation_prompt(
     template_path: Path | None = None,
 ) -> str:
     template = load_response_generation_template(template_path)
+    condensed_tags = style_tags[:4]
+    condensed_summary = format_style_summary_lines(style_summary, top_n=3)
     return render_template(
         template,
         {
             "input_text": input_text.strip(),
-            "style_tags": ", ".join(style_tags) if style_tags else "(none)",
-            "style_summary_lines": "\n".join(format_style_summary_lines(style_summary)),
+            "style_tags": ", ".join(condensed_tags) if condensed_tags else "(none)",
+            "style_summary_lines": "\n".join(condensed_summary) if condensed_summary else "(none)",
             "expression_cue_lines": "\n".join(format_expression_cue_lines(style_dict)),
             "style_vector_lines": format_style_vector_lines(style_dict),
         },
@@ -1160,11 +1550,13 @@ def infer_style_profile(
     model: EmoNet,
     decoder: LinearZtoSDecoder,
     text: str,
+    style_profile: str = DEFAULT_STYLE_PROFILE,
 ) -> dict[str, object]:
     outputs = model.forward(text)
     z = np.asarray(outputs["z"], dtype=np.float32).reshape(-1)
     s_pred = np.asarray(decoder.predict(z), dtype=np.float32).reshape(-1)
-    style_dict = style_vector_to_dict(s_pred.tolist(), STYLE_AXIS_NAMES[: len(s_pred)])
+    style_axes = resolve_style_axes(len(s_pred), style_profile=style_profile)
+    style_dict = style_vector_to_dict(s_pred.tolist(), style_axes, style_profile=style_profile)
     style_summary = build_style_summary(style_dict)
     style_tags = build_style_tags(style_dict)
     return {
@@ -1337,6 +1729,7 @@ def first_failed_stage(stages: list[dict[str, object]]) -> dict[str, object] | N
 
 
 def command_e2e_check(args: argparse.Namespace) -> None:
+    style_profile = getattr(args, "style_profile", DEFAULT_STYLE_PROFILE)
     report_json = Path(args.report_json)
     output_csv = Path(args.output_csv)
     log_jsonl = Path(args.log_jsonl)
@@ -1443,7 +1836,8 @@ def command_e2e_check(args: argparse.Namespace) -> None:
                 failures.append("s_pred contains values outside [0, 1]")
             if failures:
                 raise ValueError("; ".join(failures))
-            style_dict = style_vector_to_dict(s_pred.tolist(), STYLE_AXIS_NAMES[: len(s_pred)])
+            style_axes = resolve_style_axes(len(s_pred), style_profile=style_profile)
+            style_dict = style_vector_to_dict(s_pred.tolist(), style_axes, style_profile=style_profile)
             style_summary = build_style_summary(style_dict)
             style_tags = build_style_tags(style_dict)
             report["result"]["s_pred"] = s_pred.astype(float).tolist()
@@ -1451,6 +1845,7 @@ def command_e2e_check(args: argparse.Namespace) -> None:
             report["result"]["style_summary"] = dict(style_summary)
             report["result"]["style_summary_text"] = summarize_style_summary(style_summary)
             report["result"]["expression_cues_text"] = summarize_expression_cues(style_dict)
+            report["result"]["style_profile"] = str(style_profile)
             record_stage(
                 build_validation_stage_result(
                     stage_id="z_to_s_pred",
@@ -1733,6 +2128,7 @@ def build_label_output_columns(input_columns: list[str], block_count: int, style
             "consistency_l1",
             "keep_sample",
             "style_dim",
+            "style_profile",
             "error_message",
         ]
     )
@@ -1750,7 +2146,12 @@ def build_label_output_columns(input_columns: list[str], block_count: int, style
     return columns
 
 
-def initialize_label_output_row(record: dict[str, object], block_count: int, style_dim: int) -> dict[str, object]:
+def initialize_label_output_row(
+    record: dict[str, object],
+    block_count: int,
+    style_dim: int,
+    style_profile: str,
+) -> dict[str, object]:
     row = dict(record)
     row["status"] = "error"
     row["generation_status"] = "pending"
@@ -1759,6 +2160,7 @@ def initialize_label_output_row(record: dict[str, object], block_count: int, sty
     row["consistency_l1"] = np.nan
     row["keep_sample"] = False
     row["style_dim"] = style_dim
+    row["style_profile"] = style_profile
     row["error_message"] = ""
     for block_idx in range(1, block_count + 1):
         row[f"s_block{block_idx}_status"] = "pending"
@@ -1789,9 +2191,10 @@ def label_subset_with_local_model(
     keep_threshold: float,
     flush_every: int,
     resume: bool,
+    style_profile: str = DEFAULT_STYLE_PROFILE,
 ) -> None:
     start_time = time.perf_counter()
-    active_axes = resolve_style_axes(style_dim)
+    active_axes = resolve_style_axes(style_dim, style_profile=style_profile)
     style_blocks = build_style_blocks(block_size, active_axes)
     block_count = len(style_blocks)
     output_columns = build_label_output_columns(df.columns.tolist(), block_count, len(active_axes))
@@ -1832,7 +2235,7 @@ def label_subset_with_local_model(
                 skipped += 1
                 continue
 
-        row = initialize_label_output_row(record, block_count, len(active_axes))
+        row = initialize_label_output_row(record, block_count, len(active_axes), style_profile)
         try:
             generation_prompt = make_generation_prompt(record)
             response_text, generation_raw = request_json_response(
@@ -1900,6 +2303,7 @@ def label_subset_with_local_model(
             row["consistency_l1"] = consistency_l1
             row["keep_sample"] = bool(consistency_l1 <= keep_threshold)
             row["style_dim"] = len(active_axes)
+            row["style_profile"] = style_profile
             for axis_idx, axis in enumerate(active_axes):
                 row[f"s_{axis_idx}"] = style[axis]
                 row[f"s_hat_{axis_idx}"] = style_hat[axis]
@@ -1910,6 +2314,7 @@ def label_subset_with_local_model(
                 row["consistency_l1"] = np.nan
                 row["keep_sample"] = False
                 row["style_dim"] = len(active_axes)
+                row["style_profile"] = style_profile
                 row["error_message"] = str(exc)
                 pending_rows.append(row)
             else:
@@ -1945,6 +2350,7 @@ def label_subset_with_local_model(
 
 
 def command_label_local(args: argparse.Namespace) -> None:
+    style_profile = getattr(args, "style_profile", DEFAULT_STYLE_PROFILE)
     input_csv = Path(args.input_csv)
     output_csv = Path(args.output_csv)
     df = pd.read_csv(input_csv)
@@ -1968,6 +2374,7 @@ def command_label_local(args: argparse.Namespace) -> None:
         keep_threshold=args.keep_threshold,
         flush_every=args.flush_every,
         resume=args.resume,
+        style_profile=style_profile,
     )
 
 
@@ -2011,10 +2418,13 @@ def build_parser() -> argparse.ArgumentParser:
         subparser.add_argument("--force-refit", action="store_true")
         subparser.add_argument("--seed", type=int, default=42)
         subparser.add_argument("--z-dim", dest="z_dim", type=int, default=64)
+        subparser.add_argument("--z-encoder-mode", choices=["auto", "stat", "transformer"], default="auto")
+        subparser.add_argument("--z-encoder-path", dest="z_encoder_path", type=str, default=str(DEFAULT_Z_ENCODER_MODEL_PATH))
 
     def add_generation_options(subparser: argparse.ArgumentParser, log_jsonl_default: str | None = None) -> None:
         add_common_options(subparser)
         subparser.add_argument("--zs-model-path", required=True)
+        subparser.add_argument("--style-profile", choices=sorted(STYLE_AXIS_PROFILES), default=DEFAULT_STYLE_PROFILE)
         subparser.add_argument("--base-url", default="http://127.0.0.1:11434/v1")
         subparser.add_argument("--model-name", default="gpt-oss:20b")
         subparser.add_argument("--response-temperature", type=float, default=0.5)
@@ -2087,6 +2497,25 @@ def build_parser() -> argparse.ArgumentParser:
     fit_zs_parser.add_argument("--use-all-rows", action="store_true")
     fit_zs_parser.set_defaults(func=command_fit_zs_regressor)
 
+    fit_z_encoder_parser = subparsers.add_parser("fit-z-encoder")
+    add_common_options(fit_z_encoder_parser)
+    fit_z_encoder_parser.add_argument("--input-csv", required=True)
+    fit_z_encoder_parser.add_argument("--text-column", default="text")
+    fit_z_encoder_parser.add_argument("--zs-model-path", required=True)
+    fit_z_encoder_parser.add_argument("--z-output-csv", default=None)
+    fit_z_encoder_parser.add_argument("--style-dim", type=int, default=32)
+    fit_z_encoder_parser.add_argument("--style-profile", choices=sorted(STYLE_AXIS_PROFILES), default=DEFAULT_STYLE_PROFILE)
+    fit_z_encoder_parser.add_argument("--epochs", type=int, default=12)
+    fit_z_encoder_parser.add_argument("--batch-size", type=int, default=32)
+    fit_z_encoder_parser.add_argument("--learning-rate", type=float, default=5e-4)
+    fit_z_encoder_parser.add_argument("--weight-decay", type=float, default=1e-4)
+    fit_z_encoder_parser.add_argument("--ridge-alpha", type=float, default=1.0)
+    fit_z_encoder_parser.add_argument("--val-ratio", type=float, default=0.1)
+    fit_z_encoder_parser.add_argument("--progress-every", type=int, default=100)
+    fit_z_encoder_parser.add_argument("--use-all-rows", action="store_true")
+    fit_z_encoder_parser.add_argument("--warm-start-z-encoder", action="store_true")
+    fit_z_encoder_parser.set_defaults(func=command_fit_z_encoder)
+
     predict_s_parser = subparsers.add_parser("predict-s")
     predict_s_parser.add_argument("--input-csv", required=True)
     predict_s_parser.add_argument("--output-csv", required=True)
@@ -2109,6 +2538,7 @@ def build_parser() -> argparse.ArgumentParser:
     local_parser.add_argument("--max-retries", type=int, default=2)
     local_parser.add_argument("--block-size", type=int, default=8)
     local_parser.add_argument("--style-dim", type=int, default=32)
+    local_parser.add_argument("--style-profile", choices=sorted(STYLE_AXIS_PROFILES), default=DEFAULT_STYLE_PROFILE)
     local_parser.add_argument("--keep-threshold", type=float, default=0.12)
     local_parser.add_argument("--keep-failures", action="store_true")
     local_parser.add_argument("--flush-every", type=int, default=10)

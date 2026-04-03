@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="560" viewBox="0 0 980 560">
+<style>
+text { font-family: 'Malgun Gothic', 'Segoe UI', sans-serif; fill: #1f2937; }
+.title { font-size: 24px; font-weight: 700; }
+.subtitle { font-size: 13px; fill: #6b7280; }
+.axis { font-size: 12px; fill: #4b5563; }
+.label { font-size: 12px; }
+.small { font-size: 11px; fill: #4b5563; }
+.value { font-size: 11px; font-weight: 600; }
+.grid { stroke: #e5e7eb; stroke-width: 1; }
+.axis-line { stroke: #9ca3af; stroke-width: 1.2; }
+.note { font-size: 12px; fill: #374151; }
+</style>
+<rect x="0" y="0" width="100%" height="100%" fill="#ffffff"/>
+<text class="title" x="40" y="42">z-to-s Predictor Comparison</text>
+<text class="subtitle" x="40" y="66">Validation MAE across baseline predictors and EmoNet z64</text>
+<line class="grid" x1="90" y1="110.00" x2="940" y2="110.00"/>
+<text class="axis" x="82" y="114.00" text-anchor="end">0.164</text>
+<line class="grid" x1="90" y1="181.00" x2="940" y2="181.00"/>
+<text class="axis" x="82" y="185.00" text-anchor="end">0.131</text>
+<line class="grid" x1="90" y1="252.00" x2="940" y2="252.00"/>
+<text class="axis" x="82" y="256.00" text-anchor="end">0.098</text>
+<line class="grid" x1="90" y1="323.00" x2="940" y2="323.00"/>
+<text class="axis" x="82" y="327.00" text-anchor="end">0.065</text>
+<line class="grid" x1="90" y1="394.00" x2="940" y2="394.00"/>
+<text class="axis" x="82" y="398.00" text-anchor="end">0.033</text>
+<line class="grid" x1="90" y1="465.00" x2="940" y2="465.00"/>
+<text class="axis" x="82" y="469.00" text-anchor="end">0.000</text>
+<line class="axis-line" x1="90" y1="465" x2="940" y2="465"/>
+<line class="axis-line" x1="90" y1="110" x2="90" y2="465"/>
+<line x1="90" y1="167.72" x2="940" y2="167.72" stroke="#dc2626" stroke-width="2" stroke-dasharray="7 5"/>
+<text class="small" x="936" y="159.72" text-anchor="end">mean baseline</text>
+<rect x="168.25" y="167.72" width="56.00" height="297.28" rx="6" fill="#9ca3af"/>
+<text class="value" x="196.25" y="159.72" text-anchor="middle">0.1371</text>
+<text class="label" x="196.25" y="485.00" text-anchor="middle">mean baseline</text>
+<rect x="380.75" y="160.08" width="56.00" height="304.92" rx="6" fill="#14b8a6"/>
+<text class="value" x="408.75" y="152.08" text-anchor="middle">0.1406</text>
+<text class="label" x="408.75" y="485.00" text-anchor="middle">stim-only</text>
+<rect x="593.25" y="156.30" width="56.00" height="308.70" rx="6" fill="#60a5fa"/>
+<text class="value" x="621.25" y="148.30" text-anchor="middle">0.1423</text>
+<text class="label" x="621.25" y="485.00" text-anchor="middle">text tfidf</text>
+<rect x="805.75" y="156.61" width="56.00" height="308.39" rx="6" fill="#2563eb"/>
+<text class="value" x="833.75" y="148.61" text-anchor="middle">0.1422</text>
+<text class="label" x="833.75" y="485.00" text-anchor="middle">EmoNet z64</text>
+<text class="axis" x="32" y="94" text-anchor="start">validation MAE</text>
+<text class="note" x="40" y="536">Lower is better. None of the current predictors beat the mean baseline.</text>
+</svg>

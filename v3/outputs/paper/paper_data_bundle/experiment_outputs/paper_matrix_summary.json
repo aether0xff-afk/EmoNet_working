@@ -1,0 +1,24 @@
+{
+  "path": "outputs\\experiments\\paper_matrix.csv",
+  "rows": 300,
+  "conditions": {
+    "direct": {
+      "rows": 100,
+      "ok_rows": 99,
+      "error_rows": 1,
+      "mean_response_length": 204.657
+    },
+    "emonet_full": {
+      "rows": 100,
+      "ok_rows": 91,
+      "error_rows": 9,
+      "mean_response_length": 184.033
+    },
+    "stim_only": {
+      "rows": 100,
+      "ok_rows": 100,
+      "error_rows": 0,
+      "mean_response_length": 203.98
+    }
+  }
+}

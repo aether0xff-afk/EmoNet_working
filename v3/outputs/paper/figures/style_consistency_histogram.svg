@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="560" viewBox="0 0 980 560">
+<style>
+text { font-family: 'Malgun Gothic', 'Segoe UI', sans-serif; fill: #1f2937; }
+.title { font-size: 24px; font-weight: 700; }
+.subtitle { font-size: 13px; fill: #6b7280; }
+.axis { font-size: 12px; fill: #4b5563; }
+.label { font-size: 12px; }
+.small { font-size: 11px; fill: #4b5563; }
+.value { font-size: 11px; font-weight: 600; }
+.grid { stroke: #e5e7eb; stroke-width: 1; }
+.axis-line { stroke: #9ca3af; stroke-width: 1.2; }
+.note { font-size: 12px; fill: #374151; }
+</style>
+<rect x="0" y="0" width="100%" height="100%" fill="#ffffff"/>
+<text class="title" x="40" y="42">Style Label Consistency</text>
+<text class="subtitle" x="40" y="66">Distribution of mean absolute difference between s and s_hat</text>
+<line class="grid" x1="90" y1="110.00" x2="940" y2="110.00"/>
+<text class="axis" x="82" y="114.00" text-anchor="end">43</text>
+<line class="grid" x1="90" y1="182.00" x2="940" y2="182.00"/>
+<text class="axis" x="82" y="186.00" text-anchor="end">34</text>
+<line class="grid" x1="90" y1="254.00" x2="940" y2="254.00"/>
+<text class="axis" x="82" y="258.00" text-anchor="end">26</text>
+<line class="grid" x1="90" y1="326.00" x2="940" y2="326.00"/>
+<text class="axis" x="82" y="330.00" text-anchor="end">17</text>
+<line class="grid" x1="90" y1="398.00" x2="940" y2="398.00"/>
+<text class="axis" x="82" y="402.00" text-anchor="end">9</text>
+<line class="grid" x1="90" y1="470.00" x2="940" y2="470.00"/>
+<text class="axis" x="82" y="474.00" text-anchor="end">0</text>
+<line class="axis-line" x1="90" y1="470" x2="940" y2="470"/>
+<line class="axis-line" x1="90" y1="110" x2="90" y2="470"/>
+<rect x="91.00" y="376.93" width="68.83" height="93.07" fill="#2563eb" rx="3"/>
+<rect x="161.83" y="300.79" width="68.83" height="169.21" fill="#2563eb" rx="3"/>
+<rect x="232.67" y="156.96" width="68.83" height="313.04" fill="#2563eb" rx="3"/>
+<rect x="303.50" y="165.42" width="68.83" height="304.58" fill="#2563eb" rx="3"/>
+<rect x="374.33" y="207.72" width="68.83" height="262.28" fill="#2563eb" rx="3"/>
+<rect x="445.17" y="216.18" width="68.83" height="253.82" fill="#2563eb" rx="3"/>
+<rect x="516.00" y="309.25" width="68.83" height="160.75" fill="#2563eb" rx="3"/>
+<rect x="586.83" y="402.31" width="68.83" height="67.69" fill="#2563eb" rx="3"/>
+<rect x="657.67" y="436.16" width="68.83" height="33.84" fill="#2563eb" rx="3"/>
+<rect x="728.50" y="470.00" width="68.83" height="0.00" fill="#2563eb" rx="3"/>
+<rect x="799.33" y="453.08" width="68.83" height="16.92" fill="#2563eb" rx="3"/>
+<rect x="870.17" y="461.54" width="68.83" height="8.46" fill="#2563eb" rx="3"/>
+<text class="axis" x="90.00" y="490" text-anchor="middle">0.01</text>
+<text class="axis" x="160.83" y="490" text-anchor="middle">0.03</text>
+<text class="axis" x="231.67" y="490" text-anchor="middle">0.05</text>
+<text class="axis" x="302.50" y="490" text-anchor="middle">0.08</text>
+<text class="axis" x="373.33" y="490" text-anchor="middle">0.10</text>
+<text class="axis" x="444.17" y="490" text-anchor="middle">0.12</text>
+<text class="axis" x="515.00" y="490" text-anchor="middle">0.14</text>
+<text class="axis" x="585.83" y="490" text-anchor="middle">0.17</text>
+<text class="axis" x="656.67" y="490" text-anchor="middle">0.19</text>
+<text class="axis" x="727.50" y="490" text-anchor="middle">0.21</text>
+<text class="axis" x="798.33" y="490" text-anchor="middle">0.24</text>
+<text class="axis" x="869.17" y="490" text-anchor="middle">0.26</text>
+<text class="axis" x="940.00" y="490" text-anchor="middle">0.28</text>
+<text class="axis" x="515.00" y="538" text-anchor="middle">consistency L1</text>
+<text class="note" x="40" y="538">200 labeled samples, keep threshold = 0.12</text>
+</svg>

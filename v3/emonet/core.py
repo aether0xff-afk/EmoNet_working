@@ -194,6 +194,8 @@ class EmoNetConfig:
     s_dim: int = 32
     topk_branches: int = 4
     z_encoder_mode: Literal["stat", "transformer"] = "stat"
+    z_encoder_path: Path = field(default_factory=lambda: _project_root() / "artifacts" / "dominant_branch_encoder.pt")
+    load_z_encoder_checkpoint: bool = True
 
     n_layers: int = 2
     n_heads: int = 4
@@ -207,8 +209,8 @@ class EmoNetConfig:
         expected_total = self.n_inhibitory + self.n_excitatory + self.n_modulatory
         if expected_total != self.n_neurons:
             raise ValueError(f"Neuron counts must sum to n_neurons, got {expected_total} != {self.n_neurons}")
-        if self.s_dim != len(STYLE_AXES):
-            raise ValueError(f"s_dim must match STYLE_AXES ({len(STYLE_AXES)})")
+        if self.s_dim <= 0:
+            raise ValueError("s_dim must be positive")
 
 
 def _project_root() -> Path:
@@ -896,33 +898,15 @@ class BranchExtractor:
         selected_paths = topk_paths[:topk]
         if not selected_paths:
             return self._fallback_branch(fallback_stim_vec, branch_log)
-
-        total_score = sum(path.score for path in selected_paths) + 1e-8
-        global_weights = [path.score / total_score for path in selected_paths]
-
-        steps_by_tick: dict[int, list[tuple[float, BranchStep]]] = {}
-        for weight, path in zip(global_weights, selected_paths, strict=False):
-            for step in path.steps:
-                steps_by_tick.setdefault(step.tick, []).append((weight, step))
-
-        dominant_branch: list[DominantBranchStep] = []
-        for tick in sorted(steps_by_tick):
-            contributions = steps_by_tick[tick]
-            present_weight_sum = sum(weight for weight, _ in contributions) + 1e-8
-            stim_acc = np.zeros(STIM_DIM, dtype=np.float32)
-            k_acc = 0.0
-            for weight, step in contributions:
-                normalized_weight = weight / present_weight_sum
-                stim_acc += normalized_weight * step.stim_vec
-                k_acc += normalized_weight * step.K
-            dominant_branch.append(
-                DominantBranchStep(
-                    tick=tick,
-                    stim_vec=clamp_stim_vec(stim_acc),
-                    K=float(k_acc),
-                )
+        best_path = selected_paths[0]
+        return [
+            DominantBranchStep(
+                tick=step.tick,
+                stim_vec=clamp_stim_vec(step.stim_vec.copy()),
+                K=float(step.K),
             )
-        return dominant_branch
+            for step in best_path.steps
+        ]
 
     @staticmethod
     def _find_last_non_empty_record_index(branch_log: list[TickRecord]) -> Optional[int]:
@@ -1082,6 +1066,13 @@ class EmoNet:
         self.numpy_branch_encoder = NumpyBranchEncoder(self.config)
         self.z_to_s_regressor = ZtoSRegressor(self.config) if TORCH_AVAILABLE else None
         self.use_torch_z_encoder = self.config.z_encoder_mode == "transformer" and TORCH_AVAILABLE
+        if (
+            self.use_torch_z_encoder
+            and self.z_encoder is not None
+            and self.config.load_z_encoder_checkpoint
+            and Path(self.config.z_encoder_path).exists()
+        ):
+            self.load_z_encoder(self.config.z_encoder_path)
 
         self.last_base_stim_vec = np.zeros(STIM_DIM, dtype=np.float32)
         self.pending_signals: dict[int, list[float]] = {}
@@ -1331,6 +1322,34 @@ class EmoNet:
             ]
         )
         return "\n".join(lines)
+
+    def save_z_encoder(self, path: Optional[Path] = None) -> Path:
+        if not TORCH_AVAILABLE or self.z_encoder is None:
+            raise RuntimeError("torch transformer encoder is not available")
+        target_path = Path(path) if path is not None else Path(self.config.z_encoder_path)
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "state_dict": self.z_encoder.state_dict(),
+            "z_dim": int(self.config.z_dim),
+            "d_model": int(self.config.d_model),
+            "n_layers": int(self.config.n_layers),
+            "n_heads": int(self.config.n_heads),
+            "ff_dim": int(self.config.ff_dim),
+            "dropout": float(self.config.dropout),
+        }
+        torch.save(payload, target_path)
+        return target_path
+
+    def load_z_encoder(self, path: Path, strict: bool = True) -> Path:
+        if not TORCH_AVAILABLE or self.z_encoder is None:
+            raise RuntimeError("torch transformer encoder is not available")
+        model_path = Path(path)
+        if not model_path.exists():
+            raise FileNotFoundError(f"z encoder checkpoint not found: {model_path}")
+        payload = torch.load(model_path, map_location="cpu")
+        state_dict = payload["state_dict"] if isinstance(payload, dict) and "state_dict" in payload else payload
+        self.z_encoder.load_state_dict(state_dict, strict=strict)
+        return model_path
 
     def _apply_memory_sequence(self, neuron: NeuronState, text: str, effective_remem: float) -> None:
         if neuron.K > effective_remem:

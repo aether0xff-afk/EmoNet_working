@@ -1,0 +1,146 @@
+{
+  "mean_baseline": {
+    "rows_used": 190,
+    "val_rows": 19,
+    "decoder_mae_mean": 0.137052,
+    "runs": [
+      {
+        "seed": 7,
+        "decoder_mae": 0.132384
+      },
+      {
+        "seed": 13,
+        "decoder_mae": 0.130129
+      },
+      {
+        "seed": 21,
+        "decoder_mae": 0.141137
+      },
+      {
+        "seed": 42,
+        "decoder_mae": 0.143826
+      },
+      {
+        "seed": 84,
+        "decoder_mae": 0.137785
+      }
+    ]
+  },
+  "stim_only_ridge": {
+    "rows_used": 190,
+    "val_rows": 19,
+    "decoder_mae_mean": 0.140574,
+    "baseline_mae_mean": 0.137052,
+    "mean_gain": -0.003522,
+    "runs": [
+      {
+        "seed": 7,
+        "decoder_mae": 0.135203,
+        "mean_baseline_mae": 0.132384,
+        "gain": -0.002819
+      },
+      {
+        "seed": 13,
+        "decoder_mae": 0.133771,
+        "mean_baseline_mae": 0.130129,
+        "gain": -0.003642
+      },
+      {
+        "seed": 21,
+        "decoder_mae": 0.146337,
+        "mean_baseline_mae": 0.141137,
+        "gain": -0.0052
+      },
+      {
+        "seed": 42,
+        "decoder_mae": 0.146825,
+        "mean_baseline_mae": 0.143826,
+        "gain": -0.003
+      },
+      {
+        "seed": 84,
+        "decoder_mae": 0.140734,
+        "mean_baseline_mae": 0.137785,
+        "gain": -0.002949
+      }
+    ]
+  },
+  "text_tfidf_ridge": {
+    "rows_used": 190,
+    "val_rows": 19,
+    "decoder_mae_mean": 0.142313,
+    "baseline_mae_mean": 0.137052,
+    "mean_gain": -0.005261,
+    "runs": [
+      {
+        "seed": 7,
+        "decoder_mae": 0.135252,
+        "mean_baseline_mae": 0.132384,
+        "gain": -0.002867
+      },
+      {
+        "seed": 13,
+        "decoder_mae": 0.137405,
+        "mean_baseline_mae": 0.130129,
+        "gain": -0.007276
+      },
+      {
+        "seed": 21,
+        "decoder_mae": 0.141178,
+        "mean_baseline_mae": 0.141137,
+        "gain": -4.1e-05
+      },
+      {
+        "seed": 42,
+        "decoder_mae": 0.153915,
+        "mean_baseline_mae": 0.143826,
+        "gain": -0.01009
+      },
+      {
+        "seed": 84,
+        "decoder_mae": 0.143816,
+        "mean_baseline_mae": 0.137785,
+        "gain": -0.00603
+      }
+    ]
+  },
+  "emonet_z64_ridge": {
+    "rows_used": 190,
+    "val_rows": 19,
+    "decoder_mae_mean": 0.142172,
+    "baseline_mae_mean": 0.137052,
+    "mean_gain": -0.00512,
+    "runs": [
+      {
+        "seed": 7,
+        "decoder_mae": 0.140596,
+        "mean_baseline_mae": 0.132384,
+        "gain": -0.008211
+      },
+      {
+        "seed": 13,
+        "decoder_mae": 0.134372,
+        "mean_baseline_mae": 0.130129,
+        "gain": -0.004243
+      },
+      {
+        "seed": 21,
+        "decoder_mae": 0.146876,
+        "mean_baseline_mae": 0.141137,
+        "gain": -0.005739
+      },
+      {
+        "seed": 42,
+        "decoder_mae": 0.14761,
+        "mean_baseline_mae": 0.143826,
+        "gain": -0.003784
+      },
+      {
+        "seed": 84,
+        "decoder_mae": 0.141408,
+        "mean_baseline_mae": 0.137785,
+        "gain": -0.003623
+      }
+    ]
+  }
+}

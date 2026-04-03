@@ -57,6 +57,9 @@ if ($Task -in @("baselines", "all")) {
         "--summary-json", ".\outputs\paper\requested_tables\baseline_generation_table.json",
         "--base-url", $BaseUrl,
         "--model-name", $ModelName,
+        "--max-tokens", "600",
+        "--max-retries", "4",
+        "--keep-failures",
         "--resume"
     )
 }

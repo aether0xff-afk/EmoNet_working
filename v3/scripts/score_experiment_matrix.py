@@ -11,7 +11,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from emonet.cli import ensure_model_server_ready, request_json_response
+from emonet.cli import append_csv_rows, ensure_model_server_ready, request_json_response
 
 
 SCORE_KEYS = [
@@ -112,6 +112,8 @@ def score_matrix(
     temperature: float,
     max_retries: int,
     progress_every: int,
+    flush_every: int,
+    keep_failures: bool,
     resume: bool,
 ) -> pd.DataFrame:
     df = pd.read_csv(input_csv)
@@ -121,6 +123,18 @@ def score_matrix(
 
     existing_keys = load_existing_keys(output_csv) if resume else set()
     output_rows: list[dict[str, object]] = []
+    output_columns = [
+        "record_id",
+        "condition",
+        "condition_group",
+        "status",
+        "error_message",
+        "text",
+        "llm_response",
+        "response_length",
+        "judge_raw_output",
+        *SCORE_KEYS,
+    ]
 
     for idx, row in enumerate(ok_df.to_dict(orient="records"), start=1):
         record_id = str(row.get("record_id", row.get("sample_id", f"row_{idx:06d}")))
@@ -129,48 +143,74 @@ def score_matrix(
         if key in existing_keys:
             continue
 
-        prompt = build_judge_prompt(row)
-        payload, raw = request_json_response(
-            base_url=base_url,
-            model_name=model_name,
-            prompt=prompt,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            timeout_sec=timeout_sec,
-            max_retries=max_retries,
-            validator=normalize_scores,
-            retry_instruction=(
-                "직전 응답의 JSON 형식 또는 점수 범위가 잘못되었다. "
-                "반드시 scores object 안에 다섯 항목을 1~5 정수로 다시 출력하라."
-            ),
-        )
         scored = {
             "record_id": record_id,
             "condition": condition,
             "condition_group": str(row.get("condition_group", "")),
+            "status": "error",
+            "error_message": "",
             "text": str(row.get("text", "")),
             "llm_response": str(row.get("llm_response", "")),
             "response_length": int(len(str(row.get("llm_response", "")))),
-            "judge_raw_output": raw,
+            "judge_raw_output": "",
         }
-        for key_name, value in payload.items():
-            scored[key_name] = int(value)
-        output_rows.append(scored)
+        for key_name in SCORE_KEYS:
+            scored[key_name] = pd.NA
+
+        prompt = build_judge_prompt(row)
+        try:
+            payload, raw = request_json_response(
+                base_url=base_url,
+                model_name=model_name,
+                prompt=prompt,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                timeout_sec=timeout_sec,
+                max_retries=max_retries,
+                validator=normalize_scores,
+                retry_instruction=(
+                    "직전 응답의 JSON 형식 또는 점수 범위가 잘못되었다. "
+                    "반드시 scores object 안에 다섯 항목을 1~5 정수로 다시 출력하라."
+                ),
+            )
+            scored["status"] = "ok"
+            scored["judge_raw_output"] = raw
+            for key_name, value in payload.items():
+                scored[key_name] = int(value)
+            output_rows.append(scored)
+        except Exception as exc:
+            scored["error_message"] = str(exc)
+            if keep_failures:
+                output_rows.append(scored)
+            else:
+                raise
+
+        if flush_every > 0 and len(output_rows) >= flush_every:
+            append_csv_rows(output_csv, output_rows, columns=output_columns)
+            output_rows.clear()
 
         if progress_every > 0 and idx % progress_every == 0:
             print(f"scored {idx}/{len(ok_df)} rows")
 
-    scored_df = pd.DataFrame(output_rows)
-    if resume and output_csv.exists() and output_csv.stat().st_size > 0:
-        existing = pd.read_csv(output_csv)
-        scored_df = pd.concat([existing, scored_df], axis=0, ignore_index=True)
-
-    output_csv.parent.mkdir(parents=True, exist_ok=True)
-    scored_df.to_csv(output_csv, index=False, encoding="utf-8-sig")
+    append_csv_rows(output_csv, output_rows, columns=output_columns)
+    scored_df = pd.read_csv(output_csv)
     return scored_df
 
 
 def summarize_scores(scored_df: pd.DataFrame) -> pd.DataFrame:
+    if "status" in scored_df.columns:
+        scored_df = scored_df[scored_df["status"].fillna("") == "ok"].copy()
+    if scored_df.empty:
+        return pd.DataFrame(
+            columns=[
+                "condition",
+                "condition_group",
+                "rows",
+                "mean_response_length",
+                *[f"mean_{key}" for key in SCORE_KEYS],
+                "mean_total",
+            ]
+        )
     rows: list[dict[str, object]] = []
     for condition, group in scored_df.groupby("condition", dropna=False):
         row = {
@@ -214,6 +254,8 @@ def main() -> None:
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--max-retries", type=int, default=2)
     parser.add_argument("--progress-every", type=int, default=10)
+    parser.add_argument("--flush-every", type=int, default=10)
+    parser.add_argument("--keep-failures", action="store_true")
     parser.add_argument("--resume", action="store_true")
     args = parser.parse_args()
 
@@ -233,6 +275,8 @@ def main() -> None:
         temperature=args.temperature,
         max_retries=args.max_retries,
         progress_every=args.progress_every,
+        flush_every=args.flush_every,
+        keep_failures=args.keep_failures,
         resume=args.resume,
     )
     summary_df = summarize_scores(scored_df)

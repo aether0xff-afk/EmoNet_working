@@ -1,0 +1,116 @@
+{
+  "archived_at": "2026-04-06",
+  "archive_root": "archive/2026-04-06_legacy_runs",
+  "policy": {
+    "keep_active_top_level": true,
+    "delete_files": false,
+    "untouched_roots": [
+      "outputs/experiments",
+      "outputs/paper"
+    ]
+  },
+  "active_canonical_files": [
+    "artifacts/ridge_stim_encoder.joblib",
+    "artifacts/dominant_branch_encoder_extended40.pt",
+    "artifacts/z_to_s_decoder_extended40.npz",
+    "outputs/llm/llm_subset_4000_extended40.csv",
+    "outputs/llm/llm_subset_4000_extended40_prompts.jsonl",
+    "outputs/llm/llm_subset_labeled_4000_extended40.csv",
+    "outputs/z/out_z_training_extended40.csv",
+    "outputs/z/out_z_training_learned_extended40.csv"
+  ],
+  "archived_files": [
+    {
+      "from": "artifacts/z_to_s_decoder.npz",
+      "to": "archive/2026-04-06_legacy_runs/artifacts/z_to_s_decoder.npz"
+    },
+    {
+      "from": "artifacts/z_to_s_decoder_200.npz",
+      "to": "archive/2026-04-06_legacy_runs/artifacts/z_to_s_decoder_200.npz"
+    },
+    {
+      "from": "outputs/llm/llm_subset.csv",
+      "to": "archive/2026-04-06_legacy_runs/outputs/llm/llm_subset.csv"
+    },
+    {
+      "from": "outputs/llm/llm_subset_2000.csv",
+      "to": "archive/2026-04-06_legacy_runs/outputs/llm/llm_subset_2000.csv"
+    },
+    {
+      "from": "outputs/llm/llm_subset_labeled_200_ollama.csv",
+      "to": "archive/2026-04-06_legacy_runs/outputs/llm/llm_subset_labeled_200_ollama.csv"
+    },
+    {
+      "from": "outputs/llm/llm_subset_labeled_2000_ollama.csv",
+      "to": "archive/2026-04-06_legacy_runs/outputs/llm/llm_subset_labeled_2000_ollama.csv"
+    },
+    {
+      "from": "outputs/llm/llm_subset_labeled_50.csv",
+      "to": "archive/2026-04-06_legacy_runs/outputs/llm/llm_subset_labeled_50.csv"
+    },
+    {
+      "from": "outputs/llm/llm_subset_labeled_50_ollama.csv",
+      "to": "archive/2026-04-06_legacy_runs/outputs/llm/llm_subset_labeled_50_ollama.csv"
+    },
+    {
+      "from": "outputs/llm/llm_subset_labeled_50_v2.csv",
+      "to": "archive/2026-04-06_legacy_runs/outputs/llm/llm_subset_labeled_50_v2.csv"
+    },
+    {
+      "from": "outputs/llm/llm_subset_labeled_test.csv",
+      "to": "archive/2026-04-06_legacy_runs/outputs/llm/llm_subset_labeled_test.csv"
+    },
+    {
+      "from": "outputs/llm/llm_subset_prompts.jsonl",
+      "to": "archive/2026-04-06_legacy_runs/outputs/llm/llm_subset_prompts.jsonl"
+    },
+    {
+      "from": "outputs/z/out_z_sample.csv",
+      "to": "archive/2026-04-06_legacy_runs/outputs/z/out_z_sample.csv"
+    },
+    {
+      "from": "outputs/z/out_z_training.csv",
+      "to": "archive/2026-04-06_legacy_runs/outputs/z/out_z_training.csv"
+    },
+    {
+      "from": "outputs/z/out_z_training_with_s_pred.csv",
+      "to": "archive/2026-04-06_legacy_runs/outputs/z/out_z_training_with_s_pred.csv"
+    },
+    {
+      "from": "outputs/z/out_z_training_with_s_pred_200.csv",
+      "to": "archive/2026-04-06_legacy_runs/outputs/z/out_z_training_with_s_pred_200.csv"
+    },
+    {
+      "from": "outputs/responses/single_response.json",
+      "to": "archive/2026-04-06_legacy_runs/outputs/responses/single_response.json"
+    },
+    {
+      "from": "outputs/responses/single_response_log.jsonl",
+      "to": "archive/2026-04-06_legacy_runs/outputs/responses/single_response_log.jsonl"
+    },
+    {
+      "from": "outputs/validation/e2e_check_report.json",
+      "to": "archive/2026-04-06_legacy_runs/outputs/validation/e2e_check_report.json"
+    },
+    {
+      "from": "outputs/validation/e2e_check_report_success.json",
+      "to": "archive/2026-04-06_legacy_runs/outputs/validation/e2e_check_report_success.json"
+    },
+    {
+      "from": "outputs/validation/e2e_check_runs.csv",
+      "to": "archive/2026-04-06_legacy_runs/outputs/validation/e2e_check_runs.csv"
+    },
+    {
+      "from": "outputs/validation/e2e_check_runs.jsonl",
+      "to": "archive/2026-04-06_legacy_runs/outputs/validation/e2e_check_runs.jsonl"
+    },
+    {
+      "from": "outputs/validation/e2e_check_runs_success.csv",
+      "to": "archive/2026-04-06_legacy_runs/outputs/validation/e2e_check_runs_success.csv"
+    },
+    {
+      "from": "outputs/validation/e2e_check_runs_success.jsonl",
+      "to": "archive/2026-04-06_legacy_runs/outputs/validation/e2e_check_runs_success.jsonl"
+    }
+  ]
+}

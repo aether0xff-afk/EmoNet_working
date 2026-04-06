@@ -1,0 +1,19 @@
+{
+  "archived_at": "2026-04-06",
+  "archive_root": "archive/2026-04-06_paper_history",
+  "purpose": [
+    "keep superseded paper drafts without deleting them",
+    "treat PAPER_FRESH_DRAFT_ko.md as the current working draft",
+    "separate old draft history from current audit and worklist files"
+  ],
+  "current_top_level_files": [
+    "PAPER_FRESH_DRAFT_ko.md",
+    "PAPER_BLUEPRINT_ko.md",
+    "PAPER_WORKLIST.md"
+  ],
+  "archived_files": [
+    "PAPER_DRAFT_ko.md",
+    "PAPER_DRAFT_ko_v2.md",
+    "PAPER_RESULTS_APPENDIX.md"
+  ]
+}

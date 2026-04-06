@@ -87,12 +87,42 @@ def build_model(
         z_encoder_path,
         allow_missing_checkpoint=allow_missing_z_encoder_checkpoint,
     )
+    config_kwargs: dict[str, Any] = {
+        "seed": args.seed,
+        "z_dim": args.z_dim,
+        "z_encoder_mode": z_encoder_mode,
+        "z_encoder_path": z_encoder_path,
+        "load_z_encoder_checkpoint": load_z_encoder_checkpoint,
+    }
+    optional_config_fields = [
+        "max_ticks",
+        "min_ticks_before_converged",
+        "k_threshold_base",
+        "k_remem_base",
+        "k_decay",
+        "refractory_ticks",
+        "memory_decay",
+        "memory_stim_mix",
+        "memory_k_mix",
+        "max_out_degree",
+        "min_out_degree",
+        "dopa_rewire_gain",
+        "sero_prune_gain",
+        "mela_dropout_gain",
+        "ne_thresh_reduce_gain",
+        "ne_remem_reduce_gain",
+        "global_recovery_rate",
+        "topk_branches",
+        "branch_end_window",
+        "branch_length_bonus",
+    ]
+    for field_name in optional_config_fields:
+        field_value = getattr(args, field_name, None)
+        if field_value is not None:
+            config_kwargs[field_name] = field_value
+
     config = EmoNetConfig(
-        seed=args.seed,
-        z_dim=args.z_dim,
-        z_encoder_mode=z_encoder_mode,
-        z_encoder_path=z_encoder_path,
-        load_z_encoder_checkpoint=load_z_encoder_checkpoint,
+        **config_kwargs,
     )
     stim_config = build_stim_config(args)
     return EmoNet(config=config, stim_encoder_config=stim_config)
@@ -2420,6 +2450,26 @@ def build_parser() -> argparse.ArgumentParser:
         subparser.add_argument("--z-dim", dest="z_dim", type=int, default=64)
         subparser.add_argument("--z-encoder-mode", choices=["auto", "stat", "transformer"], default="auto")
         subparser.add_argument("--z-encoder-path", dest="z_encoder_path", type=str, default=str(DEFAULT_Z_ENCODER_MODEL_PATH))
+        subparser.add_argument("--max-ticks", dest="max_ticks", type=int, default=None)
+        subparser.add_argument("--min-ticks-before-converged", dest="min_ticks_before_converged", type=int, default=None)
+        subparser.add_argument("--k-threshold-base", dest="k_threshold_base", type=float, default=None)
+        subparser.add_argument("--k-remem-base", dest="k_remem_base", type=float, default=None)
+        subparser.add_argument("--k-decay", dest="k_decay", type=float, default=None)
+        subparser.add_argument("--refractory-ticks", dest="refractory_ticks", type=int, default=None)
+        subparser.add_argument("--memory-decay", dest="memory_decay", type=float, default=None)
+        subparser.add_argument("--memory-stim-mix", dest="memory_stim_mix", type=float, default=None)
+        subparser.add_argument("--memory-k-mix", dest="memory_k_mix", type=float, default=None)
+        subparser.add_argument("--max-out-degree", dest="max_out_degree", type=int, default=None)
+        subparser.add_argument("--min-out-degree", dest="min_out_degree", type=int, default=None)
+        subparser.add_argument("--dopa-rewire-gain", dest="dopa_rewire_gain", type=float, default=None)
+        subparser.add_argument("--sero-prune-gain", dest="sero_prune_gain", type=float, default=None)
+        subparser.add_argument("--mela-dropout-gain", dest="mela_dropout_gain", type=float, default=None)
+        subparser.add_argument("--ne-thresh-reduce-gain", dest="ne_thresh_reduce_gain", type=float, default=None)
+        subparser.add_argument("--ne-remem-reduce-gain", dest="ne_remem_reduce_gain", type=float, default=None)
+        subparser.add_argument("--global-recovery-rate", dest="global_recovery_rate", type=float, default=None)
+        subparser.add_argument("--topk-branches", dest="topk_branches", type=int, default=None)
+        subparser.add_argument("--branch-end-window", dest="branch_end_window", type=int, default=None)
+        subparser.add_argument("--branch-length-bonus", dest="branch_length_bonus", type=float, default=None)
 
     def add_generation_options(subparser: argparse.ArgumentParser, log_jsonl_default: str | None = None) -> None:
         add_common_options(subparser)

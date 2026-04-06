@@ -8,7 +8,18 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from emonet import BranchExtractor, BranchPath, BranchStep, EmoNet, EmoNetConfig, LinearZtoSDecoder, StimEncoderConfig, TORCH_AVAILABLE
+from emonet import (
+    BranchExtractor,
+    BranchPath,
+    BranchStep,
+    EmoNet,
+    EmoNetConfig,
+    LinearZtoSDecoder,
+    NodeStepState,
+    StimEncoderConfig,
+    TickRecord,
+    TORCH_AVAILABLE,
+)
 from emonet.cli import (
     STYLE_AXIS_NAMES,
     build_balanced_subset,
@@ -169,6 +180,20 @@ class EmoNetSmokeTests(unittest.TestCase):
             self.assertIn("dopamine", df.columns)
             self.assertIn("dominant_branch_len", df.columns)
 
+    def test_run_until_converged_respects_min_ticks_before_stopping(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            stim_config = self.make_stim_encoder_config(Path(temp_dir_name))
+            model = EmoNet(
+                EmoNetConfig(
+                    seed=17,
+                    delta_k_eps=1e9,
+                    min_ticks_before_converged=4,
+                ),
+                stim_encoder_config=stim_config,
+            )
+            model.run_until_converged("urgent critical alert now")
+            self.assertGreaterEqual(model.state.tick, 4)
+
     def test_build_balanced_subset_and_prompt_jsonl(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir_name:
             temp_dir = Path(temp_dir_name)
@@ -267,6 +292,46 @@ class EmoNetSmokeTests(unittest.TestCase):
         self.assertAlmostEqual(float(dominant[0].K), 1.2)
         self.assertTrue(np.allclose(dominant[0].stim_vec, best_path.steps[0].stim_vec))
         self.assertAlmostEqual(float(dominant[1].K), 1.8)
+
+    def test_extract_topk_branches_prefers_persistent_path_over_late_spike(self) -> None:
+        extractor = BranchExtractor()
+        branch_log = [
+            TickRecord(
+                tick=0,
+                active_nodes=[1],
+                node_states={1: NodeStepState(K=1.0, stim_vec=np.asarray([0.1, 0.2, 0.3, 0.4], dtype=np.float32))},
+                edges_fired=[(1, 2)],
+            ),
+            TickRecord(
+                tick=1,
+                active_nodes=[2],
+                node_states={2: NodeStepState(K=1.0, stim_vec=np.asarray([0.2, 0.2, 0.3, 0.4], dtype=np.float32))},
+                edges_fired=[(2, 3)],
+            ),
+            TickRecord(
+                tick=2,
+                active_nodes=[3],
+                node_states={3: NodeStepState(K=1.0, stim_vec=np.asarray([0.3, 0.2, 0.3, 0.4], dtype=np.float32))},
+                edges_fired=[],
+            ),
+            TickRecord(
+                tick=3,
+                active_nodes=[9],
+                node_states={9: NodeStepState(K=2.2, stim_vec=np.asarray([0.9, 0.1, 0.1, 0.1], dtype=np.float32))},
+                edges_fired=[],
+            ),
+        ]
+
+        topk = extractor.extract_topk_branches_with_strategy(
+            branch_log,
+            topk=2,
+            end_window=2,
+            length_bonus=0.5,
+        )
+
+        self.assertEqual(len(topk), 2)
+        self.assertEqual([step.node_id for step in topk[0].steps], [1, 2, 3])
+        self.assertGreater(topk[0].score, topk[1].score)
 
     def test_label_subset_with_local_model(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir_name:

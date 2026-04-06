@@ -166,26 +166,27 @@ class EmoNetConfig:
     initial_out_degree: int = 5
     target_in_degree: int = 5
     max_ticks: int = 32
+    min_ticks_before_converged: int = 4
     delta_k_eps: float = 1e-3
 
-    k_threshold_base: float = 1.0
-    k_remem_base: float = 1.2
-    k_decay: float = 0.95
-    refractory_ticks: int = 3
+    k_threshold_base: float = 0.85
+    k_remem_base: float = 1.0
+    k_decay: float = 0.98
+    refractory_ticks: int = 1
 
     memory_decay: float = 0.97
     memory_delete_threshold: float = 0.05
     memory_sim_gain: float = 0.10
     memory_stim_mix: float = 0.20
-    memory_k_mix: float = 0.10
+    memory_k_mix: float = 0.20
     max_memory_per_neuron: int = 64
 
     max_out_degree: int = 12
     min_out_degree: int = 1
-    dopa_rewire_gain: float = 0.30
-    sero_prune_gain: float = 0.30
+    dopa_rewire_gain: float = 0.60
+    sero_prune_gain: float = 0.08
 
-    mela_dropout_gain: float = 0.30
+    mela_dropout_gain: float = 0.08
     ne_thresh_reduce_gain: float = 0.25
     ne_remem_reduce_gain: float = 0.25
     global_recovery_rate: float = 0.10
@@ -193,6 +194,8 @@ class EmoNetConfig:
     z_dim: int = 64
     s_dim: int = 32
     topk_branches: int = 4
+    branch_end_window: int = 4
+    branch_length_bonus: float = 0.20
     z_encoder_mode: Literal["stat", "transformer"] = "stat"
     z_encoder_path: Path = field(default_factory=lambda: _project_root() / "artifacts" / "dominant_branch_encoder.pt")
     load_z_encoder_checkpoint: bool = True
@@ -211,6 +214,10 @@ class EmoNetConfig:
             raise ValueError(f"Neuron counts must sum to n_neurons, got {expected_total} != {self.n_neurons}")
         if self.s_dim <= 0:
             raise ValueError("s_dim must be positive")
+        if self.min_ticks_before_converged < 0:
+            raise ValueError("min_ticks_before_converged must be non-negative")
+        if self.branch_end_window <= 0:
+            raise ValueError("branch_end_window must be positive")
 
 
 def _project_root() -> Path:
@@ -888,6 +895,59 @@ class BranchExtractor:
         completed_paths.sort(key=lambda path: path.score, reverse=True)
         return completed_paths[:topk]
 
+    def extract_topk_branches_with_strategy(
+        self,
+        branch_log: list[TickRecord],
+        topk: int,
+        *,
+        end_window: int = 1,
+        length_bonus: float = 0.0,
+    ) -> list[BranchPath]:
+        if not branch_log:
+            return []
+
+        topk_paths: dict[tuple[int, int], list[BranchPath]] = {}
+
+        for index, record in enumerate(branch_log):
+            prev_edges = branch_log[index - 1].edges_fired if index > 0 else []
+            parents_by_node: dict[int, list[int]] = {}
+            for src, dst in prev_edges:
+                parents_by_node.setdefault(dst, []).append(src)
+
+            for node_id in record.active_nodes:
+                state = record.node_states[node_id]
+                step = BranchStep(
+                    tick=record.tick,
+                    node_id=node_id,
+                    K=state.K,
+                    stim_vec=state.stim_vec.copy(),
+                )
+                candidates: list[BranchPath] = []
+                parent_nodes = parents_by_node.get(node_id, [])
+                if parent_nodes:
+                    prev_tick = branch_log[index - 1].tick
+                    for parent_id in parent_nodes:
+                        for parent_path in topk_paths.get((prev_tick, parent_id), []):
+                            candidates.append(
+                                BranchPath(
+                                    score=parent_path.score + step.K + length_bonus,
+                                    steps=parent_path.steps + [step],
+                                )
+                            )
+                else:
+                    candidates.append(BranchPath(score=step.K + length_bonus, steps=[step]))
+
+                candidates.sort(key=lambda path: (path.score, len(path.steps), path.steps[-1].tick), reverse=True)
+                topk_paths[(record.tick, node_id)] = candidates[:topk]
+
+        effective_window = max(1, end_window)
+        completed_paths: list[BranchPath] = []
+        for record in branch_log[-effective_window:]:
+            for node_id in record.active_nodes:
+                completed_paths.extend(topk_paths.get((record.tick, node_id), []))
+        completed_paths.sort(key=lambda path: (path.score, len(path.steps), path.steps[-1].tick), reverse=True)
+        return completed_paths[:topk]
+
     def build_dominant_branch(
         self,
         topk_paths: list[BranchPath],
@@ -1219,7 +1279,10 @@ class EmoNet:
 
         while self.state.tick < self.config.max_ticks:
             self.run_tick(base_stim_vec, input_text)
-            if self._last_delta_k < self.config.delta_k_eps:
+            if (
+                self.state.tick >= self.config.min_ticks_before_converged
+                and self._last_delta_k < self.config.delta_k_eps
+            ):
                 break
 
         return base_stim_vec
@@ -1229,8 +1292,16 @@ class EmoNet:
         return self.pruned_branch_log
 
     def extract_topk_branches(self) -> list[BranchPath]:
-        source_log = self.pruned_branch_log or self.prune_to_survivors()
-        self.topk_branches = self.branch_extractor.extract_topk_branches(source_log, self.config.topk_branches)
+        source_log = self.state.branch_log
+        if not source_log:
+            self.prune_to_survivors()
+            source_log = self.state.branch_log
+        self.topk_branches = self.branch_extractor.extract_topk_branches_with_strategy(
+            source_log,
+            self.config.topk_branches,
+            end_window=self.config.branch_end_window,
+            length_bonus=self.config.branch_length_bonus,
+        )
         return self.topk_branches
 
     def build_dominant_branch(self) -> list[DominantBranchStep]:

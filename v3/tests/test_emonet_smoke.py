@@ -20,6 +20,8 @@ from emonet import (
     TickRecord,
     TORCH_AVAILABLE,
 )
+if TORCH_AVAILABLE:
+    import torch
 from emonet.cli import (
     STYLE_AXIS_NAMES,
     build_balanced_subset,
@@ -581,6 +583,54 @@ class EmoNetSmokeTests(unittest.TestCase):
             self.assertIn("style_summary", payload)
             self.assertIn("expression_cues_text", payload)
             self.assertTrue(log_jsonl.exists())
+
+    @unittest.skipUnless(TORCH_AVAILABLE, "torch is required for grad tensor response test")
+    def test_command_generate_response_accepts_grad_tensor_z(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            output_json = temp_dir / "response_grad.json"
+
+            class GradTensorModel:
+                def forward(self, text: str):
+                    z = torch.linspace(0.0, 1.0, 64, dtype=torch.float32, requires_grad=True)
+                    return {
+                        "stim_vec": torch.tensor([0.2, 0.4, 0.6, 0.8], dtype=torch.float32),
+                        "dominant_branch": [object(), object(), object()],
+                        "z": z,
+                    }
+
+            class Args:
+                pass
+
+            args = Args()
+            args.dataset_csv = None
+            args.benchmark_csv = None
+            args.model_cache_path = None
+            args.max_samples = None
+            args.force_refit = False
+            args.seed = 42
+            args.z_dim = 64
+            args.zs_model_path = str(temp_dir / "decoder.npz")
+            args.base_url = "http://127.0.0.1:11434/v1"
+            args.model_name = "gpt-oss:20b"
+            args.response_temperature = 0.5
+            args.max_tokens = 300
+            args.timeout_sec = 30
+            args.prompt_template = None
+            args.log_jsonl = None
+            args.text = "지금 너무 예민하고 피곤해."
+            args.output_json = str(output_json)
+
+            with patch("emonet.cli.ensure_model_server_ready"), patch(
+                "emonet.cli.build_model", return_value=GradTensorModel()
+            ), patch("emonet.cli.LinearZtoSDecoder.load", return_value=self.FakeDecoder()), patch(
+                "emonet.cli.call_openai_compatible_chat", return_value="조금만 정리하고 쉬자."
+            ):
+                command_generate_response(args)
+
+            payload = json.loads(output_json.read_text(encoding="utf-8"))
+            self.assertEqual(payload["dominant_branch_len"], 3)
+            self.assertEqual(len(payload["z"]), 64)
 
     @unittest.skipUnless(TORCH_AVAILABLE, "torch is required for transformer z-encoder training")
     def test_command_fit_z_encoder(self) -> None:

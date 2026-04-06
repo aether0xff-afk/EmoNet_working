@@ -128,6 +128,13 @@ def build_model(
     return EmoNet(config=config, stim_encoder_config=stim_config)
 
 
+def to_numpy_array(value: object, dtype: Any | None = None) -> np.ndarray:
+    if torch is not None and isinstance(value, torch.Tensor):
+        array = value.detach().cpu().numpy()
+        return array.astype(dtype, copy=False) if dtype is not None else array
+    return np.asarray(value, dtype=dtype)
+
+
 def command_fit_stim(args: argparse.Namespace) -> None:
     model = build_model(args)
     model.stim_encoder.fit()
@@ -138,13 +145,13 @@ def command_infer(args: argparse.Namespace) -> None:
     model = build_model(args)
     outputs = model.forward(args.text)
     result = {
-        "stim_vec": np.asarray(outputs["stim_vec"], dtype=float).tolist(),
+        "stim_vec": to_numpy_array(outputs["stim_vec"], dtype=float).tolist(),
         "dominant_branch_len": len(outputs["dominant_branch"]),
-        "z": np.asarray(outputs["z"], dtype=float).tolist(),
+        "z": to_numpy_array(outputs["z"], dtype=float).tolist(),
     }
     if args.zs_model_path:
         decoder = LinearZtoSDecoder.load(Path(args.zs_model_path))
-        result["s_pred"] = np.asarray(decoder.predict(np.asarray(outputs["z"], dtype=np.float32)), dtype=float).tolist()
+        result["s_pred"] = to_numpy_array(decoder.predict(to_numpy_array(outputs["z"], dtype=np.float32)), dtype=float).tolist()
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
 
@@ -237,8 +244,8 @@ def export_z_from_dataframe(model: EmoNet, df: pd.DataFrame, text_column: str, o
     stim_rows = []
     for idx, text in enumerate(df[text_column].astype(str), start=1):
         outputs = model.forward(text)
-        z_rows.append(np.asarray(outputs["z"], dtype=np.float32))
-        stim_rows.append(np.asarray(outputs["stim_vec"], dtype=np.float32))
+        z_rows.append(to_numpy_array(outputs["z"], dtype=np.float32))
+        stim_rows.append(to_numpy_array(outputs["stim_vec"], dtype=np.float32))
         if idx % 100 == 0:
             print(f"processed {idx} rows")
 
@@ -256,8 +263,8 @@ def export_z_from_dataframe(model: EmoNet, df: pd.DataFrame, text_column: str, o
 
 def build_output_row(source_row: dict, outputs: dict[str, object]) -> dict[str, object]:
     row = dict(source_row)
-    z = np.asarray(outputs["z"], dtype=np.float32).reshape(-1)
-    stim = np.asarray(outputs["stim_vec"], dtype=np.float32).reshape(-1)
+    z = to_numpy_array(outputs["z"], dtype=np.float32).reshape(-1)
+    stim = to_numpy_array(outputs["stim_vec"], dtype=np.float32).reshape(-1)
     for dim, value in enumerate(z):
         row[f"z_{dim}"] = float(value)
     for dim, name in enumerate(("dopamine", "serotonin", "norepinephrine", "melatonin")):
@@ -1583,14 +1590,14 @@ def infer_style_profile(
     style_profile: str = DEFAULT_STYLE_PROFILE,
 ) -> dict[str, object]:
     outputs = model.forward(text)
-    z = np.asarray(outputs["z"], dtype=np.float32).reshape(-1)
-    s_pred = np.asarray(decoder.predict(z), dtype=np.float32).reshape(-1)
+    z = to_numpy_array(outputs["z"], dtype=np.float32).reshape(-1)
+    s_pred = to_numpy_array(decoder.predict(z), dtype=np.float32).reshape(-1)
     style_axes = resolve_style_axes(len(s_pred), style_profile=style_profile)
     style_dict = style_vector_to_dict(s_pred.tolist(), style_axes, style_profile=style_profile)
     style_summary = build_style_summary(style_dict)
     style_tags = build_style_tags(style_dict)
     return {
-        "stim_vec": np.asarray(outputs["stim_vec"], dtype=np.float32).reshape(-1),
+        "stim_vec": to_numpy_array(outputs["stim_vec"], dtype=np.float32).reshape(-1),
         "dominant_branch_len": len(outputs["dominant_branch"]),
         "z": z,
         "s_pred": s_pred,
@@ -1798,8 +1805,8 @@ def command_e2e_check(args: argparse.Namespace) -> None:
     try:
         model = build_model(args)
         outputs = model.forward(args.text)
-        stim_vec = np.asarray(outputs["stim_vec"], dtype=np.float32).reshape(-1)
-        z = np.asarray(outputs["z"], dtype=np.float32).reshape(-1)
+        stim_vec = to_numpy_array(outputs["stim_vec"], dtype=np.float32).reshape(-1)
+        z = to_numpy_array(outputs["z"], dtype=np.float32).reshape(-1)
         dominant_branch_len = int(len(outputs["dominant_branch"]))
         failures = []
         if stim_vec.shape != (4,):

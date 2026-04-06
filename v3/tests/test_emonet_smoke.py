@@ -24,6 +24,7 @@ if TORCH_AVAILABLE:
     import torch
 from emonet.cli import (
     STYLE_AXIS_NAMES,
+    build_anti_softening_policy,
     build_balanced_subset,
     build_response_generation_prompt,
     command_e2e_check,
@@ -259,9 +260,25 @@ class EmoNetSmokeTests(unittest.TestCase):
         )
         self.assertIn("[STYLE_TAGS]", prompt)
         self.assertIn("[STYLE_SUMMARY]", prompt)
+        self.assertIn("[ANTI_SOFTENING_RULES]", prompt)
         self.assertNotIn("[EXPRESSION_CUES]", prompt)
         self.assertNotIn("[STYLE_VECTOR]", prompt)
         self.assertNotIn("여분태그", prompt)
+
+    def test_build_anti_softening_policy_turns_strict_for_distress_text(self) -> None:
+        style = {axis: 0.5 for axis in STYLE_AXIS_NAMES}
+        style["softness"] = 0.95
+        style["positivity"] = 0.95
+        style["tension"] = 0.1
+        style_summary = build_style_summary(style)
+        mode, rules = build_anti_softening_policy(
+            input_text="지금 너무 예민하고 피곤해.",
+            style_dict=style,
+            style_summary=style_summary,
+            stim_vec=np.asarray([0.2, 0.3, 0.6, 0.7], dtype=np.float32),
+        )
+        self.assertEqual(mode, "strict")
+        self.assertGreaterEqual(len(rules), 3)
 
     def test_resolve_extended_style_axes(self) -> None:
         axes = resolve_style_axes(40, style_profile="extended40")
@@ -582,6 +599,8 @@ class EmoNetSmokeTests(unittest.TestCase):
             self.assertIn("style_tags", payload)
             self.assertIn("style_summary", payload)
             self.assertIn("expression_cues_text", payload)
+            self.assertIn("anti_softening_mode", payload)
+            self.assertIn("anti_softening_rules", payload)
             self.assertTrue(log_jsonl.exists())
 
     @unittest.skipUnless(TORCH_AVAILABLE, "torch is required for grad tensor response test")

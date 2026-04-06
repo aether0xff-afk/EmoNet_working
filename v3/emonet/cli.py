@@ -838,6 +838,7 @@ def command_generate_response(args: argparse.Namespace) -> None:
         style_dict=profile["style_dict"],
         style_tags=profile["style_tags"],
         style_summary=profile["style_summary"],
+        anti_softening_rules=profile["anti_softening_rules"],
         temperature=args.response_temperature,
         max_tokens=args.max_tokens,
         timeout_sec=args.timeout_sec,
@@ -853,6 +854,8 @@ def command_generate_response(args: argparse.Namespace) -> None:
         "style_summary": dict(profile["style_summary"]),
         "style_summary_text": str(profile["style_summary_text"]),
         "expression_cues_text": str(profile["expression_cues_text"]),
+        "anti_softening_mode": str(profile["anti_softening_mode"]),
+        "anti_softening_rules": list(profile["anti_softening_rules"]),
         "style_prompt": style_prompt,
         "llm_response": response_text,
         "decoder_model_path": str(args.zs_model_path),
@@ -905,6 +908,7 @@ def command_generate_response_batch(args: argparse.Namespace) -> None:
                 style_dict=profile["style_dict"],
                 style_tags=profile["style_tags"],
                 style_summary=profile["style_summary"],
+                anti_softening_rules=profile["anti_softening_rules"],
                 temperature=args.response_temperature,
                 max_tokens=args.max_tokens,
                 timeout_sec=args.timeout_sec,
@@ -917,6 +921,8 @@ def command_generate_response_batch(args: argparse.Namespace) -> None:
             row["style_summary_text"] = str(profile["style_summary_text"])
             row["style_summary_json"] = json.dumps(profile["style_summary"], ensure_ascii=False)
             row["expression_cues_text"] = str(profile["expression_cues_text"])
+            row["anti_softening_mode"] = str(profile["anti_softening_mode"])
+            row["anti_softening_rules"] = json.dumps(profile["anti_softening_rules"], ensure_ascii=False)
             row["style_prompt"] = style_prompt
             row["llm_response"] = response_text
             row["decoder_model_path"] = str(args.zs_model_path)
@@ -939,9 +945,11 @@ def command_generate_response_batch(args: argparse.Namespace) -> None:
                     "z": np.asarray(profile["z"], dtype=float).tolist(),
                     "s_pred": np.asarray(profile["s_pred"], dtype=float).tolist(),
                     "style_tags": list(profile["style_tags"]),
-                    "style_summary": dict(profile["style_summary"]),
-                    "expression_cues_text": str(profile["expression_cues_text"]),
-                    "style_prompt": style_prompt,
+                     "style_summary": dict(profile["style_summary"]),
+                     "expression_cues_text": str(profile["expression_cues_text"]),
+                     "anti_softening_mode": str(profile["anti_softening_mode"]),
+                     "anti_softening_rules": list(profile["anti_softening_rules"]),
+                     "style_prompt": style_prompt,
                     "llm_response": response_text,
                     "decoder_model_path": str(args.zs_model_path),
                     "z_encoder_mode": str(getattr(model_config, "z_encoder_mode", "unknown")),
@@ -1152,6 +1160,31 @@ STYLE_MACRO_LABELS = {
     "raw_negative_affect": "원초적부정정동",
 }
 
+ANTI_SOFTENING_TEXT_CUES = (
+    "예민",
+    "피곤",
+    "지쳤",
+    "짜증",
+    "화나",
+    "분노",
+    "열받",
+    "억울",
+    "원망",
+    "절망",
+    "무기력",
+    "불안",
+    "초조",
+    "두렵",
+    "무섭",
+    "괴롭",
+    "답답",
+    "힘들",
+    "버겁",
+    "상처",
+    "서운",
+    "지친",
+)
+
 
 def resolve_style_axes(style_dim: int | None = None, style_profile: str = DEFAULT_STYLE_PROFILE) -> list[str]:
     if style_profile not in STYLE_AXIS_PROFILES:
@@ -1319,6 +1352,68 @@ def format_expression_cue_lines(style_dict: dict[str, float]) -> list[str]:
 
 def summarize_expression_cues(style_dict: dict[str, float]) -> str:
     return ", ".join(format_expression_cue_lines(style_dict))
+
+
+def estimate_text_distress_score(text: str) -> float:
+    normalized = str(text or "").strip()
+    if not normalized:
+        return 0.0
+    hits = sum(1 for cue in ANTI_SOFTENING_TEXT_CUES if cue in normalized)
+    return float(np.clip(hits / 3.0, 0.0, 1.0))
+
+
+def build_anti_softening_policy(
+    input_text: str,
+    style_dict: dict[str, float],
+    style_summary: dict[str, float],
+    stim_vec: np.ndarray | Sequence[float] | None = None,
+) -> tuple[str, list[str]]:
+    distress_score = estimate_text_distress_score(input_text)
+    raw_negative = float(style_summary.get("raw_negative_affect", 0.0))
+    tension = float(style_summary.get("tension", 0.5))
+    directness = float(style_summary.get("directness", 0.5))
+    softness = float(style_dict.get("softness", 0.5))
+    warmth = float(style_summary.get("warmth", 0.5))
+    positivity = float(style_dict.get("positivity", 0.5))
+    softening_pressure = (softness + warmth + positivity) / 3.0
+
+    stim_arr = to_numpy_array(stim_vec, dtype=np.float32).reshape(-1) if stim_vec is not None else np.zeros(4, dtype=np.float32)
+    norepinephrine = float(stim_arr[2]) if stim_arr.size >= 3 else 0.0
+    melatonin = float(stim_arr[3]) if stim_arr.size >= 4 else 0.0
+
+    strict_trigger = (
+        distress_score >= 0.34
+        or raw_negative >= 0.30
+        or tension >= 0.60
+        or directness >= 0.62
+        or norepinephrine >= 0.55
+    )
+    guarded_trigger = strict_trigger or softening_pressure >= 0.72 or melatonin >= 0.50
+
+    if strict_trigger:
+        mode = "strict"
+        rules = [
+            "예민함, 피로감, 분노, 원망, 절망 같은 불편한 정서를 임의로 순화하지 않는다.",
+            "사과, 위로, 안심, 응원 문구를 자동으로 덧붙이지 않는다.",
+            "지나치게 공손하거나 상담원처럼 다독이는 말투를 피한다.",
+            "불편함과 거친 결이 핵심이면 그 톤을 남긴 채 답한다.",
+        ]
+    elif guarded_trigger:
+        mode = "guarded"
+        rules = [
+            "감정을 필요 이상으로 다독이거나 낙관적으로 정리하지 않는다.",
+            "부드러운 위로나 배려 표현은 입력 내용과 스타일 신호가 뒷받침될 때만 사용한다.",
+        ]
+    else:
+        mode = "neutral"
+        rules = [
+            "입력에 없는 위로나 공손함을 자동으로 덧붙이지 않는다.",
+        ]
+    return mode, rules
+
+
+def format_anti_softening_lines(rules: list[str]) -> list[str]:
+    return [f"- {rule}" for rule in rules]
 
 
 def utc_timestamp() -> str:
@@ -1531,9 +1626,13 @@ def _default_response_generation_template() -> str:
             "[STYLE_SUMMARY]",
             "{{style_summary_lines}}",
             "",
+            "[ANTI_SOFTENING_RULES]",
+            "{{anti_softening_lines}}",
+            "",
             "[INSTRUCTIONS]",
             "- 사용자 입력의 내용에 직접 답한다.",
             "- STYLE_TAGS와 STYLE_SUMMARY만 참고해 말투, 거리감, 표현 밀도를 조절한다.",
+            "- ANTI_SOFTENING_RULES가 있으면 반드시 지킨다.",
             "- 스타일을 설명하지 말고, 그 스타일로 자연스럽게 답한다.",
             "- 한국어 평문으로만 2~5문장 이내로 답한다.",
             "- bullet, markdown, JSON, 코드블록을 쓰지 않는다.",
@@ -1566,6 +1665,7 @@ def build_response_generation_prompt(
     style_dict: dict[str, float],
     style_tags: list[str],
     style_summary: dict[str, float],
+    anti_softening_rules: list[str] | None = None,
     template_path: Path | None = None,
 ) -> str:
     template = load_response_generation_template(template_path)
@@ -1577,6 +1677,9 @@ def build_response_generation_prompt(
             "input_text": input_text.strip(),
             "style_tags": ", ".join(condensed_tags) if condensed_tags else "(none)",
             "style_summary_lines": "\n".join(condensed_summary) if condensed_summary else "(none)",
+            "anti_softening_lines": "\n".join(format_anti_softening_lines(anti_softening_rules or []))
+            if anti_softening_rules
+            else "- 입력에 없는 위로나 공손함을 자동으로 덧붙이지 않는다.",
             "expression_cue_lines": "\n".join(format_expression_cue_lines(style_dict)),
             "style_vector_lines": format_style_vector_lines(style_dict),
         },
@@ -1596,8 +1699,15 @@ def infer_style_profile(
     style_dict = style_vector_to_dict(s_pred.tolist(), style_axes, style_profile=style_profile)
     style_summary = build_style_summary(style_dict)
     style_tags = build_style_tags(style_dict)
+    stim_vec = to_numpy_array(outputs["stim_vec"], dtype=np.float32).reshape(-1)
+    anti_softening_mode, anti_softening_rules = build_anti_softening_policy(
+        input_text=text,
+        style_dict=style_dict,
+        style_summary=style_summary,
+        stim_vec=stim_vec,
+    )
     return {
-        "stim_vec": to_numpy_array(outputs["stim_vec"], dtype=np.float32).reshape(-1),
+        "stim_vec": stim_vec,
         "dominant_branch_len": len(outputs["dominant_branch"]),
         "z": z,
         "s_pred": s_pred,
@@ -1606,6 +1716,8 @@ def infer_style_profile(
         "style_summary": style_summary,
         "style_summary_text": summarize_style_summary(style_summary),
         "expression_cues_text": summarize_expression_cues(style_dict),
+        "anti_softening_mode": anti_softening_mode,
+        "anti_softening_rules": anti_softening_rules,
     }
 
 
@@ -1616,6 +1728,7 @@ def generate_response_from_style(
     style_dict: dict[str, float],
     style_tags: list[str],
     style_summary: dict[str, float],
+    anti_softening_rules: list[str] | None,
     temperature: float,
     max_tokens: int,
     timeout_sec: int,
@@ -1626,6 +1739,7 @@ def generate_response_from_style(
         style_dict=style_dict,
         style_tags=style_tags,
         style_summary=style_summary,
+        anti_softening_rules=anti_softening_rules,
         template_path=template_path,
     )
     response = call_openai_compatible_chat(
@@ -1642,7 +1756,7 @@ def generate_response_from_style(
 
 def serialize_generation_log(record: dict[str, object]) -> dict[str, object]:
     payload = dict(record)
-    for key in ("stim_vec", "z", "s_pred", "style_tags"):
+    for key in ("stim_vec", "z", "s_pred", "style_tags", "anti_softening_rules"):
         if key in payload:
             payload[key] = json.dumps(payload[key], ensure_ascii=False)
     if "style_summary" in payload and isinstance(payload["style_summary"], dict):
@@ -1749,6 +1863,8 @@ def build_e2e_validation_row(report: dict[str, object]) -> dict[str, object]:
         "llm_response": result.get("llm_response", ""),
         "style_summary_text": result.get("style_summary_text", ""),
         "expression_cues_text": result.get("expression_cues_text", ""),
+        "anti_softening_mode": result.get("anti_softening_mode", ""),
+        "anti_softening_rules_json": json.dumps(result.get("anti_softening_rules", []), ensure_ascii=False),
         "stim_vec_json": json.dumps(result.get("stim_vec", []), ensure_ascii=False),
         "z_json": json.dumps(result.get("z", []), ensure_ascii=False),
         "s_pred_json": json.dumps(result.get("s_pred", []), ensure_ascii=False),
@@ -1877,11 +1993,19 @@ def command_e2e_check(args: argparse.Namespace) -> None:
             style_dict = style_vector_to_dict(s_pred.tolist(), style_axes, style_profile=style_profile)
             style_summary = build_style_summary(style_dict)
             style_tags = build_style_tags(style_dict)
+            anti_softening_mode, anti_softening_rules = build_anti_softening_policy(
+                input_text=args.text,
+                style_dict=style_dict,
+                style_summary=style_summary,
+                stim_vec=report["result"].get("stim_vec", []),
+            )
             report["result"]["s_pred"] = s_pred.astype(float).tolist()
             report["result"]["style_tags"] = list(style_tags)
             report["result"]["style_summary"] = dict(style_summary)
             report["result"]["style_summary_text"] = summarize_style_summary(style_summary)
             report["result"]["expression_cues_text"] = summarize_expression_cues(style_dict)
+            report["result"]["anti_softening_mode"] = anti_softening_mode
+            report["result"]["anti_softening_rules"] = list(anti_softening_rules)
             report["result"]["style_profile"] = str(style_profile)
             record_stage(
                 build_validation_stage_result(
@@ -1927,7 +2051,8 @@ def command_e2e_check(args: argparse.Namespace) -> None:
         try:
             style_dict = style_vector_to_dict(
                 report["result"]["s_pred"],
-                STYLE_AXIS_NAMES[: len(report["result"]["s_pred"])],
+                resolve_style_axes(len(report["result"]["s_pred"]), style_profile=style_profile),
+                style_profile=style_profile,
             )
             style_summary = dict(report["result"]["style_summary"])
             style_tags = list(report["result"]["style_tags"])
@@ -1939,6 +2064,7 @@ def command_e2e_check(args: argparse.Namespace) -> None:
                 style_dict=style_dict,
                 style_tags=style_tags,
                 style_summary=style_summary,
+                anti_softening_rules=report["result"].get("anti_softening_rules", []),
                 temperature=args.response_temperature,
                 max_tokens=args.max_tokens,
                 timeout_sec=args.timeout_sec,

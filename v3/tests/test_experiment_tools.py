@@ -20,6 +20,67 @@ def load_module(module_name: str, relative_path: str):
 
 
 class ExperimentToolTests(unittest.TestCase):
+    def test_shard_and_merge_label_csv(self) -> None:
+        module = load_module("shard_label_csv_module", "scripts/shard_label_csv.py")
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            input_csv = temp_dir / "subset.csv"
+            shard_dir = temp_dir / "shards"
+            merged_csv = temp_dir / "merged.csv"
+
+            df = pd.DataFrame(
+                [
+                    {"sample_id": "s_000003", "text": "입력 3", "label": "E10"},
+                    {"sample_id": "s_000001", "text": "입력 1", "label": "E20"},
+                    {"sample_id": "s_000004", "text": "입력 4", "label": "E30"},
+                    {"sample_id": "s_000002", "text": "입력 2", "label": "E40"},
+                    {"sample_id": "s_000005", "text": "입력 5", "label": "E50"},
+                ]
+            )
+            df.to_csv(input_csv, index=False, encoding="utf-8-sig")
+
+            import sys
+
+            original_argv = sys.argv[:]
+            try:
+                sys.argv = [
+                    "shard_label_csv.py",
+                    "split",
+                    "--input-csv",
+                    str(input_csv),
+                    "--output-dir",
+                    str(shard_dir),
+                    "--num-shards",
+                    "3",
+                    "--prefix",
+                    "extended40_subset",
+                ]
+                module.main()
+
+                sys.argv = [
+                    "shard_label_csv.py",
+                    "merge",
+                    "--input-dir",
+                    str(shard_dir),
+                    "--pattern",
+                    "extended40_subset.shard*.csv",
+                    "--output-csv",
+                    str(merged_csv),
+                ]
+                module.main()
+            finally:
+                sys.argv = original_argv
+
+            shard_files = sorted(shard_dir.glob("extended40_subset.shard*.csv"))
+            self.assertEqual(len(shard_files), 3)
+
+            merged = pd.read_csv(merged_csv)
+            self.assertEqual(len(merged), 5)
+            self.assertEqual(
+                merged["sample_id"].tolist(),
+                ["s_000001", "s_000002", "s_000003", "s_000004", "s_000005"],
+            )
+
     def test_condition_prompt_variants_hide_requested_sections(self) -> None:
         module = load_module("experiment_matrix_module", "scripts/experiment_matrix.py")
         profile = {

@@ -11,6 +11,26 @@ current `out_z_training_extended40.csv` 기준 dominant branch 길이 분포는 
 
 즉, 대부분의 샘플에서 branch가 사실상 한 tick 반응으로 끝난다. 이 상태에서는 branch history를 중간표현의 핵심 근거로 쓰기 어렵고, learned `z` encoder가 배울 수 있는 시계열 정보도 매우 제한된다.
 
+## 현재 기본값
+
+현재 `EmoNetConfig` 기본값은 초기판보다 branch persistence를 더 강하게 주도록 올려두었다.
+
+- `max_ticks = 40`
+- `min_ticks_before_converged = 6`
+- `k_threshold_base = 0.72`
+- `k_remem_base = 0.95`
+- `k_decay = 0.99`
+- `memory_decay = 0.985`
+- `memory_stim_mix = 0.25`
+- `memory_k_mix = 0.35`
+- `mela_dropout_gain = 0.04`
+- `sero_prune_gain = 0.04`
+- `dopa_rewire_gain = 0.80`
+- `branch_end_window = 6`
+- `branch_length_bonus = 0.35`
+
+즉, 현재 기준점은 "초기 기본값"이 아니라 이미 persistence를 강화한 상태다.
+
 ## 현재 코드에서 보이는 직접 원인
 
 `emonet/core.py` 기준으로 branch가 짧아질 강한 요인은 아래와 같다.
@@ -178,3 +198,10 @@ branch length 1이 많다는 사실은 연구가 무의미하다는 뜻이 아�
 - new default: mean length 1.79, `len=1` 93/100, max length 20
 
 즉, 이번 수정은 적어도 소규모 샘플 기준으로는 branch collapse를 완화하는 방향으로 작동한다. 다만 전체 51,628 rows에 대한 재export로 최종 분포를 다시 확인해야 한다.
+
+추가로 `out_z_training_extended40_branchfix.csv` 앞 50개 샘플에서 기존 branchfix-like 설정과 더 강한 persistence 설정을 비교했을 때도 아래 변화가 확인되었다.
+
+- branchfix-like: mean length 2.36, `len=1` 44/50, max length 21
+- stronger persistence: mean length 5.08, `len=1` 36/50, max length 31
+
+즉, branch 길이는 extraction 보정만으로 끝나는 문제가 아니라 dynamics 기본값을 더 오래 버티게 할 때 추가 개선 여지가 실제로 있다.

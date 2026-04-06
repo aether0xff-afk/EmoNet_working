@@ -165,28 +165,28 @@ class EmoNetConfig:
 
     initial_out_degree: int = 5
     target_in_degree: int = 5
-    max_ticks: int = 32
-    min_ticks_before_converged: int = 4
+    max_ticks: int = 40
+    min_ticks_before_converged: int = 6
     delta_k_eps: float = 1e-3
 
-    k_threshold_base: float = 0.85
-    k_remem_base: float = 1.0
-    k_decay: float = 0.98
+    k_threshold_base: float = 0.72
+    k_remem_base: float = 0.95
+    k_decay: float = 0.99
     refractory_ticks: int = 1
 
-    memory_decay: float = 0.97
+    memory_decay: float = 0.985
     memory_delete_threshold: float = 0.05
     memory_sim_gain: float = 0.10
-    memory_stim_mix: float = 0.20
-    memory_k_mix: float = 0.20
+    memory_stim_mix: float = 0.25
+    memory_k_mix: float = 0.35
     max_memory_per_neuron: int = 64
 
     max_out_degree: int = 12
     min_out_degree: int = 1
-    dopa_rewire_gain: float = 0.60
-    sero_prune_gain: float = 0.08
+    dopa_rewire_gain: float = 0.80
+    sero_prune_gain: float = 0.04
 
-    mela_dropout_gain: float = 0.08
+    mela_dropout_gain: float = 0.04
     ne_thresh_reduce_gain: float = 0.25
     ne_remem_reduce_gain: float = 0.25
     global_recovery_rate: float = 0.10
@@ -194,8 +194,8 @@ class EmoNetConfig:
     z_dim: int = 64
     s_dim: int = 32
     topk_branches: int = 4
-    branch_end_window: int = 4
-    branch_length_bonus: float = 0.20
+    branch_end_window: int = 6
+    branch_length_bonus: float = 0.35
     z_encoder_mode: Literal["stat", "transformer"] = "stat"
     z_encoder_path: Path = field(default_factory=lambda: _project_root() / "artifacts" / "dominant_branch_encoder.pt")
     load_z_encoder_checkpoint: bool = True

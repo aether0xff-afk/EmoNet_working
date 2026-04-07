@@ -1,12 +1,13 @@
 {
-  "output_root": "C:\\Users\\esl01\\OneDrive\\문서\\GitHub\\EmoNet_working\\v3\\outputs\\paper\\refresh_2026-04-07_structfix_v2",
+  "output_root": "C:\\Users\\remote\\Documents\\GitHub\\EmoNet_working\\v3\\outputs\\paper\\refresh_2026-04-07_structfix_v2",
   "figures": [
-    "C:\\Users\\esl01\\OneDrive\\문서\\GitHub\\EmoNet_working\\v3\\outputs\\paper\\refresh_2026-04-07_structfix_v2\\figures\\dominant_branch_before_after.svg",
-    "C:\\Users\\esl01\\OneDrive\\문서\\GitHub\\EmoNet_working\\v3\\outputs\\paper\\refresh_2026-04-07_structfix_v2\\figures\\dominant_branch_length_distribution_structfix.svg",
-    "C:\\Users\\esl01\\OneDrive\\문서\\GitHub\\EmoNet_working\\v3\\outputs\\paper\\refresh_2026-04-07_structfix_v2\\figures\\encoder_benchmark_top6.svg",
-    "C:\\Users\\esl01\\OneDrive\\문서\\GitHub\\EmoNet_working\\v3\\outputs\\paper\\refresh_2026-04-07_structfix_v2\\figures\\predictor_mae_comparison_current.svg",
-    "C:\\Users\\esl01\\OneDrive\\문서\\GitHub\\EmoNet_working\\v3\\outputs\\paper\\refresh_2026-04-07_structfix_v2\\figures\\style_bias_axes_extended40.svg",
-    "C:\\Users\\esl01\\OneDrive\\문서\\GitHub\\EmoNet_working\\v3\\outputs\\paper\\refresh_2026-04-07_structfix_v2\\figures\\style_consistency_histogram_extended40.svg"
+    "C:\\Users\\remote\\Documents\\GitHub\\EmoNet_working\\v3\\outputs\\paper\\refresh_2026-04-07_structfix_v2\\figures\\baseline_generation_scores_current.svg",
+    "C:\\Users\\remote\\Documents\\GitHub\\EmoNet_working\\v3\\outputs\\paper\\refresh_2026-04-07_structfix_v2\\figures\\dominant_branch_before_after.svg",
+    "C:\\Users\\remote\\Documents\\GitHub\\EmoNet_working\\v3\\outputs\\paper\\refresh_2026-04-07_structfix_v2\\figures\\dominant_branch_length_distribution_structfix.svg",
+    "C:\\Users\\remote\\Documents\\GitHub\\EmoNet_working\\v3\\outputs\\paper\\refresh_2026-04-07_structfix_v2\\figures\\encoder_benchmark_top6.svg",
+    "C:\\Users\\remote\\Documents\\GitHub\\EmoNet_working\\v3\\outputs\\paper\\refresh_2026-04-07_structfix_v2\\figures\\predictor_mae_comparison_current.svg",
+    "C:\\Users\\remote\\Documents\\GitHub\\EmoNet_working\\v3\\outputs\\paper\\refresh_2026-04-07_structfix_v2\\figures\\style_bias_axes_extended40.svg",
+    "C:\\Users\\remote\\Documents\\GitHub\\EmoNet_working\\v3\\outputs\\paper\\refresh_2026-04-07_structfix_v2\\figures\\style_consistency_histogram_extended40.svg"
   ],
   "branch_summary": {
     "before": {
@@ -148,9 +149,28 @@
       "mean_gain": 0.000805
     }
   },
-  "generation_summary": null,
+  "generation_summary": {
+    "rows": 1,
+    "best_condition": "direct",
+    "best_mean_total": 4.3571,
+    "conditions": [
+      {
+        "condition": "direct",
+        "condition_group": "baseline",
+        "rows": 14,
+        "mean_response_length": 239.929,
+        "mean_response_retry_count": 0.0,
+        "mean_content_fit": 4.2143,
+        "mean_emotional_appropriateness": 4.2143,
+        "mean_style_match": 4.4286,
+        "mean_naturalness": 4.5714,
+        "mean_overall_quality": 4.3571,
+        "mean_total": 4.3571
+      }
+    ]
+  },
   "notes": [
-    "Current refresh excludes generation baseline re-scoring because no current scored experiment matrix was present locally.",
+    "Current generation baseline table is included; best condition is direct.",
     "Structfix solves branch-length collapse at the distribution level but does not yet solve style-target bias.",
     "Current learned z remains competitive with the mean baseline but does not outperform the text baseline."
   ]

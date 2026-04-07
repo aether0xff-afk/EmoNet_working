@@ -1,0 +1,20 @@
+{
+  "rows": 120,
+  "conditions": [
+    {
+      "condition": "direct",
+      "condition_group": "baseline",
+      "rows": 14,
+      "mean_response_length": 239.929,
+      "mean_response_retry_count": 0.0,
+      "mean_content_fit": 4.2143,
+      "mean_emotional_appropriateness": 4.2143,
+      "mean_style_match": 4.4286,
+      "mean_naturalness": 4.5714,
+      "mean_overall_quality": 4.3571,
+      "mean_total": 4.3571
+    }
+  ],
+  "scored_csv": "outputs\\experiments\\paper_matrix_current_structfix_stylefix_scored.csv",
+  "summary_csv": "outputs\\paper\\refresh_2026-04-07_structfix_v2\\tables\\baseline_generation_table_current.csv"
+}

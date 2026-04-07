@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="620" viewBox="0 0 1080 620">
+<style>
+text { font-family: 'Malgun Gothic', 'Segoe UI', sans-serif; fill: #1f2937; }
+.title { font-size: 24px; font-weight: 700; }
+.subtitle { font-size: 13px; fill: #6b7280; }
+.axis { font-size: 12px; fill: #4b5563; }
+.label { font-size: 12px; }
+.small { font-size: 11px; fill: #4b5563; }
+.value { font-size: 11px; font-weight: 600; }
+.grid { stroke: #e5e7eb; stroke-width: 1; }
+.axis-line { stroke: #9ca3af; stroke-width: 1.2; }
+.note { font-size: 12px; fill: #374151; }
+</style>
+<rect x="0" y="0" width="100%" height="100%" fill="#ffffff"/>
+<text class="title" x="40" y="42">Generation Quality Comparison (current)</text>
+<text class="subtitle" x="40" y="66">LLM-judge 5-point scores across current response-generation conditions</text>
+<line class="grid" x1="90" y1="120.00" x2="1030" y2="120.00"/>
+<text class="axis" x="82" y="124.00" text-anchor="end">5.3</text>
+<line class="grid" x1="90" y1="199.00" x2="1030" y2="199.00"/>
+<text class="axis" x="82" y="203.00" text-anchor="end">4.2</text>
+<line class="grid" x1="90" y1="278.00" x2="1030" y2="278.00"/>
+<text class="axis" x="82" y="282.00" text-anchor="end">3.2</text>
+<line class="grid" x1="90" y1="357.00" x2="1030" y2="357.00"/>
+<text class="axis" x="82" y="361.00" text-anchor="end">2.1</text>
+<line class="grid" x1="90" y1="436.00" x2="1030" y2="436.00"/>
+<text class="axis" x="82" y="440.00" text-anchor="end">1.1</text>
+<line class="grid" x1="90" y1="515.00" x2="1030" y2="515.00"/>
+<text class="axis" x="82" y="519.00" text-anchor="end">0.0</text>
+<line class="axis-line" x1="90" y1="515" x2="1030" y2="515"/>
+<line class="axis-line" x1="90" y1="120" x2="90" y2="515"/>
+<rect x="435.00" y="198.35" width="42.00" height="316.65" rx="5" fill="#2563eb"/>
+<text class="small" x="456.00" y="192.35" text-anchor="middle">4.21</text>
+<rect x="487.00" y="198.35" width="42.00" height="316.65" rx="5" fill="#14b8a6"/>
+<text class="small" x="508.00" y="192.35" text-anchor="middle">4.21</text>
+<rect x="539.00" y="182.25" width="42.00" height="332.75" rx="5" fill="#f59e0b"/>
+<text class="small" x="560.00" y="176.25" text-anchor="middle">4.43</text>
+<rect x="591.00" y="171.52" width="42.00" height="343.48" rx="5" fill="#8b5cf6"/>
+<text class="small" x="612.00" y="165.52" text-anchor="middle">4.57</text>
+<rect x="643.00" y="187.62" width="42.00" height="327.38" rx="5" fill="#ef4444"/>
+<text class="small" x="664.00" y="181.62" text-anchor="middle">4.36</text>
+<text class="label" x="560.00" y="537.00" text-anchor="middle">direct</text>
+<rect x="90" y="551" width="18" height="18" rx="3" fill="#2563eb"/>
+<text class="small" x="116" y="564">content_fit</text>
+<rect x="280" y="551" width="18" height="18" rx="3" fill="#14b8a6"/>
+<text class="small" x="306" y="564">emotion_fit</text>
+<rect x="470" y="551" width="18" height="18" rx="3" fill="#f59e0b"/>
+<text class="small" x="496" y="564">style_match</text>
+<rect x="660" y="551" width="18" height="18" rx="3" fill="#8b5cf6"/>
+<text class="small" x="686" y="564">naturalness</text>
+<rect x="850" y="551" width="18" height="18" rx="3" fill="#ef4444"/>
+<text class="small" x="876" y="564">overall</text>
+<text class="axis" x="32" y="104" text-anchor="start">score</text>
+<text class="note" x="40" y="602">Higher is better. This chart reflects the current structfix/stylefix generation stack.</text>
+</svg>

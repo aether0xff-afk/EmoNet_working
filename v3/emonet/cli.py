@@ -351,6 +351,105 @@ def export_z_from_json_stream(
     )
 
 
+def sample_probe_dataframe(df: pd.DataFrame, sample_size: int | None, sample_mode: str, seed: int) -> pd.DataFrame:
+    if sample_size is None or sample_size <= 0 or sample_size >= len(df):
+        return df.copy()
+    if sample_mode == "head":
+        return df.head(sample_size).copy()
+    if sample_mode == "random":
+        return df.sample(n=sample_size, random_state=seed).reset_index(drop=True)
+    raise ValueError("sample_mode must be one of: head, random")
+
+
+def summarize_branch_lengths(lengths: list[int]) -> dict[str, object]:
+    if not lengths:
+        return {
+            "rows": 0,
+            "mean": 0.0,
+            "median": 0.0,
+            "len1": 0,
+            "len1_ratio": 0.0,
+            "max": 0,
+            "p90": 0,
+            "p95": 0,
+            "bucket_counts": {},
+        }
+
+    arr = np.asarray(lengths, dtype=np.int32)
+    bucket_counts = {
+        "len1": int(np.sum(arr == 1)),
+        "len2_3": int(np.sum((arr >= 2) & (arr <= 3))),
+        "len4_7": int(np.sum((arr >= 4) & (arr <= 7))),
+        "len8_15": int(np.sum((arr >= 8) & (arr <= 15))),
+        "len16_plus": int(np.sum(arr >= 16)),
+    }
+    return {
+        "rows": int(len(arr)),
+        "mean": round(float(arr.mean()), 4),
+        "median": float(np.median(arr)),
+        "len1": int(np.sum(arr == 1)),
+        "len1_ratio": round(float(np.mean(arr == 1)), 4),
+        "max": int(arr.max()),
+        "p90": int(np.quantile(arr, 0.9)),
+        "p95": int(np.quantile(arr, 0.95)),
+        "bucket_counts": bucket_counts,
+    }
+
+
+def probe_branch_lengths(
+    model: EmoNet,
+    df: pd.DataFrame,
+    text_column: str,
+    *,
+    progress_every: int,
+) -> pd.DataFrame:
+    rows: list[dict[str, object]] = []
+    start_time = time.perf_counter()
+    for idx, record in enumerate(df.to_dict(orient="records"), start=1):
+        outputs = model.forward(str(record.get(text_column, "")))
+        row = dict(record)
+        row["dominant_branch_len"] = int(len(outputs["dominant_branch"]))
+        rows.append(row)
+        if progress_every > 0 and idx % progress_every == 0:
+            elapsed = max(1e-8, time.perf_counter() - start_time)
+            print(f"processed {idx} rows ({idx / elapsed:.2f} rows/s)")
+    return pd.DataFrame(rows)
+
+
+def command_probe_branch(args: argparse.Namespace) -> None:
+    model = build_model(args)
+    if bool(args.input_csv) == bool(args.input_json):
+        raise ValueError("provide exactly one of --input-csv or --input-json")
+
+    if args.input_json is not None:
+        df = load_training_json_as_dataframe(Path(args.input_json))
+    else:
+        df = pd.read_csv(Path(args.input_csv))
+
+    text_column = resolve_text_column(df, args.text_column)
+    sampled = sample_probe_dataframe(df, args.sample_size, args.sample_mode, args.seed)
+    result_df = probe_branch_lengths(
+        model=model,
+        df=sampled,
+        text_column=text_column,
+        progress_every=args.progress_every,
+    )
+    summary = summarize_branch_lengths(result_df["dominant_branch_len"].astype(int).tolist())
+    payload = {
+        "input_rows": int(len(df)),
+        "sample_rows": int(len(result_df)),
+        "sample_mode": args.sample_mode,
+        "seed": int(args.seed),
+        **summary,
+    }
+    if args.output_csv:
+        output_csv = Path(args.output_csv)
+        output_csv.parent.mkdir(parents=True, exist_ok=True)
+        result_df.to_csv(output_csv, index=False, encoding="utf-8-sig")
+        payload["output_csv"] = str(output_csv)
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+
+
 def build_balanced_subset(
     df: pd.DataFrame,
     target_size: int,
@@ -2647,6 +2746,17 @@ def build_parser() -> argparse.ArgumentParser:
     batch_generate_parser.add_argument("--limit", type=int, default=None)
     batch_generate_parser.add_argument("--progress-every", type=int, default=10)
     batch_generate_parser.set_defaults(func=command_generate_response_batch)
+
+    probe_parser = subparsers.add_parser("probe-branch")
+    add_common_options(probe_parser)
+    probe_parser.add_argument("--input-csv", default=None)
+    probe_parser.add_argument("--input-json", default=None)
+    probe_parser.add_argument("--text-column", default="text")
+    probe_parser.add_argument("--sample-size", type=int, default=200)
+    probe_parser.add_argument("--sample-mode", choices=["head", "random"], default="random")
+    probe_parser.add_argument("--progress-every", type=int, default=20)
+    probe_parser.add_argument("--output-csv", default=None)
+    probe_parser.set_defaults(func=command_probe_branch)
 
     export_parser = subparsers.add_parser("export-z")
     add_common_options(export_parser)

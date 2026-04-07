@@ -1,0 +1,23 @@
+[
+  {
+    "name": "k_threshold_base=0.68",
+    "params": {
+      "branch_length_bonus": 0.35,
+      "k_threshold_base": 0.68
+    }
+  },
+  {
+    "name": "k_threshold_base=0.7",
+    "params": {
+      "branch_length_bonus": 0.35,
+      "k_threshold_base": 0.7
+    }
+  },
+  {
+    "name": "k_threshold_base=0.72",
+    "params": {
+      "branch_length_bonus": 0.35,
+      "k_threshold_base": 0.72
+    }
+  }
+]

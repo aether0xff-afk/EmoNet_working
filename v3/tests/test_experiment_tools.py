@@ -20,6 +20,164 @@ def load_module(module_name: str, relative_path: str):
 
 
 class ExperimentToolTests(unittest.TestCase):
+    def test_branch_param_sweep_ofat_outputs_ranked_summary(self) -> None:
+        module = load_module("branch_param_sweep_ofat_module", "scripts/branch_param_sweep.py")
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            input_csv = temp_dir / "probe_input.csv"
+            dataset_csv = temp_dir / "dataset_for_regression.csv"
+            benchmark_csv = temp_dir / "benchmark_results.csv"
+            model_cache = temp_dir / "stim_encoder.joblib"
+            output_dir = temp_dir / "branch_sweep_ofat"
+
+            pd.DataFrame(
+                [
+                    {"text": "요즘 너무 예민하고 피곤하다."},
+                    {"text": "일이 많아서 버겁고 짜증난다."},
+                    {"text": "무시당한 것 같아 화가 난다."},
+                ]
+            ).to_csv(input_csv, index=False, encoding="utf-8-sig")
+
+            pd.DataFrame(
+                [
+                    {"text": "urgent critical alert now", "label": "E10", "y": 0.05, "talk_id": "t1", "persona_id": "p1"},
+                    {"text": "i feel calm and safe with support", "label": "E20", "y": 0.90, "talk_id": "t2", "persona_id": "p2"},
+                    {"text": "too tired and burned out i need rest", "label": "E30", "y": 0.20, "talk_id": "t3", "persona_id": "p3"},
+                    {"text": "we made progress and i can handle this", "label": "E40", "y": 0.85, "talk_id": "t4", "persona_id": "p4"},
+                    {"text": "this risk is scary and stressful", "label": "E50", "y": 0.10, "talk_id": "t5", "persona_id": "p5"},
+                    {"text": "quiet stable day and peaceful mood", "label": "E60", "y": 0.95, "talk_id": "t6", "persona_id": "p6"},
+                ]
+            ).to_csv(dataset_csv, index=False, encoding="utf-8-sig")
+            pd.DataFrame(
+                [{"vector": "char_tfidf", "model": "Ridge", "status": "ok", "MAE(mean)": 0.1, "RMSE(mean)": 0.2}]
+            ).to_csv(benchmark_csv, index=False, encoding="utf-8-sig")
+
+            import sys
+
+            original_argv = sys.argv[:]
+            try:
+                sys.argv = [
+                    "branch_param_sweep.py",
+                    "--input-csv",
+                    str(input_csv),
+                    "--dataset-csv",
+                    str(dataset_csv),
+                    "--benchmark-csv",
+                    str(benchmark_csv),
+                    "--model-cache-path",
+                    str(model_cache),
+                    "--force-refit",
+                    "--sample-size",
+                    "3",
+                    "--sample-mode",
+                    "head",
+                    "--progress-every",
+                    "0",
+                    "--ofat-params",
+                    "k_threshold_base,memory_k_mix",
+                    "--fixed",
+                    "branch_length_bonus=0.35",
+                    "--output-dir",
+                    str(output_dir),
+                ]
+                module.main()
+            finally:
+                sys.argv = original_argv
+
+            summary = pd.read_csv(output_dir / "summary.csv")
+            self.assertIn("score", summary.columns)
+            self.assertIn("baseline", set(summary["config_name"].tolist()))
+            self.assertTrue(any(name.startswith("k_threshold_base:down=") for name in summary["config_name"].tolist()))
+            self.assertTrue(any(name.startswith("memory_k_mix:up=") for name in summary["config_name"].tolist()))
+
+    def test_branch_param_sweep_outputs_csv_and_svg(self) -> None:
+        module = load_module("branch_param_sweep_module", "scripts/branch_param_sweep.py")
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            input_csv = temp_dir / "probe_input.csv"
+            dataset_csv = temp_dir / "dataset_for_regression.csv"
+            benchmark_csv = temp_dir / "benchmark_results.csv"
+            model_cache = temp_dir / "stim_encoder.joblib"
+            output_dir = temp_dir / "branch_sweep"
+
+            pd.DataFrame(
+                [
+                    {"text": "일이 너무 많아서 버겁다."},
+                    {"text": "요즘 너무 예민하고 피곤하다."},
+                    {"text": "화가 나는데 참고 있다."},
+                ]
+            ).to_csv(input_csv, index=False, encoding="utf-8-sig")
+
+            pd.DataFrame(
+                [
+                    {"text": "urgent critical alert now", "label": "E10", "y": 0.05, "talk_id": "t1", "persona_id": "p1"},
+                    {"text": "i feel calm and safe with support", "label": "E20", "y": 0.90, "talk_id": "t2", "persona_id": "p2"},
+                    {"text": "too tired and burned out i need rest", "label": "E30", "y": 0.20, "talk_id": "t3", "persona_id": "p3"},
+                    {"text": "we made progress and i can handle this", "label": "E40", "y": 0.85, "talk_id": "t4", "persona_id": "p4"},
+                    {"text": "this risk is scary and stressful", "label": "E50", "y": 0.10, "talk_id": "t5", "persona_id": "p5"},
+                    {"text": "quiet stable day and peaceful mood", "label": "E60", "y": 0.95, "talk_id": "t6", "persona_id": "p6"},
+                ]
+            ).to_csv(dataset_csv, index=False, encoding="utf-8-sig")
+
+            pd.DataFrame(
+                [{"vector": "char_tfidf", "model": "Ridge", "status": "ok", "MAE(mean)": 0.1, "RMSE(mean)": 0.2}]
+            ).to_csv(benchmark_csv, index=False, encoding="utf-8-sig")
+
+            import sys
+
+            original_argv = sys.argv[:]
+            try:
+                sys.argv = [
+                    "branch_param_sweep.py",
+                    "--input-csv",
+                    str(input_csv),
+                    "--dataset-csv",
+                    str(dataset_csv),
+                    "--benchmark-csv",
+                    str(benchmark_csv),
+                    "--model-cache-path",
+                    str(model_cache),
+                    "--force-refit",
+                    "--sample-size",
+                    "3",
+                    "--sample-mode",
+                    "head",
+                    "--progress-every",
+                    "0",
+                    "--sweep-param",
+                    "k_threshold_base",
+                    "--values",
+                    "0.68,0.72",
+                    "--fixed",
+                    "branch_length_bonus=0.35",
+                    "--output-dir",
+                    str(output_dir),
+                ]
+                module.main()
+            finally:
+                sys.argv = original_argv
+
+            summary_csv = output_dir / "summary.csv"
+            details_csv = output_dir / "details.csv"
+            spec_json = output_dir / "specs.json"
+            mean_svg = output_dir / "branch_sweep_mean.svg"
+            len1_svg = output_dir / "branch_sweep_len1_ratio.svg"
+            bucket_svg = output_dir / "branch_sweep_bucket_ratio.svg"
+
+            self.assertTrue(summary_csv.exists())
+            self.assertTrue(details_csv.exists())
+            self.assertTrue(spec_json.exists())
+            self.assertTrue(mean_svg.exists())
+            self.assertTrue(len1_svg.exists())
+            self.assertTrue(bucket_svg.exists())
+
+            summary = pd.read_csv(summary_csv)
+            details = pd.read_csv(details_csv)
+            self.assertEqual(len(summary), 2)
+            self.assertEqual(set(summary["config_name"].tolist()), {"k_threshold_base=0.68", "k_threshold_base=0.72"})
+            self.assertEqual(len(details), 6)
+            self.assertIn("dominant_branch_len", details.columns)
+
     def test_shard_and_merge_label_csv(self) -> None:
         module = load_module("shard_label_csv_module", "scripts/shard_label_csv.py")
         with tempfile.TemporaryDirectory() as temp_dir_name:

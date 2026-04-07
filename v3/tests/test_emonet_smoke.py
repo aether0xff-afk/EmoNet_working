@@ -1,4 +1,6 @@
 import csv
+import io
+import contextlib
 import json
 import tempfile
 import unittest
@@ -29,6 +31,7 @@ from emonet.cli import (
     build_response_generation_prompt,
     command_e2e_check,
     command_fit_z_encoder,
+    command_probe_branch,
     command_predict_s,
     command_generate_response,
     command_generate_response_batch,
@@ -182,6 +185,81 @@ class EmoNetSmokeTests(unittest.TestCase):
             self.assertIn("z_63", df.columns)
             self.assertIn("dopamine", df.columns)
             self.assertIn("dominant_branch_len", df.columns)
+
+    def test_command_probe_branch_reports_stats(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            input_csv = temp_dir / "probe_input.csv"
+            output_csv = temp_dir / "probe_output.csv"
+            pd.DataFrame(
+                [
+                    {"text": "len1", "talk_id": "t1"},
+                    {"text": "len3", "talk_id": "t2"},
+                    {"text": "len5", "talk_id": "t3"},
+                ]
+            ).to_csv(input_csv, index=False, encoding="utf-8-sig")
+
+            class ProbeModel:
+                def forward(self, text: str):
+                    branch_len = int(str(text).replace("len", ""))
+                    return {
+                        "dominant_branch": [object()] * branch_len,
+                    }
+
+            class Args:
+                pass
+
+            args = Args()
+            args.dataset_csv = None
+            args.benchmark_csv = None
+            args.model_cache_path = None
+            args.max_samples = None
+            args.force_refit = False
+            args.seed = 7
+            args.z_dim = 64
+            args.z_encoder_mode = "stat"
+            args.z_encoder_path = None
+            args.max_ticks = None
+            args.min_ticks_before_converged = None
+            args.k_threshold_base = None
+            args.k_remem_base = None
+            args.k_decay = None
+            args.refractory_ticks = None
+            args.memory_decay = None
+            args.memory_stim_mix = None
+            args.memory_k_mix = None
+            args.max_out_degree = None
+            args.min_out_degree = None
+            args.dopa_rewire_gain = None
+            args.sero_prune_gain = None
+            args.mela_dropout_gain = None
+            args.ne_thresh_reduce_gain = None
+            args.ne_remem_reduce_gain = None
+            args.global_recovery_rate = None
+            args.topk_branches = None
+            args.branch_end_window = None
+            args.branch_length_bonus = None
+            args.input_csv = str(input_csv)
+            args.input_json = None
+            args.text_column = "text"
+            args.sample_size = 2
+            args.sample_mode = "head"
+            args.progress_every = 0
+            args.output_csv = str(output_csv)
+
+            stdout = io.StringIO()
+            with patch("emonet.cli.build_model", return_value=ProbeModel()), contextlib.redirect_stdout(stdout):
+                command_probe_branch(args)
+
+            payload = json.loads(stdout.getvalue())
+            self.assertEqual(payload["input_rows"], 3)
+            self.assertEqual(payload["sample_rows"], 2)
+            self.assertEqual(payload["mean"], 2.0)
+            self.assertEqual(payload["len1"], 1)
+            self.assertEqual(payload["max"], 3)
+            self.assertTrue(output_csv.exists())
+            saved = pd.read_csv(output_csv)
+            self.assertEqual(saved["dominant_branch_len"].tolist(), [1, 3])
 
     def test_run_until_converged_respects_min_ticks_before_stopping(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir_name:

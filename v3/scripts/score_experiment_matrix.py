@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+import re
 import sys
 import time
 
@@ -12,7 +13,13 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from emonet.cli import append_csv_rows, ensure_model_server_ready, maybe_print_progress, request_json_response
+from emonet.cli import (
+    append_csv_rows,
+    call_openai_compatible_chat,
+    ensure_model_server_ready,
+    maybe_print_progress,
+    request_json_response,
+)
 
 
 SCORE_KEYS = [
@@ -22,6 +29,14 @@ SCORE_KEYS = [
     "naturalness",
     "overall_quality",
 ]
+
+SCORE_LABELS = {
+    "content_fit": "content_fit",
+    "emotional_appropriateness": "emotion_fit",
+    "style_match": "style_match",
+    "naturalness": "naturalness",
+    "overall_quality": "overall",
+}
 
 
 def normalize_scores(payload: dict[str, object]) -> dict[str, int]:
@@ -47,7 +62,7 @@ def build_judge_prompt(row: dict[str, object]) -> str:
     text = str(row.get("text", "")).strip()
     response = str(row.get("llm_response", "")).strip()
     condition = str(row.get("condition", "")).strip()
-    target_summary = str(row.get("style_summary_json", "{}")).strip()
+    target_summary = str(row.get("style_summary_text", "")).strip()
     target_tags = str(row.get("style_tags_json", "[]")).strip()
 
     return "\n".join(
@@ -61,10 +76,10 @@ def build_judge_prompt(row: dict[str, object]) -> str:
             "[MODEL_CONDITION]",
             condition,
             "",
-            "[TARGET_STYLE_TAGS_JSON]",
+            "[TARGET_STYLE_TAGS]",
             target_tags,
             "",
-            "[TARGET_STYLE_SUMMARY_JSON]",
+            "[TARGET_STYLE_SUMMARY]",
             target_summary,
             "",
             "[MODEL_RESPONSE]",
@@ -91,6 +106,96 @@ def build_judge_prompt(row: dict[str, object]) -> str:
             "}",
         ]
     )
+
+
+def build_compact_judge_prompt(row: dict[str, object]) -> str:
+    text = str(row.get("text", "")).strip()
+    response = str(row.get("llm_response", "")).strip()
+    condition = str(row.get("condition", "")).strip()
+    target_summary = str(row.get("style_summary_text", "")).strip()
+    target_tags = str(row.get("style_tags_json", "[]")).strip()
+    return "\n".join(
+        [
+            "[TASK]",
+            "아래 응답을 5개 항목으로 1~5점 정수 평가하라.",
+            "",
+            f"input={text}",
+            f"condition={condition}",
+            f"target_tags={target_tags}",
+            f"target_summary={target_summary}",
+            f"response={response}",
+            "",
+            "[FIELDS]",
+            "content_fit, emotional_appropriateness, style_match, naturalness, overall_quality",
+            "",
+            "[OUTPUT]",
+            "다른 말 없이 다섯 정수만 쉼표로 출력한다.",
+            "예시: 4,4,3,4,4",
+        ]
+    )
+
+
+def normalize_compact_scores(text: str) -> dict[str, int]:
+    raw = str(text or "").strip()
+    if not raw:
+        raise ValueError("empty compact score response")
+
+    named_values: dict[str, int] = {}
+    for key in SCORE_KEYS:
+        pattern = re.compile(rf"{re.escape(key)}\s*[:=]\s*([1-5])", re.IGNORECASE)
+        match = pattern.search(raw)
+        if match:
+            named_values[key] = int(match.group(1))
+    if len(named_values) == len(SCORE_KEYS):
+        return named_values
+
+    numbers = [int(token) for token in re.findall(r"(?<!\d)([1-5])(?!\d)", raw)]
+    if len(numbers) < len(SCORE_KEYS):
+        raise ValueError("compact score response must contain five integers in [1,5]")
+    numbers = numbers[: len(SCORE_KEYS)]
+    return {key: value for key, value in zip(SCORE_KEYS, numbers, strict=True)}
+
+
+def request_score_payload(
+    row: dict[str, object],
+    *,
+    base_url: str,
+    model_name: str,
+    timeout_sec: int,
+    max_tokens: int,
+    temperature: float,
+    max_retries: int,
+) -> tuple[dict[str, int], str, str]:
+    json_prompt = build_judge_prompt(row)
+    try:
+        payload, raw = request_json_response(
+            base_url=base_url,
+            model_name=model_name,
+            prompt=json_prompt,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            timeout_sec=timeout_sec,
+            max_retries=max_retries,
+            validator=normalize_scores,
+            retry_instruction=(
+                "직전 응답의 JSON 형식 또는 점수 범위가 잘못되었다. "
+                "반드시 scores object 안에 다섯 항목을 1~5 정수로 다시 출력하라."
+            ),
+        )
+        return payload, raw, "json"
+    except Exception:
+        compact_prompt = build_compact_judge_prompt(row)
+        raw = call_openai_compatible_chat(
+            base_url=base_url,
+            model_name=model_name,
+            prompt=compact_prompt,
+            temperature=0.0,
+            max_tokens=min(max_tokens, 64),
+            timeout_sec=timeout_sec,
+            system_prompt="Return only five integers separated by commas.",
+        )
+        payload = normalize_compact_scores(raw)
+        return payload, raw, "compact"
 
 
 def load_existing_keys(output_csv: Path) -> set[tuple[str, str]]:
@@ -120,9 +225,12 @@ def score_matrix(
     flush_every: int,
     keep_failures: bool,
     resume: bool,
+    limit: int | None,
 ) -> pd.DataFrame:
     df = pd.read_csv(input_csv)
     ok_df = df[df["status"].fillna("") == "ok"].copy()
+    if limit is not None and limit > 0:
+        ok_df = ok_df.head(limit).copy()
     if ok_df.empty:
         raise ValueError("no successful matrix rows found to score")
 
@@ -138,6 +246,7 @@ def score_matrix(
         "llm_response",
         "response_length",
         "response_retry_count",
+        "judge_parse_mode",
         "judge_raw_output",
         *SCORE_KEYS,
     ]
@@ -161,28 +270,24 @@ def score_matrix(
             "llm_response": str(row.get("llm_response", "")),
             "response_length": int(len(str(row.get("llm_response", "")))),
             "response_retry_count": 0 if pd.isna(retry_value) else int(retry_value),
+            "judge_parse_mode": "",
             "judge_raw_output": "",
         }
         for key_name in SCORE_KEYS:
             scored[key_name] = pd.NA
 
-        prompt = build_judge_prompt(row)
         try:
-            payload, raw = request_json_response(
+            payload, raw, parse_mode = request_score_payload(
+                row,
                 base_url=base_url,
                 model_name=model_name,
-                prompt=prompt,
-                temperature=temperature,
-                max_tokens=max_tokens,
                 timeout_sec=timeout_sec,
+                max_tokens=max_tokens,
+                temperature=temperature,
                 max_retries=max_retries,
-                validator=normalize_scores,
-                retry_instruction=(
-                    "직전 응답의 JSON 형식 또는 점수 범위가 잘못되었다. "
-                    "반드시 scores object 안에 다섯 항목을 1~5 정수로 다시 출력하라."
-                ),
             )
             scored["status"] = "ok"
+            scored["judge_parse_mode"] = parse_mode
             scored["judge_raw_output"] = raw
             for key_name, value in payload.items():
                 scored[key_name] = int(value)
@@ -267,6 +372,7 @@ def main() -> None:
     parser.add_argument("--flush-every", type=int, default=10)
     parser.add_argument("--keep-failures", action="store_true")
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--limit", type=int, default=None)
     args = parser.parse_args()
 
     input_csv = Path(args.input_csv)
@@ -288,6 +394,7 @@ def main() -> None:
         flush_every=args.flush_every,
         keep_failures=args.keep_failures,
         resume=args.resume,
+        limit=args.limit,
     )
     summary_df = summarize_scores(scored_df)
     summary_csv.parent.mkdir(parents=True, exist_ok=True)

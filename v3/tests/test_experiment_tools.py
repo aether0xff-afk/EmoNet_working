@@ -378,6 +378,42 @@ class ExperimentToolTests(unittest.TestCase):
         self.assertIn("mean_response_retry_count", summary.columns)
         self.assertAlmostEqual(float(summary.loc[0, "mean_response_retry_count"]), 1.0)
 
+    def test_score_experiment_matrix_compact_fallback(self) -> None:
+        module = load_module("score_experiment_matrix_compact_module", "scripts/score_experiment_matrix.py")
+        row = {
+            "text": "지금 너무 예민하고 피곤해.",
+            "llm_response": "지금은 건드리지 말고 잠깐 쉬어.",
+            "condition": "emonet_full",
+            "style_summary_text": "긴장 높음, 따뜻함 낮음",
+            "style_tags_json": "[\"건조함\", \"직설적\"]",
+        }
+        with unittest.mock.patch.object(
+            module, "request_json_response", side_effect=ValueError("json failed")
+        ), unittest.mock.patch.object(
+            module, "call_openai_compatible_chat", return_value="4,4,3,4,4"
+        ):
+            payload, raw, parse_mode = module.request_score_payload(
+                row,
+                base_url="http://127.0.0.1:11434/v1",
+                model_name="gpt-oss:20b",
+                timeout_sec=30,
+                max_tokens=300,
+                temperature=0.0,
+                max_retries=2,
+            )
+        self.assertEqual(parse_mode, "compact")
+        self.assertEqual(raw, "4,4,3,4,4")
+        self.assertEqual(
+            payload,
+            {
+                "content_fit": 4,
+                "emotional_appropriateness": 4,
+                "style_match": 3,
+                "naturalness": 4,
+                "overall_quality": 4,
+            },
+        )
+
     def test_experiment_matrix_resume_skips_only_ok_rows(self) -> None:
         module = load_module("experiment_matrix_resume_module", "scripts/experiment_matrix.py")
         with tempfile.TemporaryDirectory() as temp_dir_name:

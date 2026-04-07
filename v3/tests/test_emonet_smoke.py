@@ -186,6 +186,74 @@ class EmoNetSmokeTests(unittest.TestCase):
             self.assertIn("dopamine", df.columns)
             self.assertIn("dominant_branch_len", df.columns)
 
+    def test_aggregate_signal_bundle_uses_topk_sum_and_weighted_stim(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            stim_config = self.make_stim_encoder_config(Path(temp_dir_name))
+            model = EmoNet(
+                EmoNetConfig(seed=17, input_topk=2, input_signal_clip=1.2),
+                stim_encoder_config=stim_config,
+            )
+            strength, stim_vec = model._aggregate_signal_bundle(
+                [
+                    (0.9, np.asarray([1.0, 0.0, 0.0, 0.0], dtype=np.float32)),
+                    (0.7, np.asarray([0.0, 1.0, 0.0, 0.0], dtype=np.float32)),
+                    (0.2, np.asarray([0.0, 0.0, 1.0, 0.0], dtype=np.float32)),
+                ]
+            )
+
+            self.assertAlmostEqual(strength, 1.2, places=6)
+            np.testing.assert_allclose(
+                stim_vec,
+                np.asarray([0.5625, 0.4375, 0.0, 0.0], dtype=np.float32),
+                atol=1e-6,
+            )
+
+    def test_compose_neuron_stimulus_carries_self_parent_base_and_bias(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            stim_config = self.make_stim_encoder_config(Path(temp_dir_name))
+            model = EmoNet(
+                EmoNetConfig(
+                    seed=19,
+                    state_self_stim_mix=0.50,
+                    state_parent_stim_mix=0.25,
+                    state_base_stim_mix=0.15,
+                    state_bias_stim_mix=0.10,
+                ),
+                stim_encoder_config=stim_config,
+            )
+            neuron = model.state.neurons[0]
+            neuron.stim_vec = np.asarray([1.0, 0.0, 0.0, 0.0], dtype=np.float32)
+            neuron.intrinsic_bias = np.asarray([0.0, 0.0, 0.0, 1.0], dtype=np.float32)
+            composed = model._compose_neuron_stimulus(
+                neuron,
+                base_stim_vec=np.asarray([0.0, 0.0, 1.0, 0.0], dtype=np.float32),
+                parent_stim_vec=np.asarray([0.0, 1.0, 0.0, 0.0], dtype=np.float32),
+            )
+
+            np.testing.assert_allclose(
+                composed,
+                np.asarray([0.5, 0.25, 0.15, 0.1], dtype=np.float32),
+                atol=1e-6,
+            )
+
+    def test_compute_local_activation_params_apply_hysteresis(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            stim_config = self.make_stim_encoder_config(Path(temp_dir_name))
+            model = EmoNet(
+                EmoNetConfig(
+                    seed=23,
+                    hysteresis_threshold_gain=0.10,
+                    hysteresis_remem_gain=0.05,
+                ),
+                stim_encoder_config=stim_config,
+            )
+            neuron = model.state.neurons[0]
+            neuron.recent_activity = 1.5
+            threshold, remem = model._compute_local_activation_params(neuron, 0.72, 0.95)
+
+            self.assertAlmostEqual(threshold, 0.57, places=6)
+            self.assertAlmostEqual(remem, 0.875, places=6)
+
     def test_command_probe_branch_reports_stats(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir_name:
             temp_dir = Path(temp_dir_name)
@@ -225,9 +293,19 @@ class EmoNetSmokeTests(unittest.TestCase):
             args.k_remem_base = None
             args.k_decay = None
             args.refractory_ticks = None
+            args.input_topk = None
+            args.input_signal_clip = None
             args.memory_decay = None
             args.memory_stim_mix = None
             args.memory_k_mix = None
+            args.state_self_stim_mix = None
+            args.state_parent_stim_mix = None
+            args.state_base_stim_mix = None
+            args.state_bias_stim_mix = None
+            args.recent_activity_decay = None
+            args.hysteresis_threshold_gain = None
+            args.hysteresis_remem_gain = None
+            args.hysteresis_k_bonus = None
             args.max_out_degree = None
             args.min_out_degree = None
             args.dopa_rewire_gain = None

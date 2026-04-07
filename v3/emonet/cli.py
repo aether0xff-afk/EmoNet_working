@@ -156,9 +156,19 @@ def build_model(
         "k_remem_base",
         "k_decay",
         "refractory_ticks",
+        "input_topk",
+        "input_signal_clip",
         "memory_decay",
         "memory_stim_mix",
         "memory_k_mix",
+        "state_self_stim_mix",
+        "state_parent_stim_mix",
+        "state_base_stim_mix",
+        "state_bias_stim_mix",
+        "recent_activity_decay",
+        "hysteresis_threshold_gain",
+        "hysteresis_remem_gain",
+        "hysteresis_k_bonus",
         "max_out_degree",
         "min_out_degree",
         "dopa_rewire_gain",
@@ -2744,9 +2754,19 @@ def build_parser() -> argparse.ArgumentParser:
         subparser.add_argument("--k-remem-base", dest="k_remem_base", type=float, default=None)
         subparser.add_argument("--k-decay", dest="k_decay", type=float, default=None)
         subparser.add_argument("--refractory-ticks", dest="refractory_ticks", type=int, default=None)
+        subparser.add_argument("--input-topk", dest="input_topk", type=int, default=None)
+        subparser.add_argument("--input-signal-clip", dest="input_signal_clip", type=float, default=None)
         subparser.add_argument("--memory-decay", dest="memory_decay", type=float, default=None)
         subparser.add_argument("--memory-stim-mix", dest="memory_stim_mix", type=float, default=None)
         subparser.add_argument("--memory-k-mix", dest="memory_k_mix", type=float, default=None)
+        subparser.add_argument("--state-self-stim-mix", dest="state_self_stim_mix", type=float, default=None)
+        subparser.add_argument("--state-parent-stim-mix", dest="state_parent_stim_mix", type=float, default=None)
+        subparser.add_argument("--state-base-stim-mix", dest="state_base_stim_mix", type=float, default=None)
+        subparser.add_argument("--state-bias-stim-mix", dest="state_bias_stim_mix", type=float, default=None)
+        subparser.add_argument("--recent-activity-decay", dest="recent_activity_decay", type=float, default=None)
+        subparser.add_argument("--hysteresis-threshold-gain", dest="hysteresis_threshold_gain", type=float, default=None)
+        subparser.add_argument("--hysteresis-remem-gain", dest="hysteresis_remem_gain", type=float, default=None)
+        subparser.add_argument("--hysteresis-k-bonus", dest="hysteresis_k_bonus", type=float, default=None)
         subparser.add_argument("--max-out-degree", dest="max_out_degree", type=int, default=None)
         subparser.add_argument("--min-out-degree", dest="min_out_degree", type=int, default=None)
         subparser.add_argument("--dopa-rewire-gain", dest="dopa_rewire_gain", type=float, default=None)

@@ -96,9 +96,11 @@ class NeuronState:
     neuron_type: Literal["inhibitory", "excitatory", "modulatory"]
     K: float = 0.0
     stim_vec: np.ndarray = field(default_factory=lambda: np.zeros(STIM_DIM, dtype=np.float32))
+    intrinsic_bias: np.ndarray = field(default_factory=lambda: np.zeros(STIM_DIM, dtype=np.float32))
     k_threshold: float = 1.0
     k_remem: float = 1.2
     refractory_left: int = 0
+    recent_activity: float = 0.0
     dropped_out: bool = False
     out_neighbors: set[int] = field(default_factory=set)
     in_neighbors: set[int] = field(default_factory=set)
@@ -173,6 +175,8 @@ class EmoNetConfig:
     k_remem_base: float = 0.95
     k_decay: float = 0.99
     refractory_ticks: int = 1
+    input_topk: int = 2
+    input_signal_clip: float = 1.50
 
     memory_decay: float = 0.985
     memory_delete_threshold: float = 0.05
@@ -180,6 +184,14 @@ class EmoNetConfig:
     memory_stim_mix: float = 0.25
     memory_k_mix: float = 0.35
     max_memory_per_neuron: int = 64
+    state_self_stim_mix: float = 0.55
+    state_parent_stim_mix: float = 0.25
+    state_base_stim_mix: float = 0.15
+    state_bias_stim_mix: float = 0.05
+    recent_activity_decay: float = 0.80
+    hysteresis_threshold_gain: float = 0.12
+    hysteresis_remem_gain: float = 0.08
+    hysteresis_k_bonus: float = 0.08
 
     max_out_degree: int = 12
     min_out_degree: int = 1
@@ -218,6 +230,23 @@ class EmoNetConfig:
             raise ValueError("min_ticks_before_converged must be non-negative")
         if self.branch_end_window <= 0:
             raise ValueError("branch_end_window must be positive")
+        if self.input_topk <= 0:
+            raise ValueError("input_topk must be positive")
+        if self.input_signal_clip <= 0.0:
+            raise ValueError("input_signal_clip must be positive")
+        if not 0.0 <= self.recent_activity_decay <= 1.0:
+            raise ValueError("recent_activity_decay must be in [0, 1]")
+        for field_name in (
+            "state_self_stim_mix",
+            "state_parent_stim_mix",
+            "state_base_stim_mix",
+            "state_bias_stim_mix",
+            "hysteresis_threshold_gain",
+            "hysteresis_remem_gain",
+            "hysteresis_k_bonus",
+        ):
+            if getattr(self, field_name) < 0.0:
+                raise ValueError(f"{field_name} must be non-negative")
 
 
 def _project_root() -> Path:
@@ -718,6 +747,15 @@ class EmoNetGraph:
         self.config = config
         self.rng = rng
 
+    def _sample_intrinsic_bias(self, neuron_type: Literal["inhibitory", "excitatory", "modulatory"]) -> np.ndarray:
+        bias_centers = {
+            "inhibitory": np.asarray([0.18, 0.58, 0.24, 0.38], dtype=np.float32),
+            "excitatory": np.asarray([0.58, 0.18, 0.52, 0.18], dtype=np.float32),
+            "modulatory": np.asarray([0.36, 0.34, 0.44, 0.28], dtype=np.float32),
+        }
+        jitter = self.rng.normal(loc=0.0, scale=0.08, size=STIM_DIM).astype(np.float32)
+        return clamp_stim_vec(bias_centers[neuron_type] + jitter)
+
     def build_graph(self) -> list[NeuronState]:
         neurons = self._build_neurons()
         for src in range(self.config.n_neurons):
@@ -763,6 +801,7 @@ class EmoNetGraph:
                     neuron_type=neuron_type,
                     K=0.0,
                     stim_vec=np.zeros(STIM_DIM, dtype=np.float32),
+                    intrinsic_bias=self._sample_intrinsic_bias(neuron_type),
                     k_threshold=self.config.k_threshold_base,
                     k_remem=self.config.k_remem_base,
                 )
@@ -1135,7 +1174,7 @@ class EmoNet:
             self.load_z_encoder(self.config.z_encoder_path)
 
         self.last_base_stim_vec = np.zeros(STIM_DIM, dtype=np.float32)
-        self.pending_signals: dict[int, list[float]] = {}
+        self.pending_signals: dict[int, list[tuple[float, np.ndarray]]] = {}
         self.pruned_branch_log: list[TickRecord] = []
         self.topk_branches: list[BranchPath] = []
         self.dominant_branch: list[DominantBranchStep] = []
@@ -1151,6 +1190,7 @@ class EmoNet:
             neuron.k_threshold = self.config.k_threshold_base
             neuron.k_remem = self.config.k_remem_base
             neuron.refractory_left = 0
+            neuron.recent_activity = 0.0
             neuron.dropped_out = False
             neuron.memories.clear()
 
@@ -1185,16 +1225,93 @@ class EmoNet:
     def text_to_stim_vec(self, text: str | Sequence[float] | np.ndarray) -> np.ndarray:
         return self.stim_encoder.encode(text)
 
+    def _aggregate_signal_bundle(
+        self,
+        signals: Sequence[tuple[float, np.ndarray] | float],
+    ) -> tuple[float, np.ndarray]:
+        parsed: list[tuple[float, np.ndarray]] = []
+        for item in signals:
+            if isinstance(item, tuple):
+                strength, stim_vec = item
+                stim_arr = np.asarray(stim_vec, dtype=np.float32).reshape(STIM_DIM)
+            else:
+                strength = item
+                stim_arr = np.zeros(STIM_DIM, dtype=np.float32)
+            parsed.append((max(0.0, float(strength)), clamp_stim_vec(stim_arr)))
+
+        if not parsed:
+            return 0.0, np.zeros(STIM_DIM, dtype=np.float32)
+
+        parsed.sort(key=lambda pair: pair[0], reverse=True)
+        topk_items = parsed[: self.config.input_topk]
+        strength_sum = float(sum(strength for strength, _ in topk_items))
+        clipped_strength = min(self.config.input_signal_clip, strength_sum)
+        if strength_sum <= 1e-8:
+            return clipped_strength, np.zeros(STIM_DIM, dtype=np.float32)
+
+        weights = np.asarray([strength for strength, _ in topk_items], dtype=np.float32)
+        weights = weights / float(weights.sum() + 1e-8)
+        blended_stim = np.zeros(STIM_DIM, dtype=np.float32)
+        for weight, (_, stim_vec) in zip(weights, topk_items, strict=False):
+            blended_stim += float(weight) * stim_vec
+        return clipped_strength, clamp_stim_vec(blended_stim)
+
+    def _aggregate_pending_inputs(self) -> tuple[np.ndarray, np.ndarray]:
+        input_strengths = np.zeros(self.config.n_neurons, dtype=np.float32)
+        input_stimuli = np.zeros((self.config.n_neurons, STIM_DIM), dtype=np.float32)
+        for node_id, signals in self.pending_signals.items():
+            if not signals:
+                continue
+            strength, stim_vec = self._aggregate_signal_bundle(signals)
+            input_strengths[node_id] = float(strength)
+            input_stimuli[node_id] = stim_vec
+        return input_strengths, input_stimuli
+
+    def _compose_neuron_stimulus(
+        self,
+        neuron: NeuronState,
+        base_stim_vec: np.ndarray,
+        parent_stim_vec: np.ndarray,
+    ) -> np.ndarray:
+        components = (
+            (self.config.state_self_stim_mix, neuron.stim_vec),
+            (self.config.state_parent_stim_mix, parent_stim_vec),
+            (self.config.state_base_stim_mix, base_stim_vec),
+            (self.config.state_bias_stim_mix, neuron.intrinsic_bias),
+        )
+        total_weight = sum(max(0.0, float(weight)) for weight, _ in components)
+        if total_weight <= 1e-8:
+            return clamp_stim_vec(base_stim_vec.copy())
+
+        blended = np.zeros(STIM_DIM, dtype=np.float32)
+        for weight, stim_vec in components:
+            normalized_weight = max(0.0, float(weight)) / total_weight
+            blended += normalized_weight * stim_vec.astype(np.float32, copy=False)
+        return clamp_stim_vec(blended)
+
+    def _compute_local_activation_params(
+        self,
+        neuron: NeuronState,
+        effective_threshold: float,
+        effective_remem: float,
+    ) -> tuple[float, float]:
+        threshold = max(
+            0.0,
+            float(effective_threshold) - self.config.hysteresis_threshold_gain * float(neuron.recent_activity),
+        )
+        remem = max(
+            0.0,
+            float(effective_remem) - self.config.hysteresis_remem_gain * float(neuron.recent_activity),
+        )
+        return threshold, remem
+
     def run_tick(self, base_stim_vec: np.ndarray, text: str) -> TickRecord:
         self._restore_awake_neurons()
 
         self.state.global_threshold_shift *= 1.0 - self.config.global_recovery_rate
         self.state.global_remem_shift *= 1.0 - self.config.global_recovery_rate
 
-        input_strengths = np.zeros(self.config.n_neurons, dtype=np.float32)
-        for node_id, signals in self.pending_signals.items():
-            if signals:
-                input_strengths[node_id] = float(np.mean(signals))
+        input_strengths, input_stimuli = self._aggregate_pending_inputs()
 
         previous_k = self.state.curr_K.copy()
         effective_threshold = self.config.k_threshold_base - self.state.global_threshold_shift
@@ -1202,9 +1319,17 @@ class EmoNet:
 
         active_candidates: list[int] = []
         for neuron in self.state.neurons:
-            neuron.stim_vec = base_stim_vec.copy()
-            neuron.k_threshold = effective_threshold
-            neuron.k_remem = effective_remem
+            neuron.recent_activity *= self.config.recent_activity_decay
+            neuron.stim_vec = self._compose_neuron_stimulus(
+                neuron,
+                base_stim_vec=base_stim_vec,
+                parent_stim_vec=input_stimuli[neuron.neuron_id],
+            )
+            neuron.k_threshold, neuron.k_remem = self._compute_local_activation_params(
+                neuron,
+                effective_threshold=effective_threshold,
+                effective_remem=effective_remem,
+            )
 
             neuron.K *= self.config.k_decay
             if neuron.refractory_left > 0 or neuron.dropped_out:
@@ -1212,16 +1337,17 @@ class EmoNet:
                 continue
 
             neuron.K += float(input_strengths[neuron.neuron_id])
+            neuron.K += self.config.hysteresis_k_bonus * float(neuron.recent_activity)
             neuron.K += 0.3 * float(neuron.stim_vec[0]) + 0.3 * float(neuron.stim_vec[2])
             neuron.K -= 0.3 * float(neuron.stim_vec[1]) + 0.3 * float(neuron.stim_vec[3])
             neuron.K = max(0.0, neuron.K)
 
-            if neuron.K > effective_threshold:
+            if neuron.K > neuron.k_threshold:
                 active_candidates.append(neuron.neuron_id)
 
         for node_id in active_candidates:
             neuron = self.state.neurons[node_id]
-            self._apply_memory_sequence(neuron, text, effective_remem)
+            self._apply_memory_sequence(neuron, text, neuron.k_remem)
             self._apply_type_effect(neuron)
 
         self._apply_modulatory_effects(active_candidates)
@@ -1235,15 +1361,16 @@ class EmoNet:
         for node_id in final_active_nodes:
             self._apply_rewiring(self.state.neurons[node_id])
 
-        next_pending_signals: dict[int, list[float]] = {}
+        next_pending_signals: dict[int, list[tuple[float, np.ndarray]]] = {}
         edges_fired: list[tuple[int, int]] = []
         for node_id in final_active_nodes:
             neuron = self.state.neurons[node_id]
             fire_value = float(neuron.K)
             for dst in sorted(neuron.out_neighbors):
-                next_pending_signals.setdefault(dst, []).append(fire_value)
+                next_pending_signals.setdefault(dst, []).append((fire_value, neuron.stim_vec.copy()))
                 edges_fired.append((node_id, dst))
             neuron.refractory_left = self.config.refractory_ticks
+            neuron.recent_activity = min(2.0, neuron.recent_activity + 1.0)
 
         record = TickRecord(
             tick=self.state.tick,

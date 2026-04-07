@@ -34,6 +34,61 @@ DEFAULT_Z_ENCODER_MODEL_PATH = Path(__file__).resolve().parents[1] / "artifacts"
 DEFAULT_STYLE_PROFILE = "core32"
 
 
+def format_duration(seconds: float) -> str:
+    total_seconds = max(0, int(round(float(seconds))))
+    hours, remainder = divmod(total_seconds, 3600)
+    minutes, secs = divmod(remainder, 60)
+    if hours > 0:
+        return f"{hours:02d}:{minutes:02d}:{secs:02d}"
+    return f"{minutes:02d}:{secs:02d}"
+
+
+def build_progress_line(
+    label: str,
+    current: int,
+    total: int | None,
+    start_time: float,
+    *,
+    unit: str = "rows",
+    extra: str | None = None,
+) -> str:
+    elapsed = max(1e-8, time.perf_counter() - start_time)
+    rate = float(current) / elapsed if current > 0 else 0.0
+    parts: list[str] = []
+    if total is not None and total > 0:
+        pct = 100.0 * float(current) / float(total)
+        parts.append(f"{label}: {current}/{total} ({pct:.1f}%)")
+        if 0 < current < total and rate > 0.0:
+            remaining = max(0.0, float(total - current) / rate)
+            parts.append(f"eta {format_duration(remaining)}")
+    else:
+        parts.append(f"{label}: {current}")
+    if rate > 0.0:
+        parts.append(f"{rate:.2f} {unit}/s")
+    parts.append(f"elapsed {format_duration(elapsed)}")
+    if extra:
+        parts.append(extra)
+    return " | ".join(parts)
+
+
+def maybe_print_progress(
+    label: str,
+    current: int,
+    total: int | None,
+    start_time: float,
+    *,
+    every: int,
+    unit: str = "rows",
+    extra: str | None = None,
+    force: bool = False,
+) -> None:
+    if every <= 0:
+        return
+    if not force and current % every != 0:
+        return
+    print(build_progress_line(label, current, total, start_time, unit=unit, extra=extra))
+
+
 def resolve_z_encoder_path(raw_path: str | None) -> Path:
     return Path(raw_path) if raw_path else DEFAULT_Z_ENCODER_MODEL_PATH
 
@@ -242,12 +297,12 @@ def resolve_indexed_columns(df: pd.DataFrame, prefix: str, expected_dim: int | N
 def export_z_from_dataframe(model: EmoNet, df: pd.DataFrame, text_column: str, output_csv: Path) -> None:
     z_rows = []
     stim_rows = []
+    start_time = time.perf_counter()
     for idx, text in enumerate(df[text_column].astype(str), start=1):
         outputs = model.forward(text)
         z_rows.append(to_numpy_array(outputs["z"], dtype=np.float32))
         stim_rows.append(to_numpy_array(outputs["stim_vec"], dtype=np.float32))
-        if idx % 100 == 0:
-            print(f"processed {idx} rows")
+        maybe_print_progress("export-z", idx, len(df), start_time, every=100)
 
     z_array = np.vstack(z_rows)
     stim_array = np.vstack(stim_rows)
@@ -323,9 +378,7 @@ def export_z_from_json_stream(
         processed += 1
         written += 1
 
-        if progress_every > 0 and processed % progress_every == 0:
-            elapsed = max(1e-8, time.perf_counter() - start_time)
-            print(f"processed {processed} rows ({processed / elapsed:.2f} rows/s)")
+        maybe_print_progress("export-z", processed, limit, start_time, every=progress_every)
 
         if len(rows_to_write) >= chunk_size:
             write_header = flush_rows(rows_to_write, output_csv, write_header)
@@ -410,9 +463,7 @@ def probe_branch_lengths(
         row = dict(record)
         row["dominant_branch_len"] = int(len(outputs["dominant_branch"]))
         rows.append(row)
-        if progress_every > 0 and idx % progress_every == 0:
-            elapsed = max(1e-8, time.perf_counter() - start_time)
-            print(f"processed {idx} rows ({idx / elapsed:.2f} rows/s)")
+        maybe_print_progress("probe-branch", idx, len(df), start_time, every=progress_every)
     return pd.DataFrame(rows)
 
 
@@ -705,9 +756,7 @@ def train_transformer_z_encoder_from_dataframe(
     for idx, text in enumerate(texts, start=1):
         outputs = model.forward(text)
         branch_tensors.append(np.asarray(outputs["branch_tensor"], dtype=np.float32))
-        if progress_every > 0 and idx % progress_every == 0:
-            elapsed = max(1e-8, time.perf_counter() - feature_start)
-            print(f"prepared {idx}/{len(texts)} branch tensors ({idx / elapsed:.2f} rows/s)")
+        maybe_print_progress("fit-z-encoder feature prep", idx, len(texts), feature_start, every=progress_every)
 
     rng = np.random.default_rng(seed)
     indices = rng.permutation(len(df))
@@ -743,7 +792,9 @@ def train_transformer_z_encoder_from_dataframe(
     best_train_mae = None
     best_val_mae = None
 
-    for epoch in range(1, max(1, int(epochs)) + 1):
+    epoch_start_time = time.perf_counter()
+    total_epochs = max(1, int(epochs))
+    for epoch in range(1, total_epochs + 1):
         shuffled = train_idx[rng.permutation(len(train_idx))]
         encoder.train()
         head.train()
@@ -790,6 +841,15 @@ def train_transformer_z_encoder_from_dataframe(
             best_val_mae = None if len(val_idx) == 0 else val_mae
             best_encoder_state = {key: value.detach().cpu().clone() for key, value in encoder.state_dict().items()}
             best_head_state = {key: value.detach().cpu().clone() for key, value in head.state_dict().items()}
+        maybe_print_progress(
+            "fit-z-encoder epoch",
+            epoch,
+            total_epochs,
+            epoch_start_time,
+            every=1,
+            unit="epochs",
+            extra=f"train_mae={train_mae:.4f}, val_mae={val_mae:.4f}, best={best_metric:.4f}",
+        )
 
     encoder.load_state_dict(best_encoder_state)
     head.load_state_dict(best_head_state)
@@ -1065,9 +1125,7 @@ def command_generate_response_batch(args: argparse.Namespace) -> None:
             row["error_message"] = str(exc)
             rows.append(row)
 
-        if args.progress_every > 0 and idx % args.progress_every == 0:
-            elapsed = max(1e-8, time.perf_counter() - start_time)
-            print(f"processed {idx}/{len(df)} rows ({idx / elapsed:.2f} rows/s)")
+        maybe_print_progress("generate-response-batch", idx, len(df), start_time, every=args.progress_every)
 
     result_df = pd.DataFrame(rows)
     output_csv.parent.mkdir(parents=True, exist_ok=True)
@@ -2589,9 +2647,7 @@ def label_subset_with_local_model(
             append_csv_rows(output_csv, pending_rows, columns=output_columns)
             pending_rows.clear()
 
-        if progress_every > 0 and processed % progress_every == 0:
-            elapsed = max(1e-8, time.perf_counter() - start_time)
-            print(f"processed {processed}/{total} rows ({processed / elapsed:.2f} rows/s)")
+        maybe_print_progress("label-local", processed, total, start_time, every=progress_every)
 
     append_csv_rows(output_csv, pending_rows, columns=output_columns)
     elapsed = time.perf_counter() - start_time

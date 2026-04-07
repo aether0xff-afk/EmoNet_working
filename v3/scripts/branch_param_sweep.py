@@ -5,6 +5,7 @@ import importlib.util
 import json
 from pathlib import Path
 import sys
+import time
 from typing import Any
 
 import pandas as pd
@@ -16,6 +17,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from emonet.cli import (
     DEFAULT_Z_ENCODER_MODEL_PATH,
     build_model,
+    maybe_print_progress,
     load_training_json_as_dataframe,
     probe_branch_lengths,
     resolve_text_column,
@@ -387,7 +389,8 @@ def main() -> None:
 
     summary_rows: list[dict[str, Any]] = []
     detail_frames: list[pd.DataFrame] = []
-    for spec in specs:
+    sweep_start_time = time.perf_counter()
+    for spec_idx, spec in enumerate(specs, start=1):
         config_name = str(spec["name"])
         params = dict(spec["params"])
         model_args = build_model_namespace(args, params)
@@ -403,6 +406,15 @@ def main() -> None:
         result_df["params_json"] = json.dumps(params, ensure_ascii=False, sort_keys=True)
         detail_frames.append(result_df)
         summary_rows.append(summarize_records(config_name, params, result_df))
+        maybe_print_progress(
+            "branch-sweep configs",
+            spec_idx,
+            len(specs),
+            sweep_start_time,
+            every=1,
+            unit="configs",
+            extra=config_name,
+        )
 
     summary_df = pd.DataFrame(summary_rows)
     summary_df["score"] = summary_df.apply(score_summary_row, axis=1)

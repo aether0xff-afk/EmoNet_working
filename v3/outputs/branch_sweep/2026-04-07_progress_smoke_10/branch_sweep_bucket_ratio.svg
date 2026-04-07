@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="620" viewBox="0 0 1080 620">
+<style>
+text { font-family: 'Malgun Gothic', 'Segoe UI', sans-serif; fill: #1f2937; }
+.title { font-size: 24px; font-weight: 700; }
+.subtitle { font-size: 13px; fill: #6b7280; }
+.axis { font-size: 12px; fill: #4b5563; }
+.label { font-size: 12px; }
+.small { font-size: 11px; fill: #4b5563; }
+.value { font-size: 11px; font-weight: 600; }
+.grid { stroke: #e5e7eb; stroke-width: 1; }
+.axis-line { stroke: #9ca3af; stroke-width: 1.2; }
+.note { font-size: 12px; fill: #374151; }
+</style>
+<rect x="0" y="0" width="100%" height="100%" fill="#ffffff"/>
+<text class="title" x="40" y="42">Branch Sweep: Length Bucket Ratios</text>
+<text class="subtitle" x="40" y="66">sample_rows=10, sample_mode=random, sample_seed=42, model_seed=42</text>
+<line class="grid" x1="90" y1="120.00" x2="1030" y2="120.00"/>
+<text class="axis" x="82" y="124.00" text-anchor="end">0.6</text>
+<line class="grid" x1="90" y1="199.00" x2="1030" y2="199.00"/>
+<text class="axis" x="82" y="203.00" text-anchor="end">0.5</text>
+<line class="grid" x1="90" y1="278.00" x2="1030" y2="278.00"/>
+<text class="axis" x="82" y="282.00" text-anchor="end">0.3</text>
+<line class="grid" x1="90" y1="357.00" x2="1030" y2="357.00"/>
+<text class="axis" x="82" y="361.00" text-anchor="end">0.2</text>
+<line class="grid" x1="90" y1="436.00" x2="1030" y2="436.00"/>
+<text class="axis" x="82" y="440.00" text-anchor="end">0.1</text>
+<line class="grid" x1="90" y1="515.00" x2="1030" y2="515.00"/>
+<text class="axis" x="82" y="519.00" text-anchor="end">0.0</text>
+<line class="axis-line" x1="90" y1="515" x2="1030" y2="515"/>
+<line class="axis-line" x1="90" y1="120" x2="90" y2="515"/>
+<rect x="105.00" y="171.52" width="33.00" height="343.48" rx="5" fill="#dc2626"/>
+<text class="small" x="121.50" y="165.52" text-anchor="middle">0.50</text>
+<rect x="148.00" y="515.00" width="33.00" height="0.00" rx="5" fill="#f59e0b"/>
+<text class="small" x="164.50" y="509.00" text-anchor="middle">0.00</text>
+<rect x="191.00" y="515.00" width="33.00" height="0.00" rx="5" fill="#65a30d"/>
+<text class="small" x="207.50" y="509.00" text-anchor="middle">0.00</text>
+<rect x="234.00" y="240.22" width="33.00" height="274.78" rx="5" fill="#0891b2"/>
+<text class="small" x="250.50" y="234.22" text-anchor="middle">0.40</text>
+<rect x="277.00" y="446.30" width="33.00" height="68.70" rx="5" fill="#2563eb"/>
+<text class="small" x="293.50" y="440.30" text-anchor="middle">0.10</text>
+<text class="label" x="207.50" y="537.00" text-anchor="middle">k_threshold_base:down=0.68</text>
+<rect x="340.00" y="171.52" width="33.00" height="343.48" rx="5" fill="#dc2626"/>
+<text class="small" x="356.50" y="165.52" text-anchor="middle">0.50</text>
+<rect x="383.00" y="515.00" width="33.00" height="0.00" rx="5" fill="#f59e0b"/>
+<text class="small" x="399.50" y="509.00" text-anchor="middle">0.00</text>
+<rect x="426.00" y="515.00" width="33.00" height="0.00" rx="5" fill="#65a30d"/>
+<text class="small" x="442.50" y="509.00" text-anchor="middle">0.00</text>
+<rect x="469.00" y="240.22" width="33.00" height="274.78" rx="5" fill="#0891b2"/>
+<text class="small" x="485.50" y="234.22" text-anchor="middle">0.40</text>
+<rect x="512.00" y="446.30" width="33.00" height="68.70" rx="5" fill="#2563eb"/>
+<text class="small" x="528.50" y="440.30" text-anchor="middle">0.10</text>
+<text class="label" x="442.50" y="537.00" text-anchor="middle">baseline</text>
+<rect x="575.00" y="171.52" width="33.00" height="343.48" rx="5" fill="#dc2626"/>
+<text class="small" x="591.50" y="165.52" text-anchor="middle">0.50</text>
+<rect x="618.00" y="515.00" width="33.00" height="0.00" rx="5" fill="#f59e0b"/>
+<text class="small" x="634.50" y="509.00" text-anchor="middle">0.00</text>
+<rect x="661.00" y="515.00" width="33.00" height="0.00" rx="5" fill="#65a30d"/>
+<text class="small" x="677.50" y="509.00" text-anchor="middle">0.00</text>
+<rect x="704.00" y="240.22" width="33.00" height="274.78" rx="5" fill="#0891b2"/>
+<text class="small" x="720.50" y="234.22" text-anchor="middle">0.40</text>
+<rect x="747.00" y="446.30" width="33.00" height="68.70" rx="5" fill="#2563eb"/>
+<text class="small" x="763.50" y="440.30" text-anchor="middle">0.10</text>
+<text class="label" x="677.50" y="537.00" text-anchor="middle">k_threshold_base:base=0.72</text>
+<rect x="810.00" y="171.52" width="33.00" height="343.48" rx="5" fill="#dc2626"/>
+<text class="small" x="826.50" y="165.52" text-anchor="middle">0.50</text>
+<rect x="853.00" y="515.00" width="33.00" height="0.00" rx="5" fill="#f59e0b"/>
+<text class="small" x="869.50" y="509.00" text-anchor="middle">0.00</text>
+<rect x="896.00" y="377.61" width="33.00" height="137.39" rx="5" fill="#65a30d"/>
+<text class="small" x="912.50" y="371.61" text-anchor="middle">0.20</text>
+<rect x="939.00" y="377.61" width="33.00" height="137.39" rx="5" fill="#0891b2"/>
+<text class="small" x="955.50" y="371.61" text-anchor="middle">0.20</text>
+<rect x="982.00" y="446.30" width="33.00" height="68.70" rx="5" fill="#2563eb"/>
+<text class="small" x="998.50" y="440.30" text-anchor="middle">0.10</text>
+<text class="label" x="912.50" y="537.00" text-anchor="middle">k_threshold_base:up=0.76</text>
+<rect x="90" y="551" width="18" height="18" rx="3" fill="#dc2626"/>
+<text class="small" x="116" y="564">len1</text>
+<rect x="280" y="551" width="18" height="18" rx="3" fill="#f59e0b"/>
+<text class="small" x="306" y="564">2-3</text>
+<rect x="470" y="551" width="18" height="18" rx="3" fill="#65a30d"/>
+<text class="small" x="496" y="564">4-7</text>
+<rect x="660" y="551" width="18" height="18" rx="3" fill="#0891b2"/>
+<text class="small" x="686" y="564">8-15</text>
+<rect x="850" y="551" width="18" height="18" rx="3" fill="#2563eb"/>
+<text class="small" x="876" y="564">16+</text>
+<text class="axis" x="32" y="104" text-anchor="start">ratio</text>
+<text class="note" x="40" y="602">distribution view for paper figures</text>
+</svg>

@@ -23,6 +23,7 @@ from emonet.cli import (
     format_style_summary_lines,
     format_style_vector_lines,
     infer_style_profile,
+    maybe_print_progress,
     resolve_text_column,
     serialize_generation_log,
     utc_timestamp,
@@ -536,9 +537,7 @@ def main() -> None:
                 append_jsonl(log_jsonl, jsonl_buffer)
                 jsonl_buffer.clear()
 
-        if args.progress_every > 0 and idx % args.progress_every == 0:
-            elapsed = max(1e-8, time.perf_counter() - start_time)
-            print(f"processed {idx}/{len(input_df)} rows ({idx / elapsed:.2f} rows/s)")
+        maybe_print_progress("experiment-matrix", idx, len(input_df), start_time, every=args.progress_every)
 
     if rows_buffer:
         append_csv_rows(output_csv, rows_buffer, columns=OUTPUT_COLUMNS)

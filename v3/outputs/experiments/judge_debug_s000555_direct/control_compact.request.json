@@ -1,0 +1,7 @@
+{
+  "name": "control_compact",
+  "prompt": "설명 없이 4,4,4,4,4 만 출력하라.",
+  "system_prompt": "Output only five comma-separated integers.",
+  "temperature": 0.0,
+  "max_tokens": 16
+}

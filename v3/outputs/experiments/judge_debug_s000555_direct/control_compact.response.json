@@ -1,0 +1,49 @@
+{
+  "url": "http://127.0.0.1:11434/v1/chat/completions",
+  "request_payload": {
+    "model": "gpt-oss:20b",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Output only five comma-separated integers."
+      },
+      {
+        "role": "user",
+        "content": "설명 없이 4,4,4,4,4 만 출력하라."
+      }
+    ],
+    "temperature": 0.0,
+    "max_tokens": 16
+  },
+  "http_status": 200,
+  "headers": {
+    "Content-Type": "application/json",
+    "Date": "Tue, 07 Apr 2026 23:25:47 GMT",
+    "Content-Length": "339",
+    "Connection": "close"
+  },
+  "response_text": "{\"id\":\"chatcmpl-22\",\"object\":\"chat.completion\",\"created\":1775604347,\"model\":\"gpt-oss:20b\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"reasoning\":\"The user says: \\\"설명 없이 4,4,\"},\"finish_reason\":\"length\"}],\"usage\":{\"prompt_tokens\":100,\"completion_tokens\":16,\"total_tokens\":116}}\n",
+  "response_json": {
+    "id": "chatcmpl-22",
+    "object": "chat.completion",
+    "created": 1775604347,
+    "model": "gpt-oss:20b",
+    "system_fingerprint": "fp_ollama",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning": "The user says: \"설명 없이 4,4,"
+        },
+        "finish_reason": "length"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 100,
+      "completion_tokens": 16,
+      "total_tokens": 116
+    }
+  }
+}

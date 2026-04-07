@@ -1,0 +1,49 @@
+{
+  "url": "http://127.0.0.1:11434/v1/chat/completions",
+  "request_payload": {
+    "model": "gpt-oss:20b",
+    "messages": [
+      {
+        "role": "system",
+        "content": "Output only five comma-separated integers."
+      },
+      {
+        "role": "user",
+        "content": "5개 점수만 출력:\ncontent_fit, emotional_appropriateness, style_match, naturalness, overall_quality\n형식: 4,4,3,4,4\ncondition=direct\nstyle=긴장 매우 낮음, 감정개방성 매우 낮음, 에너지 매우 낮음, 원초적부정정동 매우 낮음\ntext=대표님이 나만 빼고 팀원 모두에게 커피를 돌린 거 있지? 정말 당혹스러웠어. [SEP] 대표님의 행동에 곤란하고 당혹스러우셨겠어요. [SEP] 대표란 사람이 그렇게 공개적으로 차별 대우를 한다는 게 말이 안 되잖아. 다들 어떻게 생각했겠어. [SEP] 대놓고 차별하는 대표의 행동이 말이 안 된다고 생각하시는군요. 당혹스러...\nresponse=대표님이 그렇게 차별적이게 행동하신 건 정말 상심이 크셨겠어요. 지금 느끼는 화와 혼란은 자연스러운 반응이니, 먼저 감정을 가라앉히기 위해 잠시 숨을 깊이 들이쉬어 보세요. 그 다음, 사내 인사팀이나 신뢰할 수 있는 동료에게 상황을 설명하고, 공정한 대우를 요청해 보는 것도 방법이 될 수 있어요. 이런 과정을 통해 정당한..."
+      }
+    ],
+    "temperature": 0.0,
+    "max_tokens": 16
+  },
+  "http_status": 200,
+  "headers": {
+    "Content-Type": "application/json",
+    "Date": "Tue, 07 Apr 2026 23:25:46 GMT",
+    "Content-Length": "370",
+    "Connection": "close"
+  },
+  "response_text": "{\"id\":\"chatcmpl-442\",\"object\":\"chat.completion\",\"created\":1775604346,\"model\":\"gpt-oss:20b\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"reasoning\":\"We need to output five comma-separated integers. The user says \\\"\"},\"finish_reason\":\"length\"}],\"usage\":{\"prompt_tokens\":383,\"completion_tokens\":16,\"total_tokens\":399}}\n",
+  "response_json": {
+    "id": "chatcmpl-442",
+    "object": "chat.completion",
+    "created": 1775604346,
+    "model": "gpt-oss:20b",
+    "system_fingerprint": "fp_ollama",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "",
+          "reasoning": "We need to output five comma-separated integers. The user says \""
+        },
+        "finish_reason": "length"
+      }
+    ],
+    "usage": {
+      "prompt_tokens": 383,
+      "completion_tokens": 16,
+      "total_tokens": 399
+    }
+  }
+}

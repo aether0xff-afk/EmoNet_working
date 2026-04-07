@@ -1,0 +1,132 @@
+{
+  "record_id": "s_000555",
+  "condition": "direct",
+  "output_dir": "outputs\\experiments\\judge_debug_s000555_direct",
+  "summaries": [
+    {
+      "http_status": 200,
+      "response_text_preview": "{\"id\":\"chatcmpl-62\",\"object\":\"chat.completion\",\"created\":1775604345,\"model\":\"gpt-oss:20b\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"reasoning\":\"We need to produce JSON only. The scoring: we need to evaluate the model response. The model response is:\\n\\n\\\"대표님이 그렇게 차별적이게 행동하신 건 정말 상심이 크셨겠어요. 지금 느끼는 화와 혼란은 자연스러운 반응이니, 먼저 감정을 가라앉히기 위해 잠시 숨을 깊이 들이쉬어 보세요. 그 다음, 사내 인사팀이나 신뢰할 수 있는 동료에게 상황을 설명하고, 공정한 대우를 요청해 보는 것도 방법이 될 수 있어요. 이런 과정을 통해 정당한 해결책을 찾으",
+      "has_json_body": true,
+      "num_choices": 1,
+      "finish_reason": "length",
+      "choice_keys": [
+        "finish_reason",
+        "index",
+        "message"
+      ],
+      "message_keys": [
+        "content",
+        "reasoning",
+        "role"
+      ],
+      "content_type": "str",
+      "content_len": 0,
+      "content_preview": "",
+      "reasoning_type": "str",
+      "reasoning_preview": "We need to produce JSON only. The scoring: we need to evaluate the model response. The model response is:\n\n\"대표님이 그렇게 차별적이게 행동하신 건 정말 상심이 크셨겠어요. 지금 느끼는 화와 혼란은 자연스러운 반응이니, 먼저 감정을 가라앉히기 위해 잠시 숨을 깊이 들이쉬어 보세요. 그 다음, 사내 인사팀이나 신뢰할 수 있는 동료에게 상황을 설명하고, 공정한 대우를 요청해 보는 것도 방법이 될 수 있어요. 이런 과정을 통해 정당한 해결책을 찾으시길 바랍니다.\"\n\nWe need to score each category 1-5. Let's analyze.\n\nInput: The user gave multiple sentences separated by [SEP]. They express frustration, anger, confusion, feeling discriminated. They want advi",
+      "name": "judge_json",
+      "prompt_chars": 1124,
+      "system_prompt": "Return JSON only."
+    },
+    {
+      "http_status": 200,
+      "response_text_preview": "{\"id\":\"chatcmpl-116\",\"object\":\"chat.completion\",\"created\":1775604346,\"model\":\"gpt-oss:20b\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"reasoning\":\"We need to evaluate the response on five fields: content_fit, emotional_appropriateness, style_match, naturalness, overall_quality. The response is: \\\"대표님이 그렇게 차별적이게 행동하신 건 정말 상심이 크셨겠어요. 지금 느끼는 화와\"},\"finish_reason\":\"length\"}],\"usage\":{\"prompt_tokens\":529,\"completion_tokens\":64,\"total_tokens\":593}}",
+      "has_json_body": true,
+      "num_choices": 1,
+      "finish_reason": "length",
+      "choice_keys": [
+        "finish_reason",
+        "index",
+        "message"
+      ],
+      "message_keys": [
+        "content",
+        "reasoning",
+        "role"
+      ],
+      "content_type": "str",
+      "content_len": 0,
+      "content_preview": "",
+      "reasoning_type": "str",
+      "reasoning_preview": "We need to evaluate the response on five fields: content_fit, emotional_appropriateness, style_match, naturalness, overall_quality. The response is: \"대표님이 그렇게 차별적이게 행동하신 건 정말 상심이 크셨겠어요. 지금 느끼는 화와",
+      "name": "judge_compact",
+      "prompt_chars": 811,
+      "system_prompt": "Return only five integers separated by commas."
+    },
+    {
+      "http_status": 200,
+      "response_text_preview": "{\"id\":\"chatcmpl-442\",\"object\":\"chat.completion\",\"created\":1775604346,\"model\":\"gpt-oss:20b\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"reasoning\":\"We need to output five comma-separated integers. The user says \\\"\"},\"finish_reason\":\"length\"}],\"usage\":{\"prompt_tokens\":383,\"completion_tokens\":16,\"total_tokens\":399}}\n",
+      "has_json_body": true,
+      "num_choices": 1,
+      "finish_reason": "length",
+      "choice_keys": [
+        "finish_reason",
+        "index",
+        "message"
+      ],
+      "message_keys": [
+        "content",
+        "reasoning",
+        "role"
+      ],
+      "content_type": "str",
+      "content_len": 0,
+      "content_preview": "",
+      "reasoning_type": "str",
+      "reasoning_preview": "We need to output five comma-separated integers. The user says \"",
+      "name": "judge_minimal_compact",
+      "prompt_chars": 559,
+      "system_prompt": "Output only five comma-separated integers."
+    },
+    {
+      "http_status": 200,
+      "response_text_preview": "{\"id\":\"chatcmpl-643\",\"object\":\"chat.completion\",\"created\":1775604347,\"model\":\"gpt-oss:20b\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"reasoning\":\"The user says: \\\"설명 없이 다음 JSON만 그대로 출력하라.\\\" That means \\\"Without explanation, output the following JSON exactly.\\\" Then they provide a JSON: {\\\"scores\\\":{\\\"content_fit\\\":4,\\\"emotional_appropriateness\\\":4,\\\"style_match\\\":4,\\\"naturalness\\\":4,\\\"\"},\"finish_reason\":\"length\"}],\"usage\":{\"prompt_tokens\":1",
+      "has_json_body": true,
+      "num_choices": 1,
+      "finish_reason": "length",
+      "choice_keys": [
+        "finish_reason",
+        "index",
+        "message"
+      ],
+      "message_keys": [
+        "content",
+        "reasoning",
+        "role"
+      ],
+      "content_type": "str",
+      "content_len": 0,
+      "content_preview": "",
+      "reasoning_type": "str",
+      "reasoning_preview": "The user says: \"설명 없이 다음 JSON만 그대로 출력하라.\" That means \"Without explanation, output the following JSON exactly.\" Then they provide a JSON: {\"scores\":{\"content_fit\":4,\"emotional_appropriateness\":4,\"style_match\":4,\"naturalness\":4,\"",
+      "name": "control_json",
+      "prompt_chars": 135,
+      "system_prompt": "Return JSON only."
+    },
+    {
+      "http_status": 200,
+      "response_text_preview": "{\"id\":\"chatcmpl-22\",\"object\":\"chat.completion\",\"created\":1775604347,\"model\":\"gpt-oss:20b\",\"system_fingerprint\":\"fp_ollama\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"reasoning\":\"The user says: \\\"설명 없이 4,4,\"},\"finish_reason\":\"length\"}],\"usage\":{\"prompt_tokens\":100,\"completion_tokens\":16,\"total_tokens\":116}}\n",
+      "has_json_body": true,
+      "num_choices": 1,
+      "finish_reason": "length",
+      "choice_keys": [
+        "finish_reason",
+        "index",
+        "message"
+      ],
+      "message_keys": [
+        "content",
+        "reasoning",
+        "role"
+      ],
+      "content_type": "str",
+      "content_len": 0,
+      "content_preview": "",
+      "reasoning_type": "str",
+      "reasoning_preview": "The user says: \"설명 없이 4,4,",
+      "name": "control_compact",
+      "prompt_chars": 23,
+      "system_prompt": "Output only five comma-separated integers."
+    }
+  ]
+}

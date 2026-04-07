@@ -775,11 +775,12 @@ def train_zs_decoder_from_dataframe(
     seed: int,
     val_ratio: float,
     use_all_rows: bool,
+    keep_column: str = "keep_sample",
 ) -> dict[str, object]:
     original_rows = len(df)
     keep_filtered_rows = 0
-    if not use_all_rows and "keep_sample" in df.columns:
-        keep_mask = df["keep_sample"].fillna(False).astype(bool)
+    if not use_all_rows and keep_column in df.columns:
+        keep_mask = df[keep_column].fillna(False).astype(bool)
         keep_filtered_rows = int((~keep_mask).sum())
         df = df.loc[keep_mask].copy()
 
@@ -837,6 +838,7 @@ def train_zs_decoder_from_dataframe(
         "z_dim": int(z_dim),
         "s_dim": int(inferred_s_dim),
         "model_path": str(saved_path),
+        "keep_column": str(keep_column),
     }
 
 
@@ -895,6 +897,7 @@ def train_transformer_z_encoder_from_dataframe(
     val_ratio: float,
     use_all_rows: bool,
     progress_every: int,
+    keep_column: str = "keep_sample",
 ) -> dict[str, object]:
     if torch is None or nn is None or not TORCH_AVAILABLE:
         raise RuntimeError("torch is required to train the transformer z encoder")
@@ -907,8 +910,8 @@ def train_transformer_z_encoder_from_dataframe(
 
     original_rows = len(df)
     keep_filtered_rows = 0
-    if not use_all_rows and "keep_sample" in df.columns:
-        keep_mask = df["keep_sample"].fillna(False).astype(bool)
+    if not use_all_rows and keep_column in df.columns:
+        keep_mask = df[keep_column].fillna(False).astype(bool)
         keep_filtered_rows = int((~keep_mask).sum())
         df = df.loc[keep_mask].copy()
 
@@ -1074,6 +1077,7 @@ def train_transformer_z_encoder_from_dataframe(
         "zs_model_path": str(saved_decoder_path),
         "z_output_csv": None if z_output_csv is None else str(z_output_csv),
         "device": str(device),
+        "keep_column": str(keep_column),
     }
 
 
@@ -1105,6 +1109,7 @@ def command_fit_z_encoder(args: argparse.Namespace) -> None:
         val_ratio=args.val_ratio,
         use_all_rows=args.use_all_rows,
         progress_every=args.progress_every,
+        keep_column=args.keep_column,
     )
     print(json.dumps(summary, ensure_ascii=False, indent=2))
 
@@ -1122,6 +1127,7 @@ def command_fit_zs_regressor(args: argparse.Namespace) -> None:
         seed=args.seed,
         val_ratio=args.val_ratio,
         use_all_rows=args.use_all_rows,
+        keep_column=args.keep_column,
     )
     print(json.dumps(summary, ensure_ascii=False, indent=2))
 
@@ -1360,6 +1366,30 @@ RAW_AFFECT_AXIS_NAMES = [
     "fearfulness",
     "shame",
     "relief",
+    "trust",
+]
+
+NEGATIVE_RAW_AFFECT_AXES = [
+    "hostility",
+    "resentment",
+    "despair",
+    "volatility",
+    "fearfulness",
+    "shame",
+]
+EDGE_STYLE_AXES = [
+    "tension",
+    "sharpness",
+    "heaviness",
+    "urgency",
+    "dominance",
+]
+SOFT_BIAS_AXES = [
+    "softness",
+    "calmness",
+    "cooperativeness",
+    "positivity",
+    "warmth",
     "trust",
 ]
 
@@ -1903,6 +1933,123 @@ def ensure_model_server_ready(base_url: str, timeout_sec: int) -> None:
 def compute_consistency(style_a: dict[str, float], style_b: dict[str, float], active_axes: list[str]) -> float:
     values = [abs(style_a[axis] - style_b[axis]) for axis in active_axes]
     return float(np.mean(values))
+
+
+def filter_present_axes(candidate_axes: list[str], active_axes: list[str]) -> list[str]:
+    active = set(active_axes)
+    return [axis for axis in candidate_axes if axis in active]
+
+
+def compute_axis_mean(style_dict: dict[str, float], axes: list[str]) -> float:
+    if not axes:
+        return 0.0
+    return float(np.mean([float(style_dict[axis]) for axis in axes]))
+
+
+def compute_axis_max(style_dict: dict[str, float], axes: list[str]) -> float:
+    if not axes:
+        return 0.0
+    return float(np.max([float(style_dict[axis]) for axis in axes]))
+
+
+def compute_axis_consistency(style_a: dict[str, float], style_b: dict[str, float], axes: list[str]) -> float:
+    if not axes:
+        return 0.0
+    return compute_consistency(style_a, style_b, axes)
+
+
+def compute_style_bias_metrics(
+    style: dict[str, float],
+    style_hat: dict[str, float],
+    active_axes: list[str],
+) -> dict[str, float | bool]:
+    negative_axes = filter_present_axes(NEGATIVE_RAW_AFFECT_AXES, active_axes)
+    edge_axes = filter_present_axes(EDGE_STYLE_AXES, active_axes)
+    soft_axes = filter_present_axes(SOFT_BIAS_AXES, active_axes)
+    metrics: dict[str, float | bool] = {
+        "negative_raw_mean": compute_axis_mean(style, negative_axes),
+        "negative_raw_max": compute_axis_max(style, negative_axes),
+        "edge_mean": compute_axis_mean(style, edge_axes),
+        "edge_max": compute_axis_max(style, edge_axes),
+        "soft_bias_mean": compute_axis_mean(style, soft_axes),
+        "consistency_negative_raw_l1": compute_axis_consistency(style, style_hat, negative_axes),
+        "consistency_edge_l1": compute_axis_consistency(style, style_hat, edge_axes),
+    }
+    return metrics
+
+
+def classify_style_balance_bucket(
+    metrics: dict[str, float | bool],
+    *,
+    raw_affect_min: float,
+    edge_spike_min: float,
+    soft_bias_floor: float,
+) -> str:
+    negative_raw_max = float(metrics.get("negative_raw_max", 0.0))
+    edge_max = float(metrics.get("edge_max", 0.0))
+    soft_bias_mean = float(metrics.get("soft_bias_mean", 0.0))
+    if negative_raw_max >= raw_affect_min:
+        return "rare_raw"
+    if edge_max >= edge_spike_min:
+        return "edgy"
+    if soft_bias_mean >= soft_bias_floor and negative_raw_max < raw_affect_min and edge_max < edge_spike_min:
+        return "soft_safe"
+    return "mixed"
+
+
+def compute_style_rebalance_score(metrics: dict[str, float | bool]) -> float:
+    negative_raw_mean = float(metrics.get("negative_raw_mean", 0.0))
+    negative_raw_max = float(metrics.get("negative_raw_max", 0.0))
+    edge_mean = float(metrics.get("edge_mean", 0.0))
+    edge_max = float(metrics.get("edge_max", 0.0))
+    soft_bias_mean = float(metrics.get("soft_bias_mean", 0.0))
+    return (
+        1.8 * negative_raw_max
+        + 0.9 * negative_raw_mean
+        + 1.0 * edge_mean
+        + 0.6 * edge_max
+        - 1.15 * soft_bias_mean
+    )
+
+
+def decide_axis_aware_keep(
+    consistency_l1: float,
+    metrics: dict[str, float | bool],
+    *,
+    keep_threshold: float,
+    rare_keep_threshold: float,
+    raw_affect_min: float,
+    edge_spike_min: float,
+    soft_bias_floor: float,
+    raw_affect_keep_threshold: float,
+    edge_keep_threshold: float,
+) -> tuple[bool, str, str]:
+    bucket = classify_style_balance_bucket(
+        metrics,
+        raw_affect_min=raw_affect_min,
+        edge_spike_min=edge_spike_min,
+        soft_bias_floor=soft_bias_floor,
+    )
+    negative_raw_l1 = float(metrics.get("consistency_negative_raw_l1", 0.0))
+    edge_l1 = float(metrics.get("consistency_edge_l1", 0.0))
+    rare_candidate = bucket in {"rare_raw", "edgy"}
+    oversoft_candidate = bucket == "soft_safe"
+    base_keep = consistency_l1 <= keep_threshold and not oversoft_candidate
+    rescue_keep = (
+        rare_candidate
+        and consistency_l1 <= rare_keep_threshold
+        and negative_raw_l1 <= raw_affect_keep_threshold
+        and edge_l1 <= edge_keep_threshold
+    )
+    if rescue_keep:
+        return True, "rare_affect_rescue", bucket
+    if base_keep:
+        return True, "consistent_nonsoft", bucket
+    if oversoft_candidate and consistency_l1 <= keep_threshold:
+        return False, "oversoft_trim", bucket
+    if consistency_l1 > rare_keep_threshold:
+        return False, "consistency_too_high", bucket
+    return False, "axis_keep_rejected", bucket
 
 
 def make_generation_prompt(record: dict[str, object]) -> str:
@@ -2549,6 +2696,9 @@ def make_style_block_prompt(
             "- 0.00 = 왼쪽 성향이 거의 없음, 0.50 = 중간, 1.00 = 오른쪽 성향이 매우 강함",
             "- 응답 표면의 문체만 보고 판단한다. 내용 정답 여부나 화자의 내면 상태는 추정하지 않는다.",
             "- 응답에 표정 변화 같은 명시적 비언어 단서가 있으면 그것도 표현 특성으로 반영한다.",
+            "- 응답이 건조하거나 날카롭거나 체념적이거나 적대적이면, 사회적으로 바람직한 톤으로 순화하지 말고 그대로 반영한다.",
+            "- hostility, resentment, despair, volatility, fearfulness, shame 축은 응답 표면에 그런 정서가 실제로 드러나면 0이 아닌 값도 적극적으로 사용한다.",
+            "- blunt, cold, tense, urgent, hopeless, accusatory한 표현이면 calmness/softness/cooperativeness/positivity를 자동으로 높게 주지 않는다.",
             "- 애매하면 극단값 대신 0.25, 0.50, 0.75 중 하나를 고른다.",
             "",
             "[OUTPUT_FORMAT]",
@@ -2617,6 +2767,18 @@ def build_label_output_columns(input_columns: list[str], block_count: int, style
             "llm_response",
             "generation_raw_output",
             "consistency_l1",
+            "consistency_negative_raw_l1",
+            "consistency_edge_l1",
+            "negative_raw_mean",
+            "negative_raw_max",
+            "edge_mean",
+            "edge_max",
+            "soft_bias_mean",
+            "rare_affect_candidate",
+            "oversoft_candidate",
+            "rebalance_bucket",
+            "selection_score",
+            "keep_reason",
             "keep_sample",
             "style_dim",
             "style_profile",
@@ -2649,6 +2811,18 @@ def initialize_label_output_row(
     row["llm_response"] = ""
     row["generation_raw_output"] = ""
     row["consistency_l1"] = np.nan
+    row["consistency_negative_raw_l1"] = np.nan
+    row["consistency_edge_l1"] = np.nan
+    row["negative_raw_mean"] = np.nan
+    row["negative_raw_max"] = np.nan
+    row["edge_mean"] = np.nan
+    row["edge_max"] = np.nan
+    row["soft_bias_mean"] = np.nan
+    row["rare_affect_candidate"] = False
+    row["oversoft_candidate"] = False
+    row["rebalance_bucket"] = ""
+    row["selection_score"] = np.nan
+    row["keep_reason"] = ""
     row["keep_sample"] = False
     row["style_dim"] = style_dim
     row["style_profile"] = style_profile
@@ -2662,6 +2836,67 @@ def initialize_label_output_row(
         row[f"s_{axis_idx}"] = np.nan
         row[f"s_hat_{axis_idx}"] = np.nan
     return row
+
+
+def build_style_dict_from_row(row: dict[str, object], active_axes: list[str], prefix: str) -> dict[str, float]:
+    style: dict[str, float] = {}
+    for axis_idx, axis in enumerate(active_axes):
+        value = row.get(f"{prefix}{axis_idx}", np.nan)
+        if pd.isna(value):
+            raise ValueError(f"missing style value for {prefix}{axis_idx}")
+        style[axis] = float(value)
+    return style
+
+
+def analyze_style_balance_row(
+    row: dict[str, object],
+    active_axes: list[str],
+    *,
+    keep_threshold: float,
+    rare_keep_threshold: float,
+    raw_affect_min: float,
+    edge_spike_min: float,
+    soft_bias_floor: float,
+    raw_affect_keep_threshold: float,
+    edge_keep_threshold: float,
+) -> dict[str, object]:
+    style = build_style_dict_from_row(row, active_axes, "s_")
+    style_hat = build_style_dict_from_row(row, active_axes, "s_hat_")
+    consistency_l1 = row.get("consistency_l1", np.nan)
+    if pd.isna(consistency_l1):
+        consistency_l1 = compute_consistency(style, style_hat, active_axes)
+    consistency_l1 = float(consistency_l1)
+    metrics = compute_style_bias_metrics(style, style_hat, active_axes)
+    keep_sample, keep_reason, bucket = decide_axis_aware_keep(
+        consistency_l1=consistency_l1,
+        metrics=metrics,
+        keep_threshold=keep_threshold,
+        rare_keep_threshold=rare_keep_threshold,
+        raw_affect_min=raw_affect_min,
+        edge_spike_min=edge_spike_min,
+        soft_bias_floor=soft_bias_floor,
+        raw_affect_keep_threshold=raw_affect_keep_threshold,
+        edge_keep_threshold=edge_keep_threshold,
+    )
+    rare_affect_candidate = bucket in {"rare_raw", "edgy"}
+    oversoft_candidate = bucket == "soft_safe"
+    selection_score = compute_style_rebalance_score(metrics)
+    return {
+        "consistency_l1": consistency_l1,
+        "consistency_negative_raw_l1": float(metrics["consistency_negative_raw_l1"]),
+        "consistency_edge_l1": float(metrics["consistency_edge_l1"]),
+        "negative_raw_mean": float(metrics["negative_raw_mean"]),
+        "negative_raw_max": float(metrics["negative_raw_max"]),
+        "edge_mean": float(metrics["edge_mean"]),
+        "edge_max": float(metrics["edge_max"]),
+        "soft_bias_mean": float(metrics["soft_bias_mean"]),
+        "rare_affect_candidate": bool(rare_affect_candidate),
+        "oversoft_candidate": bool(oversoft_candidate),
+        "rebalance_bucket": str(bucket),
+        "selection_score": float(selection_score),
+        "keep_reason": str(keep_reason),
+        "keep_sample": bool(keep_sample),
+    }
 
 
 def label_subset_with_local_model(
@@ -2680,6 +2915,12 @@ def label_subset_with_local_model(
     block_size: int,
     style_dim: int,
     keep_threshold: float,
+    rare_keep_threshold: float,
+    raw_affect_min: float,
+    edge_spike_min: float,
+    soft_bias_floor: float,
+    raw_affect_keep_threshold: float,
+    edge_keep_threshold: float,
     flush_every: int,
     resume: bool,
     style_profile: str = DEFAULT_STYLE_PROFILE,
@@ -2789,15 +3030,30 @@ def label_subset_with_local_model(
                 style_hat.update(block_style_hat)
 
             consistency_l1 = compute_consistency(style, style_hat, active_axes)
+            balance = analyze_style_balance_row(
+                {
+                    **row,
+                    **{f"s_{axis_idx}": style[axis] for axis_idx, axis in enumerate(active_axes)},
+                    **{f"s_hat_{axis_idx}": style_hat[axis] for axis_idx, axis in enumerate(active_axes)},
+                    "consistency_l1": consistency_l1,
+                },
+                active_axes=active_axes,
+                keep_threshold=keep_threshold,
+                rare_keep_threshold=rare_keep_threshold,
+                raw_affect_min=raw_affect_min,
+                edge_spike_min=edge_spike_min,
+                soft_bias_floor=soft_bias_floor,
+                raw_affect_keep_threshold=raw_affect_keep_threshold,
+                edge_keep_threshold=edge_keep_threshold,
+            )
 
             row["status"] = "ok"
-            row["consistency_l1"] = consistency_l1
-            row["keep_sample"] = bool(consistency_l1 <= keep_threshold)
             row["style_dim"] = len(active_axes)
             row["style_profile"] = style_profile
             for axis_idx, axis in enumerate(active_axes):
                 row[f"s_{axis_idx}"] = style[axis]
                 row[f"s_hat_{axis_idx}"] = style_hat[axis]
+            row.update(balance)
             pending_rows.append(row)
             kept_this_run += int(row["keep_sample"])
         except Exception as exc:
@@ -2861,10 +3117,206 @@ def command_label_local(args: argparse.Namespace) -> None:
         block_size=args.block_size,
         style_dim=args.style_dim,
         keep_threshold=args.keep_threshold,
+        rare_keep_threshold=args.rare_keep_threshold,
+        raw_affect_min=args.raw_affect_min,
+        edge_spike_min=args.edge_spike_min,
+        soft_bias_floor=args.soft_bias_floor,
+        raw_affect_keep_threshold=args.raw_affect_keep_threshold,
+        edge_keep_threshold=args.edge_keep_threshold,
         flush_every=args.flush_every,
         resume=args.resume,
         style_profile=style_profile,
     )
+
+
+def rebalance_labeled_style_dataframe(
+    df: pd.DataFrame,
+    *,
+    style_dim: int,
+    style_profile: str,
+    keep_threshold: float,
+    rare_keep_threshold: float,
+    raw_affect_min: float,
+    edge_spike_min: float,
+    soft_bias_floor: float,
+    raw_affect_keep_threshold: float,
+    edge_keep_threshold: float,
+    soft_cap_ratio: float,
+    target_size: int | None,
+    base_keep_column: str,
+    keep_column: str,
+    progress_every: int,
+    seed: int,
+) -> tuple[pd.DataFrame, dict[str, object]]:
+    if soft_cap_ratio < 0.0 or soft_cap_ratio > 1.0:
+        raise ValueError("soft_cap_ratio must be between 0.0 and 1.0")
+    active_axes = resolve_style_axes(style_dim, style_profile=style_profile)
+    start_time = time.perf_counter()
+    records = df.to_dict(orient="records")
+    analyzed_rows: list[dict[str, object]] = []
+    for idx, record in enumerate(records, start=1):
+        row = dict(record)
+        status = str(record.get("status", "")).strip().lower()
+        if status == "ok":
+            try:
+                row.update(
+                    analyze_style_balance_row(
+                        record,
+                        active_axes=active_axes,
+                        keep_threshold=keep_threshold,
+                        rare_keep_threshold=rare_keep_threshold,
+                        raw_affect_min=raw_affect_min,
+                        edge_spike_min=edge_spike_min,
+                        soft_bias_floor=soft_bias_floor,
+                        raw_affect_keep_threshold=raw_affect_keep_threshold,
+                        edge_keep_threshold=edge_keep_threshold,
+                    )
+                )
+            except Exception as exc:
+                row["keep_reason"] = f"analysis_error:{exc}"
+                row["keep_sample"] = False
+                row["rare_affect_candidate"] = False
+                row["oversoft_candidate"] = False
+                row["rebalance_bucket"] = ""
+                row["selection_score"] = np.nan
+        analyzed_rows.append(row)
+        maybe_print_progress("rebalance-labeled", idx, len(records), start_time, every=progress_every)
+    maybe_print_progress("rebalance-labeled", len(records), len(records), start_time, every=progress_every, force=True)
+
+    analyzed = pd.DataFrame(analyzed_rows)
+    if keep_column not in analyzed.columns:
+        analyzed[keep_column] = False
+    rare_series = (
+        analyzed["rare_affect_candidate"]
+        if "rare_affect_candidate" in analyzed.columns
+        else pd.Series(False, index=analyzed.index, dtype="boolean")
+    )
+    oversoft_series = (
+        analyzed["oversoft_candidate"]
+        if "oversoft_candidate" in analyzed.columns
+        else pd.Series(False, index=analyzed.index, dtype="boolean")
+    )
+    analyzed["rare_affect_candidate"] = pd.Series(rare_series, index=analyzed.index).astype("boolean").fillna(False).astype(bool)
+    analyzed["oversoft_candidate"] = pd.Series(oversoft_series, index=analyzed.index).astype("boolean").fillna(False).astype(bool)
+    analyzed["status"] = analyzed.get("status", "").astype(str)
+    analyzed["consistency_l1"] = pd.to_numeric(analyzed.get("consistency_l1"), errors="coerce")
+    analyzed["consistency_negative_raw_l1"] = pd.to_numeric(
+        analyzed.get("consistency_negative_raw_l1"),
+        errors="coerce",
+    ).fillna(0.0)
+    analyzed["consistency_edge_l1"] = pd.to_numeric(analyzed.get("consistency_edge_l1"), errors="coerce").fillna(0.0)
+    analyzed["selection_score"] = pd.to_numeric(analyzed.get("selection_score"), errors="coerce").fillna(-999.0)
+
+    eligible_mask = (analyzed["status"].str.lower() == "ok") & (
+        (analyzed["consistency_l1"] <= keep_threshold)
+        | (
+            analyzed["rare_affect_candidate"]
+            & (analyzed["consistency_l1"] <= rare_keep_threshold)
+            & (analyzed["consistency_negative_raw_l1"] <= raw_affect_keep_threshold)
+            & (analyzed["consistency_edge_l1"] <= edge_keep_threshold)
+        )
+    )
+    analyzed["axis_keep_candidate"] = eligible_mask
+
+    if target_size is None or int(target_size) <= 0:
+        if base_keep_column in analyzed.columns:
+            target_size = int(analyzed[base_keep_column].fillna(False).astype(bool).sum())
+        else:
+            target_size = int(eligible_mask.sum())
+    target_size = min(int(target_size), int(eligible_mask.sum()))
+    rng = np.random.default_rng(seed)
+    bucket_priority = {"rare_raw": 3, "edgy": 2, "mixed": 1, "soft_safe": 0}
+    eligible = analyzed.loc[eligible_mask].copy()
+    eligible["bucket_priority"] = eligible["rebalance_bucket"].map(bucket_priority).fillna(-1).astype(int)
+    eligible["selection_tiebreak"] = rng.random(len(eligible))
+    eligible = eligible.sort_values(
+        by=["bucket_priority", "selection_score", "consistency_l1", "selection_tiebreak"],
+        ascending=[False, False, True, True],
+    )
+    nonsoft = eligible.loc[~eligible["oversoft_candidate"]]
+    soft = eligible.loc[eligible["oversoft_candidate"]]
+    selected_indices = nonsoft.index.tolist()[:target_size]
+    remaining = max(0, target_size - len(selected_indices))
+    soft_cap = min(len(soft), max(0, int(round(target_size * soft_cap_ratio))))
+    if remaining > 0:
+        selected_indices.extend(soft.index.tolist()[: min(remaining, soft_cap)])
+    remaining = max(0, target_size - len(selected_indices))
+    if remaining > 0:
+        leftover_soft = [idx for idx in soft.index.tolist() if idx not in set(selected_indices)]
+        selected_indices.extend(leftover_soft[:remaining])
+    selected_set = set(selected_indices)
+    analyzed[keep_column] = analyzed.index.to_series().isin(selected_set)
+
+    before_soft_mean = float(
+        pd.to_numeric(analyzed.loc[eligible_mask, "soft_bias_mean"], errors="coerce").fillna(0.0).mean()
+    ) if int(eligible_mask.sum()) > 0 else 0.0
+    after_soft_mean = float(
+        pd.to_numeric(analyzed.loc[analyzed[keep_column], "soft_bias_mean"], errors="coerce").fillna(0.0).mean()
+    ) if int(analyzed[keep_column].sum()) > 0 else 0.0
+    before_neg_mean = float(
+        pd.to_numeric(analyzed.loc[eligible_mask, "negative_raw_mean"], errors="coerce").fillna(0.0).mean()
+    ) if int(eligible_mask.sum()) > 0 else 0.0
+    after_neg_mean = float(
+        pd.to_numeric(analyzed.loc[analyzed[keep_column], "negative_raw_mean"], errors="coerce").fillna(0.0).mean()
+    ) if int(analyzed[keep_column].sum()) > 0 else 0.0
+    before_edge_mean = float(
+        pd.to_numeric(analyzed.loc[eligible_mask, "edge_mean"], errors="coerce").fillna(0.0).mean()
+    ) if int(eligible_mask.sum()) > 0 else 0.0
+    after_edge_mean = float(
+        pd.to_numeric(analyzed.loc[analyzed[keep_column], "edge_mean"], errors="coerce").fillna(0.0).mean()
+    ) if int(analyzed[keep_column].sum()) > 0 else 0.0
+    summary = {
+        "input_rows": int(len(analyzed)),
+        "ok_rows": int((analyzed["status"].str.lower() == "ok").sum()),
+        "eligible_rows": int(eligible_mask.sum()),
+        "target_size": int(target_size),
+        "selected_rows": int(analyzed[keep_column].sum()),
+        "selected_rare_rows": int((analyzed[keep_column] & analyzed["rare_affect_candidate"]).sum()),
+        "selected_oversoft_rows": int((analyzed[keep_column] & analyzed["oversoft_candidate"]).sum()),
+        "keep_column": str(keep_column),
+        "base_keep_column": str(base_keep_column),
+        "soft_cap_ratio": round(float(soft_cap_ratio), 4),
+        "before_soft_bias_mean": round(before_soft_mean, 6),
+        "after_soft_bias_mean": round(after_soft_mean, 6),
+        "before_negative_raw_mean": round(before_neg_mean, 6),
+        "after_negative_raw_mean": round(after_neg_mean, 6),
+        "before_edge_mean": round(before_edge_mean, 6),
+        "after_edge_mean": round(after_edge_mean, 6),
+        "bucket_counts_selected": {
+            key: int(value)
+            for key, value in analyzed.loc[analyzed[keep_column], "rebalance_bucket"].value_counts().to_dict().items()
+        },
+    }
+    return analyzed, summary
+
+
+def command_rebalance_labeled(args: argparse.Namespace) -> None:
+    input_csv = Path(args.input_csv)
+    output_csv = Path(args.output_csv)
+    df = pd.read_csv(input_csv)
+    analyzed, summary = rebalance_labeled_style_dataframe(
+        df=df,
+        style_dim=args.style_dim,
+        style_profile=args.style_profile,
+        keep_threshold=args.keep_threshold,
+        rare_keep_threshold=args.rare_keep_threshold,
+        raw_affect_min=args.raw_affect_min,
+        edge_spike_min=args.edge_spike_min,
+        soft_bias_floor=args.soft_bias_floor,
+        raw_affect_keep_threshold=args.raw_affect_keep_threshold,
+        edge_keep_threshold=args.edge_keep_threshold,
+        soft_cap_ratio=args.soft_cap_ratio,
+        target_size=args.target_size,
+        base_keep_column=args.base_keep_column,
+        keep_column=args.keep_column,
+        progress_every=args.progress_every,
+        seed=args.seed,
+    )
+    output_csv.parent.mkdir(parents=True, exist_ok=True)
+    analyzed.to_csv(output_csv, index=False, encoding="utf-8-sig")
+    payload = dict(summary)
+    payload["output_csv"] = str(output_csv)
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
 
 
 def command_export_z(args: argparse.Namespace) -> None:
@@ -3038,6 +3490,7 @@ def build_parser() -> argparse.ArgumentParser:
     fit_zs_parser.add_argument("--val-ratio", type=float, default=0.1)
     fit_zs_parser.add_argument("--seed", type=int, default=42)
     fit_zs_parser.add_argument("--use-all-rows", action="store_true")
+    fit_zs_parser.add_argument("--keep-column", default="keep_sample")
     fit_zs_parser.set_defaults(func=command_fit_zs_regressor)
 
     fit_z_encoder_parser = subparsers.add_parser("fit-z-encoder")
@@ -3057,6 +3510,7 @@ def build_parser() -> argparse.ArgumentParser:
     fit_z_encoder_parser.add_argument("--progress-every", type=int, default=100)
     fit_z_encoder_parser.add_argument("--use-all-rows", action="store_true")
     fit_z_encoder_parser.add_argument("--warm-start-z-encoder", action="store_true")
+    fit_z_encoder_parser.add_argument("--keep-column", default="keep_sample")
     fit_z_encoder_parser.set_defaults(func=command_fit_z_encoder)
 
     predict_s_parser = subparsers.add_parser("predict-s")
@@ -3083,10 +3537,36 @@ def build_parser() -> argparse.ArgumentParser:
     local_parser.add_argument("--style-dim", type=int, default=32)
     local_parser.add_argument("--style-profile", choices=sorted(STYLE_AXIS_PROFILES), default=DEFAULT_STYLE_PROFILE)
     local_parser.add_argument("--keep-threshold", type=float, default=0.12)
+    local_parser.add_argument("--rare-keep-threshold", type=float, default=0.18)
+    local_parser.add_argument("--raw-affect-min", type=float, default=0.25)
+    local_parser.add_argument("--edge-spike-min", type=float, default=0.75)
+    local_parser.add_argument("--soft-bias-floor", type=float, default=0.90)
+    local_parser.add_argument("--raw-affect-keep-threshold", type=float, default=0.25)
+    local_parser.add_argument("--edge-keep-threshold", type=float, default=0.20)
     local_parser.add_argument("--keep-failures", action="store_true")
     local_parser.add_argument("--flush-every", type=int, default=10)
     local_parser.add_argument("--resume", action="store_true")
     local_parser.set_defaults(func=command_label_local)
+
+    rebalance_parser = subparsers.add_parser("rebalance-labeled")
+    rebalance_parser.add_argument("--input-csv", required=True)
+    rebalance_parser.add_argument("--output-csv", required=True)
+    rebalance_parser.add_argument("--style-dim", type=int, default=40)
+    rebalance_parser.add_argument("--style-profile", choices=sorted(STYLE_AXIS_PROFILES), default=DEFAULT_STYLE_PROFILE)
+    rebalance_parser.add_argument("--keep-threshold", type=float, default=0.12)
+    rebalance_parser.add_argument("--rare-keep-threshold", type=float, default=0.18)
+    rebalance_parser.add_argument("--raw-affect-min", type=float, default=0.25)
+    rebalance_parser.add_argument("--edge-spike-min", type=float, default=0.75)
+    rebalance_parser.add_argument("--soft-bias-floor", type=float, default=0.90)
+    rebalance_parser.add_argument("--raw-affect-keep-threshold", type=float, default=0.25)
+    rebalance_parser.add_argument("--edge-keep-threshold", type=float, default=0.20)
+    rebalance_parser.add_argument("--soft-cap-ratio", type=float, default=0.25)
+    rebalance_parser.add_argument("--target-size", type=int, default=None)
+    rebalance_parser.add_argument("--base-keep-column", default="keep_sample")
+    rebalance_parser.add_argument("--keep-column", default="keep_sample_rebalanced")
+    rebalance_parser.add_argument("--progress-every", type=int, default=100)
+    rebalance_parser.add_argument("--seed", type=int, default=42)
+    rebalance_parser.set_defaults(func=command_rebalance_labeled)
 
     return parser
 

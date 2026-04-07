@@ -41,6 +41,7 @@ from emonet.cli import (
     export_z_from_json_stream,
     extract_json_block,
     label_subset_with_local_model,
+    rebalance_labeled_style_dataframe,
     normalize_style_dict,
     request_json_response,
     resolve_style_axes,
@@ -553,6 +554,12 @@ class EmoNetSmokeTests(unittest.TestCase):
                     block_size=8,
                     style_dim=16,
                     keep_threshold=0.12,
+                    rare_keep_threshold=0.18,
+                    raw_affect_min=0.25,
+                    edge_spike_min=0.75,
+                    soft_bias_floor=0.90,
+                    raw_affect_keep_threshold=0.25,
+                    edge_keep_threshold=0.20,
                     flush_every=1,
                     resume=False,
                 )
@@ -566,6 +573,9 @@ class EmoNetSmokeTests(unittest.TestCase):
             self.assertIn("s_0", saved.columns)
             self.assertIn("s_hat_15", saved.columns)
             self.assertIn("consistency_l1", saved.columns)
+            self.assertIn("consistency_negative_raw_l1", saved.columns)
+            self.assertIn("selection_score", saved.columns)
+            self.assertIn("keep_reason", saved.columns)
             self.assertEqual(saved.loc[0, "status"], "ok")
             self.assertEqual(saved.loc[0, "generation_status"], "ok")
             self.assertEqual(saved.loc[0, "s_block1_status"], "ok")
@@ -628,6 +638,12 @@ class EmoNetSmokeTests(unittest.TestCase):
                     block_size=8,
                     style_dim=8,
                     keep_threshold=0.12,
+                    rare_keep_threshold=0.18,
+                    raw_affect_min=0.25,
+                    edge_spike_min=0.75,
+                    soft_bias_floor=0.90,
+                    raw_affect_keep_threshold=0.25,
+                    edge_keep_threshold=0.20,
                     flush_every=1,
                     resume=False,
                 )
@@ -651,6 +667,12 @@ class EmoNetSmokeTests(unittest.TestCase):
                     block_size=8,
                     style_dim=8,
                     keep_threshold=0.12,
+                    rare_keep_threshold=0.18,
+                    raw_affect_min=0.25,
+                    edge_spike_min=0.75,
+                    soft_bias_floor=0.90,
+                    raw_affect_keep_threshold=0.25,
+                    edge_keep_threshold=0.20,
                     flush_every=1,
                     resume=True,
                 )
@@ -659,6 +681,63 @@ class EmoNetSmokeTests(unittest.TestCase):
             self.assertEqual(len(saved), 2)
             self.assertEqual(saved["sample_id"].tolist(), ["s_000000", "s_000001"])
             self.assertEqual(saved["llm_response"].tolist(), ["첫 번째 응답", "두 번째 응답"])
+
+    def test_rebalance_labeled_style_dataframe_marks_custom_keep_column(self) -> None:
+        active_axes = resolve_style_axes(40, style_profile="extended40")
+        rows = []
+        base = {f"z_{idx}": float(idx) / 64.0 for idx in range(64)}
+
+        def make_row(sample_id: str, *, negative_raw: float, edge: float, soft: float, consistency: float) -> dict[str, object]:
+            row = {
+                "sample_id": sample_id,
+                "text": f"text {sample_id}",
+                "talk_id": sample_id,
+                "status": "ok",
+                "keep_sample": True,
+                "consistency_l1": consistency,
+                **base,
+            }
+            for axis_idx, axis in enumerate(active_axes):
+                value = 0.5
+                if axis in {"hostility", "resentment", "despair", "volatility", "fearfulness", "shame"}:
+                    value = negative_raw
+                elif axis in {"tension", "sharpness", "heaviness", "urgency", "dominance"}:
+                    value = edge
+                elif axis in {"softness", "calmness", "cooperativeness", "positivity", "warmth", "trust"}:
+                    value = soft
+                row[f"s_{axis_idx}"] = value
+                row[f"s_hat_{axis_idx}"] = value
+            return row
+
+        rows.append(make_row("rare", negative_raw=0.25, edge=0.75, soft=0.50, consistency=0.16))
+        rows.append(make_row("mixed", negative_raw=0.0, edge=0.75, soft=0.60, consistency=0.10))
+        rows.append(make_row("soft", negative_raw=0.0, edge=0.0, soft=1.00, consistency=0.08))
+        df = pd.DataFrame(rows)
+
+        analyzed, summary = rebalance_labeled_style_dataframe(
+            df=df,
+            style_dim=40,
+            style_profile="extended40",
+            keep_threshold=0.12,
+            rare_keep_threshold=0.18,
+            raw_affect_min=0.25,
+            edge_spike_min=0.75,
+            soft_bias_floor=0.90,
+            raw_affect_keep_threshold=0.25,
+            edge_keep_threshold=0.20,
+            soft_cap_ratio=0.0,
+            target_size=2,
+            base_keep_column="keep_sample",
+            keep_column="keep_sample_rebalanced",
+            progress_every=1,
+            seed=42,
+        )
+
+        self.assertEqual(summary["selected_rows"], 2)
+        self.assertIn("keep_sample_rebalanced", analyzed.columns)
+        self.assertTrue(bool(analyzed.loc[analyzed["sample_id"] == "rare", "keep_sample_rebalanced"].iloc[0]))
+        self.assertTrue(bool(analyzed.loc[analyzed["sample_id"] == "mixed", "keep_sample_rebalanced"].iloc[0]))
+        self.assertFalse(bool(analyzed.loc[analyzed["sample_id"] == "soft", "keep_sample_rebalanced"].iloc[0]))
 
     def test_request_json_response_retries_on_schema_validation(self) -> None:
         with patch(
@@ -827,7 +906,7 @@ class EmoNetSmokeTests(unittest.TestCase):
                 "there is still some relief now",
             ]
             for idx, text in enumerate(texts):
-                row = {"text": text, "talk_id": f"t{idx}", "keep_sample": True}
+                row = {"text": text, "talk_id": f"t{idx}", "keep_sample": False, "keep_sample_alt": True}
                 for axis_idx in range(8):
                     row[f"s_{axis_idx}"] = float(((idx + axis_idx) % 5) / 4.0)
                 rows.append(row)
@@ -859,7 +938,8 @@ class EmoNetSmokeTests(unittest.TestCase):
             args.ridge_alpha = 1.0
             args.val_ratio = 0.34
             args.progress_every = 100
-            args.use_all_rows = True
+            args.use_all_rows = False
+            args.keep_column = "keep_sample_alt"
             args.warm_start_z_encoder = False
 
             command_fit_z_encoder(args)
@@ -1056,7 +1136,8 @@ class EmoNetSmokeTests(unittest.TestCase):
                     "sample_id": f"s_{idx:06d}",
                     "text": f"synthetic text {idx}",
                     "talk_id": f"t{idx}",
-                    "keep_sample": idx % 5 != 0,
+                    "keep_sample": False,
+                    "keep_sample_alt": idx % 5 != 0,
                 }
                 row.update({f"z_{j}": float(z[j]) for j in range(64)})
                 row.update({f"s_{j}": float(s[j]) for j in range(16)})
@@ -1074,11 +1155,13 @@ class EmoNetSmokeTests(unittest.TestCase):
                 seed=7,
                 val_ratio=0.2,
                 use_all_rows=False,
+                keep_column="keep_sample_alt",
             )
             self.assertTrue(model_path.exists())
             self.assertEqual(summary["input_rows"], 24)
             self.assertGreater(summary["rows_used"], 10)
             self.assertIsNotNone(summary["val_mae"])
+            self.assertEqual(summary["keep_column"], "keep_sample_alt")
 
             decoder = LinearZtoSDecoder.load(model_path)
             pred = decoder.predict(train_df.loc[0, [f"z_{j}" for j in range(64)]].to_numpy(dtype=np.float32))

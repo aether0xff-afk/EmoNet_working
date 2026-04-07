@@ -24,7 +24,7 @@ from scripts.generate_paper_svgs import (
 )
 
 
-OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "paper" / "refresh_2026-04-07_structfix_v1"
+OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "paper" / "refresh_2026-04-07_structfix_v2"
 FIG_DIR = OUTPUT_ROOT / "figures"
 TABLE_DIR = OUTPUT_ROOT / "tables"
 
@@ -33,6 +33,7 @@ LEARNED_Z_CSV = PROJECT_ROOT / "outputs" / "z" / "out_z_training_learned_extende
 OLD_Z_CSV = PROJECT_ROOT / "outputs" / "z" / "out_z_training_extended40.csv"
 NEW_BRANCH_CSV = PROJECT_ROOT / "outputs" / "z" / "out_z_training_extended40_structfix.csv"
 BENCHMARK_CSV = PROJECT_ROOT.parent / "encoder-ML testing" / "out_benchmark" / "benchmark_results_20260305_180830.csv"
+CURRENT_GENERATION_TABLE_CSV = TABLE_DIR / "baseline_generation_table_current.csv"
 
 SEEDS = [7, 13, 21, 42, 84]
 
@@ -314,6 +315,64 @@ def build_predictor_table_and_chart(labeled_df: pd.DataFrame, learned_df: pd.Dat
     }
 
 
+def build_generation_table_and_chart() -> dict[str, Any] | None:
+    if not CURRENT_GENERATION_TABLE_CSV.exists():
+        return None
+
+    df = pd.read_csv(CURRENT_GENERATION_TABLE_CSV)
+    required_columns = {
+        "condition",
+        "mean_content_fit",
+        "mean_emotional_appropriateness",
+        "mean_style_match",
+        "mean_naturalness",
+        "mean_overall_quality",
+        "mean_total",
+    }
+    if not required_columns.issubset(set(df.columns)):
+        missing = sorted(required_columns.difference(set(df.columns)))
+        raise ValueError(f"current generation table is missing columns: {', '.join(missing)}")
+
+    metric_columns = [
+        "mean_content_fit",
+        "mean_emotional_appropriateness",
+        "mean_style_match",
+        "mean_naturalness",
+        "mean_overall_quality",
+    ]
+    series_labels = ["content_fit", "emotion_fit", "style_match", "naturalness", "overall"]
+    label_map = {
+        "direct": "direct",
+        "stim_only": "stim_only",
+        "emonet_full": "EmoNet full",
+        "emonet_no_summary": "w/o summary",
+        "emonet_no_tags": "w/o tags",
+        "emonet_no_expression": "w/o expression",
+        "emonet_vector_only": "vector only",
+        "emonet_macro_only": "macro only",
+    }
+    group_labels = [label_map.get(str(name), str(name)) for name in df["condition"].tolist()]
+    values = [[float(row[column]) for column in metric_columns] for _, row in df.iterrows()]
+    grouped_bar_chart(
+        path=FIG_DIR / "baseline_generation_scores_current.svg",
+        title="Generation Quality Comparison (current)",
+        subtitle="LLM-judge 5-point scores across current response-generation conditions",
+        group_labels=group_labels,
+        series_labels=series_labels,
+        values=values,
+        colors=["#2563eb", "#14b8a6", "#f59e0b", "#8b5cf6", "#ef4444"],
+        y_label="score",
+        note="Higher is better. This chart reflects the current structfix/stylefix generation stack.",
+    )
+    top_row = df.sort_values(["mean_total", "condition"], ascending=[False, True]).iloc[0]
+    return {
+        "rows": int(len(df)),
+        "best_condition": str(top_row["condition"]),
+        "best_mean_total": round_float(float(top_row["mean_total"]), 4),
+        "conditions": df.to_dict(orient="records"),
+    }
+
+
 def main() -> None:
     OUTPUT_ROOT.mkdir(parents=True, exist_ok=True)
     FIG_DIR.mkdir(parents=True, exist_ok=True)
@@ -328,6 +387,7 @@ def main() -> None:
     branch_summary = build_branch_figures(old_branch_series, new_branch_series)
     style_summary = build_consistency_and_bias_figures(labeled_df)
     predictor_summary = build_predictor_table_and_chart(labeled_df, learned_df)
+    generation_summary = build_generation_table_and_chart()
 
     summary_payload = {
         "output_root": str(OUTPUT_ROOT),
@@ -335,12 +395,22 @@ def main() -> None:
         "branch_summary": branch_summary,
         "style_summary": style_summary,
         "predictor_summary": predictor_summary,
+        "generation_summary": generation_summary,
         "notes": [
-            "Current refresh excludes generation baseline re-scoring because no current scored experiment matrix was present locally.",
             "Structfix solves branch-length collapse at the distribution level but does not yet solve style-target bias.",
             "Current learned z remains competitive with the mean baseline but does not outperform the text baseline.",
         ],
     }
+    if generation_summary is None:
+        summary_payload["notes"].insert(
+            0,
+            "Current refresh excludes generation baseline re-scoring because no current scored experiment matrix was present locally.",
+        )
+    else:
+        summary_payload["notes"].insert(
+            0,
+            f"Current generation baseline table is included; best condition is {generation_summary['best_condition']}.",
+        )
     (TABLE_DIR / "paper_refresh_summary.json").write_text(
         json.dumps(summary_payload, ensure_ascii=False, indent=2),
         encoding="utf-8",

@@ -1,0 +1,27 @@
+{
+  "mean_baseline": {
+    "decoder_mae_mean": 0.114318,
+    "baseline_mae_mean": 0.114318,
+    "mean_gain": 0.0
+  },
+  "stim_only_ridge": {
+    "decoder_mae_mean": 0.112829,
+    "baseline_mae_mean": 0.114318,
+    "mean_gain": 0.001489
+  },
+  "text_tfidf_ridge": {
+    "decoder_mae_mean": 0.110391,
+    "baseline_mae_mean": 0.114318,
+    "mean_gain": 0.003926
+  },
+  "legacy_z64_ridge": {
+    "decoder_mae_mean": 0.112874,
+    "baseline_mae_mean": 0.114318,
+    "mean_gain": 0.001444
+  },
+  "structfix_learned_z64_ridge": {
+    "decoder_mae_mean": 0.113513,
+    "baseline_mae_mean": 0.114318,
+    "mean_gain": 0.000805
+  }
+}

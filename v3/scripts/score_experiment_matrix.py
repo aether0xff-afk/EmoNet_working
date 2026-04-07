@@ -4,6 +4,7 @@ import argparse
 import json
 from pathlib import Path
 import sys
+import time
 
 import pandas as pd
 
@@ -11,7 +12,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from emonet.cli import append_csv_rows, ensure_model_server_ready, request_json_response
+from emonet.cli import append_csv_rows, ensure_model_server_ready, maybe_print_progress, request_json_response
 
 
 SCORE_KEYS = [
@@ -132,9 +133,11 @@ def score_matrix(
         "text",
         "llm_response",
         "response_length",
+        "response_retry_count",
         "judge_raw_output",
         *SCORE_KEYS,
     ]
+    start_time = time.perf_counter()
 
     for idx, row in enumerate(ok_df.to_dict(orient="records"), start=1):
         record_id = str(row.get("record_id", row.get("sample_id", f"row_{idx:06d}")))
@@ -142,6 +145,7 @@ def score_matrix(
         key = (record_id, condition)
         if key in existing_keys:
             continue
+        retry_value = pd.to_numeric(row.get("response_retry_count", 0), errors="coerce")
 
         scored = {
             "record_id": record_id,
@@ -152,6 +156,7 @@ def score_matrix(
             "text": str(row.get("text", "")),
             "llm_response": str(row.get("llm_response", "")),
             "response_length": int(len(str(row.get("llm_response", "")))),
+            "response_retry_count": 0 if pd.isna(retry_value) else int(retry_value),
             "judge_raw_output": "",
         }
         for key_name in SCORE_KEYS:
@@ -189,8 +194,7 @@ def score_matrix(
             append_csv_rows(output_csv, output_rows, columns=output_columns)
             output_rows.clear()
 
-        if progress_every > 0 and idx % progress_every == 0:
-            print(f"scored {idx}/{len(ok_df)} rows")
+        maybe_print_progress("score-experiment-matrix", idx, len(ok_df), start_time, every=progress_every)
 
     append_csv_rows(output_csv, output_rows, columns=output_columns)
     scored_df = pd.read_csv(output_csv)
@@ -207,6 +211,7 @@ def summarize_scores(scored_df: pd.DataFrame) -> pd.DataFrame:
                 "condition_group",
                 "rows",
                 "mean_response_length",
+                "mean_response_retry_count",
                 *[f"mean_{key}" for key in SCORE_KEYS],
                 "mean_total",
             ]
@@ -218,6 +223,7 @@ def summarize_scores(scored_df: pd.DataFrame) -> pd.DataFrame:
             "condition_group": str(group["condition_group"].iloc[0]) if "condition_group" in group.columns else "",
             "rows": int(len(group)),
             "mean_response_length": round(float(group["response_length"].mean()), 3),
+            "mean_response_retry_count": round(float(pd.to_numeric(group.get("response_retry_count", 0), errors="coerce").fillna(0).mean()), 3),
         }
         for key in SCORE_KEYS:
             row[f"mean_{key}"] = round(float(group[key].mean()), 4)

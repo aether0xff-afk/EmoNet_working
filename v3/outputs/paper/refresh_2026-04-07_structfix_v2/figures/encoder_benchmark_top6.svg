@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="520" viewBox="0 0 980 520">
+<style>
+text { font-family: 'Malgun Gothic', 'Segoe UI', sans-serif; fill: #1f2937; }
+.title { font-size: 24px; font-weight: 700; }
+.subtitle { font-size: 13px; fill: #6b7280; }
+.axis { font-size: 12px; fill: #4b5563; }
+.label { font-size: 12px; }
+.small { font-size: 11px; fill: #4b5563; }
+.value { font-size: 11px; font-weight: 600; }
+.grid { stroke: #e5e7eb; stroke-width: 1; }
+.axis-line { stroke: #9ca3af; stroke-width: 1.2; }
+.note { font-size: 12px; fill: #374151; }
+</style>
+<rect x="0" y="0" width="100%" height="100%" fill="#ffffff"/>
+<text class="title" x="40" y="42">Encoder Benchmark</text>
+<text class="subtitle" x="40" y="66">30,000-sample regression benchmark sorted by MAE</text>
+<line class="grid" x1="180.00" y1="110" x2="180.00" y2="465"/>
+<text class="axis" x="180.00" y="487" text-anchor="middle">0.00</text>
+<line class="grid" x1="330.00" y1="110" x2="330.00" y2="465"/>
+<text class="axis" x="330.00" y="487" text-anchor="middle">0.04</text>
+<line class="grid" x1="480.00" y1="110" x2="480.00" y2="465"/>
+<text class="axis" x="480.00" y="487" text-anchor="middle">0.09</text>
+<line class="grid" x1="630.00" y1="110" x2="630.00" y2="465"/>
+<text class="axis" x="630.00" y="487" text-anchor="middle">0.13</text>
+<line class="grid" x1="780.00" y1="110" x2="780.00" y2="465"/>
+<text class="axis" x="780.00" y="487" text-anchor="middle">0.18</text>
+<line class="grid" x1="930.00" y1="110" x2="930.00" y2="465"/>
+<text class="axis" x="930.00" y="487" text-anchor="middle">0.22</text>
+<line class="axis-line" x1="180" y1="465" x2="930" y2="465"/>
+<line class="axis-line" x1="180" y1="110" x2="180" y2="465"/>
+<rect x="180" y="125.58" width="597.93" height="28.00" rx="6" fill="#2563eb"/>
+<text class="label" x="170" y="143.58" text-anchor="end">char_tfidf + Ridge</text>
+<text class="value" x="785.93" y="143.58" text-anchor="start">0.1749</text>
+<rect x="180" y="184.75" width="618.50" height="28.00" rx="6" fill="#3b82f6"/>
+<text class="label" x="170" y="202.75" text-anchor="end">word_tfidf + Ridge</text>
+<text class="value" x="806.50" y="202.75" text-anchor="start">0.1809</text>
+<rect x="180" y="243.92" width="619.96" height="28.00" rx="6" fill="#60a5fa"/>
+<text class="label" x="170" y="261.92" text-anchor="end">char_tfidf + LinearSVR</text>
+<text class="value" x="807.96" y="261.92" text-anchor="start">0.1813</text>
+<rect x="180" y="303.08" width="625.55" height="28.00" rx="6" fill="#93c5fd"/>
+<text class="label" x="170" y="321.08" text-anchor="end">char_tfidf_svd300 + LinearSVR</text>
+<text class="value" x="813.55" y="321.08" text-anchor="start">0.1829</text>
+<rect x="180" y="362.25" width="642.86" height="28.00" rx="6" fill="#1d4ed8"/>
+<text class="label" x="170" y="380.25" text-anchor="end">char_tfidf_svd300 + Ridge</text>
+<text class="value" x="830.86" y="380.25" text-anchor="start">0.1880</text>
+<rect x="180" y="421.42" width="652.17" height="28.00" rx="6" fill="#1e40af"/>
+<text class="label" x="170" y="439.42" text-anchor="end">word_tfidf + LinearSVR</text>
+<text class="value" x="840.17" y="439.42" text-anchor="start">0.1907</text>
+<text class="axis" x="555.00" y="502" text-anchor="middle">mean MAE</text>
+<text class="note" x="40" y="502">Lower is better. The best setting remained char_tfidf + Ridge.</text>
+</svg>

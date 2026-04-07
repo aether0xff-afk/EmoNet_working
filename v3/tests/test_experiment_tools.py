@@ -246,20 +246,137 @@ class ExperimentToolTests(unittest.TestCase):
             "style_dict": {"warmth": 0.8, "softness": 0.7, "directness": 0.4},
             "style_tags": ["부드러움", "따뜻함"],
             "style_summary": {"warmth": 0.7, "tension": 0.2},
+            "anti_softening_rules": ["같은 문장을 반복하지 않는다."],
         }
 
         prompt, sections = module.build_condition_prompt("emonet_no_summary", "예시 입력", profile)
         self.assertIn("[STYLE_TAGS]", prompt)
         self.assertIn("[STYLE_VECTOR]", prompt)
+        self.assertIn("[ANTI_SOFTENING_RULES]", prompt)
         self.assertNotIn("[STYLE_SUMMARY]", prompt)
-        self.assertEqual(sections, "style_tags,expression_cues,style_vector")
+        self.assertEqual(sections, "style_tags,expression_cues,style_vector,anti_softening_rules")
 
         prompt, sections = module.build_condition_prompt("emonet_vector_only", "예시 입력", profile)
         self.assertIn("[STYLE_VECTOR]", prompt)
+        self.assertIn("[ANTI_SOFTENING_RULES]", prompt)
         self.assertNotIn("[STYLE_TAGS]", prompt)
         self.assertNotIn("[STYLE_SUMMARY]", prompt)
         self.assertNotIn("[EXPRESSION_CUES]", prompt)
-        self.assertEqual(sections, "style_vector")
+        self.assertEqual(sections, "style_vector,anti_softening_rules")
+
+    def test_experiment_matrix_records_response_retry_metadata(self) -> None:
+        module = load_module("experiment_matrix_retry_module", "scripts/experiment_matrix.py")
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            input_csv = temp_dir / "matrix_input.csv"
+            output_csv = temp_dir / "matrix_output.csv"
+            summary_json = temp_dir / "matrix_summary.json"
+            log_jsonl = temp_dir / "matrix_log.jsonl"
+
+            pd.DataFrame([{"sample_id": "s1", "talk_id": "t1", "text": "지금 너무 예민하고 피곤해."}]).to_csv(
+                input_csv, index=False, encoding="utf-8-sig"
+            )
+
+            profile = {
+                "stim_vec": [0.2, 0.4, 0.6, 0.8],
+                "dominant_branch_len": 5,
+                "z": [0.1] * 64,
+                "s_pred": [0.2] * 32,
+                "style_dict": {"softness": 0.4, "directness": 0.6},
+                "style_tags": ["건조함", "직설적"],
+                "style_summary": {"warmth": 0.3, "tension": 0.7},
+                "style_summary_text": "긴장 높음, 따뜻함 낮음",
+                "expression_cues_text": "표정 변화=0.6",
+                "anti_softening_mode": "strict",
+                "anti_softening_rules": ["같은 문장을 반복하지 않는다."],
+            }
+
+            import sys
+
+            original_argv = sys.argv[:]
+            try:
+                sys.argv = [
+                    "experiment_matrix.py",
+                    "--input-csv",
+                    str(input_csv),
+                    "--output-csv",
+                    str(output_csv),
+                    "--summary-json",
+                    str(summary_json),
+                    "--log-jsonl",
+                    str(log_jsonl),
+                    "--conditions",
+                    "direct,emonet_full",
+                    "--progress-every",
+                    "0",
+                    "--flush-every",
+                    "1",
+                    "--zs-model-path",
+                    str(temp_dir / "decoder.npz"),
+                    "--response-max-retries",
+                    "2",
+                ]
+                with unittest.mock.patch.object(module, "ensure_model_server_ready"), unittest.mock.patch.object(
+                    module, "build_model", return_value=object()
+                ), unittest.mock.patch.object(module.LinearZtoSDecoder, "load", return_value=object()), unittest.mock.patch.object(
+                    module, "infer_style_profile", return_value=profile
+                ), unittest.mock.patch.object(
+                    module,
+                    "request_plain_text_response",
+                    side_effect=[
+                        ("직접 응답이다.", "직접 응답이다.", {"retry_count": 0, "validation_errors": []}),
+                        (
+                            "지금은 건드리지 말고 잠깐 쉬어.",
+                            "지금은 건드리지 말고 잠깐 쉬어.",
+                            {"retry_count": 2, "validation_errors": ["repeat", "hanging"]},
+                        ),
+                    ],
+                ):
+                    module.main()
+            finally:
+                sys.argv = original_argv
+
+            saved = pd.read_csv(output_csv)
+            self.assertEqual(len(saved), 2)
+            self.assertIn("response_retry_count", saved.columns)
+            self.assertIn("response_validation_errors_json", saved.columns)
+            emonet_row = saved[saved["condition"] == "emonet_full"].iloc[0]
+            self.assertEqual(int(emonet_row["response_retry_count"]), 2)
+            self.assertIn("hanging", str(emonet_row["response_validation_errors_json"]))
+
+    def test_score_experiment_matrix_summary_includes_retry_mean(self) -> None:
+        module = load_module("score_experiment_matrix_module", "scripts/score_experiment_matrix.py")
+        scored = pd.DataFrame(
+            [
+                {
+                    "condition": "direct",
+                    "condition_group": "baseline",
+                    "status": "ok",
+                    "response_length": 10,
+                    "response_retry_count": 0,
+                    "content_fit": 4,
+                    "emotional_appropriateness": 4,
+                    "style_match": 3,
+                    "naturalness": 4,
+                    "overall_quality": 4,
+                },
+                {
+                    "condition": "direct",
+                    "condition_group": "baseline",
+                    "status": "ok",
+                    "response_length": 12,
+                    "response_retry_count": 2,
+                    "content_fit": 5,
+                    "emotional_appropriateness": 4,
+                    "style_match": 4,
+                    "naturalness": 5,
+                    "overall_quality": 4,
+                },
+            ]
+        )
+        summary = module.summarize_scores(scored)
+        self.assertIn("mean_response_retry_count", summary.columns)
+        self.assertAlmostEqual(float(summary.loc[0, "mean_response_retry_count"]), 1.0)
 
     def test_prepare_human_eval_blinds_condition_order(self) -> None:
         module = load_module("prepare_human_eval_module", "scripts/prepare_human_eval.py")

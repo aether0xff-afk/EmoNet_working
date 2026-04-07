@@ -43,6 +43,7 @@ from emonet.cli import (
     label_subset_with_local_model,
     rebalance_labeled_style_dataframe,
     normalize_style_dict,
+    validate_plain_response_text,
     request_json_response,
     resolve_style_axes,
     summarize_expression_cues,
@@ -815,6 +816,7 @@ class EmoNetSmokeTests(unittest.TestCase):
             args.base_url = "http://127.0.0.1:11434/v1"
             args.model_name = "gpt-oss:20b"
             args.response_temperature = 0.5
+            args.response_max_retries = 2
             args.max_tokens = 300
             args.timeout_sec = 30
             args.prompt_template = None
@@ -836,7 +838,60 @@ class EmoNetSmokeTests(unittest.TestCase):
             self.assertIn("expression_cues_text", payload)
             self.assertIn("anti_softening_mode", payload)
             self.assertIn("anti_softening_rules", payload)
+            self.assertEqual(payload["response_retry_count"], 0)
             self.assertTrue(log_jsonl.exists())
+
+    def test_validate_plain_response_text_rejects_repetition_and_hanging_suffix(self) -> None:
+        with self.assertRaisesRegex(ValueError, "repeats"):
+            validate_plain_response_text("예민하고 피곤해. 무시해도 돼. 무시해도 돼.")
+        with self.assertRaisesRegex(ValueError, "mid-sentence|hanging connective"):
+            validate_plain_response_text("지금 예민하고 피곤한 상태라면")
+        self.assertEqual(validate_plain_response_text("지금은 건드리지 말고 잠깐 쉬어."), "지금은 건드리지 말고 잠깐 쉬어.")
+
+    def test_command_generate_response_retries_invalid_plain_text(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            output_json = temp_dir / "response_retry.json"
+
+            class Args:
+                pass
+
+            args = Args()
+            args.dataset_csv = None
+            args.benchmark_csv = None
+            args.model_cache_path = None
+            args.max_samples = None
+            args.force_refit = False
+            args.seed = 42
+            args.z_dim = 64
+            args.zs_model_path = str(temp_dir / "decoder.npz")
+            args.base_url = "http://127.0.0.1:11434/v1"
+            args.model_name = "gpt-oss:20b"
+            args.response_temperature = 0.5
+            args.response_max_retries = 2
+            args.max_tokens = 300
+            args.timeout_sec = 30
+            args.prompt_template = None
+            args.log_jsonl = None
+            args.text = "지금 너무 예민하고 피곤해."
+            args.output_json = str(output_json)
+
+            with patch("emonet.cli.ensure_model_server_ready"), patch(
+                "emonet.cli.build_model", return_value=self.FakeGenerativeModel()
+            ), patch("emonet.cli.LinearZtoSDecoder.load", return_value=self.FakeDecoder()), patch(
+                "emonet.cli.call_openai_compatible_chat",
+                side_effect=[
+                    "예민하고 피곤해. 무시해도 돼. 무시해도 돼.",
+                    "지금 예민하고 피곤한 상태라면",
+                    "지금은 건드리지 말고 잠깐 쉬어.",
+                ],
+            ):
+                command_generate_response(args)
+
+            payload = json.loads(output_json.read_text(encoding="utf-8"))
+            self.assertEqual(payload["llm_response"], "지금은 건드리지 말고 잠깐 쉬어.")
+            self.assertEqual(payload["response_retry_count"], 2)
+            self.assertEqual(len(payload["response_validation_errors"]), 2)
 
     @unittest.skipUnless(TORCH_AVAILABLE, "torch is required for grad tensor response test")
     def test_command_generate_response_accepts_grad_tensor_z(self) -> None:
@@ -868,6 +923,7 @@ class EmoNetSmokeTests(unittest.TestCase):
             args.base_url = "http://127.0.0.1:11434/v1"
             args.model_name = "gpt-oss:20b"
             args.response_temperature = 0.5
+            args.response_max_retries = 2
             args.max_tokens = 300
             args.timeout_sec = 30
             args.prompt_template = None
@@ -982,6 +1038,7 @@ class EmoNetSmokeTests(unittest.TestCase):
             args.base_url = "http://127.0.0.1:11434/v1"
             args.model_name = "gpt-oss:20b"
             args.response_temperature = 0.5
+            args.response_max_retries = 2
             args.max_tokens = 300
             args.timeout_sec = 30
             args.prompt_template = None
@@ -1005,6 +1062,8 @@ class EmoNetSmokeTests(unittest.TestCase):
             self.assertIn("style_summary_text", saved.columns)
             self.assertIn("expression_cues_text", saved.columns)
             self.assertIn("llm_response", saved.columns)
+            self.assertIn("response_retry_count", saved.columns)
+            self.assertIn("response_validation_errors", saved.columns)
             self.assertIn("macro_tension", saved.columns)
             self.assertIn("s_pred_31", saved.columns)
             self.assertTrue(log_jsonl.exists())
@@ -1031,6 +1090,7 @@ class EmoNetSmokeTests(unittest.TestCase):
             args.base_url = "http://127.0.0.1:11434/v1"
             args.model_name = "gpt-oss:20b"
             args.response_temperature = 0.5
+            args.response_max_retries = 2
             args.max_tokens = 300
             args.timeout_sec = 30
             args.prompt_template = None
@@ -1053,12 +1113,14 @@ class EmoNetSmokeTests(unittest.TestCase):
             self.assertEqual(report["stage_status"]["s_pred_text_to_llm_response"], "passed")
             self.assertEqual(report["stage_status"]["artifact_logging"], "passed")
             self.assertEqual(report["result"]["llm_response"], "조금 쉬면서 호흡을 가다듬어 보세요.")
+            self.assertEqual(report["result"]["response_retry_count"], 0)
             self.assertIn("expression_cues_text", report["result"])
 
             saved = pd.read_csv(output_csv)
             self.assertEqual(len(saved), 1)
             self.assertEqual(saved.loc[0, "overall_status"], "passed")
             self.assertEqual(saved.loc[0, "stage4_status"], "passed")
+            self.assertIn("response_retry_count", saved.columns)
             self.assertIn("expression_cues_text", saved.columns)
             self.assertTrue(log_jsonl.exists())
             self.assertEqual(len(log_jsonl.read_text(encoding="utf-8").strip().splitlines()), 1)
@@ -1085,6 +1147,7 @@ class EmoNetSmokeTests(unittest.TestCase):
             args.base_url = "http://127.0.0.1:11434/v1"
             args.model_name = "gpt-oss:20b"
             args.response_temperature = 0.5
+            args.response_max_retries = 2
             args.max_tokens = 300
             args.timeout_sec = 30
             args.prompt_template = None

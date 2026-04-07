@@ -15,20 +15,21 @@ if str(PROJECT_ROOT) not in sys.path:
 from emonet.cli import (
     append_csv_rows,
     append_jsonl,
+    build_model as build_emonet_model,
     build_response_generation_prompt,
-    build_stim_config,
-    call_openai_compatible_chat,
     ensure_model_server_ready,
     format_expression_cue_lines,
     format_style_summary_lines,
     format_style_vector_lines,
     infer_style_profile,
     maybe_print_progress,
+    request_plain_text_response,
     resolve_text_column,
     serialize_generation_log,
     utc_timestamp,
+    validate_plain_response_text,
 )
-from emonet.core import EmoNet, EmoNetConfig, LinearZtoSDecoder
+from emonet.core import EmoNet, LinearZtoSDecoder
 
 
 CONDITION_SPECS: dict[str, dict[str, object]] = {
@@ -100,6 +101,10 @@ OUTPUT_COLUMNS = [
     "dominant_branch_len",
     "style_summary_text",
     "expression_cues_text",
+    "anti_softening_mode",
+    "anti_softening_rules_json",
+    "response_retry_count",
+    "response_validation_errors_json",
     "style_tags_json",
     "style_summary_json",
     "stim_vec_json",
@@ -127,9 +132,7 @@ def parse_conditions(raw: str | None) -> list[str]:
 
 
 def build_model(args: argparse.Namespace) -> EmoNet:
-    stim_config = build_stim_config(args)
-    config = EmoNetConfig(seed=args.seed, z_dim=args.z_dim, z_encoder_mode="stat")
-    return EmoNet(config=config, stim_encoder_config=stim_config)
+    return build_emonet_model(args)
 
 
 def build_direct_prompt(input_text: str) -> str:
@@ -145,6 +148,8 @@ def build_direct_prompt(input_text: str) -> str:
             "- 사용자 입력의 내용에 직접 답한다.",
             "- 말투를 설명하지 말고 자연스럽게 응답한다.",
             "- 한국어 평문으로만 3~6문장 이내로 답한다.",
+            "- 같은 문장이나 핵심 구절을 반복하지 않는다.",
+            "- 문장을 중간에 끊지 말고 마지막 문장은 완결된 문장으로 끝낸다.",
             "- bullet, markdown, JSON, 코드블록을 쓰지 않는다.",
         ]
     )
@@ -184,6 +189,8 @@ def build_stim_only_prompt(input_text: str, stim_vec: list[float]) -> str:
             "- AFFECT_STIMULUS를 참고해 전반적인 정서 분위기만 조절한다.",
             "- 숫자를 그대로 언급하지 않는다.",
             "- 한국어 평문으로만 3~6문장 이내로 답한다.",
+            "- 같은 문장이나 핵심 구절을 반복하지 않는다.",
+            "- 문장을 중간에 끊지 말고 마지막 문장은 완결된 문장으로 끝낸다.",
             "- bullet, markdown, JSON, 코드블록을 쓰지 않는다.",
         ]
     )
@@ -194,6 +201,7 @@ def build_variant_prompt(
     style_dict: dict[str, float],
     style_tags: list[str],
     style_summary: dict[str, float],
+    anti_softening_rules: list[str],
     *,
     include_tags: bool,
     include_summary: bool,
@@ -222,6 +230,9 @@ def build_variant_prompt(
     if include_vector:
         sections.append("style_vector")
         lines.extend(["[STYLE_VECTOR]", format_style_vector_lines(style_dict), ""])
+    if anti_softening_rules:
+        sections.append("anti_softening_rules")
+        lines.extend(["[ANTI_SOFTENING_RULES]", *[f"- {rule}" for rule in anti_softening_rules], ""])
 
     instruction_parts = []
     if include_vector:
@@ -244,6 +255,8 @@ def build_variant_prompt(
             ),
             "- 스타일을 설명하지 말고, 그 스타일로 자연스럽게 답한다.",
             "- 한국어 평문으로만 3~6문장 이내로 답한다.",
+            "- 같은 문장이나 핵심 구절을 반복하지 않는다.",
+            "- 문장을 중간에 끊지 말고 마지막 문장은 완결된 문장으로 끝낸다.",
             "- bullet, markdown, JSON, 코드블록을 쓰지 않는다.",
         ]
     )
@@ -260,6 +273,7 @@ def build_condition_prompt(condition: str, input_text: str, profile: dict[str, o
     style_dict = dict(profile["style_dict"])
     style_tags = list(profile["style_tags"])
     style_summary = dict(profile["style_summary"])
+    anti_softening_rules = list(profile.get("anti_softening_rules", []))
 
     if condition == "stim_only":
         return build_stim_only_prompt(input_text, stim_vec), "stim_vec"
@@ -270,9 +284,10 @@ def build_condition_prompt(condition: str, input_text: str, profile: dict[str, o
                 style_dict=style_dict,
                 style_tags=style_tags,
                 style_summary=style_summary,
+                anti_softening_rules=anti_softening_rules,
                 template_path=None,
             ),
-            "style_tags,style_summary,expression_cues,style_vector",
+            "style_tags,style_summary,anti_softening_rules",
         )
     if condition == "emonet_no_summary":
         return build_variant_prompt(
@@ -280,6 +295,7 @@ def build_condition_prompt(condition: str, input_text: str, profile: dict[str, o
             style_dict=style_dict,
             style_tags=style_tags,
             style_summary=style_summary,
+            anti_softening_rules=anti_softening_rules,
             include_tags=True,
             include_summary=False,
             include_expression=True,
@@ -291,6 +307,7 @@ def build_condition_prompt(condition: str, input_text: str, profile: dict[str, o
             style_dict=style_dict,
             style_tags=style_tags,
             style_summary=style_summary,
+            anti_softening_rules=anti_softening_rules,
             include_tags=False,
             include_summary=True,
             include_expression=True,
@@ -302,6 +319,7 @@ def build_condition_prompt(condition: str, input_text: str, profile: dict[str, o
             style_dict=style_dict,
             style_tags=style_tags,
             style_summary=style_summary,
+            anti_softening_rules=anti_softening_rules,
             include_tags=True,
             include_summary=True,
             include_expression=False,
@@ -313,6 +331,7 @@ def build_condition_prompt(condition: str, input_text: str, profile: dict[str, o
             style_dict=style_dict,
             style_tags=style_tags,
             style_summary=style_summary,
+            anti_softening_rules=anti_softening_rules,
             include_tags=False,
             include_summary=False,
             include_expression=False,
@@ -324,6 +343,7 @@ def build_condition_prompt(condition: str, input_text: str, profile: dict[str, o
             style_dict=style_dict,
             style_tags=style_tags,
             style_summary=style_summary,
+            anti_softening_rules=anti_softening_rules,
             include_tags=True,
             include_summary=True,
             include_expression=True,
@@ -372,6 +392,9 @@ def main() -> None:
     parser.add_argument("--talk-id-column", default="talk_id")
     parser.add_argument("--conditions", default=",".join(DEFAULT_CONDITIONS))
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument("--sample-size", type=int, default=None)
+    parser.add_argument("--sample-mode", choices=["head", "random"], default="random")
+    parser.add_argument("--sample-seed", type=int, default=42)
     parser.add_argument("--progress-every", type=int, default=10)
     parser.add_argument("--flush-every", type=int, default=10)
     parser.add_argument("--resume", action="store_true")
@@ -379,6 +402,7 @@ def main() -> None:
     parser.add_argument("--base-url", default="http://127.0.0.1:11434/v1")
     parser.add_argument("--model-name", default="gpt-oss:20b")
     parser.add_argument("--response-temperature", type=float, default=0.5)
+    parser.add_argument("--response-max-retries", type=int, default=2)
     parser.add_argument("--max-tokens", type=int, default=600)
     parser.add_argument("--timeout-sec", type=int, default=180)
     parser.add_argument("--dataset-csv", dest="dataset_csv", type=str, default=None)
@@ -388,6 +412,8 @@ def main() -> None:
     parser.add_argument("--force-refit", action="store_true")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--z-dim", dest="z_dim", type=int, default=64)
+    parser.add_argument("--z-encoder-mode", choices=["auto", "stat", "transformer"], default="auto")
+    parser.add_argument("--z-encoder-path", default=None)
     args = parser.parse_args()
 
     conditions = parse_conditions(args.conditions)
@@ -401,6 +427,11 @@ def main() -> None:
 
     input_df = pd.read_csv(Path(args.input_csv))
     text_column = resolve_text_column(input_df, args.text_column)
+    if args.sample_size is not None and args.sample_size > 0 and len(input_df) > args.sample_size:
+        if args.sample_mode == "random":
+            input_df = input_df.sample(n=args.sample_size, random_state=args.sample_seed).reset_index(drop=True)
+        else:
+            input_df = input_df.head(args.sample_size).copy()
     if args.limit is not None and args.limit > 0:
         input_df = input_df.head(args.limit).copy()
 
@@ -450,6 +481,10 @@ def main() -> None:
                 "dominant_branch_len": None,
                 "style_summary_text": "",
                 "expression_cues_text": "",
+                "anti_softening_mode": "",
+                "anti_softening_rules_json": "[]",
+                "response_retry_count": 0,
+                "response_validation_errors_json": "[]",
                 "style_tags_json": "[]",
                 "style_summary_json": "{}",
                 "stim_vec_json": "[]",
@@ -467,27 +502,35 @@ def main() -> None:
 
             try:
                 prompt, style_sections = build_condition_prompt(condition, text, profile)
-                response_text = call_openai_compatible_chat(
+                response_text, _raw_output, response_meta = request_plain_text_response(
                     base_url=args.base_url,
                     model_name=args.model_name,
                     prompt=prompt,
                     temperature=args.response_temperature,
                     max_tokens=args.max_tokens,
                     timeout_sec=args.timeout_sec,
+                    max_retries=args.response_max_retries,
+                    validator=validate_plain_response_text,
+                    retry_instruction=(
+                        "직전 응답은 반복, 미완성 문장, bullet/JSON, 혹은 부자연스러운 출력 때문에 거부되었다. "
+                        "같은 문장이나 핵심 구절을 반복하지 말고 마지막 문장은 완결된 한국어 평문으로 끝내라."
+                    ),
                     system_prompt="Return a plain Korean response only. Do not return JSON.",
-                ).strip()
-                if not response_text:
-                    raise ValueError("empty response")
+                )
 
                 row["status"] = "ok"
                 row["prompt"] = prompt
                 row["llm_response"] = response_text
                 row["response_length"] = len(response_text)
                 row["style_sections"] = style_sections
+                row["response_retry_count"] = int(response_meta["retry_count"])
+                row["response_validation_errors_json"] = json.dumps(response_meta["validation_errors"], ensure_ascii=False)
                 if profile is not None:
                     row["dominant_branch_len"] = int(profile["dominant_branch_len"])
                     row["style_summary_text"] = str(profile["style_summary_text"])
                     row["expression_cues_text"] = str(profile["expression_cues_text"])
+                    row["anti_softening_mode"] = str(profile.get("anti_softening_mode", ""))
+                    row["anti_softening_rules_json"] = json.dumps(profile.get("anti_softening_rules", []), ensure_ascii=False)
                     row["style_tags_json"] = json.dumps(profile["style_tags"], ensure_ascii=False)
                     row["style_summary_json"] = json.dumps(profile["style_summary"], ensure_ascii=False)
                     row["stim_vec_json"] = json.dumps([float(value) for value in profile["stim_vec"]], ensure_ascii=False)
@@ -507,6 +550,10 @@ def main() -> None:
                             "style_summary": dict(profile["style_summary"]),
                             "style_summary_text": str(profile["style_summary_text"]),
                             "expression_cues_text": str(profile["expression_cues_text"]),
+                            "anti_softening_mode": str(profile.get("anti_softening_mode", "")),
+                            "anti_softening_rules": list(profile.get("anti_softening_rules", [])),
+                            "response_retry_count": int(response_meta["retry_count"]),
+                            "response_validation_errors": list(response_meta["validation_errors"]),
                             "style_prompt": prompt,
                             "llm_response": response_text,
                             "llm_model_name": args.model_name,
@@ -521,6 +568,8 @@ def main() -> None:
                         "input_text": text,
                         "style_prompt": prompt,
                         "llm_response": response_text,
+                        "response_retry_count": int(response_meta["retry_count"]),
+                        "response_validation_errors": list(response_meta["validation_errors"]),
                         "llm_model_name": args.model_name,
                         "timestamp_utc": row["timestamp_utc"],
                     }

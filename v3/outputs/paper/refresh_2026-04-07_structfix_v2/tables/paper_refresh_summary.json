@@ -1,0 +1,157 @@
+{
+  "output_root": "C:\\Users\\esl01\\OneDrive\\문서\\GitHub\\EmoNet_working\\v3\\outputs\\paper\\refresh_2026-04-07_structfix_v2",
+  "figures": [
+    "C:\\Users\\esl01\\OneDrive\\문서\\GitHub\\EmoNet_working\\v3\\outputs\\paper\\refresh_2026-04-07_structfix_v2\\figures\\dominant_branch_before_after.svg",
+    "C:\\Users\\esl01\\OneDrive\\문서\\GitHub\\EmoNet_working\\v3\\outputs\\paper\\refresh_2026-04-07_structfix_v2\\figures\\dominant_branch_length_distribution_structfix.svg",
+    "C:\\Users\\esl01\\OneDrive\\문서\\GitHub\\EmoNet_working\\v3\\outputs\\paper\\refresh_2026-04-07_structfix_v2\\figures\\encoder_benchmark_top6.svg",
+    "C:\\Users\\esl01\\OneDrive\\문서\\GitHub\\EmoNet_working\\v3\\outputs\\paper\\refresh_2026-04-07_structfix_v2\\figures\\predictor_mae_comparison_current.svg",
+    "C:\\Users\\esl01\\OneDrive\\문서\\GitHub\\EmoNet_working\\v3\\outputs\\paper\\refresh_2026-04-07_structfix_v2\\figures\\style_bias_axes_extended40.svg",
+    "C:\\Users\\esl01\\OneDrive\\문서\\GitHub\\EmoNet_working\\v3\\outputs\\paper\\refresh_2026-04-07_structfix_v2\\figures\\style_consistency_histogram_extended40.svg"
+  ],
+  "branch_summary": {
+    "before": {
+      "rows": 51628,
+      "mean": 1.0539,
+      "len1": 50257,
+      "len1_ratio": 0.9734,
+      "p50": 1,
+      "p75": 1,
+      "p90": 1,
+      "p95": 1,
+      "p99": 3,
+      "max": 8
+    },
+    "after": {
+      "rows": 51628,
+      "mean": 18.9649,
+      "len1": 796,
+      "len1_ratio": 0.0154,
+      "p50": 20,
+      "p75": 22,
+      "p90": 24,
+      "p95": 25,
+      "p99": 27,
+      "max": 30
+    }
+  },
+  "style_summary": {
+    "rows_ok": 3971,
+    "rows_keep": 2832,
+    "consistency_mean_ok": 0.1022,
+    "consistency_mean_keep": 0.0832,
+    "selected_axis_means": {
+      "softness": 0.9537,
+      "calmness": 0.948,
+      "cooperativeness": 0.9522,
+      "positivity": 0.9431,
+      "warmth": 0.7814,
+      "hostility": 0.0001,
+      "resentment": 0.0001,
+      "despair": 0.002,
+      "volatility": 0.0012,
+      "fearfulness": 0.0046,
+      "shame": 0.0008,
+      "relief": 0.3846,
+      "trust": 0.587
+    },
+    "top_high": [
+      {
+        "axis": "plainness",
+        "mean": 0.9538
+      },
+      {
+        "axis": "softness",
+        "mean": 0.9537
+      },
+      {
+        "axis": "cooperativeness",
+        "mean": 0.9522
+      },
+      {
+        "axis": "calmness",
+        "mean": 0.948
+      },
+      {
+        "axis": "positivity",
+        "mean": 0.9431
+      },
+      {
+        "axis": "initiative",
+        "mean": 0.8818
+      },
+      {
+        "axis": "explicitness",
+        "mean": 0.8373
+      },
+      {
+        "axis": "directness",
+        "mean": 0.7855
+      }
+    ],
+    "top_low": [
+      {
+        "axis": "hostility",
+        "mean": 0.0001
+      },
+      {
+        "axis": "resentment",
+        "mean": 0.0001
+      },
+      {
+        "axis": "shame",
+        "mean": 0.0008
+      },
+      {
+        "axis": "volatility",
+        "mean": 0.0012
+      },
+      {
+        "axis": "despair",
+        "mean": 0.002
+      },
+      {
+        "axis": "fearfulness",
+        "mean": 0.0046
+      },
+      {
+        "axis": "playfulness",
+        "mean": 0.0123
+      },
+      {
+        "axis": "metaphoricity",
+        "mean": 0.0215
+      }
+    ]
+  },
+  "predictor_summary": {
+    "rows_used": 2832,
+    "val_rows": 283,
+    "mean_baseline": 0.114318,
+    "stim_only": {
+      "decoder_mae_mean": 0.112829,
+      "baseline_mae_mean": 0.114318,
+      "mean_gain": 0.001489
+    },
+    "text_tfidf": {
+      "decoder_mae_mean": 0.110391,
+      "baseline_mae_mean": 0.114318,
+      "mean_gain": 0.003926
+    },
+    "legacy_z64": {
+      "decoder_mae_mean": 0.112874,
+      "baseline_mae_mean": 0.114318,
+      "mean_gain": 0.001444
+    },
+    "structfix_learned_z64": {
+      "decoder_mae_mean": 0.113513,
+      "baseline_mae_mean": 0.114318,
+      "mean_gain": 0.000805
+    }
+  },
+  "generation_summary": null,
+  "notes": [
+    "Current refresh excludes generation baseline re-scoring because no current scored experiment matrix was present locally.",
+    "Structfix solves branch-length collapse at the distribution level but does not yet solve style-target bias.",
+    "Current learned z remains competitive with the mean baseline but does not outperform the text baseline."
+  ]
+}

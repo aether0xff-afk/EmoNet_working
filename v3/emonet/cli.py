@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
+import re
 import time
 from typing import Any, Callable
 import urllib.error
@@ -1167,7 +1168,7 @@ def command_generate_response(args: argparse.Namespace) -> None:
     model_config = getattr(model, "config", None)
     decoder = LinearZtoSDecoder.load(Path(args.zs_model_path))
     profile = infer_style_profile(model=model, decoder=decoder, text=args.text, style_profile=style_profile)
-    response_text, style_prompt = generate_response_from_style(
+    response_text, style_prompt, response_meta = generate_response_from_style(
         base_url=args.base_url,
         model_name=args.model_name,
         input_text=args.text,
@@ -1179,6 +1180,7 @@ def command_generate_response(args: argparse.Namespace) -> None:
         max_tokens=args.max_tokens,
         timeout_sec=args.timeout_sec,
         template_path=Path(args.prompt_template) if args.prompt_template else None,
+        max_retries=args.response_max_retries,
     )
     result = {
         "input_text": args.text,
@@ -1192,6 +1194,8 @@ def command_generate_response(args: argparse.Namespace) -> None:
         "expression_cues_text": str(profile["expression_cues_text"]),
         "anti_softening_mode": str(profile["anti_softening_mode"]),
         "anti_softening_rules": list(profile["anti_softening_rules"]),
+        "response_retry_count": int(response_meta["retry_count"]),
+        "response_validation_errors": list(response_meta["validation_errors"]),
         "style_prompt": style_prompt,
         "llm_response": response_text,
         "decoder_model_path": str(args.zs_model_path),
@@ -1237,7 +1241,7 @@ def command_generate_response_batch(args: argparse.Namespace) -> None:
 
         try:
             profile = infer_style_profile(model=model, decoder=decoder, text=text, style_profile=style_profile)
-            response_text, style_prompt = generate_response_from_style(
+            response_text, style_prompt, response_meta = generate_response_from_style(
                 base_url=args.base_url,
                 model_name=args.model_name,
                 input_text=text,
@@ -1249,6 +1253,7 @@ def command_generate_response_batch(args: argparse.Namespace) -> None:
                 max_tokens=args.max_tokens,
                 timeout_sec=args.timeout_sec,
                 template_path=Path(args.prompt_template) if args.prompt_template else None,
+                max_retries=args.response_max_retries,
             )
             row = dict(record)
             row["status"] = "ok"
@@ -1259,6 +1264,8 @@ def command_generate_response_batch(args: argparse.Namespace) -> None:
             row["expression_cues_text"] = str(profile["expression_cues_text"])
             row["anti_softening_mode"] = str(profile["anti_softening_mode"])
             row["anti_softening_rules"] = json.dumps(profile["anti_softening_rules"], ensure_ascii=False)
+            row["response_retry_count"] = int(response_meta["retry_count"])
+            row["response_validation_errors"] = json.dumps(response_meta["validation_errors"], ensure_ascii=False)
             row["style_prompt"] = style_prompt
             row["llm_response"] = response_text
             row["decoder_model_path"] = str(args.zs_model_path)
@@ -1285,6 +1292,8 @@ def command_generate_response_batch(args: argparse.Namespace) -> None:
                      "expression_cues_text": str(profile["expression_cues_text"]),
                      "anti_softening_mode": str(profile["anti_softening_mode"]),
                      "anti_softening_rules": list(profile["anti_softening_rules"]),
+                     "response_retry_count": int(response_meta["retry_count"]),
+                     "response_validation_errors": list(response_meta["validation_errors"]),
                      "style_prompt": style_prompt,
                     "llm_response": response_text,
                     "decoder_model_path": str(args.zs_model_path),
@@ -1541,6 +1550,30 @@ ANTI_SOFTENING_TEXT_CUES = (
     "상처",
     "서운",
     "지친",
+)
+
+RESPONSE_BULLET_PREFIXES = ("- ", "* ", "• ", "1. ", "1) ", "2. ", "2) ")
+RESPONSE_HANGING_SUFFIXES = (
+    "라면",
+    "다면",
+    "지만",
+    "는데",
+    "면서",
+    "거나",
+    "하며",
+    "하고",
+    "해서",
+    "이며",
+    "인데",
+    "니까",
+    "므로",
+    "때문에",
+    "같아",
+    "같고",
+    "같은",
+    "처럼",
+    "및",
+    "또는",
 )
 
 
@@ -1872,10 +1905,130 @@ def normalize_response_text(payload: dict) -> str:
     response = payload.get("response", "")
     if not isinstance(response, str):
         raise ValueError("'response' must be a string")
-    response = response.strip()
-    if not response:
-        raise ValueError("empty 'response' returned from model output")
-    return response
+    return validate_plain_response_text(response)
+
+
+def clean_plain_response_text(response: str) -> str:
+    cleaned = str(response).replace("\r", "\n").strip()
+    cleaned = re.sub(r"[ \t]+", " ", cleaned)
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+    return cleaned
+
+
+def split_response_segments(response: str) -> list[str]:
+    segments = re.split(r"[.!?…\n]+", response)
+    cleaned_segments: list[str] = []
+    for segment in segments:
+        normalized = segment.strip(" \"'“”‘’()[]{}")
+        if normalized:
+            cleaned_segments.append(normalized)
+    return cleaned_segments
+
+
+def normalize_segment_key(segment: str) -> str:
+    return re.sub(r"[^0-9A-Za-z가-힣]+", "", segment).lower()
+
+
+def looks_like_incomplete_response(response: str) -> bool:
+    tail = response.rstrip(" \"'“”‘’)]}")
+    if not tail:
+        return False
+    if tail[-1] in ",:;/-(":
+        return True
+    lowered = tail.lower()
+    return any(lowered.endswith(suffix) for suffix in RESPONSE_HANGING_SUFFIXES)
+
+
+def validate_plain_response_text(response: str) -> str:
+    normalized = clean_plain_response_text(response)
+    if not normalized:
+        raise ValueError("empty response returned from model output")
+
+    stripped = normalized.lstrip()
+    if stripped.startswith(("```", "{", "[")):
+        raise ValueError("response must be plain text, not JSON or markdown")
+    if any(stripped.startswith(prefix) for prefix in RESPONSE_BULLET_PREFIXES):
+        raise ValueError("response must be plain sentences, not bullet points")
+    if len(re.findall(r"[0-9A-Za-z가-힣]", normalized)) < 2:
+        raise ValueError("response is too short to be meaningful")
+
+    segments = split_response_segments(normalized)
+    if not segments:
+        raise ValueError("response does not contain a readable sentence")
+
+    seen_segments: set[str] = set()
+    for segment in segments:
+        key = normalize_segment_key(segment)
+        if len(key) < 4:
+            continue
+        if key in seen_segments:
+            raise ValueError("response repeats the same sentence or clause")
+        seen_segments.add(key)
+
+    if len(segments) >= 2:
+        last_key = normalize_segment_key(segments[-1])
+        prev_key = normalize_segment_key(segments[-2])
+        if last_key and last_key == prev_key:
+            raise ValueError("response repeats the same ending sentence")
+
+    if looks_like_incomplete_response(normalized):
+        raise ValueError("response ends mid-sentence or with a hanging connective")
+
+    return normalized
+
+
+def request_plain_text_response(
+    base_url: str,
+    model_name: str,
+    prompt: str,
+    temperature: float,
+    max_tokens: int,
+    timeout_sec: int,
+    max_retries: int,
+    validator: Callable[[str], str] | None = None,
+    retry_instruction: str | None = None,
+    system_prompt: str = "Return a plain Korean response only. Do not return JSON.",
+) -> tuple[str, str, dict[str, object]]:
+    last_raw = ""
+    validation_errors: list[str] = []
+    for attempt in range(max_retries + 1):
+        retry_suffix = ""
+        if attempt > 0:
+            retry_reason = validation_errors[-1] if validation_errors else "직전 응답이 형식 검증을 통과하지 못했다."
+            retry_suffix = (
+                "\n\n[RETRY_INSTRUCTION]\n"
+                + (
+                    retry_instruction
+                    or "직전 응답은 plain Korean response 규칙을 어겼다. 같은 문장 반복, 미완성 문장, bullet/JSON을 피하고 자연스러운 한국어 평문으로만 다시 출력하라."
+                )
+                + f"\n- 직전 문제: {retry_reason}"
+            )
+        raw = call_openai_compatible_chat(
+            base_url=base_url,
+            model_name=model_name,
+            prompt=prompt + retry_suffix,
+            temperature=temperature if attempt == 0 else 0.0,
+            max_tokens=max_tokens,
+            timeout_sec=timeout_sec,
+            system_prompt=system_prompt,
+        )
+        last_raw = raw
+        try:
+            validated = validator(raw) if validator is not None else clean_plain_response_text(raw)
+            return (
+                validated,
+                raw,
+                {
+                    "attempt_count": int(attempt + 1),
+                    "retry_count": int(attempt),
+                    "validation_errors": list(validation_errors),
+                },
+            )
+        except Exception as exc:
+            validation_errors.append(str(exc))
+            continue
+    last_error = validation_errors[-1] if validation_errors else "unknown validation error"
+    raise ValueError(f"invalid plain-text response after retries: {last_error}. raw={last_raw[:500]}")
 
 
 def call_openai_compatible_chat(
@@ -2208,7 +2361,8 @@ def generate_response_from_style(
     max_tokens: int,
     timeout_sec: int,
     template_path: Path | None = None,
-) -> tuple[str, str]:
+    max_retries: int = 2,
+) -> tuple[str, str, dict[str, object]]:
     prompt = build_response_generation_prompt(
         input_text=input_text,
         style_dict=style_dict,
@@ -2217,16 +2371,22 @@ def generate_response_from_style(
         anti_softening_rules=anti_softening_rules,
         template_path=template_path,
     )
-    response = call_openai_compatible_chat(
+    response, _raw_output, response_meta = request_plain_text_response(
         base_url=base_url,
         model_name=model_name,
         prompt=prompt,
         temperature=temperature,
         max_tokens=max_tokens,
         timeout_sec=timeout_sec,
+        max_retries=max_retries,
+        validator=validate_plain_response_text,
+        retry_instruction=(
+            "직전 응답은 반복, 미완성 문장, bullet/JSON, 혹은 부자연스러운 출력 때문에 거부되었다. "
+            "같은 문장이나 핵심 구절을 반복하지 말고, 마지막 문장은 완결된 한국어 평문으로 끝내라."
+        ),
         system_prompt="Return a plain Korean response only. Do not return JSON.",
-    ).strip()
-    return response, prompt
+    )
+    return response, prompt, response_meta
 
 
 def serialize_generation_log(record: dict[str, object]) -> dict[str, object]:
@@ -2336,6 +2496,8 @@ def build_e2e_validation_row(report: dict[str, object]) -> dict[str, object]:
         "z_dim": len(result.get("z", [])) if isinstance(result.get("z"), list) else 0,
         "s_pred_dim": len(result.get("s_pred", [])) if isinstance(result.get("s_pred"), list) else 0,
         "llm_response": result.get("llm_response", ""),
+        "response_retry_count": result.get("response_retry_count", ""),
+        "response_validation_errors_json": json.dumps(result.get("response_validation_errors", []), ensure_ascii=False),
         "style_summary_text": result.get("style_summary_text", ""),
         "expression_cues_text": result.get("expression_cues_text", ""),
         "anti_softening_mode": result.get("anti_softening_mode", ""),
@@ -2519,7 +2681,7 @@ def command_e2e_check(args: argparse.Namespace) -> None:
 
     llm_criteria = [
         "LLM server must be reachable",
-        "llm_response must be a non-empty plain-text string",
+        "llm_response must be a non-empty plain-text string that passes repetition/completion validation",
         "style_prompt, style_summary, and s_pred must all be available together",
     ]
     if stage_map["z_to_s_pred"]["status"] == "passed":
@@ -2532,7 +2694,7 @@ def command_e2e_check(args: argparse.Namespace) -> None:
             style_summary = dict(report["result"]["style_summary"])
             style_tags = list(report["result"]["style_tags"])
             ensure_model_server_ready(args.base_url, args.timeout_sec)
-            response_text, style_prompt = generate_response_from_style(
+            response_text, style_prompt, response_meta = generate_response_from_style(
                 base_url=args.base_url,
                 model_name=args.model_name,
                 input_text=args.text,
@@ -2544,11 +2706,14 @@ def command_e2e_check(args: argparse.Namespace) -> None:
                 max_tokens=args.max_tokens,
                 timeout_sec=args.timeout_sec,
                 template_path=Path(args.prompt_template) if args.prompt_template else None,
+                max_retries=args.response_max_retries,
             )
             if not isinstance(response_text, str) or not response_text.strip():
                 raise ValueError("llm_response must be a non-empty string")
             report["result"]["style_prompt"] = style_prompt
             report["result"]["llm_response"] = response_text.strip()
+            report["result"]["response_retry_count"] = int(response_meta["retry_count"])
+            report["result"]["response_validation_errors"] = list(response_meta["validation_errors"])
             record_stage(
                 build_validation_stage_result(
                     stage_id="s_pred_text_to_llm_response",
@@ -2557,6 +2722,8 @@ def command_e2e_check(args: argparse.Namespace) -> None:
                     criteria=llm_criteria,
                     observed={
                         "response_length": len(report["result"]["llm_response"]),
+                        "response_retry_count": int(response_meta["retry_count"]),
+                        "response_validation_rejections": len(response_meta["validation_errors"]),
                         "style_tag_count": len(style_tags),
                         "style_summary_keys": sorted(style_summary.keys()),
                     },
@@ -3410,6 +3577,7 @@ def build_parser() -> argparse.ArgumentParser:
         subparser.add_argument("--base-url", default="http://127.0.0.1:11434/v1")
         subparser.add_argument("--model-name", default="gpt-oss:20b")
         subparser.add_argument("--response-temperature", type=float, default=0.5)
+        subparser.add_argument("--response-max-retries", type=int, default=2)
         subparser.add_argument("--max-tokens", type=int, default=600)
         subparser.add_argument("--timeout-sec", type=int, default=180)
         subparser.add_argument("--prompt-template", default=None)

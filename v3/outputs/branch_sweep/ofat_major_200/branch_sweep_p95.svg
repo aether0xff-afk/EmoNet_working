@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="560" viewBox="0 0 980 560">
+<style>
+text { font-family: 'Malgun Gothic', 'Segoe UI', sans-serif; fill: #1f2937; }
+.title { font-size: 24px; font-weight: 700; }
+.subtitle { font-size: 13px; fill: #6b7280; }
+.axis { font-size: 12px; fill: #4b5563; }
+.label { font-size: 12px; }
+.small { font-size: 11px; fill: #4b5563; }
+.value { font-size: 11px; font-weight: 600; }
+.grid { stroke: #e5e7eb; stroke-width: 1; }
+.axis-line { stroke: #9ca3af; stroke-width: 1.2; }
+.note { font-size: 12px; fill: #374151; }
+</style>
+<rect x="0" y="0" width="100%" height="100%" fill="#ffffff"/>
+<text class="title" x="40" y="42">Branch Sweep: P95 Branch Length</text>
+<text class="subtitle" x="40" y="66">sample_rows=200, sample_mode=random, sample_seed=42, model_seed=42</text>
+<line class="grid" x1="90" y1="110.00" x2="940" y2="110.00"/>
+<text class="axis" x="82" y="114.00" text-anchor="end">32.200</text>
+<line class="grid" x1="90" y1="181.00" x2="940" y2="181.00"/>
+<text class="axis" x="82" y="185.00" text-anchor="end">25.760</text>
+<line class="grid" x1="90" y1="252.00" x2="940" y2="252.00"/>
+<text class="axis" x="82" y="256.00" text-anchor="end">19.320</text>
+<line class="grid" x1="90" y1="323.00" x2="940" y2="323.00"/>
+<text class="axis" x="82" y="327.00" text-anchor="end">12.880</text>
+<line class="grid" x1="90" y1="394.00" x2="940" y2="394.00"/>
+<text class="axis" x="82" y="398.00" text-anchor="end">6.440</text>
+<line class="grid" x1="90" y1="465.00" x2="940" y2="465.00"/>
+<text class="axis" x="82" y="469.00" text-anchor="end">0.000</text>
+<line class="axis-line" x1="90" y1="465" x2="940" y2="465"/>
+<line class="axis-line" x1="90" y1="110" x2="90" y2="465"/>
+<rect x="99.00" y="156.30" width="7.00" height="308.70" rx="6" fill="#0f766e"/>
+<text class="value" x="102.50" y="148.30" text-anchor="middle">28</text>
+<text class="label" x="102.50" y="485.00" text-anchor="middle">k_threshold_base:down=0.68</text>
+<rect x="124.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#1d4ed8"/>
+<text class="value" x="127.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="127.50" y="485.00" text-anchor="middle">k_decay:up=0.992</text>
+<rect x="149.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#ea580c"/>
+<text class="value" x="152.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="152.50" y="485.00" text-anchor="middle">baseline</text>
+<rect x="174.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#b45309"/>
+<text class="value" x="177.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="177.50" y="485.00" text-anchor="middle">k_threshold_base:base=0.72</text>
+<rect x="199.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#7c3aed"/>
+<text class="value" x="202.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="202.50" y="485.00" text-anchor="middle">k_remem_base:down=0.9</text>
+<rect x="224.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#be123c"/>
+<text class="value" x="227.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="227.50" y="485.00" text-anchor="middle">k_remem_base:base=0.95</text>
+<rect x="249.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#4d7c0f"/>
+<text class="value" x="252.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="252.50" y="485.00" text-anchor="middle">k_remem_base:up=1</text>
+<rect x="274.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#334155"/>
+<text class="value" x="277.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="277.50" y="485.00" text-anchor="middle">k_decay:base=0.99</text>
+<rect x="299.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#334155"/>
+<text class="value" x="302.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="302.50" y="485.00" text-anchor="middle">memory_decay:down=0.982</text>
+<rect x="324.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#334155"/>
+<text class="value" x="327.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="327.50" y="485.00" text-anchor="middle">memory_decay:base=0.985</text>
+<rect x="349.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#334155"/>
+<text class="value" x="352.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="352.50" y="485.00" text-anchor="middle">memory_decay:up=0.988</text>
+<rect x="374.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#334155"/>
+<text class="value" x="377.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="377.50" y="485.00" text-anchor="middle">memory_stim_mix:down=0.2</text>
+<rect x="399.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#334155"/>
+<text class="value" x="402.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="402.50" y="485.00" text-anchor="middle">memory_stim_mix:base=0.25</text>
+<rect x="424.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#334155"/>
+<text class="value" x="427.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="427.50" y="485.00" text-anchor="middle">memory_stim_mix:up=0.3</text>
+<rect x="449.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#334155"/>
+<text class="value" x="452.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="452.50" y="485.00" text-anchor="middle">memory_k_mix:down=0.25</text>
+<rect x="474.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#334155"/>
+<text class="value" x="477.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="477.50" y="485.00" text-anchor="middle">memory_k_mix:base=0.35</text>
+<rect x="499.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#334155"/>
+<text class="value" x="502.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="502.50" y="485.00" text-anchor="middle">memory_k_mix:up=0.45</text>
+<rect x="524.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#334155"/>
+<text class="value" x="527.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="527.50" y="485.00" text-anchor="middle">dopa_rewire_gain:base=0.8</text>
+<rect x="549.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#334155"/>
+<text class="value" x="552.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="552.50" y="485.00" text-anchor="middle">dopa_rewire_gain:up=1</text>
+<rect x="574.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#334155"/>
+<text class="value" x="577.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="577.50" y="485.00" text-anchor="middle">sero_prune_gain:down=0.02</text>
+<rect x="599.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#334155"/>
+<text class="value" x="602.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="602.50" y="485.00" text-anchor="middle">sero_prune_gain:base=0.04</text>
+<rect x="624.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#334155"/>
+<text class="value" x="627.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="627.50" y="485.00" text-anchor="middle">sero_prune_gain:up=0.06</text>
+<rect x="649.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#334155"/>
+<text class="value" x="652.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="652.50" y="485.00" text-anchor="middle">mela_dropout_gain:down=0.02</text>
+<rect x="674.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#334155"/>
+<text class="value" x="677.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="677.50" y="485.00" text-anchor="middle">mela_dropout_gain:base=0.04</text>
+<rect x="699.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#334155"/>
+<text class="value" x="702.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="702.50" y="485.00" text-anchor="middle">mela_dropout_gain:up=0.06</text>
+<rect x="724.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#334155"/>
+<text class="value" x="727.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="727.50" y="485.00" text-anchor="middle">branch_end_window:down=4</text>
+<rect x="749.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#334155"/>
+<text class="value" x="752.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="752.50" y="485.00" text-anchor="middle">branch_end_window:base=6</text>
+<rect x="774.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#334155"/>
+<text class="value" x="777.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="777.50" y="485.00" text-anchor="middle">branch_end_window:up=8</text>
+<rect x="799.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#334155"/>
+<text class="value" x="802.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="802.50" y="485.00" text-anchor="middle">branch_length_bonus:down=0.25</text>
+<rect x="824.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#334155"/>
+<text class="value" x="827.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="827.50" y="485.00" text-anchor="middle">branch_length_bonus:base=0.35</text>
+<rect x="849.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#334155"/>
+<text class="value" x="852.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="852.50" y="485.00" text-anchor="middle">branch_length_bonus:up=0.45</text>
+<rect x="874.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#334155"/>
+<text class="value" x="877.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="877.50" y="485.00" text-anchor="middle">k_decay:down=0.988</text>
+<rect x="899.00" y="167.33" width="7.00" height="297.67" rx="6" fill="#334155"/>
+<text class="value" x="902.50" y="159.33" text-anchor="middle">27</text>
+<text class="label" x="902.50" y="485.00" text-anchor="middle">dopa_rewire_gain:down=0.6</text>
+<rect x="924.00" y="178.35" width="7.00" height="286.65" rx="6" fill="#334155"/>
+<text class="value" x="927.50" y="170.35" text-anchor="middle">26</text>
+<text class="label" x="927.50" y="485.00" text-anchor="middle">k_threshold_base:up=0.76</text>
+<text class="axis" x="32" y="94" text-anchor="start">p95 branch length</text>
+<text class="note" x="40" y="536">checks whether the tail grows beyond isolated spikes</text>
+</svg>

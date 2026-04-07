@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime, timezone
 import json
+import os
 from pathlib import Path
 import time
 from typing import Any, Callable
@@ -32,6 +34,51 @@ from .core import (
 
 DEFAULT_Z_ENCODER_MODEL_PATH = Path(__file__).resolve().parents[1] / "artifacts" / "dominant_branch_encoder.pt"
 DEFAULT_STYLE_PROFILE = "core32"
+MODEL_OPTIONAL_CONFIG_FIELDS = [
+    "max_ticks",
+    "min_ticks_before_converged",
+    "k_threshold_base",
+    "k_remem_base",
+    "k_decay",
+    "refractory_ticks",
+    "input_topk",
+    "input_signal_clip",
+    "memory_decay",
+    "memory_stim_mix",
+    "memory_k_mix",
+    "state_self_stim_mix",
+    "state_parent_stim_mix",
+    "state_base_stim_mix",
+    "state_bias_stim_mix",
+    "recent_activity_decay",
+    "hysteresis_threshold_gain",
+    "hysteresis_remem_gain",
+    "hysteresis_k_bonus",
+    "max_out_degree",
+    "min_out_degree",
+    "dopa_rewire_gain",
+    "sero_prune_gain",
+    "mela_dropout_gain",
+    "ne_thresh_reduce_gain",
+    "ne_remem_reduce_gain",
+    "global_recovery_rate",
+    "topk_branches",
+    "branch_end_window",
+    "branch_length_bonus",
+]
+MODEL_BUILD_ARG_FIELDS = [
+    "dataset_csv",
+    "benchmark_csv",
+    "model_cache_path",
+    "max_samples",
+    "force_refit",
+    "seed",
+    "z_dim",
+    "z_encoder_mode",
+    "z_encoder_path",
+    *MODEL_OPTIONAL_CONFIG_FIELDS,
+]
+_PARALLEL_MODEL: EmoNet | None = None
 
 
 def format_duration(seconds: float) -> str:
@@ -129,6 +176,46 @@ def build_stim_config(args: argparse.Namespace) -> StimEncoderConfig:
     return StimEncoderConfig(**kwargs)
 
 
+def resolve_num_workers(raw_value: int | None) -> int:
+    if raw_value is None:
+        return 1
+    if int(raw_value) == 0:
+        return max(1, int(os.cpu_count() or 1))
+    return max(1, int(raw_value))
+
+
+def estimate_executor_chunksize(total: int, num_workers: int, preferred: int = 64) -> int:
+    if total <= 0:
+        return 1
+    return max(1, min(int(preferred), max(1, total // max(1, num_workers * 8))))
+
+
+def build_model_payload(args: argparse.Namespace) -> dict[str, Any]:
+    payload: dict[str, Any] = {}
+    for field_name in MODEL_BUILD_ARG_FIELDS:
+        payload[field_name] = getattr(args, field_name, None)
+    return payload
+
+
+def prepare_parallel_model_payload(args: argparse.Namespace) -> dict[str, Any]:
+    warm_model = build_model(args)
+    warm_model.stim_encoder.ensure_fitted()
+    payload = build_model_payload(args)
+    payload["force_refit"] = False
+    return payload
+
+
+def _init_parallel_model(model_payload: dict[str, Any]) -> None:
+    global _PARALLEL_MODEL
+    _PARALLEL_MODEL = build_model(argparse.Namespace(**model_payload))
+
+
+def _require_parallel_model() -> EmoNet:
+    if _PARALLEL_MODEL is None:
+        raise RuntimeError("parallel worker model is not initialized")
+    return _PARALLEL_MODEL
+
+
 def build_model(
     args: argparse.Namespace,
     *,
@@ -149,39 +236,7 @@ def build_model(
         "z_encoder_path": z_encoder_path,
         "load_z_encoder_checkpoint": load_z_encoder_checkpoint,
     }
-    optional_config_fields = [
-        "max_ticks",
-        "min_ticks_before_converged",
-        "k_threshold_base",
-        "k_remem_base",
-        "k_decay",
-        "refractory_ticks",
-        "input_topk",
-        "input_signal_clip",
-        "memory_decay",
-        "memory_stim_mix",
-        "memory_k_mix",
-        "state_self_stim_mix",
-        "state_parent_stim_mix",
-        "state_base_stim_mix",
-        "state_bias_stim_mix",
-        "recent_activity_decay",
-        "hysteresis_threshold_gain",
-        "hysteresis_remem_gain",
-        "hysteresis_k_bonus",
-        "max_out_degree",
-        "min_out_degree",
-        "dopa_rewire_gain",
-        "sero_prune_gain",
-        "mela_dropout_gain",
-        "ne_thresh_reduce_gain",
-        "ne_remem_reduce_gain",
-        "global_recovery_rate",
-        "topk_branches",
-        "branch_end_window",
-        "branch_length_bonus",
-    ]
-    for field_name in optional_config_fields:
+    for field_name in MODEL_OPTIONAL_CONFIG_FIELDS:
         field_value = getattr(args, field_name, None)
         if field_value is not None:
             config_kwargs[field_name] = field_value
@@ -304,26 +359,60 @@ def resolve_indexed_columns(df: pd.DataFrame, prefix: str, expected_dim: int | N
     return [column for _, column in indexed]
 
 
-def export_z_from_dataframe(model: EmoNet, df: pd.DataFrame, text_column: str, output_csv: Path) -> None:
-    z_rows = []
-    stim_rows = []
+def export_z_from_dataframe(
+    model: EmoNet | None,
+    df: pd.DataFrame,
+    text_column: str,
+    output_csv: Path,
+    *,
+    progress_every: int,
+    num_workers: int = 1,
+    model_args: argparse.Namespace | None = None,
+) -> None:
+    records = df.to_dict(orient="records")
+    total = len(records)
     start_time = time.perf_counter()
-    for idx, text in enumerate(df[text_column].astype(str), start=1):
-        outputs = model.forward(text)
-        z_rows.append(to_numpy_array(outputs["z"], dtype=np.float32))
-        stim_rows.append(to_numpy_array(outputs["stim_vec"], dtype=np.float32))
-        maybe_print_progress("export-z", idx, len(df), start_time, every=100)
+    rows: list[dict[str, object]] = []
+    worker_count = resolve_num_workers(num_workers)
 
-    z_array = np.vstack(z_rows)
-    stim_array = np.vstack(stim_rows)
-    for dim in range(z_array.shape[1]):
-        df[f"z_{dim}"] = z_array[:, dim]
-    for dim, name in enumerate(("dopamine", "serotonin", "norepinephrine", "melatonin")):
-        df[name] = stim_array[:, dim]
+    if worker_count <= 1:
+        if model is None:
+            raise ValueError("model is required when num_workers <= 1")
+        for idx, record in enumerate(records, start=1):
+            outputs = model.forward(str(record.get(text_column, "")))
+            rows.append(build_output_row(record, outputs))
+            maybe_print_progress("export-z", idx, total, start_time, every=progress_every)
+    else:
+        if model_args is None:
+            raise ValueError("model_args is required when num_workers > 1")
+        payload = prepare_parallel_model_payload(model_args)
+        chunksize = estimate_executor_chunksize(total, worker_count, preferred=128)
+        task_iter = ((record, text_column) for record in records)
+        with ProcessPoolExecutor(
+            max_workers=worker_count,
+            initializer=_init_parallel_model,
+            initargs=(payload,),
+        ) as executor:
+            for idx, row in enumerate(executor.map(_parallel_export_record, task_iter, chunksize=chunksize), start=1):
+                rows.append(row)
+                maybe_print_progress("export-z", idx, total, start_time, every=progress_every)
 
+    output_df = pd.DataFrame(rows)
     output_csv.parent.mkdir(parents=True, exist_ok=True)
-    df.to_csv(output_csv, index=False, encoding="utf-8-sig")
-    print(json.dumps({"rows": int(len(df)), "output_csv": str(output_csv)}, ensure_ascii=False, indent=2))
+    output_df.to_csv(output_csv, index=False, encoding="utf-8-sig")
+    elapsed = time.perf_counter() - start_time
+    print(
+        json.dumps(
+            {
+                "rows": int(len(output_df)),
+                "output_csv": str(output_csv),
+                "elapsed_sec": round(elapsed, 3),
+                "num_workers": int(worker_count),
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
 
 
 def build_output_row(source_row: dict, outputs: dict[str, object]) -> dict[str, object]:
@@ -334,6 +423,22 @@ def build_output_row(source_row: dict, outputs: dict[str, object]) -> dict[str, 
         row[f"z_{dim}"] = float(value)
     for dim, name in enumerate(("dopamine", "serotonin", "norepinephrine", "melatonin")):
         row[name] = float(stim[dim])
+    row["dominant_branch_len"] = int(len(outputs["dominant_branch"]))
+    return row
+
+
+def _parallel_export_record(task: tuple[dict[str, object], str]) -> dict[str, object]:
+    record, text_column = task
+    model = _require_parallel_model()
+    outputs = model.forward(str(record.get(text_column, "")))
+    return build_output_row(record, outputs)
+
+
+def _parallel_probe_record(task: tuple[dict[str, object], str]) -> dict[str, object]:
+    record, text_column = task
+    model = _require_parallel_model()
+    outputs = model.forward(str(record.get(text_column, "")))
+    row = dict(record)
     row["dominant_branch_len"] = int(len(outputs["dominant_branch"]))
     return row
 
@@ -358,21 +463,24 @@ def load_existing_ids(output_csv: Path, column_name: str = "talk_id") -> set[str
 
 
 def export_z_from_json_stream(
-    model: EmoNet,
+    model: EmoNet | None,
     input_json: Path,
     output_csv: Path,
     limit: int | None,
     chunk_size: int,
     progress_every: int,
     resume: bool,
+    *,
+    num_workers: int = 1,
+    model_args: argparse.Namespace | None = None,
 ) -> None:
     rows_to_write: list[dict[str, object]] = []
-    processed = 0
-    written = 0
     skipped = 0
     write_header = not output_csv.exists() or not resume
     existing_ids = load_existing_ids(output_csv) if resume else set()
     start_time = time.perf_counter()
+    source_rows: list[dict[str, object]] = []
+    worker_count = resolve_num_workers(num_workers)
 
     if resume and existing_ids:
         print(f"resume mode: skipping {len(existing_ids)} existing talk_id rows")
@@ -382,20 +490,45 @@ def export_z_from_json_stream(
         if existing_ids and talk_id and talk_id in existing_ids:
             skipped += 1
             continue
-
-        outputs = model.forward(str(source_row["text"]))
-        rows_to_write.append(build_output_row(source_row, outputs))
-        processed += 1
-        written += 1
-
-        maybe_print_progress("export-z", processed, limit, start_time, every=progress_every)
-
-        if len(rows_to_write) >= chunk_size:
-            write_header = flush_rows(rows_to_write, output_csv, write_header)
-            rows_to_write.clear()
-
-        if limit is not None and processed >= limit:
+        source_rows.append(source_row)
+        if limit is not None and len(source_rows) >= limit:
             break
+
+    total = len(source_rows)
+    processed = 0
+    written = 0
+
+    if worker_count <= 1:
+        if model is None:
+            raise ValueError("model is required when num_workers <= 1")
+        for source_row in source_rows:
+            outputs = model.forward(str(source_row["text"]))
+            rows_to_write.append(build_output_row(source_row, outputs))
+            processed += 1
+            written += 1
+            maybe_print_progress("export-z", processed, total, start_time, every=progress_every)
+            if len(rows_to_write) >= chunk_size:
+                write_header = flush_rows(rows_to_write, output_csv, write_header)
+                rows_to_write.clear()
+    else:
+        if model_args is None:
+            raise ValueError("model_args is required when num_workers > 1")
+        payload = prepare_parallel_model_payload(model_args)
+        chunksize = estimate_executor_chunksize(total, worker_count, preferred=max(16, chunk_size))
+        task_iter = ((source_row, "text") for source_row in source_rows)
+        with ProcessPoolExecutor(
+            max_workers=worker_count,
+            initializer=_init_parallel_model,
+            initargs=(payload,),
+        ) as executor:
+            for row in executor.map(_parallel_export_record, task_iter, chunksize=chunksize):
+                rows_to_write.append(row)
+                processed += 1
+                written += 1
+                maybe_print_progress("export-z", processed, total, start_time, every=progress_every)
+                if len(rows_to_write) >= chunk_size:
+                    write_header = flush_rows(rows_to_write, output_csv, write_header)
+                    rows_to_write.clear()
 
     write_header = flush_rows(rows_to_write, output_csv, write_header)
     elapsed = time.perf_counter() - start_time
@@ -407,6 +540,7 @@ def export_z_from_json_stream(
                 "skipped": skipped,
                 "output_csv": str(output_csv),
                 "elapsed_sec": round(elapsed, 3),
+                "num_workers": int(worker_count),
             },
             ensure_ascii=False,
             indent=2,
@@ -460,25 +594,47 @@ def summarize_branch_lengths(lengths: list[int]) -> dict[str, object]:
 
 
 def probe_branch_lengths(
-    model: EmoNet,
+    model: EmoNet | None,
     df: pd.DataFrame,
     text_column: str,
     *,
     progress_every: int,
+    num_workers: int = 1,
+    model_args: argparse.Namespace | None = None,
 ) -> pd.DataFrame:
     rows: list[dict[str, object]] = []
     start_time = time.perf_counter()
-    for idx, record in enumerate(df.to_dict(orient="records"), start=1):
-        outputs = model.forward(str(record.get(text_column, "")))
-        row = dict(record)
-        row["dominant_branch_len"] = int(len(outputs["dominant_branch"]))
-        rows.append(row)
-        maybe_print_progress("probe-branch", idx, len(df), start_time, every=progress_every)
+    records = df.to_dict(orient="records")
+    total = len(records)
+    worker_count = resolve_num_workers(num_workers)
+
+    if worker_count <= 1:
+        if model is None:
+            raise ValueError("model is required when num_workers <= 1")
+        for idx, record in enumerate(records, start=1):
+            outputs = model.forward(str(record.get(text_column, "")))
+            row = dict(record)
+            row["dominant_branch_len"] = int(len(outputs["dominant_branch"]))
+            rows.append(row)
+            maybe_print_progress("probe-branch", idx, total, start_time, every=progress_every)
+    else:
+        if model_args is None:
+            raise ValueError("model_args is required when num_workers > 1")
+        payload = prepare_parallel_model_payload(model_args)
+        chunksize = estimate_executor_chunksize(total, worker_count, preferred=64)
+        task_iter = ((record, text_column) for record in records)
+        with ProcessPoolExecutor(
+            max_workers=worker_count,
+            initializer=_init_parallel_model,
+            initargs=(payload,),
+        ) as executor:
+            for idx, row in enumerate(executor.map(_parallel_probe_record, task_iter, chunksize=chunksize), start=1):
+                rows.append(row)
+                maybe_print_progress("probe-branch", idx, total, start_time, every=progress_every)
     return pd.DataFrame(rows)
 
 
 def command_probe_branch(args: argparse.Namespace) -> None:
-    model = build_model(args)
     if bool(args.input_csv) == bool(args.input_json):
         raise ValueError("provide exactly one of --input-csv or --input-json")
 
@@ -489,11 +645,15 @@ def command_probe_branch(args: argparse.Namespace) -> None:
 
     text_column = resolve_text_column(df, args.text_column)
     sampled = sample_probe_dataframe(df, args.sample_size, args.sample_mode, args.seed)
+    worker_count = resolve_num_workers(getattr(args, "num_workers", 1))
+    model = build_model(args) if worker_count <= 1 else None
     result_df = probe_branch_lengths(
         model=model,
         df=sampled,
         text_column=text_column,
         progress_every=args.progress_every,
+        num_workers=worker_count,
+        model_args=args,
     )
     summary = summarize_branch_lengths(result_df["dominant_branch_len"].astype(int).tolist())
     payload = {
@@ -501,6 +661,7 @@ def command_probe_branch(args: argparse.Namespace) -> None:
         "sample_rows": int(len(result_df)),
         "sample_mode": args.sample_mode,
         "seed": int(args.seed),
+        "num_workers": int(worker_count),
         **summary,
     }
     if args.output_csv:
@@ -2707,9 +2868,10 @@ def command_label_local(args: argparse.Namespace) -> None:
 
 
 def command_export_z(args: argparse.Namespace) -> None:
-    model = build_model(args)
     output_csv = Path(args.output_csv)
     text_column = args.text_column
+    worker_count = resolve_num_workers(getattr(args, "num_workers", 1))
+    model = build_model(args) if worker_count <= 1 else None
 
     if bool(args.input_csv) == bool(args.input_json):
         raise ValueError("provide exactly one of --input-csv or --input-json")
@@ -2724,6 +2886,8 @@ def command_export_z(args: argparse.Namespace) -> None:
             chunk_size=args.chunk_size,
             progress_every=args.progress_every,
             resume=args.resume,
+            num_workers=worker_count,
+            model_args=args,
         )
     else:
         input_csv = Path(args.input_csv)
@@ -2731,7 +2895,15 @@ def command_export_z(args: argparse.Namespace) -> None:
         text_column = resolve_text_column(df, text_column)
         if args.limit is not None and args.limit > 0:
             df = df.head(args.limit).copy()
-        export_z_from_dataframe(model, df, text_column, output_csv)
+        export_z_from_dataframe(
+            model,
+            df,
+            text_column,
+            output_csv,
+            progress_every=args.progress_every,
+            num_workers=worker_count,
+            model_args=args,
+        )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -2831,6 +3003,7 @@ def build_parser() -> argparse.ArgumentParser:
     probe_parser.add_argument("--sample-size", type=int, default=200)
     probe_parser.add_argument("--sample-mode", choices=["head", "random"], default="random")
     probe_parser.add_argument("--progress-every", type=int, default=20)
+    probe_parser.add_argument("--num-workers", type=int, default=1, help="0 uses all logical CPU cores")
     probe_parser.add_argument("--output-csv", default=None)
     probe_parser.set_defaults(func=command_probe_branch)
 
@@ -2843,6 +3016,7 @@ def build_parser() -> argparse.ArgumentParser:
     export_parser.add_argument("--limit", type=int, default=None)
     export_parser.add_argument("--chunk-size", type=int, default=256)
     export_parser.add_argument("--progress-every", type=int, default=100)
+    export_parser.add_argument("--num-workers", type=int, default=1, help="0 uses all logical CPU cores")
     export_parser.add_argument("--resume", action="store_true")
     export_parser.set_defaults(func=command_export_z)
 

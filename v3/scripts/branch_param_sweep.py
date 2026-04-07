@@ -17,6 +17,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from emonet.cli import (
     DEFAULT_Z_ENCODER_MODEL_PATH,
     build_model,
+    resolve_num_workers,
     maybe_print_progress,
     load_training_json_as_dataframe,
     probe_branch_lengths,
@@ -382,6 +383,7 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=42, help="seed for sample selection")
     parser.add_argument("--model-seed", type=int, default=42, help="seed for model graph initialization")
     parser.add_argument("--progress-every", type=int, default=20)
+    parser.add_argument("--num-workers", type=int, default=1, help="0 uses all logical CPU cores")
     parser.add_argument("--dataset-csv", default=None)
     parser.add_argument("--benchmark-csv", default=None)
     parser.add_argument("--model-cache-path", default=None)
@@ -414,12 +416,15 @@ def main() -> None:
         config_name = str(spec["name"])
         params = dict(spec["params"])
         model_args = build_model_namespace(args, params)
-        model = build_model(model_args)
+        worker_count = resolve_num_workers(args.num_workers)
+        model = build_model(model_args) if worker_count <= 1 else None
         result_df = probe_branch_lengths(
             model=model,
             df=sampled_df,
             text_column=text_column,
             progress_every=args.progress_every,
+            num_workers=args.num_workers,
+            model_args=model_args,
         )
         result_df = result_df.copy()
         result_df["config_name"] = config_name

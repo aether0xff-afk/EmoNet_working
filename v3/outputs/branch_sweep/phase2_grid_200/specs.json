@@ -1,0 +1,72 @@
+[
+  {
+    "name": "baseline_t0.72_d0.990",
+    "params": {
+      "k_threshold_base": 0.72,
+      "k_decay": 0.99
+    }
+  },
+  {
+    "name": "t0.66_d0.990",
+    "params": {
+      "k_threshold_base": 0.66,
+      "k_decay": 0.99
+    }
+  },
+  {
+    "name": "t0.66_d0.992",
+    "params": {
+      "k_threshold_base": 0.66,
+      "k_decay": 0.992
+    }
+  },
+  {
+    "name": "t0.66_d0.994",
+    "params": {
+      "k_threshold_base": 0.66,
+      "k_decay": 0.994
+    }
+  },
+  {
+    "name": "t0.68_d0.990",
+    "params": {
+      "k_threshold_base": 0.68,
+      "k_decay": 0.99
+    }
+  },
+  {
+    "name": "t0.68_d0.992",
+    "params": {
+      "k_threshold_base": 0.68,
+      "k_decay": 0.992
+    }
+  },
+  {
+    "name": "t0.68_d0.994",
+    "params": {
+      "k_threshold_base": 0.68,
+      "k_decay": 0.994
+    }
+  },
+  {
+    "name": "t0.70_d0.990",
+    "params": {
+      "k_threshold_base": 0.7,
+      "k_decay": 0.99
+    }
+  },
+  {
+    "name": "t0.70_d0.992",
+    "params": {
+      "k_threshold_base": 0.7,
+      "k_decay": 0.992
+    }
+  },
+  {
+    "name": "t0.70_d0.994",
+    "params": {
+      "k_threshold_base": 0.7,
+      "k_decay": 0.994
+    }
+  }
+]

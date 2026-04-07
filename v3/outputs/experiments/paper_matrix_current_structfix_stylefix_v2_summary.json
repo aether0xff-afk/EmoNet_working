@@ -1,0 +1,24 @@
+{
+  "path": "outputs\\experiments\\paper_matrix_current_structfix_stylefix_v2.csv",
+  "rows": 240,
+  "conditions": {
+    "direct": {
+      "rows": 80,
+      "ok_rows": 80,
+      "error_rows": 0,
+      "mean_response_length": 204.4
+    },
+    "emonet_full": {
+      "rows": 80,
+      "ok_rows": 79,
+      "error_rows": 1,
+      "mean_response_length": 150.658
+    },
+    "stim_only": {
+      "rows": 80,
+      "ok_rows": 80,
+      "error_rows": 0,
+      "mean_response_length": 207.7
+    }
+  }
+}

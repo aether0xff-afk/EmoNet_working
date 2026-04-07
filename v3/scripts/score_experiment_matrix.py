@@ -96,7 +96,11 @@ def build_judge_prompt(row: dict[str, object]) -> str:
 def load_existing_keys(output_csv: Path) -> set[tuple[str, str]]:
     if not output_csv.exists() or output_csv.stat().st_size == 0:
         return set()
-    df = pd.read_csv(output_csv, usecols=["record_id", "condition"])
+    df = pd.read_csv(output_csv)
+    if "status" in df.columns:
+        df = df[df["status"].fillna("") == "ok"].copy()
+    if df.empty:
+        return set()
     return {
         (str(record_id), str(condition))
         for record_id, condition in zip(df["record_id"].astype(str), df["condition"].astype(str), strict=True)

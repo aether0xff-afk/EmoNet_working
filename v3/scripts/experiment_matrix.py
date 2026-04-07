@@ -13,6 +13,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from emonet.cli import (
+    DEFAULT_STYLE_PROFILE,
     append_csv_rows,
     append_jsonl,
     build_model as build_emonet_model,
@@ -355,7 +356,11 @@ def build_condition_prompt(condition: str, input_text: str, profile: dict[str, o
 def load_existing_keys(output_csv: Path) -> set[tuple[str, str]]:
     if not output_csv.exists() or output_csv.stat().st_size == 0:
         return set()
-    df = pd.read_csv(output_csv, usecols=["record_id", "condition"])
+    df = pd.read_csv(output_csv)
+    if "status" in df.columns:
+        df = df[df["status"].fillna("") == "ok"].copy()
+    if df.empty:
+        return set()
     return {
         (str(record_id), str(condition))
         for record_id, condition in zip(df["record_id"].astype(str), df["condition"].astype(str), strict=True)
@@ -414,6 +419,7 @@ def main() -> None:
     parser.add_argument("--z-dim", dest="z_dim", type=int, default=64)
     parser.add_argument("--z-encoder-mode", choices=["auto", "stat", "transformer"], default="auto")
     parser.add_argument("--z-encoder-path", default=None)
+    parser.add_argument("--style-profile", choices=["core32", "extended40"], default=DEFAULT_STYLE_PROFILE)
     args = parser.parse_args()
 
     conditions = parse_conditions(args.conditions)
@@ -454,7 +460,7 @@ def main() -> None:
         profile_error: Exception | None = None
         if any(bool(CONDITION_SPECS[name]["needs_profile"]) for name in conditions):
             try:
-                profile = infer_style_profile(model=model, decoder=decoder, text=text)
+                profile = infer_style_profile(model=model, decoder=decoder, text=text, style_profile=args.style_profile)
             except Exception as exc:  # pragma: no cover
                 profile_error = exc
 

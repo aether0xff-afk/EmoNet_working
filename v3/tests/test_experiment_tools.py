@@ -378,6 +378,36 @@ class ExperimentToolTests(unittest.TestCase):
         self.assertIn("mean_response_retry_count", summary.columns)
         self.assertAlmostEqual(float(summary.loc[0, "mean_response_retry_count"]), 1.0)
 
+    def test_experiment_matrix_resume_skips_only_ok_rows(self) -> None:
+        module = load_module("experiment_matrix_resume_module", "scripts/experiment_matrix.py")
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            output_csv = temp_dir / "matrix_output.csv"
+            pd.DataFrame(
+                [
+                    {"record_id": "r1", "condition": "direct", "status": "ok"},
+                    {"record_id": "r2", "condition": "direct", "status": "error"},
+                ]
+            ).to_csv(output_csv, index=False, encoding="utf-8-sig")
+
+            keys = module.load_existing_keys(output_csv)
+            self.assertEqual(keys, {("r1", "direct")})
+
+    def test_score_experiment_matrix_resume_skips_only_ok_rows(self) -> None:
+        module = load_module("score_experiment_matrix_resume_module", "scripts/score_experiment_matrix.py")
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            output_csv = temp_dir / "scored_output.csv"
+            pd.DataFrame(
+                [
+                    {"record_id": "r1", "condition": "direct", "status": "ok"},
+                    {"record_id": "r2", "condition": "direct", "status": "error"},
+                ]
+            ).to_csv(output_csv, index=False, encoding="utf-8-sig")
+
+            keys = module.load_existing_keys(output_csv)
+            self.assertEqual(keys, {("r1", "direct")})
+
     def test_prepare_human_eval_blinds_condition_order(self) -> None:
         module = load_module("prepare_human_eval_module", "scripts/prepare_human_eval.py")
         with tempfile.TemporaryDirectory() as temp_dir_name:

@@ -390,7 +390,9 @@ class ExperimentToolTests(unittest.TestCase):
         with unittest.mock.patch.object(
             module, "request_json_response", side_effect=ValueError("json failed")
         ), unittest.mock.patch.object(
-            module, "call_openai_compatible_chat", return_value="4,4,3,4,4"
+            module,
+            "request_plain_text_response",
+            return_value=("4,4,3,4,4", "4,4,3,4,4", {"attempt_count": 2, "retry_count": 1, "validation_errors": ["empty"]}),
         ):
             payload, raw, parse_mode = module.request_score_payload(
                 row,
@@ -411,8 +413,31 @@ class ExperimentToolTests(unittest.TestCase):
                 "style_match": 3,
                 "naturalness": 4,
                 "overall_quality": 4,
-            },
-        )
+                },
+            )
+
+    def test_score_experiment_matrix_compact_failure_surfaces_both_errors(self) -> None:
+        module = load_module("score_experiment_matrix_compact_error_module", "scripts/score_experiment_matrix.py")
+        row = {
+            "text": "입력",
+            "llm_response": "응답",
+            "condition": "direct",
+        }
+        with unittest.mock.patch.object(
+            module, "request_json_response", side_effect=ValueError("json failed")
+        ), unittest.mock.patch.object(
+            module, "request_plain_text_response", side_effect=ValueError("compact failed")
+        ):
+            with self.assertRaisesRegex(ValueError, "json_error=json failed; compact_error=compact failed"):
+                module.request_score_payload(
+                    row,
+                    base_url="http://127.0.0.1:11434/v1",
+                    model_name="gpt-oss:20b",
+                    timeout_sec=30,
+                    max_tokens=300,
+                    temperature=0.0,
+                    max_retries=2,
+                )
 
     def test_experiment_matrix_resume_skips_only_ok_rows(self) -> None:
         module = load_module("experiment_matrix_resume_module", "scripts/experiment_matrix.py")

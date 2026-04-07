@@ -15,10 +15,10 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from emonet.cli import (
     append_csv_rows,
-    call_openai_compatible_chat,
     ensure_model_server_ready,
     maybe_print_progress,
     request_json_response,
+    request_plain_text_response,
 )
 
 
@@ -156,6 +156,12 @@ def normalize_compact_scores(text: str) -> dict[str, int]:
     return {key: value for key, value in zip(SCORE_KEYS, numbers, strict=True)}
 
 
+def validate_compact_score_response(text: str) -> str:
+    raw = str(text or "").strip()
+    normalize_compact_scores(raw)
+    return raw
+
+
 def request_score_payload(
     row: dict[str, object],
     *,
@@ -183,19 +189,32 @@ def request_score_payload(
             ),
         )
         return payload, raw, "json"
-    except Exception:
+    except Exception as json_exc:
         compact_prompt = build_compact_judge_prompt(row)
-        raw = call_openai_compatible_chat(
-            base_url=base_url,
-            model_name=model_name,
-            prompt=compact_prompt,
-            temperature=0.0,
-            max_tokens=min(max_tokens, 64),
-            timeout_sec=timeout_sec,
-            system_prompt="Return only five integers separated by commas.",
-        )
-        payload = normalize_compact_scores(raw)
-        return payload, raw, "compact"
+        try:
+            compact_text, raw, _meta = request_plain_text_response(
+                base_url=base_url,
+                model_name=model_name,
+                prompt=compact_prompt,
+                temperature=0.0,
+                max_tokens=min(max_tokens, 64),
+                timeout_sec=timeout_sec,
+                max_retries=max_retries,
+                validator=validate_compact_score_response,
+                retry_instruction=(
+                    "직전 응답이 비어 있거나 형식이 틀렸다. "
+                    "설명 없이 1~5 정수 다섯 개만 쉼표로 출력하라. "
+                    "예시: 4,4,3,4,4"
+                ),
+                system_prompt="Return only five integers separated by commas.",
+            )
+            payload = normalize_compact_scores(compact_text)
+            return payload, raw, "compact"
+        except Exception as compact_exc:
+            raise ValueError(
+                "judge scoring failed after JSON and compact fallbacks. "
+                f"json_error={json_exc}; compact_error={compact_exc}"
+            ) from compact_exc
 
 
 def load_existing_keys(output_csv: Path) -> set[tuple[str, str]]:

@@ -135,6 +135,30 @@ def build_compact_judge_prompt(row: dict[str, object]) -> str:
     )
 
 
+def build_minimal_compact_judge_prompt(row: dict[str, object]) -> str:
+    text = " ".join(str(row.get("text", "")).strip().split())
+    response = " ".join(str(row.get("llm_response", "")).strip().split())
+    condition = str(row.get("condition", "")).strip()
+    target_summary = str(row.get("style_summary_text", "")).strip()
+    if len(text) > 180:
+        text = text[:180] + "..."
+    if len(response) > 180:
+        response = response[:180] + "..."
+    if len(target_summary) > 80:
+        target_summary = target_summary[:80] + "..."
+    return "\n".join(
+        [
+            "5개 점수만 출력:",
+            "content_fit, emotional_appropriateness, style_match, naturalness, overall_quality",
+            "형식: 4,4,3,4,4",
+            f"condition={condition}",
+            f"style={target_summary}",
+            f"text={text}",
+            f"response={response}",
+        ]
+    )
+
+
 def normalize_compact_scores(text: str) -> dict[str, int]:
     raw = str(text or "").strip()
     if not raw:
@@ -211,10 +235,32 @@ def request_score_payload(
             payload = normalize_compact_scores(compact_text)
             return payload, raw, "compact"
         except Exception as compact_exc:
-            raise ValueError(
-                "judge scoring failed after JSON and compact fallbacks. "
-                f"json_error={json_exc}; compact_error={compact_exc}"
-            ) from compact_exc
+            minimal_prompt = build_minimal_compact_judge_prompt(row)
+            last_raw = ""
+            try:
+                minimal_text, raw, _meta = request_plain_text_response(
+                    base_url=base_url,
+                    model_name=model_name,
+                    prompt=minimal_prompt,
+                    temperature=0.0,
+                    max_tokens=16,
+                    timeout_sec=timeout_sec,
+                    max_retries=max_retries,
+                    validator=validate_compact_score_response,
+                    retry_instruction=(
+                        "직전 응답이 비어 있거나 형식이 틀렸다. "
+                        "반드시 숫자 다섯 개만 쉼표로 출력하라. 예시: 4,4,3,4,4"
+                    ),
+                    system_prompt="Output only five comma-separated integers.",
+                )
+                payload = normalize_compact_scores(minimal_text)
+                return payload, raw, "minimal_compact"
+            except Exception as minimal_exc:
+                last_raw = str(minimal_exc)
+                raise ValueError(
+                    "judge scoring failed after JSON, compact, and minimal compact fallbacks. "
+                    f"json_error={json_exc}; compact_error={compact_exc}; minimal_error={last_raw}"
+                ) from minimal_exc
 
 
 def load_existing_keys(output_csv: Path) -> set[tuple[str, str]]:
@@ -419,8 +465,17 @@ def main() -> None:
     summary_csv.parent.mkdir(parents=True, exist_ok=True)
     summary_df.to_csv(summary_csv, index=False, encoding="utf-8-sig")
 
+    ok_rows = 0
+    error_rows = 0
+    if "status" in scored_df.columns:
+        status_series = scored_df["status"].fillna("").astype(str)
+        ok_rows = int((status_series == "ok").sum())
+        error_rows = int((status_series != "ok").sum())
+
     payload = {
         "rows": int(len(scored_df)),
+        "ok_rows": ok_rows,
+        "error_rows": error_rows,
         "conditions": summary_df.to_dict(orient="records"),
         "scored_csv": str(output_csv),
         "summary_csv": str(summary_csv),

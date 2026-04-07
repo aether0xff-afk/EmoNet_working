@@ -428,7 +428,10 @@ class ExperimentToolTests(unittest.TestCase):
         ), unittest.mock.patch.object(
             module, "request_plain_text_response", side_effect=ValueError("compact failed")
         ):
-            with self.assertRaisesRegex(ValueError, "json_error=json failed; compact_error=compact failed"):
+            with self.assertRaisesRegex(
+                ValueError,
+                "json_error=json failed; compact_error=compact failed; minimal_error=compact failed",
+            ):
                 module.request_score_payload(
                     row,
                     base_url="http://127.0.0.1:11434/v1",

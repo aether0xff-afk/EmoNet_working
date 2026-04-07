@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 import re
 import sys
@@ -186,6 +187,19 @@ def validate_compact_score_response(text: str) -> str:
     return raw
 
 
+def resolve_api_key(api_key_env: str | None) -> str | None:
+    if not api_key_env:
+        return None
+    value = os.environ.get(str(api_key_env), "").strip()
+    if not value:
+        raise ValueError(f"environment variable '{api_key_env}' is not set or empty")
+    return value
+
+
+def should_use_json_mode(base_url: str, api_key: str | None) -> bool:
+    return bool(api_key and "api.openai.com" in str(base_url).lower())
+
+
 def request_score_payload(
     row: dict[str, object],
     *,
@@ -195,6 +209,7 @@ def request_score_payload(
     max_tokens: int,
     temperature: float,
     max_retries: int,
+    api_key: str | None = None,
 ) -> tuple[dict[str, int], str, str]:
     json_prompt = build_judge_prompt(row)
     try:
@@ -211,6 +226,8 @@ def request_score_payload(
                 "직전 응답의 JSON 형식 또는 점수 범위가 잘못되었다. "
                 "반드시 scores object 안에 다섯 항목을 1~5 정수로 다시 출력하라."
             ),
+            api_key=api_key,
+            response_format={"type": "json_object"} if should_use_json_mode(base_url, api_key) else None,
         )
         return payload, raw, "json"
     except Exception as json_exc:
@@ -231,6 +248,7 @@ def request_score_payload(
                     "예시: 4,4,3,4,4"
                 ),
                 system_prompt="Return only five integers separated by commas.",
+                api_key=api_key,
             )
             payload = normalize_compact_scores(compact_text)
             return payload, raw, "compact"
@@ -252,6 +270,7 @@ def request_score_payload(
                         "반드시 숫자 다섯 개만 쉼표로 출력하라. 예시: 4,4,3,4,4"
                     ),
                     system_prompt="Output only five comma-separated integers.",
+                    api_key=api_key,
                 )
                 payload = normalize_compact_scores(minimal_text)
                 return payload, raw, "minimal_compact"
@@ -291,6 +310,7 @@ def score_matrix(
     keep_failures: bool,
     resume: bool,
     limit: int | None,
+    api_key: str | None,
 ) -> pd.DataFrame:
     df = pd.read_csv(input_csv)
     ok_df = df[df["status"].fillna("") == "ok"].copy()
@@ -350,6 +370,7 @@ def score_matrix(
                 max_tokens=max_tokens,
                 temperature=temperature,
                 max_retries=max_retries,
+                api_key=api_key,
             )
             scored["status"] = "ok"
             scored["judge_parse_mode"] = parse_mode
@@ -438,6 +459,7 @@ def main() -> None:
     parser.add_argument("--keep-failures", action="store_true")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument("--api-key-env", default=None)
     args = parser.parse_args()
 
     input_csv = Path(args.input_csv)
@@ -445,7 +467,8 @@ def main() -> None:
     summary_csv = Path(args.summary_csv)
     summary_json = Path(args.summary_json)
 
-    ensure_model_server_ready(args.base_url, args.timeout_sec)
+    api_key = resolve_api_key(args.api_key_env)
+    ensure_model_server_ready(args.base_url, args.timeout_sec, api_key=api_key)
     scored_df = score_matrix(
         input_csv=input_csv,
         output_csv=output_csv,
@@ -460,6 +483,7 @@ def main() -> None:
         keep_failures=args.keep_failures,
         resume=args.resume,
         limit=args.limit,
+        api_key=api_key,
     )
     summary_df = summarize_scores(scored_df)
     summary_csv.parent.mkdir(parents=True, exist_ok=True)

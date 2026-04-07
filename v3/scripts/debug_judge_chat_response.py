@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 import sys
 import urllib.request
@@ -29,6 +30,7 @@ def send_raw_chat_completion(
     temperature: float,
     max_tokens: int,
     timeout_sec: int,
+    api_key: str | None,
 ) -> dict[str, object]:
     url = base_url.rstrip("/") + "/chat/completions"
     payload = {
@@ -41,10 +43,13 @@ def send_raw_chat_completion(
         "max_tokens": max_tokens,
     }
     data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
     request = urllib.request.Request(
         url,
         data=data,
-        headers={"Content-Type": "application/json"},
+        headers=headers,
         method="POST",
     )
     with urllib.request.urlopen(request, timeout=timeout_sec) as response:
@@ -126,13 +131,20 @@ def main() -> None:
     parser.add_argument("--base-url", default="http://127.0.0.1:11434/v1")
     parser.add_argument("--model-name", default="gpt-oss:20b")
     parser.add_argument("--timeout-sec", type=int, default=180)
+    parser.add_argument("--api-key-env", default=None)
     parser.add_argument(
         "--output-dir",
         default=str(PROJECT_ROOT / "outputs" / "experiments" / "judge_debug"),
     )
     args = parser.parse_args()
 
-    ensure_model_server_ready(args.base_url, args.timeout_sec)
+    api_key = None
+    if args.api_key_env:
+        api_key = os.environ.get(str(args.api_key_env), "").strip()
+        if not api_key:
+            raise ValueError(f"environment variable '{args.api_key_env}' is not set or empty")
+
+    ensure_model_server_ready(args.base_url, args.timeout_sec, api_key=api_key)
     row = load_target_row(Path(args.input_csv), args.record_id, args.condition)
 
     output_dir = Path(args.output_dir)
@@ -186,6 +198,7 @@ def main() -> None:
             temperature=float(spec["temperature"]),
             max_tokens=int(spec["max_tokens"]),
             timeout_sec=args.timeout_sec,
+            api_key=api_key,
         )
         summary = summarize_response(result)
         summary["name"] = spec["name"]

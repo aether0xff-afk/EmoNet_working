@@ -24,7 +24,7 @@ from scripts.generate_paper_svgs import (
 )
 
 
-OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "paper" / "refresh_2026-04-07_structfix_v3"
+OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "paper" / "refresh_2026-04-08_structfix_v4"
 FIG_DIR = OUTPUT_ROOT / "figures"
 TABLE_DIR = OUTPUT_ROOT / "tables"
 

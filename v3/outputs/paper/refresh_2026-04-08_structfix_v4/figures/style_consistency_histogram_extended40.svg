@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="560" viewBox="0 0 980 560">
+<style>
+text { font-family: 'Malgun Gothic', 'Segoe UI', sans-serif; fill: #1f2937; }
+.title { font-size: 24px; font-weight: 700; }
+.subtitle { font-size: 13px; fill: #6b7280; }
+.axis { font-size: 12px; fill: #4b5563; }
+.label { font-size: 12px; }
+.small { font-size: 11px; fill: #4b5563; }
+.value { font-size: 11px; font-weight: 600; }
+.grid { stroke: #e5e7eb; stroke-width: 1; }
+.axis-line { stroke: #9ca3af; stroke-width: 1.2; }
+.note { font-size: 12px; fill: #374151; }
+</style>
+<rect x="0" y="0" width="100%" height="100%" fill="#ffffff"/>
+<text class="title" x="40" y="42">Style Label Consistency</text>
+<text class="subtitle" x="40" y="66">extended40 labeled subset, all parsed rows</text>
+<line class="grid" x1="90" y1="110.00" x2="940" y2="110.00"/>
+<text class="axis" x="82" y="114.00" text-anchor="end">875</text>
+<line class="grid" x1="90" y1="182.00" x2="940" y2="182.00"/>
+<text class="axis" x="82" y="186.00" text-anchor="end">700</text>
+<line class="grid" x1="90" y1="254.00" x2="940" y2="254.00"/>
+<text class="axis" x="82" y="258.00" text-anchor="end">525</text>
+<line class="grid" x1="90" y1="326.00" x2="940" y2="326.00"/>
+<text class="axis" x="82" y="330.00" text-anchor="end">350</text>
+<line class="grid" x1="90" y1="398.00" x2="940" y2="398.00"/>
+<text class="axis" x="82" y="402.00" text-anchor="end">175</text>
+<line class="grid" x1="90" y1="470.00" x2="940" y2="470.00"/>
+<text class="axis" x="82" y="474.00" text-anchor="end">0</text>
+<line class="axis-line" x1="90" y1="470" x2="940" y2="470"/>
+<line class="axis-line" x1="90" y1="110" x2="90" y2="470"/>
+<rect x="91.00" y="463.42" width="51.12" height="6.58" fill="#2563eb" rx="3"/>
+<rect x="144.12" y="421.46" width="51.12" height="48.54" fill="#2563eb" rx="3"/>
+<rect x="197.25" y="377.44" width="51.12" height="92.56" fill="#2563eb" rx="3"/>
+<rect x="250.38" y="244.16" width="51.12" height="225.84" fill="#2563eb" rx="3"/>
+<rect x="303.50" y="282.83" width="51.12" height="187.17" fill="#2563eb" rx="3"/>
+<rect x="356.62" y="156.96" width="51.12" height="313.04" fill="#2563eb" rx="3"/>
+<rect x="409.75" y="257.33" width="51.12" height="212.67" fill="#2563eb" rx="3"/>
+<rect x="462.88" y="231.82" width="51.12" height="238.18" fill="#2563eb" rx="3"/>
+<rect x="516.00" y="321.91" width="51.12" height="148.09" fill="#2563eb" rx="3"/>
+<rect x="569.12" y="408.30" width="51.12" height="61.70" fill="#2563eb" rx="3"/>
+<rect x="622.25" y="414.06" width="51.12" height="55.94" fill="#2563eb" rx="3"/>
+<rect x="675.38" y="449.84" width="51.12" height="20.16" fill="#2563eb" rx="3"/>
+<rect x="728.50" y="456.43" width="51.12" height="13.57" fill="#2563eb" rx="3"/>
+<rect x="781.62" y="466.71" width="51.12" height="3.29" fill="#2563eb" rx="3"/>
+<rect x="834.75" y="465.06" width="51.12" height="4.94" fill="#2563eb" rx="3"/>
+<rect x="887.88" y="468.77" width="51.12" height="1.23" fill="#2563eb" rx="3"/>
+<text class="axis" x="90.00" y="490" text-anchor="middle">0.01</text>
+<text class="axis" x="143.12" y="490" text-anchor="middle">0.02</text>
+<text class="axis" x="196.25" y="490" text-anchor="middle">0.04</text>
+<text class="axis" x="249.38" y="490" text-anchor="middle">0.05</text>
+<text class="axis" x="302.50" y="490" text-anchor="middle">0.07</text>
+<text class="axis" x="355.62" y="490" text-anchor="middle">0.09</text>
+<text class="axis" x="408.75" y="490" text-anchor="middle">0.10</text>
+<text class="axis" x="461.88" y="490" text-anchor="middle">0.12</text>
+<text class="axis" x="515.00" y="490" text-anchor="middle">0.13</text>
+<text class="axis" x="568.12" y="490" text-anchor="middle">0.15</text>
+<text class="axis" x="621.25" y="490" text-anchor="middle">0.17</text>
+<text class="axis" x="674.38" y="490" text-anchor="middle">0.18</text>
+<text class="axis" x="727.50" y="490" text-anchor="middle">0.20</text>
+<text class="axis" x="780.62" y="490" text-anchor="middle">0.21</text>
+<text class="axis" x="833.75" y="490" text-anchor="middle">0.23</text>
+<text class="axis" x="886.88" y="490" text-anchor="middle">0.25</text>
+<text class="axis" x="940.00" y="490" text-anchor="middle">0.26</text>
+<text class="axis" x="515.00" y="538" text-anchor="middle">consistency L1</text>
+<text class="note" x="40" y="538">4,000 labeled rows; keep rows average lower consistency error.</text>
+</svg>

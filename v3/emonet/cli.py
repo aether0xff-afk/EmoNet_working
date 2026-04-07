@@ -1836,6 +1836,8 @@ def request_json_response(
     max_retries: int,
     validator: Callable[[dict], object] | None = None,
     retry_instruction: str | None = None,
+    api_key: str | None = None,
+    response_format: dict[str, Any] | None = None,
 ) -> tuple[object, str]:
     last_raw = ""
     last_error = ""
@@ -1856,6 +1858,8 @@ def request_json_response(
             temperature=temperature if attempt == 0 else 0.0,
             max_tokens=max_tokens,
             timeout_sec=timeout_sec,
+            api_key=api_key,
+            response_format=response_format,
         )
         last_raw = raw
         try:
@@ -1988,6 +1992,7 @@ def request_plain_text_response(
     validator: Callable[[str], str] | None = None,
     retry_instruction: str | None = None,
     system_prompt: str = "Return a plain Korean response only. Do not return JSON.",
+    api_key: str | None = None,
 ) -> tuple[str, str, dict[str, object]]:
     last_raw = ""
     validation_errors: list[str] = []
@@ -2011,6 +2016,7 @@ def request_plain_text_response(
             max_tokens=max_tokens,
             timeout_sec=timeout_sec,
             system_prompt=system_prompt,
+            api_key=api_key,
         )
         last_raw = raw
         try:
@@ -2039,6 +2045,8 @@ def call_openai_compatible_chat(
     max_tokens: int,
     timeout_sec: int,
     system_prompt: str = "Return JSON only.",
+    api_key: str | None = None,
+    response_format: dict[str, Any] | None = None,
 ) -> str:
     url = base_url.rstrip("/") + "/chat/completions"
     payload = {
@@ -2050,28 +2058,42 @@ def call_openai_compatible_chat(
         "temperature": temperature,
         "max_tokens": max_tokens,
     }
+    if response_format is not None:
+        payload["response_format"] = response_format
     data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
     request = urllib.request.Request(
         url,
         data=data,
-        headers={"Content-Type": "application/json"},
+        headers=headers,
         method="POST",
     )
     with urllib.request.urlopen(request, timeout=timeout_sec) as response:
         body = json.loads(response.read().decode("utf-8"))
     choices = body.get("choices", [])
     if not choices:
-        raise ValueError("no choices returned from local model server")
+        raise ValueError("no choices returned from model server")
     message = choices[0].get("message", {})
     content = message.get("content", "")
+    if isinstance(content, list):
+        text_parts: list[str] = []
+        for item in content:
+            if isinstance(item, dict) and item.get("type") == "text":
+                text_parts.append(str(item.get("text", "")))
+        content = "".join(text_parts)
     if not isinstance(content, str):
-        raise ValueError("invalid content returned from local model server")
+        raise ValueError("invalid content returned from model server")
     return content
 
 
-def ensure_model_server_ready(base_url: str, timeout_sec: int) -> None:
+def ensure_model_server_ready(base_url: str, timeout_sec: int, api_key: str | None = None) -> None:
     models_url = base_url.rstrip("/") + "/models"
-    request = urllib.request.Request(models_url, method="GET")
+    headers: dict[str, str] = {}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+    request = urllib.request.Request(models_url, headers=headers, method="GET")
     try:
         with urllib.request.urlopen(request, timeout=min(timeout_sec, 10)) as response:
             if response.status >= 500:

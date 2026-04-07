@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="560" viewBox="0 0 1100 560">
+<style>
+text { font-family: 'Malgun Gothic', 'Segoe UI', sans-serif; fill: #1f2937; }
+.title { font-size: 24px; font-weight: 700; }
+.subtitle { font-size: 13px; fill: #6b7280; }
+.axis { font-size: 12px; fill: #4b5563; }
+.label { font-size: 12px; }
+.small { font-size: 11px; fill: #4b5563; }
+.value { font-size: 11px; font-weight: 600; }
+.grid { stroke: #e5e7eb; stroke-width: 1; }
+.axis-line { stroke: #9ca3af; stroke-width: 1.2; }
+.note { font-size: 12px; fill: #374151; }
+</style>
+<rect x="0" y="0" width="100%" height="100%" fill="#ffffff"/>
+<text class="title" x="40" y="42">Dominant Branch Length Distribution</text>
+<text class="subtitle" x="40" y="66">Structfix export, 51,628 samples</text>
+<line class="grid" x1="90" y1="110.00" x2="1060" y2="110.00"/>
+<text class="axis" x="82" y="114.00" text-anchor="end">11.398</text>
+<line class="grid" x1="90" y1="181.00" x2="1060" y2="181.00"/>
+<text class="axis" x="82" y="185.00" text-anchor="end">9.118</text>
+<line class="grid" x1="90" y1="252.00" x2="1060" y2="252.00"/>
+<text class="axis" x="82" y="256.00" text-anchor="end">6.839</text>
+<line class="grid" x1="90" y1="323.00" x2="1060" y2="323.00"/>
+<text class="axis" x="82" y="327.00" text-anchor="end">4.559</text>
+<line class="grid" x1="90" y1="394.00" x2="1060" y2="394.00"/>
+<text class="axis" x="82" y="398.00" text-anchor="end">2.280</text>
+<line class="grid" x1="90" y1="465.00" x2="1060" y2="465.00"/>
+<text class="axis" x="82" y="469.00" text-anchor="end">0.000</text>
+<line class="axis-line" x1="90" y1="465" x2="1060" y2="465"/>
+<line class="axis-line" x1="90" y1="110" x2="90" y2="465"/>
+<rect x="99.00" y="416.98" width="14.33" height="48.02" rx="6" fill="#2563eb"/>
+<text class="value" x="106.17" y="408.98" text-anchor="middle">1.54</text>
+<text class="label" x="106.17" y="485.00" text-anchor="middle">1</text>
+<rect x="131.33" y="458.42" width="14.33" height="6.58" rx="6" fill="#93c5fd"/>
+<text class="value" x="138.50" y="450.42" text-anchor="middle">0.21</text>
+<text class="label" x="138.50" y="485.00" text-anchor="middle">2</text>
+<rect x="163.67" y="457.04" width="14.33" height="7.96" rx="6" fill="#93c5fd"/>
+<text class="value" x="170.83" y="449.04" text-anchor="middle">0.26</text>
+<text class="label" x="170.83" y="485.00" text-anchor="middle">3</text>
+<rect x="196.00" y="456.07" width="14.33" height="8.93" rx="6" fill="#93c5fd"/>
+<text class="value" x="203.17" y="448.07" text-anchor="middle">0.29</text>
+<text class="label" x="203.17" y="485.00" text-anchor="middle">4</text>
+<rect x="228.33" y="454.38" width="14.33" height="10.62" rx="6" fill="#93c5fd"/>
+<text class="value" x="235.50" y="446.38" text-anchor="middle">0.34</text>
+<text class="label" x="235.50" y="485.00" text-anchor="middle">5</text>
+<rect x="260.67" y="452.57" width="14.33" height="12.43" rx="6" fill="#93c5fd"/>
+<text class="value" x="267.83" y="444.57" text-anchor="middle">0.40</text>
+<text class="label" x="267.83" y="485.00" text-anchor="middle">6</text>
+<rect x="293.00" y="447.69" width="14.33" height="17.31" rx="6" fill="#93c5fd"/>
+<text class="value" x="300.17" y="439.69" text-anchor="middle">0.56</text>
+<text class="label" x="300.17" y="485.00" text-anchor="middle">7</text>
+<rect x="325.33" y="446.54" width="14.33" height="18.46" rx="6" fill="#93c5fd"/>
+<text class="value" x="332.50" y="438.54" text-anchor="middle">0.59</text>
+<text class="label" x="332.50" y="485.00" text-anchor="middle">8</text>
+<rect x="357.67" y="440.99" width="14.33" height="24.01" rx="6" fill="#93c5fd"/>
+<text class="value" x="364.83" y="432.99" text-anchor="middle">0.77</text>
+<text class="label" x="364.83" y="485.00" text-anchor="middle">9</text>
+<rect x="390.00" y="433.33" width="14.33" height="31.67" rx="6" fill="#93c5fd"/>
+<text class="value" x="397.17" y="425.33" text-anchor="middle">1.02</text>
+<text class="label" x="397.17" y="485.00" text-anchor="middle">10</text>
+<rect x="422.33" y="427.60" width="14.33" height="37.40" rx="6" fill="#93c5fd"/>
+<text class="value" x="429.50" y="419.60" text-anchor="middle">1.20</text>
+<text class="label" x="429.50" y="485.00" text-anchor="middle">11</text>
+<rect x="454.67" y="410.28" width="14.33" height="54.72" rx="6" fill="#93c5fd"/>
+<text class="value" x="461.83" y="402.28" text-anchor="middle">1.76</text>
+<text class="label" x="461.83" y="485.00" text-anchor="middle">12</text>
+<rect x="487.00" y="392.18" width="14.33" height="72.82" rx="6" fill="#93c5fd"/>
+<text class="value" x="494.17" y="384.18" text-anchor="middle">2.34</text>
+<text class="label" x="494.17" y="485.00" text-anchor="middle">13</text>
+<rect x="519.33" y="369.50" width="14.33" height="95.50" rx="6" fill="#93c5fd"/>
+<text class="value" x="526.50" y="361.50" text-anchor="middle">3.07</text>
+<text class="label" x="526.50" y="485.00" text-anchor="middle">14</text>
+<rect x="551.67" y="339.82" width="14.33" height="125.18" rx="6" fill="#93c5fd"/>
+<text class="value" x="558.83" y="331.82" text-anchor="middle">4.02</text>
+<text class="label" x="558.83" y="485.00" text-anchor="middle">15</text>
+<rect x="584.00" y="294.94" width="14.33" height="170.06" rx="6" fill="#93c5fd"/>
+<text class="value" x="591.17" y="286.94" text-anchor="middle">5.46</text>
+<text class="label" x="591.17" y="485.00" text-anchor="middle">16</text>
+<rect x="616.33" y="252.83" width="14.33" height="212.17" rx="6" fill="#93c5fd"/>
+<text class="value" x="623.50" y="244.83" text-anchor="middle">6.81</text>
+<text class="label" x="623.50" y="485.00" text-anchor="middle">17</text>
+<rect x="648.67" y="205.17" width="14.33" height="259.83" rx="6" fill="#93c5fd"/>
+<text class="value" x="655.83" y="197.17" text-anchor="middle">8.34</text>
+<text class="label" x="655.83" y="485.00" text-anchor="middle">18</text>
+<rect x="681.00" y="179.23" width="14.33" height="285.77" rx="6" fill="#93c5fd"/>
+<text class="value" x="688.17" y="171.23" text-anchor="middle">9.18</text>
+<text class="label" x="688.17" y="485.00" text-anchor="middle">19</text>
+<rect x="713.33" y="169.76" width="14.33" height="295.24" rx="6" fill="#93c5fd"/>
+<text class="value" x="720.50" y="161.76" text-anchor="middle">9.48</text>
+<text class="label" x="720.50" y="485.00" text-anchor="middle">20</text>
+<rect x="745.67" y="156.30" width="14.33" height="308.70" rx="6" fill="#93c5fd"/>
+<text class="value" x="752.83" y="148.30" text-anchor="middle">9.91</text>
+<text class="label" x="752.83" y="485.00" text-anchor="middle">21</text>
+<rect x="778.00" y="177.12" width="14.33" height="287.88" rx="6" fill="#93c5fd"/>
+<text class="value" x="785.17" y="169.12" text-anchor="middle">9.24</text>
+<text class="label" x="785.17" y="485.00" text-anchor="middle">22</text>
+<rect x="810.33" y="225.32" width="14.33" height="239.68" rx="6" fill="#93c5fd"/>
+<text class="value" x="817.50" y="217.32" text-anchor="middle">7.70</text>
+<text class="label" x="817.50" y="485.00" text-anchor="middle">23</text>
+<rect x="842.67" y="263.69" width="14.33" height="201.31" rx="6" fill="#93c5fd"/>
+<text class="value" x="849.83" y="255.69" text-anchor="middle">6.46</text>
+<text class="label" x="849.83" y="485.00" text-anchor="middle">24</text>
+<rect x="875.00" y="328.72" width="14.33" height="136.28" rx="6" fill="#93c5fd"/>
+<text class="value" x="882.17" y="320.72" text-anchor="middle">4.38</text>
+<text class="label" x="882.17" y="485.00" text-anchor="middle">25</text>
+<rect x="907.33" y="380.12" width="14.33" height="84.88" rx="6" fill="#93c5fd"/>
+<text class="value" x="914.50" y="372.12" text-anchor="middle">2.73</text>
+<text class="label" x="914.50" y="485.00" text-anchor="middle">26</text>
+<rect x="939.67" y="423.01" width="14.33" height="41.99" rx="6" fill="#93c5fd"/>
+<text class="value" x="946.83" y="415.01" text-anchor="middle">1.35</text>
+<text class="label" x="946.83" y="485.00" text-anchor="middle">27</text>
+<rect x="972.00" y="449.68" width="14.33" height="15.32" rx="6" fill="#93c5fd"/>
+<text class="value" x="979.17" y="441.68" text-anchor="middle">0.49</text>
+<text class="label" x="979.17" y="485.00" text-anchor="middle">28</text>
+<rect x="1004.33" y="461.44" width="14.33" height="3.56" rx="6" fill="#93c5fd"/>
+<text class="value" x="1011.50" y="453.44" text-anchor="middle">0.11</text>
+<text class="label" x="1011.50" y="485.00" text-anchor="middle">29</text>
+<rect x="1036.67" y="464.70" width="14.33" height="0.30" rx="6" fill="#93c5fd"/>
+<text class="value" x="1043.83" y="456.70" text-anchor="middle">0.01</text>
+<text class="label" x="1043.83" y="485.00" text-anchor="middle">30</text>
+<text class="axis" x="32" y="94" text-anchor="start">sample percentage (%)</text>
+<text class="note" x="40" y="536">Length-1 collapse is largely removed in the structfix export.</text>
+</svg>

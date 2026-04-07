@@ -1,0 +1,8 @@
+{
+  "rows": 6,
+  "ok_rows": 0,
+  "error_rows": 6,
+  "conditions": [],
+  "scored_csv": "outputs\\experiments\\paper_matrix_current_structfix_stylefix_v5_scored_smoke.csv",
+  "summary_csv": "outputs\\experiments\\paper_matrix_current_structfix_stylefix_v5_scored_smoke_summary.csv"
+}

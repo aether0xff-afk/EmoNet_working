@@ -1,0 +1,48 @@
+{
+  "rows": 6,
+  "ok_rows": 6,
+  "error_rows": 0,
+  "conditions": [
+    {
+      "condition": "direct",
+      "condition_group": "baseline",
+      "rows": 2,
+      "mean_response_length": 167.5,
+      "mean_response_retry_count": 0.0,
+      "mean_content_fit": 4.0,
+      "mean_emotional_appropriateness": 4.5,
+      "mean_style_match": 2.5,
+      "mean_naturalness": 4.5,
+      "mean_overall_quality": 3.5,
+      "mean_total": 3.8
+    },
+    {
+      "condition": "stim_only",
+      "condition_group": "baseline",
+      "rows": 2,
+      "mean_response_length": 176.0,
+      "mean_response_retry_count": 0.0,
+      "mean_content_fit": 4.5,
+      "mean_emotional_appropriateness": 4.0,
+      "mean_style_match": 2.5,
+      "mean_naturalness": 4.5,
+      "mean_overall_quality": 3.5,
+      "mean_total": 3.8
+    },
+    {
+      "condition": "emonet_full",
+      "condition_group": "emonet",
+      "rows": 2,
+      "mean_response_length": 104.5,
+      "mean_response_retry_count": 0.0,
+      "mean_content_fit": 3.5,
+      "mean_emotional_appropriateness": 2.0,
+      "mean_style_match": 1.5,
+      "mean_naturalness": 3.5,
+      "mean_overall_quality": 2.0,
+      "mean_total": 2.5
+    }
+  ],
+  "scored_csv": "outputs\\experiments\\paper_matrix_current_structfix_stylefix_gpt54_local_smoke6.csv",
+  "summary_csv": "outputs\\experiments\\paper_matrix_current_structfix_stylefix_gpt54_local_smoke6_summary.csv"
+}

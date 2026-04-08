@@ -104,6 +104,8 @@ OUTPUT_COLUMNS = [
     "expression_cues_text",
     "anti_softening_mode",
     "anti_softening_rules_json",
+    "grounding_mode",
+    "grounding_rules_json",
     "response_retry_count",
     "response_validation_errors_json",
     "style_tags_json",
@@ -203,6 +205,7 @@ def build_variant_prompt(
     style_tags: list[str],
     style_summary: dict[str, float],
     anti_softening_rules: list[str],
+    grounding_rules: list[str],
     *,
     include_tags: bool,
     include_summary: bool,
@@ -234,6 +237,9 @@ def build_variant_prompt(
     if anti_softening_rules:
         sections.append("anti_softening_rules")
         lines.extend(["[ANTI_SOFTENING_RULES]", *[f"- {rule}" for rule in anti_softening_rules], ""])
+    if grounding_rules:
+        sections.append("grounding_rules")
+        lines.extend(["[GROUNDING_RULES]", *[f"- {rule}" for rule in grounding_rules], ""])
 
     instruction_parts = []
     if include_vector:
@@ -255,6 +261,7 @@ def build_variant_prompt(
                 else "- 별도의 스타일 힌트 없이 자연스럽게 응답한다."
             ),
             "- 스타일을 설명하지 말고, 그 스타일로 자연스럽게 답한다.",
+            "- GROUNDING_RULES가 있으면 반드시 지킨다.",
             "- 한국어 평문으로만 3~6문장 이내로 답한다.",
             "- 같은 문장이나 핵심 구절을 반복하지 않는다.",
             "- 문장을 중간에 끊지 말고 마지막 문장은 완결된 문장으로 끝낸다.",
@@ -275,6 +282,7 @@ def build_condition_prompt(condition: str, input_text: str, profile: dict[str, o
     style_tags = list(profile["style_tags"])
     style_summary = dict(profile["style_summary"])
     anti_softening_rules = list(profile.get("anti_softening_rules", []))
+    grounding_rules = list(profile.get("grounding_rules", []))
 
     if condition == "stim_only":
         return build_stim_only_prompt(input_text, stim_vec), "stim_vec"
@@ -286,9 +294,10 @@ def build_condition_prompt(condition: str, input_text: str, profile: dict[str, o
                 style_tags=style_tags,
                 style_summary=style_summary,
                 anti_softening_rules=anti_softening_rules,
+                grounding_rules=grounding_rules,
                 template_path=None,
             ),
-            "style_tags,style_summary,anti_softening_rules",
+            "style_tags,style_summary,anti_softening_rules,grounding_rules",
         )
     if condition == "emonet_no_summary":
         return build_variant_prompt(
@@ -297,6 +306,7 @@ def build_condition_prompt(condition: str, input_text: str, profile: dict[str, o
             style_tags=style_tags,
             style_summary=style_summary,
             anti_softening_rules=anti_softening_rules,
+            grounding_rules=grounding_rules,
             include_tags=True,
             include_summary=False,
             include_expression=True,
@@ -309,6 +319,7 @@ def build_condition_prompt(condition: str, input_text: str, profile: dict[str, o
             style_tags=style_tags,
             style_summary=style_summary,
             anti_softening_rules=anti_softening_rules,
+            grounding_rules=grounding_rules,
             include_tags=False,
             include_summary=True,
             include_expression=True,
@@ -321,6 +332,7 @@ def build_condition_prompt(condition: str, input_text: str, profile: dict[str, o
             style_tags=style_tags,
             style_summary=style_summary,
             anti_softening_rules=anti_softening_rules,
+            grounding_rules=grounding_rules,
             include_tags=True,
             include_summary=True,
             include_expression=False,
@@ -333,6 +345,7 @@ def build_condition_prompt(condition: str, input_text: str, profile: dict[str, o
             style_tags=style_tags,
             style_summary=style_summary,
             anti_softening_rules=anti_softening_rules,
+            grounding_rules=grounding_rules,
             include_tags=False,
             include_summary=False,
             include_expression=False,
@@ -345,6 +358,7 @@ def build_condition_prompt(condition: str, input_text: str, profile: dict[str, o
             style_tags=style_tags,
             style_summary=style_summary,
             anti_softening_rules=anti_softening_rules,
+            grounding_rules=grounding_rules,
             include_tags=True,
             include_summary=True,
             include_expression=True,
@@ -489,6 +503,8 @@ def main() -> None:
                 "expression_cues_text": "",
                 "anti_softening_mode": "",
                 "anti_softening_rules_json": "[]",
+                "grounding_mode": "",
+                "grounding_rules_json": "[]",
                 "response_retry_count": 0,
                 "response_validation_errors_json": "[]",
                 "style_tags_json": "[]",
@@ -537,6 +553,8 @@ def main() -> None:
                     row["expression_cues_text"] = str(profile["expression_cues_text"])
                     row["anti_softening_mode"] = str(profile.get("anti_softening_mode", ""))
                     row["anti_softening_rules_json"] = json.dumps(profile.get("anti_softening_rules", []), ensure_ascii=False)
+                    row["grounding_mode"] = str(profile.get("grounding_mode", ""))
+                    row["grounding_rules_json"] = json.dumps(profile.get("grounding_rules", []), ensure_ascii=False)
                     row["style_tags_json"] = json.dumps(profile["style_tags"], ensure_ascii=False)
                     row["style_summary_json"] = json.dumps(profile["style_summary"], ensure_ascii=False)
                     row["stim_vec_json"] = json.dumps([float(value) for value in profile["stim_vec"]], ensure_ascii=False)
@@ -558,6 +576,8 @@ def main() -> None:
                             "expression_cues_text": str(profile["expression_cues_text"]),
                             "anti_softening_mode": str(profile.get("anti_softening_mode", "")),
                             "anti_softening_rules": list(profile.get("anti_softening_rules", [])),
+                            "grounding_mode": str(profile.get("grounding_mode", "")),
+                            "grounding_rules": list(profile.get("grounding_rules", [])),
                             "response_retry_count": int(response_meta["retry_count"]),
                             "response_validation_errors": list(response_meta["validation_errors"]),
                             "style_prompt": prompt,

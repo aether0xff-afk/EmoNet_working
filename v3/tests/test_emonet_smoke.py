@@ -27,6 +27,7 @@ if TORCH_AVAILABLE:
 from emonet.cli import (
     STYLE_AXIS_NAMES,
     build_anti_softening_policy,
+    build_grounding_policy,
     build_balanced_subset,
     build_response_generation_prompt,
     command_e2e_check,
@@ -256,6 +257,28 @@ class EmoNetSmokeTests(unittest.TestCase):
             self.assertAlmostEqual(threshold, 0.57, places=6)
             self.assertAlmostEqual(remem, 0.875, places=6)
 
+    def test_seed_ignition_pending_signals_bootstraps_initial_activity(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            stim_config = self.make_stim_encoder_config(Path(temp_dir_name))
+            model = EmoNet(
+                EmoNetConfig(
+                    seed=29,
+                    ignition_topk=8,
+                    ignition_strength_scale=1.6,
+                ),
+                stim_encoder_config=stim_config,
+            )
+            base_stim_vec = np.asarray([0.85, 0.15, 0.85, 0.10], dtype=np.float32)
+            model._seed_ignition_pending_signals(base_stim_vec)
+
+            self.assertGreater(len(model.pending_signals), 0)
+            self.assertLessEqual(len(model.pending_signals), 8)
+            first_strength = next(iter(model.pending_signals.values()))[0][0]
+            self.assertGreater(first_strength, 0.0)
+
+            record = model.run_tick(base_stim_vec, "urgent critical alert now")
+            self.assertGreater(len(record.active_nodes), 0)
+
     def test_command_probe_branch_reports_stats(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir_name:
             temp_dir = Path(temp_dir_name)
@@ -415,13 +438,24 @@ class EmoNetSmokeTests(unittest.TestCase):
             style_dict=style,
             style_tags=["긴장높음", "건조함", "직설적", "무게감", "여분태그"],
             style_summary=build_style_summary(style),
+            grounding_rules=["첫 문장에서 사용자의 감정을 짧게 짚고 바로 답한다."],
         )
         self.assertIn("[STYLE_TAGS]", prompt)
         self.assertIn("[STYLE_SUMMARY]", prompt)
         self.assertIn("[ANTI_SOFTENING_RULES]", prompt)
+        self.assertIn("[GROUNDING_RULES]", prompt)
         self.assertNotIn("[EXPRESSION_CUES]", prompt)
         self.assertNotIn("[STYLE_VECTOR]", prompt)
         self.assertNotIn("여분태그", prompt)
+
+    def test_build_grounding_policy_turns_grounded_for_distress_text(self) -> None:
+        mode, rules = build_grounding_policy(
+            input_text="지금 너무 예민하고 피곤해.",
+            style_summary={"warmth": 0.72, "directness": 0.55, "raw_negative_affect": 0.22},
+            anti_softening_mode="guarded",
+        )
+        self.assertEqual(mode, "grounded")
+        self.assertGreaterEqual(len(rules), 3)
 
     def test_build_anti_softening_policy_turns_strict_for_distress_text(self) -> None:
         style = {axis: 0.5 for axis in STYLE_AXIS_NAMES}
@@ -838,6 +872,8 @@ class EmoNetSmokeTests(unittest.TestCase):
             self.assertIn("expression_cues_text", payload)
             self.assertIn("anti_softening_mode", payload)
             self.assertIn("anti_softening_rules", payload)
+            self.assertIn("grounding_mode", payload)
+            self.assertIn("grounding_rules", payload)
             self.assertEqual(payload["response_retry_count"], 0)
             self.assertTrue(log_jsonl.exists())
 

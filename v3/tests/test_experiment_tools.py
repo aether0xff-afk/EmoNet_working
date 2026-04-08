@@ -247,22 +247,25 @@ class ExperimentToolTests(unittest.TestCase):
             "style_tags": ["부드러움", "따뜻함"],
             "style_summary": {"warmth": 0.7, "tension": 0.2},
             "anti_softening_rules": ["같은 문장을 반복하지 않는다."],
+            "grounding_rules": ["첫 문장에서 감정을 짧게 짚고 바로 답한다."],
         }
 
         prompt, sections = module.build_condition_prompt("emonet_no_summary", "예시 입력", profile)
         self.assertIn("[STYLE_TAGS]", prompt)
         self.assertIn("[STYLE_VECTOR]", prompt)
         self.assertIn("[ANTI_SOFTENING_RULES]", prompt)
+        self.assertIn("[GROUNDING_RULES]", prompt)
         self.assertNotIn("[STYLE_SUMMARY]", prompt)
-        self.assertEqual(sections, "style_tags,expression_cues,style_vector,anti_softening_rules")
+        self.assertEqual(sections, "style_tags,expression_cues,style_vector,anti_softening_rules,grounding_rules")
 
         prompt, sections = module.build_condition_prompt("emonet_vector_only", "예시 입력", profile)
         self.assertIn("[STYLE_VECTOR]", prompt)
         self.assertIn("[ANTI_SOFTENING_RULES]", prompt)
+        self.assertIn("[GROUNDING_RULES]", prompt)
         self.assertNotIn("[STYLE_TAGS]", prompt)
         self.assertNotIn("[STYLE_SUMMARY]", prompt)
         self.assertNotIn("[EXPRESSION_CUES]", prompt)
-        self.assertEqual(sections, "style_vector,anti_softening_rules")
+        self.assertEqual(sections, "style_vector,anti_softening_rules,grounding_rules")
 
     def test_experiment_matrix_records_response_retry_metadata(self) -> None:
         module = load_module("experiment_matrix_retry_module", "scripts/experiment_matrix.py")
@@ -289,6 +292,8 @@ class ExperimentToolTests(unittest.TestCase):
                 "expression_cues_text": "표정 변화=0.6",
                 "anti_softening_mode": "strict",
                 "anti_softening_rules": ["같은 문장을 반복하지 않는다."],
+                "grounding_mode": "grounded",
+                "grounding_rules": ["첫 문장에서 감정을 짧게 짚고 바로 답한다."],
             }
 
             import sys
@@ -340,9 +345,12 @@ class ExperimentToolTests(unittest.TestCase):
             self.assertEqual(len(saved), 2)
             self.assertIn("response_retry_count", saved.columns)
             self.assertIn("response_validation_errors_json", saved.columns)
+            self.assertIn("grounding_mode", saved.columns)
+            self.assertIn("grounding_rules_json", saved.columns)
             emonet_row = saved[saved["condition"] == "emonet_full"].iloc[0]
             self.assertEqual(int(emonet_row["response_retry_count"]), 2)
             self.assertIn("hanging", str(emonet_row["response_validation_errors_json"]))
+            self.assertEqual(str(emonet_row["grounding_mode"]), "grounded")
 
     def test_score_experiment_matrix_summary_includes_retry_mean(self) -> None:
         module = load_module("score_experiment_matrix_module", "scripts/score_experiment_matrix.py")

@@ -200,6 +200,14 @@ def should_use_json_mode(base_url: str, api_key: str | None) -> bool:
     return bool(api_key and "api.openai.com" in str(base_url).lower())
 
 
+def resolve_reasoning_effort(base_url: str, api_key: str | None, requested: str | None) -> str | None:
+    if not requested:
+        return None
+    if not (api_key and "api.openai.com" in str(base_url).lower()):
+        return None
+    return str(requested).strip()
+
+
 def request_score_payload(
     row: dict[str, object],
     *,
@@ -210,6 +218,7 @@ def request_score_payload(
     temperature: float,
     max_retries: int,
     api_key: str | None = None,
+    reasoning_effort: str | None = None,
 ) -> tuple[dict[str, int], str, str]:
     json_prompt = build_judge_prompt(row)
     try:
@@ -228,6 +237,7 @@ def request_score_payload(
             ),
             api_key=api_key,
             response_format={"type": "json_object"} if should_use_json_mode(base_url, api_key) else None,
+            reasoning_effort=reasoning_effort,
         )
         return payload, raw, "json"
     except Exception as json_exc:
@@ -249,6 +259,7 @@ def request_score_payload(
                 ),
                 system_prompt="Return only five integers separated by commas.",
                 api_key=api_key,
+                reasoning_effort=reasoning_effort,
             )
             payload = normalize_compact_scores(compact_text)
             return payload, raw, "compact"
@@ -271,6 +282,7 @@ def request_score_payload(
                     ),
                     system_prompt="Output only five comma-separated integers.",
                     api_key=api_key,
+                    reasoning_effort=reasoning_effort,
                 )
                 payload = normalize_compact_scores(minimal_text)
                 return payload, raw, "minimal_compact"
@@ -311,6 +323,7 @@ def score_matrix(
     resume: bool,
     limit: int | None,
     api_key: str | None,
+    reasoning_effort: str | None,
 ) -> pd.DataFrame:
     df = pd.read_csv(input_csv)
     ok_df = df[df["status"].fillna("") == "ok"].copy()
@@ -371,6 +384,7 @@ def score_matrix(
                 temperature=temperature,
                 max_retries=max_retries,
                 api_key=api_key,
+                reasoning_effort=reasoning_effort,
             )
             scored["status"] = "ok"
             scored["judge_parse_mode"] = parse_mode
@@ -460,6 +474,7 @@ def main() -> None:
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--api-key-env", default=None)
+    parser.add_argument("--reasoning-effort", default=None)
     args = parser.parse_args()
 
     input_csv = Path(args.input_csv)
@@ -468,6 +483,7 @@ def main() -> None:
     summary_json = Path(args.summary_json)
 
     api_key = resolve_api_key(args.api_key_env)
+    reasoning_effort = resolve_reasoning_effort(args.base_url, api_key, args.reasoning_effort)
     ensure_model_server_ready(args.base_url, args.timeout_sec, api_key=api_key)
     scored_df = score_matrix(
         input_csv=input_csv,
@@ -484,6 +500,7 @@ def main() -> None:
         resume=args.resume,
         limit=args.limit,
         api_key=api_key,
+        reasoning_effort=reasoning_effort,
     )
     summary_df = summarize_scores(scored_df)
     summary_csv.parent.mkdir(parents=True, exist_ok=True)

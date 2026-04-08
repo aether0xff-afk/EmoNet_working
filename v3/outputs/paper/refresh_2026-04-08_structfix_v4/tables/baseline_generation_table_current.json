@@ -1,0 +1,48 @@
+{
+  "rows": 239,
+  "ok_rows": 239,
+  "error_rows": 0,
+  "conditions": [
+    {
+      "condition": "direct",
+      "condition_group": "baseline",
+      "rows": 80,
+      "mean_response_length": 204.4,
+      "mean_response_retry_count": 0.025,
+      "mean_content_fit": 4.0375,
+      "mean_emotional_appropriateness": 3.725,
+      "mean_style_match": 2.6,
+      "mean_naturalness": 4.525,
+      "mean_overall_quality": 3.675,
+      "mean_total": 3.7125
+    },
+    {
+      "condition": "stim_only",
+      "condition_group": "baseline",
+      "rows": 80,
+      "mean_response_length": 207.7,
+      "mean_response_retry_count": 0.0,
+      "mean_content_fit": 3.975,
+      "mean_emotional_appropriateness": 3.725,
+      "mean_style_match": 2.5625,
+      "mean_naturalness": 4.5,
+      "mean_overall_quality": 3.6375,
+      "mean_total": 3.68
+    },
+    {
+      "condition": "emonet_full",
+      "condition_group": "emonet",
+      "rows": 79,
+      "mean_response_length": 150.658,
+      "mean_response_retry_count": 0.089,
+      "mean_content_fit": 3.6709,
+      "mean_emotional_appropriateness": 2.8987,
+      "mean_style_match": 2.8354,
+      "mean_naturalness": 3.8354,
+      "mean_overall_quality": 3.2152,
+      "mean_total": 3.2911
+    }
+  ],
+  "scored_csv": "outputs\\experiments\\paper_matrix_current_structfix_stylefix_gpt54_scored.csv",
+  "summary_csv": "outputs\\paper\\refresh_2026-04-08_structfix_v4\\tables\\baseline_generation_table_current.csv"
+}

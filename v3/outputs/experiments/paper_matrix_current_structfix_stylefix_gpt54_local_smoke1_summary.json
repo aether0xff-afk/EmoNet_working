@@ -1,0 +1,8 @@
+{
+  "rows": 1,
+  "ok_rows": 0,
+  "error_rows": 1,
+  "conditions": [],
+  "scored_csv": "outputs\\experiments\\paper_matrix_current_structfix_stylefix_gpt54_local_smoke1.csv",
+  "summary_csv": "outputs\\experiments\\paper_matrix_current_structfix_stylefix_gpt54_local_smoke1_summary.csv"
+}

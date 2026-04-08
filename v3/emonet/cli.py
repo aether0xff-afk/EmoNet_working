@@ -55,6 +55,8 @@ MODEL_OPTIONAL_CONFIG_FIELDS = [
     "hysteresis_threshold_gain",
     "hysteresis_remem_gain",
     "hysteresis_k_bonus",
+    "ignition_topk",
+    "ignition_strength_scale",
     "max_out_degree",
     "min_out_degree",
     "dopa_rewire_gain",
@@ -1176,6 +1178,7 @@ def command_generate_response(args: argparse.Namespace) -> None:
         style_tags=profile["style_tags"],
         style_summary=profile["style_summary"],
         anti_softening_rules=profile["anti_softening_rules"],
+        grounding_rules=profile["grounding_rules"],
         temperature=args.response_temperature,
         max_tokens=args.max_tokens,
         timeout_sec=args.timeout_sec,
@@ -1194,6 +1197,8 @@ def command_generate_response(args: argparse.Namespace) -> None:
         "expression_cues_text": str(profile["expression_cues_text"]),
         "anti_softening_mode": str(profile["anti_softening_mode"]),
         "anti_softening_rules": list(profile["anti_softening_rules"]),
+        "grounding_mode": str(profile["grounding_mode"]),
+        "grounding_rules": list(profile["grounding_rules"]),
         "response_retry_count": int(response_meta["retry_count"]),
         "response_validation_errors": list(response_meta["validation_errors"]),
         "style_prompt": style_prompt,
@@ -1249,6 +1254,7 @@ def command_generate_response_batch(args: argparse.Namespace) -> None:
                 style_tags=profile["style_tags"],
                 style_summary=profile["style_summary"],
                 anti_softening_rules=profile["anti_softening_rules"],
+                grounding_rules=profile["grounding_rules"],
                 temperature=args.response_temperature,
                 max_tokens=args.max_tokens,
                 timeout_sec=args.timeout_sec,
@@ -1264,6 +1270,8 @@ def command_generate_response_batch(args: argparse.Namespace) -> None:
             row["expression_cues_text"] = str(profile["expression_cues_text"])
             row["anti_softening_mode"] = str(profile["anti_softening_mode"])
             row["anti_softening_rules"] = json.dumps(profile["anti_softening_rules"], ensure_ascii=False)
+            row["grounding_mode"] = str(profile["grounding_mode"])
+            row["grounding_rules"] = json.dumps(profile["grounding_rules"], ensure_ascii=False)
             row["response_retry_count"] = int(response_meta["retry_count"])
             row["response_validation_errors"] = json.dumps(response_meta["validation_errors"], ensure_ascii=False)
             row["style_prompt"] = style_prompt
@@ -1292,6 +1300,8 @@ def command_generate_response_batch(args: argparse.Namespace) -> None:
                      "expression_cues_text": str(profile["expression_cues_text"]),
                      "anti_softening_mode": str(profile["anti_softening_mode"]),
                      "anti_softening_rules": list(profile["anti_softening_rules"]),
+                     "grounding_mode": str(profile["grounding_mode"]),
+                     "grounding_rules": list(profile["grounding_rules"]),
                      "response_retry_count": int(response_meta["retry_count"]),
                      "response_validation_errors": list(response_meta["validation_errors"]),
                      "style_prompt": style_prompt,
@@ -1807,6 +1817,46 @@ def format_anti_softening_lines(rules: list[str]) -> list[str]:
     return [f"- {rule}" for rule in rules]
 
 
+def build_grounding_policy(
+    input_text: str,
+    style_summary: dict[str, float],
+    anti_softening_mode: str,
+) -> tuple[str, list[str]]:
+    distress_score = estimate_text_distress_score(input_text)
+    raw_negative = float(style_summary.get("raw_negative_affect", 0.0))
+    warmth = float(style_summary.get("warmth", 0.5))
+    directness = float(style_summary.get("directness", 0.5))
+
+    needs_strong_grounding = (
+        anti_softening_mode in {"strict", "guarded"}
+        or distress_score >= 0.34
+        or raw_negative >= 0.20
+        or warmth >= 0.70
+        or directness >= 0.65
+    )
+
+    if needs_strong_grounding:
+        mode = "grounded"
+        rules = [
+            "첫 문장에서 사용자의 현재 감정이나 처지를 짧게 짚어 주고 바로 답한다.",
+            "사용자를 훈계하거나 판정하지 않는다.",
+            "명령조, 협박조, 단정적 예언을 피한다.",
+            "사용자 입장에서 확인되지 않은 사실이나 관계를 임의로 단정하지 않는다.",
+            "조언이 필요하면 강요형 대신 제안형 표현을 우선한다.",
+        ]
+    else:
+        mode = "light"
+        rules = [
+            "첫 문장은 입력의 정서와 직접 연결되게 시작한다.",
+            "사용자를 평가하거나 결론을 대신 내려주지 않는다.",
+        ]
+    return mode, rules
+
+
+def format_grounding_lines(rules: list[str]) -> list[str]:
+    return [f"- {rule}" for rule in rules]
+
+
 def utc_timestamp() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -1838,6 +1888,7 @@ def request_json_response(
     retry_instruction: str | None = None,
     api_key: str | None = None,
     response_format: dict[str, Any] | None = None,
+    reasoning_effort: str | None = None,
 ) -> tuple[object, str]:
     last_raw = ""
     last_error = ""
@@ -1860,6 +1911,7 @@ def request_json_response(
             timeout_sec=timeout_sec,
             api_key=api_key,
             response_format=response_format,
+            reasoning_effort=reasoning_effort,
         )
         last_raw = raw
         try:
@@ -1993,6 +2045,7 @@ def request_plain_text_response(
     retry_instruction: str | None = None,
     system_prompt: str = "Return a plain Korean response only. Do not return JSON.",
     api_key: str | None = None,
+    reasoning_effort: str | None = None,
 ) -> tuple[str, str, dict[str, object]]:
     last_raw = ""
     validation_errors: list[str] = []
@@ -2017,6 +2070,7 @@ def request_plain_text_response(
             timeout_sec=timeout_sec,
             system_prompt=system_prompt,
             api_key=api_key,
+            reasoning_effort=reasoning_effort,
         )
         last_raw = raw
         try:
@@ -2047,19 +2101,29 @@ def call_openai_compatible_chat(
     system_prompt: str = "Return JSON only.",
     api_key: str | None = None,
     response_format: dict[str, Any] | None = None,
+    reasoning_effort: str | None = None,
 ) -> str:
     url = base_url.rstrip("/") + "/chat/completions"
+    is_openai_api = bool(api_key and "api.openai.com" in str(base_url).lower())
     payload = {
         "model": model_name,
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt},
         ],
-        "temperature": temperature,
-        "max_tokens": max_tokens,
     }
+    if not is_openai_api:
+        payload["temperature"] = temperature
+    elif temperature not in (0, 0.0, 1, 1.0):
+        payload["temperature"] = temperature
+    if is_openai_api:
+        payload["max_completion_tokens"] = max_tokens
+    else:
+        payload["max_tokens"] = max_tokens
     if response_format is not None:
         payload["response_format"] = response_format
+    if reasoning_effort is not None:
+        payload["reasoning_effort"] = reasoning_effort
     data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
     headers = {"Content-Type": "application/json"}
     if api_key:
@@ -2070,8 +2134,12 @@ def call_openai_compatible_chat(
         headers=headers,
         method="POST",
     )
-    with urllib.request.urlopen(request, timeout=timeout_sec) as response:
-        body = json.loads(response.read().decode("utf-8"))
+    try:
+        with urllib.request.urlopen(request, timeout=timeout_sec) as response:
+            body = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        error_text = exc.read().decode("utf-8", errors="replace")
+        raise ValueError(f"HTTP {exc.code} from {url}: {error_text[:1000]}") from exc
     choices = body.get("choices", [])
     if not choices:
         raise ValueError("no choices returned from model server")
@@ -2316,6 +2384,7 @@ def build_response_generation_prompt(
     style_tags: list[str],
     style_summary: dict[str, float],
     anti_softening_rules: list[str] | None = None,
+    grounding_rules: list[str] | None = None,
     template_path: Path | None = None,
 ) -> str:
     template = load_response_generation_template(template_path)
@@ -2326,14 +2395,17 @@ def build_response_generation_prompt(
         {
             "input_text": input_text.strip(),
             "style_tags": ", ".join(condensed_tags) if condensed_tags else "(none)",
-            "style_summary_lines": "\n".join(condensed_summary) if condensed_summary else "(none)",
-            "anti_softening_lines": "\n".join(format_anti_softening_lines(anti_softening_rules or []))
-            if anti_softening_rules
-            else "- 입력에 없는 위로나 공손함을 자동으로 덧붙이지 않는다.",
-            "expression_cue_lines": "\n".join(format_expression_cue_lines(style_dict)),
-            "style_vector_lines": format_style_vector_lines(style_dict),
-        },
-    )
+              "style_summary_lines": "\n".join(condensed_summary) if condensed_summary else "(none)",
+              "anti_softening_lines": "\n".join(format_anti_softening_lines(anti_softening_rules or []))
+              if anti_softening_rules
+              else "- 입력에 없는 위로나 공손함을 자동으로 덧붙이지 않는다.",
+              "grounding_lines": "\n".join(format_grounding_lines(grounding_rules or []))
+              if grounding_rules
+              else "- 첫 문장은 입력의 정서와 직접 연결되게 시작한다.",
+              "expression_cue_lines": "\n".join(format_expression_cue_lines(style_dict)),
+              "style_vector_lines": format_style_vector_lines(style_dict),
+          },
+      )
 
 
 def infer_style_profile(
@@ -2356,6 +2428,11 @@ def infer_style_profile(
         style_summary=style_summary,
         stim_vec=stim_vec,
     )
+    grounding_mode, grounding_rules = build_grounding_policy(
+        input_text=text,
+        style_summary=style_summary,
+        anti_softening_mode=anti_softening_mode,
+    )
     return {
         "stim_vec": stim_vec,
         "dominant_branch_len": len(outputs["dominant_branch"]),
@@ -2368,6 +2445,8 @@ def infer_style_profile(
         "expression_cues_text": summarize_expression_cues(style_dict),
         "anti_softening_mode": anti_softening_mode,
         "anti_softening_rules": anti_softening_rules,
+        "grounding_mode": grounding_mode,
+        "grounding_rules": grounding_rules,
     }
 
 
@@ -2379,6 +2458,7 @@ def generate_response_from_style(
     style_tags: list[str],
     style_summary: dict[str, float],
     anti_softening_rules: list[str] | None,
+    grounding_rules: list[str] | None,
     temperature: float,
     max_tokens: int,
     timeout_sec: int,
@@ -2391,6 +2471,7 @@ def generate_response_from_style(
         style_tags=style_tags,
         style_summary=style_summary,
         anti_softening_rules=anti_softening_rules,
+        grounding_rules=grounding_rules,
         template_path=template_path,
     )
     response, _raw_output, response_meta = request_plain_text_response(
@@ -2413,7 +2494,7 @@ def generate_response_from_style(
 
 def serialize_generation_log(record: dict[str, object]) -> dict[str, object]:
     payload = dict(record)
-    for key in ("stim_vec", "z", "s_pred", "style_tags", "anti_softening_rules"):
+    for key in ("stim_vec", "z", "s_pred", "style_tags", "anti_softening_rules", "grounding_rules"):
         if key in payload:
             payload[key] = json.dumps(payload[key], ensure_ascii=False)
     if "style_summary" in payload and isinstance(payload["style_summary"], dict):
@@ -2524,6 +2605,8 @@ def build_e2e_validation_row(report: dict[str, object]) -> dict[str, object]:
         "expression_cues_text": result.get("expression_cues_text", ""),
         "anti_softening_mode": result.get("anti_softening_mode", ""),
         "anti_softening_rules_json": json.dumps(result.get("anti_softening_rules", []), ensure_ascii=False),
+        "grounding_mode": result.get("grounding_mode", ""),
+        "grounding_rules_json": json.dumps(result.get("grounding_rules", []), ensure_ascii=False),
         "stim_vec_json": json.dumps(result.get("stim_vec", []), ensure_ascii=False),
         "z_json": json.dumps(result.get("z", []), ensure_ascii=False),
         "s_pred_json": json.dumps(result.get("s_pred", []), ensure_ascii=False),
@@ -2665,6 +2748,13 @@ def command_e2e_check(args: argparse.Namespace) -> None:
             report["result"]["expression_cues_text"] = summarize_expression_cues(style_dict)
             report["result"]["anti_softening_mode"] = anti_softening_mode
             report["result"]["anti_softening_rules"] = list(anti_softening_rules)
+            grounding_mode, grounding_rules = build_grounding_policy(
+                input_text=args.text,
+                style_summary=style_summary,
+                anti_softening_mode=anti_softening_mode,
+            )
+            report["result"]["grounding_mode"] = grounding_mode
+            report["result"]["grounding_rules"] = list(grounding_rules)
             report["result"]["style_profile"] = str(style_profile)
             record_stage(
                 build_validation_stage_result(
@@ -2724,6 +2814,7 @@ def command_e2e_check(args: argparse.Namespace) -> None:
                 style_tags=style_tags,
                 style_summary=style_summary,
                 anti_softening_rules=report["result"].get("anti_softening_rules", []),
+                grounding_rules=report["result"].get("grounding_rules", []),
                 temperature=args.response_temperature,
                 max_tokens=args.max_tokens,
                 timeout_sec=args.timeout_sec,
@@ -3580,6 +3671,8 @@ def build_parser() -> argparse.ArgumentParser:
         subparser.add_argument("--hysteresis-threshold-gain", dest="hysteresis_threshold_gain", type=float, default=None)
         subparser.add_argument("--hysteresis-remem-gain", dest="hysteresis_remem_gain", type=float, default=None)
         subparser.add_argument("--hysteresis-k-bonus", dest="hysteresis_k_bonus", type=float, default=None)
+        subparser.add_argument("--ignition-topk", dest="ignition_topk", type=int, default=None)
+        subparser.add_argument("--ignition-strength-scale", dest="ignition_strength_scale", type=float, default=None)
         subparser.add_argument("--max-out-degree", dest="max_out_degree", type=int, default=None)
         subparser.add_argument("--min-out-degree", dest="min_out_degree", type=int, default=None)
         subparser.add_argument("--dopa-rewire-gain", dest="dopa_rewire_gain", type=float, default=None)

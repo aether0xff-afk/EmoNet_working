@@ -1,0 +1,12 @@
+{
+  "k_threshold_base": [
+    0.68,
+    0.7,
+    0.72
+  ],
+  "intrinsic_alignment_gain": [
+    0.2,
+    0.24,
+    0.28
+  ]
+}

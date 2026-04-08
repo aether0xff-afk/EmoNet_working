@@ -20,6 +20,88 @@ def load_module(module_name: str, relative_path: str):
 
 
 class ExperimentToolTests(unittest.TestCase):
+    def test_optimize_branch_dynamics_outputs_ranked_artifacts(self) -> None:
+        module = load_module("optimize_branch_dynamics_module", "scripts/optimize_branch_dynamics.py")
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            input_csv = temp_dir / "probe_input.csv"
+            dataset_csv = temp_dir / "dataset_for_regression.csv"
+            benchmark_csv = temp_dir / "benchmark_results.csv"
+            model_cache = temp_dir / "stim_encoder.joblib"
+            output_dir = temp_dir / "branch_optimize"
+
+            pd.DataFrame(
+                [
+                    {"text": "요즘 너무 예민하고 피곤하다."},
+                    {"text": "일이 너무 많아서 버겁다."},
+                    {"text": "무시당한 기분이라 화가 난다."},
+                ]
+            ).to_csv(input_csv, index=False, encoding="utf-8-sig")
+
+            pd.DataFrame(
+                [
+                    {"text": "urgent critical alert now", "label": "E10", "y": 0.05, "talk_id": "t1", "persona_id": "p1"},
+                    {"text": "i feel calm and safe with support", "label": "E20", "y": 0.90, "talk_id": "t2", "persona_id": "p2"},
+                    {"text": "too tired and burned out i need rest", "label": "E30", "y": 0.20, "talk_id": "t3", "persona_id": "p3"},
+                    {"text": "this risk is scary and stressful", "label": "E40", "y": 0.10, "talk_id": "t4", "persona_id": "p4"},
+                ]
+            ).to_csv(dataset_csv, index=False, encoding="utf-8-sig")
+
+            pd.DataFrame(
+                [{"vector": "char_tfidf", "model": "Ridge", "status": "ok", "MAE(mean)": 0.1, "RMSE(mean)": 0.2}]
+            ).to_csv(benchmark_csv, index=False, encoding="utf-8-sig")
+
+            import sys
+
+            original_argv = sys.argv[:]
+            try:
+                sys.argv = [
+                    "optimize_branch_dynamics.py",
+                    "--input-csv",
+                    str(input_csv),
+                    "--dataset-csv",
+                    str(dataset_csv),
+                    "--benchmark-csv",
+                    str(benchmark_csv),
+                    "--model-cache-path",
+                    str(model_cache),
+                    "--force-refit",
+                    "--sample-size",
+                    "1",
+                    "--sample-mode",
+                    "head",
+                    "--progress-every",
+                    "0",
+                    "--search-mode",
+                    "random",
+                    "--budget",
+                    "1",
+                    "--include-baseline",
+                    "--fixed",
+                    "max_ticks=8",
+                    "--space",
+                    "k_threshold_base=0.72,0.95",
+                    "--output-dir",
+                    str(output_dir),
+                ]
+                module.main()
+            finally:
+                sys.argv = original_argv
+
+            summary = pd.read_csv(output_dir / "summary.csv")
+            details = pd.read_csv(output_dir / "details.csv")
+            tick_details = pd.read_csv(output_dir / "tick_details.csv")
+
+            self.assertIn("balanced_score", summary.columns)
+            self.assertIn("is_pareto_front", summary.columns)
+            self.assertTrue((output_dir / "best_config.json").exists())
+            self.assertTrue((output_dir / "optimizer_balanced_score.svg").exists())
+            self.assertTrue((output_dir / "optimizer_len1_vs_hitmax.svg").exists())
+            self.assertTrue((output_dir / "BRANCH_OPTIMIZATION_REPORT.md").exists())
+            self.assertGreaterEqual(len(summary), 2)
+            self.assertFalse(details.empty)
+            self.assertFalse(tick_details.empty)
+
     def test_branch_param_sweep_ofat_outputs_ranked_summary(self) -> None:
         module = load_module("branch_param_sweep_ofat_module", "scripts/branch_param_sweep.py")
         with tempfile.TemporaryDirectory() as temp_dir_name:
@@ -75,6 +157,8 @@ class ExperimentToolTests(unittest.TestCase):
                     "0",
                     "--ofat-params",
                     "k_threshold_base,memory_k_mix",
+                    "--fixed",
+                    "max_ticks=40",
                     "--fixed",
                     "branch_length_bonus=0.35",
                     "--output-dir",
@@ -148,6 +232,8 @@ class ExperimentToolTests(unittest.TestCase):
                     "k_threshold_base",
                     "--values",
                     "0.68,0.72",
+                    "--fixed",
+                    "max_ticks=40",
                     "--fixed",
                     "branch_length_bonus=0.35",
                     "--output-dir",

@@ -257,28 +257,6 @@ class EmoNetSmokeTests(unittest.TestCase):
             self.assertAlmostEqual(threshold, 0.57, places=6)
             self.assertAlmostEqual(remem, 0.875, places=6)
 
-    def test_seed_ignition_pending_signals_bootstraps_initial_activity(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir_name:
-            stim_config = self.make_stim_encoder_config(Path(temp_dir_name))
-            model = EmoNet(
-                EmoNetConfig(
-                    seed=29,
-                    ignition_topk=8,
-                    ignition_strength_scale=1.6,
-                ),
-                stim_encoder_config=stim_config,
-            )
-            base_stim_vec = np.asarray([0.85, 0.15, 0.85, 0.10], dtype=np.float32)
-            model._seed_ignition_pending_signals(base_stim_vec)
-
-            self.assertGreater(len(model.pending_signals), 0)
-            self.assertLessEqual(len(model.pending_signals), 8)
-            first_strength = next(iter(model.pending_signals.values()))[0][0]
-            self.assertGreater(first_strength, 0.0)
-
-            record = model.run_tick(base_stim_vec, "urgent critical alert now")
-            self.assertGreater(len(record.active_nodes), 0)
-
     def test_command_probe_branch_reports_stats(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir_name:
             temp_dir = Path(temp_dir_name)

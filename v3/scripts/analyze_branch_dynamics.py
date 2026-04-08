@@ -440,8 +440,6 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--memory-k-mix", dest="memory_k_mix", type=float, default=None)
     parser.add_argument("--recent-activity-decay", dest="recent_activity_decay", type=float, default=None)
     parser.add_argument("--global-recovery-rate", dest="global_recovery_rate", type=float, default=None)
-    parser.add_argument("--ignition-topk", dest="ignition_topk", type=int, default=None)
-    parser.add_argument("--ignition-strength-scale", dest="ignition_strength_scale", type=float, default=None)
     parser.add_argument("--branch-end-window", dest="branch_end_window", type=int, default=None)
     parser.add_argument("--branch-length-bonus", dest="branch_length_bonus", type=float, default=None)
     parser.add_argument("--compare-z-csv", dest="compare_z_csvs", action="append", default=None)
@@ -507,8 +505,6 @@ def main() -> None:
         "k_decay": float(config_model.config.k_decay),
         "input_topk": int(config_model.config.input_topk),
         "input_signal_clip": float(config_model.config.input_signal_clip),
-        "ignition_topk": int(config_model.config.ignition_topk),
-        "ignition_strength_scale": float(config_model.config.ignition_strength_scale),
     }
     write_report(
         output_dir / "BRANCH_DYNAMICS_RESEARCH.md",

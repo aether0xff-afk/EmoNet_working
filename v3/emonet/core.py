@@ -167,7 +167,7 @@ class EmoNetConfig:
 
     initial_out_degree: int = 5
     target_in_degree: int = 5
-    max_ticks: int = 40
+    max_ticks: int = 128
     min_ticks_before_converged: int = 6
     delta_k_eps: float = 1e-3
 
@@ -192,8 +192,6 @@ class EmoNetConfig:
     hysteresis_threshold_gain: float = 0.12
     hysteresis_remem_gain: float = 0.08
     hysteresis_k_bonus: float = 0.08
-    ignition_topk: int = 16
-    ignition_strength_scale: float = 1.40
 
     max_out_degree: int = 12
     min_out_degree: int = 1
@@ -238,10 +236,6 @@ class EmoNetConfig:
             raise ValueError("input_signal_clip must be positive")
         if not 0.0 <= self.recent_activity_decay <= 1.0:
             raise ValueError("recent_activity_decay must be in [0, 1]")
-        if self.ignition_topk < 0:
-            raise ValueError("ignition_topk must be non-negative")
-        if self.ignition_strength_scale < 0.0:
-            raise ValueError("ignition_strength_scale must be non-negative")
         for field_name in (
             "state_self_stim_mix",
             "state_parent_stim_mix",
@@ -1273,43 +1267,6 @@ class EmoNet:
             input_stimuli[node_id] = stim_vec
         return input_strengths, input_stimuli
 
-    def _seed_ignition_pending_signals(self, base_stim_vec: np.ndarray) -> None:
-        if self.config.ignition_topk <= 0:
-            return
-
-        scored_nodes: list[tuple[float, int]] = []
-        for neuron in self.state.neurons:
-            alignment = max(0.0, cosine_similarity(base_stim_vec, neuron.intrinsic_bias))
-            if neuron.neuron_type == "excitatory":
-                type_gain = 1.0
-            elif neuron.neuron_type == "modulatory":
-                type_gain = 0.90
-            else:
-                type_gain = 0.65
-            score = float(alignment * type_gain)
-            if score > 0.0:
-                scored_nodes.append((score, neuron.neuron_id))
-
-        if not scored_nodes:
-            return
-
-        scored_nodes.sort(key=lambda item: item[0], reverse=True)
-        selected = scored_nodes[: self.config.ignition_topk]
-        peak_score = max(score for score, _ in selected)
-        if peak_score <= 1e-8:
-            return
-
-        ignition_signals: dict[int, list[tuple[float, np.ndarray]]] = {}
-        for score, node_id in selected:
-            normalized = float(score / peak_score)
-            strength = (
-                self.config.k_threshold_base
-                * self.config.ignition_strength_scale
-                * (0.75 + 0.25 * normalized)
-            )
-            ignition_signals[node_id] = [(float(strength), base_stim_vec.copy())]
-        self.pending_signals = ignition_signals
-
     def _compose_neuron_stimulus(
         self,
         neuron: NeuronState,
@@ -1445,7 +1402,6 @@ class EmoNet:
     def run_until_converged(self, text: str | Sequence[float] | np.ndarray) -> np.ndarray:
         base_stim_vec = self.text_to_stim_vec(text)
         self.last_base_stim_vec = base_stim_vec.copy()
-        self._seed_ignition_pending_signals(base_stim_vec)
         input_text = text if isinstance(text, str) else repr(list(np.asarray(base_stim_vec, dtype=float)))
 
         while self.state.tick < self.config.max_ticks:

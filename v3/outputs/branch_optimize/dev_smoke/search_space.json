@@ -1,0 +1,70 @@
+{
+  "k_threshold_base": [
+    0.72,
+    0.8,
+    0.9,
+    1.0
+  ],
+  "k_remem_base": [
+    0.95,
+    1.05,
+    1.15
+  ],
+  "k_decay": [
+    0.93,
+    0.95,
+    0.97,
+    0.99
+  ],
+  "refractory_ticks": [
+    1,
+    2,
+    3
+  ],
+  "input_signal_clip": [
+    0.8,
+    1.0,
+    1.2,
+    1.5
+  ],
+  "recent_activity_decay": [
+    0.3,
+    0.5,
+    0.7,
+    0.8
+  ],
+  "hysteresis_threshold_gain": [
+    0.0,
+    0.03,
+    0.06,
+    0.12
+  ],
+  "hysteresis_remem_gain": [
+    0.0,
+    0.02,
+    0.04,
+    0.08
+  ],
+  "hysteresis_k_bonus": [
+    0.0,
+    0.02,
+    0.04,
+    0.08
+  ],
+  "memory_decay": [
+    0.97,
+    0.98,
+    0.985
+  ],
+  "memory_k_mix": [
+    0.0,
+    0.1,
+    0.2,
+    0.35
+  ],
+  "state_base_stim_mix": [
+    0.05,
+    0.1,
+    0.15
+  ]
+}

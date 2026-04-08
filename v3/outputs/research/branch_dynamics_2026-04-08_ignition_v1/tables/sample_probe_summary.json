@@ -1,0 +1,16 @@
+{
+  "rows": 200,
+  "mean_branch_len": 39.985,
+  "p95_branch_len": 40.0,
+  "mean_ticks_run": 40.0,
+  "p95_ticks_run": 40.0,
+  "hit_max_ticks_ratio": 1.0,
+  "mean_path_coverage": 0.9996250000000001,
+  "mean_silent_tail_ticks": 0.0,
+  "termination_counts": [
+    {
+      "termination_reason": "max_ticks",
+      "count": 200
+    }
+  ]
+}

@@ -277,6 +277,67 @@ def plot_path_coverage(sample_df: pd.DataFrame, output_path: Path) -> None:
     plt.close(fig)
 
 
+def build_ignition_metrics(tick_df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    for sample_index, group in tick_df.groupby("sample_index"):
+        active = group[group["active_nodes"] > 0]
+        if active.empty:
+            first_active_tick = -1
+            last_active_tick = -1
+            active_window_ticks = 0
+        else:
+            first_active_tick = int(active["tick"].min())
+            last_active_tick = int(active["tick"].max())
+            active_window_ticks = int(last_active_tick - first_active_tick + 1)
+        rows.append(
+            {
+                "sample_index": int(sample_index),
+                "first_active_tick": first_active_tick,
+                "last_active_tick": last_active_tick,
+                "active_window_ticks": active_window_ticks,
+            }
+        )
+
+    ignition_df = pd.DataFrame(rows)
+    valid_first = ignition_df.loc[ignition_df["first_active_tick"] >= 0, "first_active_tick"]
+    summary = {
+        "rows": int(len(ignition_df)),
+        "no_activity_rows": int((ignition_df["first_active_tick"] < 0).sum()),
+        "mean_first_active_tick": float(valid_first.mean()) if len(valid_first) else None,
+        "median_first_active_tick": float(valid_first.median()) if len(valid_first) else None,
+        "p90_first_active_tick": float(valid_first.quantile(0.90)) if len(valid_first) else None,
+        "late_ignition_ratio_ge_15": float((ignition_df["first_active_tick"] >= 15).mean()),
+        "mean_active_window_ticks": float(ignition_df["active_window_ticks"].mean()),
+        "median_active_window_ticks": float(ignition_df["active_window_ticks"].median()),
+    }
+    return ignition_df, summary
+
+
+def plot_first_active_tick(ignition_df: pd.DataFrame, output_path: Path) -> None:
+    valid_first = ignition_df.loc[ignition_df["first_active_tick"] >= 0, "first_active_tick"]
+    fig, ax = plt.subplots(figsize=(6.2, 4.6))
+    ax.hist(valid_first, bins=15, color="#355c7d", edgecolor="white")
+    ax.set_title("First Active Tick Distribution")
+    ax.set_xlabel("First tick with any active node")
+    ax.set_ylabel("Samples")
+    fig.tight_layout()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path, format="svg")
+    plt.close(fig)
+
+
+def plot_active_window(ignition_df: pd.DataFrame, output_path: Path) -> None:
+    fig, ax = plt.subplots(figsize=(6.2, 4.6))
+    ax.hist(ignition_df["active_window_ticks"], bins=15, color="#4c9f70", edgecolor="white")
+    ax.set_title("Active Window Length Distribution")
+    ax.set_xlabel("Ticks between first and last active tick")
+    ax.set_ylabel("Samples")
+    fig.tight_layout()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path, format="svg")
+    plt.close(fig)
+
+
 def write_report(
     output_path: Path,
     *,
@@ -424,19 +485,30 @@ def main() -> None:
         json.dumps(sample_summary, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
+    ignition_df, ignition_summary = build_ignition_metrics(tick_df)
+    ignition_df.to_csv(tables_dir / "ignition_metrics.csv", index=False, encoding="utf-8-sig")
+    (tables_dir / "ignition_summary.json").write_text(
+        json.dumps(ignition_summary, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
 
     plot_ticks_vs_branch(sample_df, figures_dir / "ticks_vs_branch_length.svg")
     plot_tick_activity(tick_df, figures_dir / "tick_activity_profile.svg")
     plot_termination_counts(sample_df, figures_dir / "termination_reasons.svg")
     plot_path_coverage(sample_df, figures_dir / "path_coverage_histogram.svg")
+    plot_first_active_tick(ignition_df, figures_dir / "first_active_tick_histogram.svg")
+    plot_active_window(ignition_df, figures_dir / "active_window_histogram.svg")
 
+    config_model = model if model is not None else build_emonet_model(args)
     config = {
-        "max_ticks": int(model.config.max_ticks),
-        "min_ticks_before_converged": int(model.config.min_ticks_before_converged),
-        "k_threshold_base": float(model.config.k_threshold_base),
-        "k_decay": float(model.config.k_decay),
-        "input_topk": int(model.config.input_topk),
-        "input_signal_clip": float(model.config.input_signal_clip),
+        "max_ticks": int(config_model.config.max_ticks),
+        "min_ticks_before_converged": int(config_model.config.min_ticks_before_converged),
+        "k_threshold_base": float(config_model.config.k_threshold_base),
+        "k_decay": float(config_model.config.k_decay),
+        "input_topk": int(config_model.config.input_topk),
+        "input_signal_clip": float(config_model.config.input_signal_clip),
+        "ignition_topk": int(config_model.config.ignition_topk),
+        "ignition_strength_scale": float(config_model.config.ignition_strength_scale),
     }
     write_report(
         output_dir / "BRANCH_DYNAMICS_RESEARCH.md",

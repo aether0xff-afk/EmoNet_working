@@ -517,6 +517,90 @@ def render_top_metric_figure(summary_df: pd.DataFrame, output_path: Path, top_k:
     plt.close(fig)
 
 
+def write_artifacts(
+    *,
+    output_dir: Path,
+    summary_rows: list[dict[str, Any]],
+    sample_frames: list[pd.DataFrame],
+    tick_frames: list[pd.DataFrame],
+    args: argparse.Namespace,
+    search_space: dict[str, list[Any]],
+    center: dict[str, Any],
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, dict[str, Any], list[Path]]:
+    summary_df = pd.DataFrame(summary_rows)
+    if summary_df.empty:
+        detail_df = pd.DataFrame()
+        tick_df = pd.DataFrame()
+        best_payload: dict[str, Any] = {}
+        figure_paths: list[Path] = []
+    else:
+        summary_df = mark_pareto_front(summary_df)
+        summary_df = summary_df.sort_values(
+            by=["is_feasible", "constraint_penalty", "balanced_score", "len1_ratio", "hit_max_ticks_ratio", "mean_branch_len"],
+            ascending=[False, True, False, True, True, False],
+        ).reset_index(drop=True)
+        detail_df = pd.concat(sample_frames, ignore_index=True) if sample_frames else pd.DataFrame()
+        tick_df = pd.concat(tick_frames, ignore_index=True) if tick_frames else pd.DataFrame()
+        best_payload = summary_df.iloc[0].to_dict()
+        figure_paths = [
+            output_dir / "optimizer_balanced_score.svg",
+            output_dir / "optimizer_len1_vs_hitmax.svg",
+            output_dir / "optimizer_activation_tradeoff.svg",
+            output_dir / "optimizer_top_metrics.svg",
+        ]
+        render_score_figure(summary_df, figure_paths[0], args.top_k_figures)
+        render_tradeoff_figure(summary_df, figure_paths[1])
+        render_activation_figure(summary_df, figure_paths[2])
+        render_top_metric_figure(summary_df, figure_paths[3], args.top_k_figures)
+
+    summary_csv = output_dir / "summary.csv"
+    details_csv = output_dir / "details.csv"
+    tick_csv = output_dir / "tick_details.csv"
+    best_json = output_dir / "best_config.json"
+    summary_df.to_csv(summary_csv, index=False, encoding="utf-8-sig")
+    detail_df.to_csv(details_csv, index=False, encoding="utf-8-sig")
+    tick_df.to_csv(tick_csv, index=False, encoding="utf-8-sig")
+    best_json.write_text(json.dumps(best_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    write_report(
+        output_dir / "BRANCH_OPTIMIZATION_REPORT.md",
+        args=args,
+        search_space=search_space,
+        center=center,
+        summary_df=summary_df,
+        figure_paths=figure_paths,
+    )
+
+    progress_json = output_dir / "progress.json"
+    progress_payload = {
+        "completed_configs": int(len(summary_df)),
+        "best_config": best_payload,
+        "summary_csv": str(summary_csv),
+        "details_csv": str(details_csv),
+        "tick_csv": str(tick_csv),
+        "figure_paths": [str(path) for path in figure_paths],
+    }
+    progress_json.write_text(json.dumps(progress_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    return summary_df, detail_df, tick_df, best_payload, figure_paths
+
+
+def load_resume_state(output_dir: Path) -> tuple[list[dict[str, Any]], list[pd.DataFrame], list[pd.DataFrame], set[str]]:
+    summary_csv = output_dir / "summary.csv"
+    details_csv = output_dir / "details.csv"
+    tick_csv = output_dir / "tick_details.csv"
+    if not summary_csv.exists():
+        return [], [], [], set()
+
+    summary_df = pd.read_csv(summary_csv)
+    details_df = pd.read_csv(details_csv) if details_csv.exists() else pd.DataFrame()
+    tick_df = pd.read_csv(tick_csv) if tick_csv.exists() else pd.DataFrame()
+    summary_rows = summary_df.to_dict(orient="records")
+    sample_frames = [details_df] if not details_df.empty else []
+    tick_frames = [tick_df] if not tick_df.empty else []
+    completed_names = set(summary_df["config_name"].astype(str).tolist()) if "config_name" in summary_df.columns else set()
+    return summary_rows, sample_frames, tick_frames, completed_names
+
+
 def write_report(
     output_path: Path,
     *,
@@ -648,6 +732,7 @@ def main() -> None:
     parser.add_argument("--max-first-active-tick", type=float, default=None)
     parser.add_argument("--max-late-ignition-ratio", type=float, default=None)
     parser.add_argument("--min-mean-branch-len", type=float, default=None)
+    parser.add_argument("--resume", action="store_true")
     parser.add_argument("--output-dir", default=str(Path("outputs") / "branch_optimize" / "latest"))
     args = parser.parse_args()
 
@@ -664,12 +749,24 @@ def main() -> None:
     (output_dir / "center_config.json").write_text(json.dumps(center, ensure_ascii=False, indent=2), encoding="utf-8")
     (output_dir / "specs.json").write_text(json.dumps(specs, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    summary_rows: list[dict[str, Any]] = []
-    sample_frames: list[pd.DataFrame] = []
-    tick_frames: list[pd.DataFrame] = []
+    if args.resume:
+        summary_rows, sample_frames, tick_frames, completed_names = load_resume_state(output_dir)
+    else:
+        summary_rows, sample_frames, tick_frames, completed_names = [], [], [], set()
     optimize_start = time.perf_counter()
     for idx, spec in enumerate(specs, start=1):
         config_name = str(spec["name"])
+        if config_name in completed_names:
+            maybe_print_progress(
+                "branch-optimize configs",
+                idx,
+                len(specs),
+                optimize_start,
+                every=1,
+                unit="configs",
+                extra=f"resume-skip {config_name}",
+            )
+            continue
         params = dict(spec["params"])
         model_args = build_model_namespace(args, params)
         worker_count = resolve_num_workers(args.num_workers)
@@ -695,6 +792,15 @@ def main() -> None:
 
         sample_frames.append(sample_df)
         tick_frames.append(tick_df)
+        summary_df, detail_df, full_tick_df, best_payload, figure_paths = write_artifacts(
+            output_dir=output_dir,
+            summary_rows=summary_rows,
+            sample_frames=sample_frames,
+            tick_frames=tick_frames,
+            args=args,
+            search_space=search_space,
+            center=center,
+        )
         maybe_print_progress(
             "branch-optimize configs",
             idx,
@@ -704,54 +810,26 @@ def main() -> None:
             unit="configs",
             extra=config_name,
         )
+        completed_names.add(config_name)
 
-    summary_df = pd.DataFrame(summary_rows)
-    summary_df = mark_pareto_front(summary_df)
-    summary_df = summary_df.sort_values(
-        by=["is_feasible", "constraint_penalty", "balanced_score", "len1_ratio", "hit_max_ticks_ratio", "mean_branch_len"],
-        ascending=[False, True, False, True, True, False],
-    ).reset_index(drop=True)
-    detail_df = pd.concat(sample_frames, ignore_index=True) if sample_frames else pd.DataFrame()
-    tick_df = pd.concat(tick_frames, ignore_index=True) if tick_frames else pd.DataFrame()
-
-    summary_csv = output_dir / "summary.csv"
-    details_csv = output_dir / "details.csv"
-    tick_csv = output_dir / "tick_details.csv"
-    best_json = output_dir / "best_config.json"
-    summary_df.to_csv(summary_csv, index=False, encoding="utf-8-sig")
-    detail_df.to_csv(details_csv, index=False, encoding="utf-8-sig")
-    tick_df.to_csv(tick_csv, index=False, encoding="utf-8-sig")
-    best_payload = summary_df.iloc[0].to_dict() if not summary_df.empty else {}
-    best_json.write_text(json.dumps(best_payload, ensure_ascii=False, indent=2), encoding="utf-8")
-
-    figure_paths = [
-        output_dir / "optimizer_balanced_score.svg",
-        output_dir / "optimizer_len1_vs_hitmax.svg",
-        output_dir / "optimizer_activation_tradeoff.svg",
-        output_dir / "optimizer_top_metrics.svg",
-    ]
-    render_score_figure(summary_df, figure_paths[0], args.top_k_figures)
-    render_tradeoff_figure(summary_df, figure_paths[1])
-    render_activation_figure(summary_df, figure_paths[2])
-    render_top_metric_figure(summary_df, figure_paths[3], args.top_k_figures)
-
-    write_report(
-        output_dir / "BRANCH_OPTIMIZATION_REPORT.md",
+    summary_df, detail_df, tick_df, best_payload, figure_paths = write_artifacts(
+        output_dir=output_dir,
+        summary_rows=summary_rows,
+        sample_frames=sample_frames,
+        tick_frames=tick_frames,
         args=args,
         search_space=search_space,
         center=center,
-        summary_df=summary_df,
-        figure_paths=figure_paths,
     )
 
     payload = {
         "input_rows": int(len(input_df)),
         "sample_rows": int(len(sampled_df)),
         "config_rows": int(len(summary_df)),
-        "summary_csv": str(summary_csv),
-        "details_csv": str(details_csv),
-        "tick_csv": str(tick_csv),
-        "best_json": str(best_json),
+        "summary_csv": str(output_dir / "summary.csv"),
+        "details_csv": str(output_dir / "details.csv"),
+        "tick_csv": str(output_dir / "tick_details.csv"),
+        "best_json": str(output_dir / "best_config.json"),
         "figure_paths": [str(path) for path in figure_paths],
         "best_config": best_payload,
     }

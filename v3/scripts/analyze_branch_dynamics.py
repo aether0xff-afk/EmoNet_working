@@ -439,6 +439,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--memory-stim-mix", dest="memory_stim_mix", type=float, default=None)
     parser.add_argument("--memory-k-mix", dest="memory_k_mix", type=float, default=None)
     parser.add_argument("--recent-activity-decay", dest="recent_activity_decay", type=float, default=None)
+    parser.add_argument("--intrinsic-alignment-gain", dest="intrinsic_alignment_gain", type=float, default=None)
+    parser.add_argument("--fatigue-decay", dest="fatigue_decay", type=float, default=None)
+    parser.add_argument("--fatigue-gain", dest="fatigue_gain", type=float, default=None)
+    parser.add_argument("--fatigue-threshold-gain", dest="fatigue_threshold_gain", type=float, default=None)
+    parser.add_argument("--fatigue-k-leak", dest="fatigue_k_leak", type=float, default=None)
+    parser.add_argument("--fire-output-log-gain", dest="fire_output_log_gain", type=float, default=None)
     parser.add_argument("--global-recovery-rate", dest="global_recovery_rate", type=float, default=None)
     parser.add_argument("--branch-end-window", dest="branch_end_window", type=int, default=None)
     parser.add_argument("--branch-length-bonus", dest="branch_length_bonus", type=float, default=None)
@@ -505,6 +511,12 @@ def main() -> None:
         "k_decay": float(config_model.config.k_decay),
         "input_topk": int(config_model.config.input_topk),
         "input_signal_clip": float(config_model.config.input_signal_clip),
+        "intrinsic_alignment_gain": float(config_model.config.intrinsic_alignment_gain),
+        "fatigue_decay": float(config_model.config.fatigue_decay),
+        "fatigue_gain": float(config_model.config.fatigue_gain),
+        "fatigue_threshold_gain": float(config_model.config.fatigue_threshold_gain),
+        "fatigue_k_leak": float(config_model.config.fatigue_k_leak),
+        "fire_output_log_gain": float(config_model.config.fire_output_log_gain),
     }
     write_report(
         output_dir / "BRANCH_DYNAMICS_RESEARCH.md",

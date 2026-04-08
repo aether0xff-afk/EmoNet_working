@@ -20,6 +20,121 @@ def load_module(module_name: str, relative_path: str):
 
 
 class ExperimentToolTests(unittest.TestCase):
+    def test_analyze_branch_traces_outputs_report_and_figures(self) -> None:
+        module = load_module("analyze_branch_traces_module", "scripts/analyze_branch_traces.py")
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            summary_csv = temp_dir / "summary.csv"
+            details_csv = temp_dir / "details.csv"
+            tick_csv = temp_dir / "tick_details.csv"
+            output_dir = temp_dir / "trace_report"
+
+            pd.DataFrame(
+                [
+                    {
+                        "config_name": "baseline",
+                        "balanced_score": 30.0,
+                        "constraint_penalty": 1.2,
+                        "constraint_failures": "hit_max_ticks_ratio>0.8",
+                        "len1_ratio": 0.0,
+                        "hit_max_ticks_ratio": 1.0,
+                        "mean_first_active_tick": 20.0,
+                        "late_ignition_ratio_ge_15": 1.0,
+                        "mean_branch_len": 30.0,
+                    },
+                    {
+                        "config_name": "candidate_a",
+                        "balanced_score": 45.0,
+                        "constraint_penalty": 0.7,
+                        "constraint_failures": "mean_first_active_tick>20.0",
+                        "len1_ratio": 0.1,
+                        "hit_max_ticks_ratio": 0.7,
+                        "mean_first_active_tick": 18.0,
+                        "late_ignition_ratio_ge_15": 0.6,
+                        "mean_branch_len": 24.0,
+                    },
+                    {
+                        "config_name": "candidate_b",
+                        "balanced_score": 44.0,
+                        "constraint_penalty": 0.5,
+                        "constraint_failures": "",
+                        "len1_ratio": 0.2,
+                        "hit_max_ticks_ratio": 0.5,
+                        "mean_first_active_tick": 8.0,
+                        "late_ignition_ratio_ge_15": 0.2,
+                        "mean_branch_len": 18.0,
+                    },
+                ]
+            ).to_csv(summary_csv, index=False, encoding="utf-8-sig")
+
+            pd.DataFrame(
+                [
+                    {"sample_index": 1, "text": "sample one", "dominant_branch_len": 30, "first_active_tick": 20, "last_active_tick": 31, "active_window_ticks": 12, "mean_active_nodes": 40.0, "mean_edges_fired": 100.0, "max_active_nodes": 60, "max_edges_fired": 120, "config_name": "baseline"},
+                    {"sample_index": 2, "text": "sample two", "dominant_branch_len": 10, "first_active_tick": 25, "last_active_tick": 31, "active_window_ticks": 7, "mean_active_nodes": 35.0, "mean_edges_fired": 80.0, "max_active_nodes": 50, "max_edges_fired": 95, "config_name": "baseline"},
+                    {"sample_index": 1, "text": "sample one", "dominant_branch_len": 24, "first_active_tick": 18, "last_active_tick": 31, "active_window_ticks": 14, "mean_active_nodes": 32.0, "mean_edges_fired": 70.0, "max_active_nodes": 48, "max_edges_fired": 88, "config_name": "candidate_a"},
+                    {"sample_index": 2, "text": "sample two", "dominant_branch_len": 16, "first_active_tick": 10, "last_active_tick": 25, "active_window_ticks": 16, "mean_active_nodes": 28.0, "mean_edges_fired": 60.0, "max_active_nodes": 42, "max_edges_fired": 76, "config_name": "candidate_a"},
+                    {"sample_index": 1, "text": "sample one", "dominant_branch_len": 18, "first_active_tick": 8, "last_active_tick": 22, "active_window_ticks": 15, "mean_active_nodes": 22.0, "mean_edges_fired": 40.0, "max_active_nodes": 35, "max_edges_fired": 55, "config_name": "candidate_b"},
+                    {"sample_index": 2, "text": "sample two", "dominant_branch_len": 14, "first_active_tick": 6, "last_active_tick": 18, "active_window_ticks": 13, "mean_active_nodes": 20.0, "mean_edges_fired": 36.0, "max_active_nodes": 30, "max_edges_fired": 46, "config_name": "candidate_b"},
+                ]
+            ).to_csv(details_csv, index=False, encoding="utf-8-sig")
+
+            tick_rows = []
+            for config_name, sample_index, active_values, edge_values in [
+                ("baseline", 1, [0, 0, 0, 10, 20, 30], [0, 0, 0, 20, 40, 60]),
+                ("baseline", 2, [0, 0, 0, 0, 10, 12], [0, 0, 0, 0, 16, 20]),
+                ("candidate_a", 1, [0, 0, 8, 12, 20, 24], [0, 0, 10, 18, 30, 36]),
+                ("candidate_a", 2, [0, 6, 10, 14, 18, 22], [0, 8, 12, 18, 24, 28]),
+                ("candidate_b", 1, [4, 8, 12, 14, 12, 10], [6, 10, 14, 16, 14, 12]),
+                ("candidate_b", 2, [3, 6, 9, 12, 10, 8], [4, 8, 12, 14, 12, 10]),
+            ]:
+                for tick, (active_nodes, edges_fired) in enumerate(zip(active_values, edge_values, strict=True)):
+                    tick_rows.append(
+                        {
+                            "sample_index": sample_index,
+                            "tick": tick,
+                            "active_nodes": active_nodes,
+                            "edges_fired": edges_fired,
+                            "has_activity": int(active_nodes > 0),
+                            "config_name": config_name,
+                        }
+                    )
+            pd.DataFrame(tick_rows).to_csv(tick_csv, index=False, encoding="utf-8-sig")
+
+            import sys
+
+            original_argv = sys.argv[:]
+            try:
+                sys.argv = [
+                    "analyze_branch_traces.py",
+                    "--summary-csv",
+                    str(summary_csv),
+                    "--details-csv",
+                    str(details_csv),
+                    "--tick-csv",
+                    str(tick_csv),
+                    "--output-dir",
+                    str(output_dir),
+                    "--top-k-candidates",
+                    "2",
+                    "--top-k-samples",
+                    "3",
+                    "--progress-every",
+                    "0",
+                ]
+                module.main()
+            finally:
+                sys.argv = original_argv
+
+            self.assertTrue((output_dir / "config_comparison.csv").exists())
+            self.assertTrue((output_dir / "representative_samples.csv").exists())
+            self.assertTrue((output_dir / "pairwise_deltas.csv").exists())
+            self.assertTrue((output_dir / "config_mean_active_nodes.svg").exists())
+            self.assertTrue((output_dir / "TRACE_ANALYSIS_REPORT.md").exists())
+
+            comparison = pd.read_csv(output_dir / "config_comparison.csv")
+            self.assertIn("p50_activity_tick", comparison.columns)
+            self.assertIn("baseline", set(comparison["config_name"].tolist()))
+
     def test_optimize_branch_dynamics_outputs_ranked_artifacts(self) -> None:
         module = load_module("optimize_branch_dynamics_module", "scripts/optimize_branch_dynamics.py")
         with tempfile.TemporaryDirectory() as temp_dir_name:

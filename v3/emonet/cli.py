@@ -55,6 +55,12 @@ MODEL_OPTIONAL_CONFIG_FIELDS = [
     "hysteresis_threshold_gain",
     "hysteresis_remem_gain",
     "hysteresis_k_bonus",
+    "intrinsic_alignment_gain",
+    "fatigue_decay",
+    "fatigue_gain",
+    "fatigue_threshold_gain",
+    "fatigue_k_leak",
+    "fire_output_log_gain",
     "max_out_degree",
     "min_out_degree",
     "dopa_rewire_gain",
@@ -3669,6 +3675,12 @@ def build_parser() -> argparse.ArgumentParser:
         subparser.add_argument("--hysteresis-threshold-gain", dest="hysteresis_threshold_gain", type=float, default=None)
         subparser.add_argument("--hysteresis-remem-gain", dest="hysteresis_remem_gain", type=float, default=None)
         subparser.add_argument("--hysteresis-k-bonus", dest="hysteresis_k_bonus", type=float, default=None)
+        subparser.add_argument("--intrinsic-alignment-gain", dest="intrinsic_alignment_gain", type=float, default=None)
+        subparser.add_argument("--fatigue-decay", dest="fatigue_decay", type=float, default=None)
+        subparser.add_argument("--fatigue-gain", dest="fatigue_gain", type=float, default=None)
+        subparser.add_argument("--fatigue-threshold-gain", dest="fatigue_threshold_gain", type=float, default=None)
+        subparser.add_argument("--fatigue-k-leak", dest="fatigue_k_leak", type=float, default=None)
+        subparser.add_argument("--fire-output-log-gain", dest="fire_output_log_gain", type=float, default=None)
         subparser.add_argument("--max-out-degree", dest="max_out_degree", type=int, default=None)
         subparser.add_argument("--min-out-degree", dest="min_out_degree", type=int, default=None)
         subparser.add_argument("--dopa-rewire-gain", dest="dopa_rewire_gain", type=float, default=None)

@@ -257,6 +257,58 @@ class EmoNetSmokeTests(unittest.TestCase):
             self.assertAlmostEqual(threshold, 0.57, places=6)
             self.assertAlmostEqual(remem, 0.875, places=6)
 
+    def test_compute_local_activation_params_include_fatigue_penalty(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            stim_config = self.make_stim_encoder_config(Path(temp_dir_name))
+            model = EmoNet(
+                EmoNetConfig(
+                    seed=29,
+                    hysteresis_threshold_gain=0.10,
+                    hysteresis_remem_gain=0.05,
+                    fatigue_threshold_gain=0.20,
+                ),
+                stim_encoder_config=stim_config,
+            )
+            neuron = model.state.neurons[0]
+            neuron.recent_activity = 1.0
+            neuron.fatigue = 1.5
+            threshold, remem = model._compute_local_activation_params(neuron, 0.72, 0.95)
+
+            self.assertAlmostEqual(threshold, 0.92, places=6)
+            self.assertAlmostEqual(remem, 1.025, places=6)
+
+    def test_alignment_drive_and_fire_value_are_modulated_by_fatigue(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            stim_config = self.make_stim_encoder_config(Path(temp_dir_name))
+            model = EmoNet(
+                EmoNetConfig(
+                    seed=31,
+                    intrinsic_alignment_gain=0.24,
+                    fire_output_log_gain=1.0,
+                ),
+                stim_encoder_config=stim_config,
+            )
+            neuron = model.state.neurons[0]
+            neuron.intrinsic_bias = np.asarray([1.0, 0.0, 0.0, 0.0], dtype=np.float32)
+            low_fatigue_drive = model._compute_intrinsic_alignment_drive(
+                neuron,
+                np.asarray([1.0, 0.0, 0.0, 0.0], dtype=np.float32),
+            )
+            neuron.fatigue = 1.0
+            high_fatigue_drive = model._compute_intrinsic_alignment_drive(
+                neuron,
+                np.asarray([1.0, 0.0, 0.0, 0.0], dtype=np.float32),
+            )
+
+            neuron.K = 3.0
+            neuron.fatigue = 0.0
+            low_fatigue_fire = model._compute_fire_value(neuron)
+            neuron.fatigue = 1.0
+            high_fatigue_fire = model._compute_fire_value(neuron)
+
+            self.assertGreater(low_fatigue_drive, high_fatigue_drive)
+            self.assertGreater(low_fatigue_fire, high_fatigue_fire)
+
     def test_command_probe_branch_reports_stats(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir_name:
             temp_dir = Path(temp_dir_name)
@@ -309,6 +361,12 @@ class EmoNetSmokeTests(unittest.TestCase):
             args.hysteresis_threshold_gain = None
             args.hysteresis_remem_gain = None
             args.hysteresis_k_bonus = None
+            args.intrinsic_alignment_gain = None
+            args.fatigue_decay = None
+            args.fatigue_gain = None
+            args.fatigue_threshold_gain = None
+            args.fatigue_k_leak = None
+            args.fire_output_log_gain = None
             args.max_out_degree = None
             args.min_out_degree = None
             args.dopa_rewire_gain = None

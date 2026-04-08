@@ -1,0 +1,10 @@
+{
+  "rows": 8,
+  "no_activity_rows": 0,
+  "mean_first_active_tick": 13.375,
+  "median_first_active_tick": 15.0,
+  "p90_first_active_tick": 15.3,
+  "late_ignition_ratio_ge_15": 0.625,
+  "mean_active_window_ticks": 114.625,
+  "median_active_window_ticks": 113.0
+}

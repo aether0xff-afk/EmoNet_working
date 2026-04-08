@@ -1,0 +1,6 @@
+[
+  "baseline",
+  "random:k_threshold_base=0.82;k_remem_base=0.95;k_decay=0.97;refractory_ticks=3;input_signal_clip=1.0;recent_activity_decay=0.3;hysteresis_threshold_gain=0.0;hysteresis_remem_gain=0.0;hysteresis_k_bonus=0.0;memory_decay=0.98;memory_k_mix=0.0;state_base_stim_mix=0.05",
+  "random:k_threshold_base=0.82;k_remem_base=1.05;k_decay=0.97;refractory_ticks=3;input_signal_clip=1.0;recent_activity_decay=0.2;hysteresis_threshold_gain=0.03;hysteresis_remem_gain=0.0;hysteresis_k_bonus=0.0;memory_decay=0.98;memory_k_mix=0.0;state_base_stim_mix=0.05",
+  "random:k_threshold_base=0.9;k_remem_base=0.95;k_decay=0.97;refractory_ticks=3;input_signal_clip=1.0;recent_activity_decay=0.4;hysteresis_threshold_gain=0.03;hysteresis_remem_gain=0.0;hysteresis_k_bonus=0.02;memory_decay=0.98;memory_k_mix=0.1;state_base_stim_mix=0.05"
+]

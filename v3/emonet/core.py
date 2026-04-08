@@ -101,6 +101,7 @@ class NeuronState:
     k_remem: float = 1.2
     refractory_left: int = 0
     recent_activity: float = 0.0
+    fatigue: float = 0.0
     dropped_out: bool = False
     out_neighbors: set[int] = field(default_factory=set)
     in_neighbors: set[int] = field(default_factory=set)
@@ -192,6 +193,12 @@ class EmoNetConfig:
     hysteresis_threshold_gain: float = 0.12
     hysteresis_remem_gain: float = 0.08
     hysteresis_k_bonus: float = 0.08
+    intrinsic_alignment_gain: float = 0.24
+    fatigue_decay: float = 0.90
+    fatigue_gain: float = 0.30
+    fatigue_threshold_gain: float = 0.18
+    fatigue_k_leak: float = 0.08
+    fire_output_log_gain: float = 0.75
 
     max_out_degree: int = 12
     min_out_degree: int = 1
@@ -244,9 +251,17 @@ class EmoNetConfig:
             "hysteresis_threshold_gain",
             "hysteresis_remem_gain",
             "hysteresis_k_bonus",
+            "intrinsic_alignment_gain",
+            "fatigue_decay",
+            "fatigue_gain",
+            "fatigue_threshold_gain",
+            "fatigue_k_leak",
+            "fire_output_log_gain",
         ):
             if getattr(self, field_name) < 0.0:
                 raise ValueError(f"{field_name} must be non-negative")
+        if self.fatigue_decay > 1.0:
+            raise ValueError("fatigue_decay must be in [0, 1]")
 
 
 def _project_root() -> Path:
@@ -1297,13 +1312,32 @@ class EmoNet:
     ) -> tuple[float, float]:
         threshold = max(
             0.0,
-            float(effective_threshold) - self.config.hysteresis_threshold_gain * float(neuron.recent_activity),
+            float(effective_threshold)
+            - self.config.hysteresis_threshold_gain * float(neuron.recent_activity)
+            + self.config.fatigue_threshold_gain * float(neuron.fatigue),
         )
         remem = max(
             0.0,
-            float(effective_remem) - self.config.hysteresis_remem_gain * float(neuron.recent_activity),
+            float(effective_remem)
+            - self.config.hysteresis_remem_gain * float(neuron.recent_activity)
+            + 0.5 * self.config.fatigue_threshold_gain * float(neuron.fatigue),
         )
         return threshold, remem
+
+    def _compute_intrinsic_alignment_drive(self, neuron: NeuronState, base_stim_vec: np.ndarray) -> float:
+        if self.config.intrinsic_alignment_gain <= 0.0:
+            return 0.0
+        alignment = max(0.0, cosine_similarity(base_stim_vec, neuron.intrinsic_bias))
+        fatigue_scale = 1.0 + float(neuron.fatigue)
+        return float(self.config.intrinsic_alignment_gain) * alignment / fatigue_scale
+
+    def _compute_fire_value(self, neuron: NeuronState) -> float:
+        raw_k = max(0.0, float(neuron.K))
+        if raw_k <= 0.0:
+            return 0.0
+        if self.config.fire_output_log_gain > 0.0:
+            raw_k = math.log1p(self.config.fire_output_log_gain * raw_k) / self.config.fire_output_log_gain
+        return raw_k / (1.0 + float(neuron.fatigue))
 
     def run_tick(self, base_stim_vec: np.ndarray, text: str) -> TickRecord:
         self._restore_awake_neurons()
@@ -1320,6 +1354,7 @@ class EmoNet:
         active_candidates: list[int] = []
         for neuron in self.state.neurons:
             neuron.recent_activity *= self.config.recent_activity_decay
+            neuron.fatigue *= self.config.fatigue_decay
             neuron.stim_vec = self._compose_neuron_stimulus(
                 neuron,
                 base_stim_vec=base_stim_vec,
@@ -1332,12 +1367,14 @@ class EmoNet:
             )
 
             neuron.K *= self.config.k_decay
+            neuron.K = max(0.0, neuron.K - self.config.fatigue_k_leak * float(neuron.fatigue))
             if neuron.refractory_left > 0 or neuron.dropped_out:
                 neuron.K = max(0.0, neuron.K)
                 continue
 
             neuron.K += float(input_strengths[neuron.neuron_id])
             neuron.K += self.config.hysteresis_k_bonus * float(neuron.recent_activity)
+            neuron.K += self._compute_intrinsic_alignment_drive(neuron, base_stim_vec)
             neuron.K += 0.3 * float(neuron.stim_vec[0]) + 0.3 * float(neuron.stim_vec[2])
             neuron.K -= 0.3 * float(neuron.stim_vec[1]) + 0.3 * float(neuron.stim_vec[3])
             neuron.K = max(0.0, neuron.K)
@@ -1365,12 +1402,13 @@ class EmoNet:
         edges_fired: list[tuple[int, int]] = []
         for node_id in final_active_nodes:
             neuron = self.state.neurons[node_id]
-            fire_value = float(neuron.K)
+            fire_value = self._compute_fire_value(neuron)
             for dst in sorted(neuron.out_neighbors):
                 next_pending_signals.setdefault(dst, []).append((fire_value, neuron.stim_vec.copy()))
                 edges_fired.append((node_id, dst))
             neuron.refractory_left = self.config.refractory_ticks
             neuron.recent_activity = min(2.0, neuron.recent_activity + 1.0)
+            neuron.fatigue = min(4.0, neuron.fatigue + self.config.fatigue_gain)
 
         record = TickRecord(
             tick=self.state.tick,

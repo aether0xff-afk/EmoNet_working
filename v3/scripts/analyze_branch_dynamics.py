@@ -442,7 +442,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--memory-decay", dest="memory_decay", type=float, default=None)
     parser.add_argument("--memory-stim-mix", dest="memory_stim_mix", type=float, default=None)
     parser.add_argument("--memory-k-mix", dest="memory_k_mix", type=float, default=None)
+    parser.add_argument("--state-self-stim-mix", dest="state_self_stim_mix", type=float, default=None)
+    parser.add_argument("--state-parent-stim-mix", dest="state_parent_stim_mix", type=float, default=None)
+    parser.add_argument("--state-base-stim-mix", dest="state_base_stim_mix", type=float, default=None)
+    parser.add_argument("--state-bias-stim-mix", dest="state_bias_stim_mix", type=float, default=None)
     parser.add_argument("--recent-activity-decay", dest="recent_activity_decay", type=float, default=None)
+    parser.add_argument("--hysteresis-threshold-gain", dest="hysteresis_threshold_gain", type=float, default=None)
+    parser.add_argument("--hysteresis-remem-gain", dest="hysteresis_remem_gain", type=float, default=None)
+    parser.add_argument("--hysteresis-k-bonus", dest="hysteresis_k_bonus", type=float, default=None)
     parser.add_argument("--intrinsic-alignment-gain", dest="intrinsic_alignment_gain", type=float, default=None)
     parser.add_argument("--fatigue-decay", dest="fatigue_decay", type=float, default=None)
     parser.add_argument("--fatigue-gain", dest="fatigue_gain", type=float, default=None)
@@ -527,6 +534,13 @@ def main() -> None:
         "fatigue_k_leak": float(config_model.config.fatigue_k_leak),
         "fire_output_log_gain": float(config_model.config.fire_output_log_gain),
         "inhibitory_suppression_gain": float(config_model.config.inhibitory_suppression_gain),
+        "state_self_stim_mix": float(config_model.config.state_self_stim_mix),
+        "state_parent_stim_mix": float(config_model.config.state_parent_stim_mix),
+        "state_base_stim_mix": float(config_model.config.state_base_stim_mix),
+        "state_bias_stim_mix": float(config_model.config.state_bias_stim_mix),
+        "hysteresis_threshold_gain": float(config_model.config.hysteresis_threshold_gain),
+        "hysteresis_remem_gain": float(config_model.config.hysteresis_remem_gain),
+        "hysteresis_k_bonus": float(config_model.config.hysteresis_k_bonus),
     }
     write_report(
         output_dir / "BRANCH_DYNAMICS_RESEARCH.md",

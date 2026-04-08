@@ -322,6 +322,34 @@ def summarize_candidate(
         4,
     )
 
+    constraint_failures: list[str] = []
+    constraint_penalty = 0.0
+
+    def apply_upper_constraint(metric_name: str, metric_value: float, limit: float | None) -> None:
+        nonlocal constraint_penalty
+        if limit is None:
+            return
+        if metric_value > limit:
+            scale = max(abs(limit), 1e-6)
+            constraint_penalty += (metric_value - limit) / scale
+            constraint_failures.append(f"{metric_name}>{limit}")
+
+    def apply_lower_constraint(metric_name: str, metric_value: float, limit: float | None) -> None:
+        nonlocal constraint_penalty
+        if limit is None:
+            return
+        if metric_value < limit:
+            scale = max(abs(limit), 1e-6)
+            constraint_penalty += (limit - metric_value) / scale
+            constraint_failures.append(f"{metric_name}<{limit}")
+
+    apply_upper_constraint("len1_ratio", len1_ratio, args.max_len1_ratio)
+    apply_upper_constraint("hit_max_ticks_ratio", hit_max_ticks_ratio, args.max_hit_max_ticks_ratio)
+    apply_upper_constraint("mean_first_active_tick", mean_first_active_tick, args.max_first_active_tick)
+    apply_upper_constraint("late_ignition_ratio_ge_15", late_ignition_ratio, args.max_late_ignition_ratio)
+    apply_lower_constraint("mean_branch_len", mean_branch_len, args.min_mean_branch_len)
+    is_feasible = len(constraint_failures) == 0
+
     return {
         "config_name": config_name,
         "params_json": stable_params_key(params),
@@ -349,6 +377,9 @@ def summarize_candidate(
         "score_first_active_component": round(first_active_component, 4),
         "score_active_window_component": round(active_window_component, 4),
         "balanced_score": balanced_score,
+        "constraint_penalty": round(constraint_penalty, 6),
+        "constraint_failures": ";".join(constraint_failures),
+        "is_feasible": is_feasible,
     }
 
 
@@ -516,6 +547,14 @@ def write_report(
         f"- target_first_active_tick: `{args.target_first_active_tick}`",
         f"- target_active_window_ratio: `{args.target_active_window_ratio}`",
         "",
+        "## Constraints",
+        "",
+        f"- max_len1_ratio: `{args.max_len1_ratio}`",
+        f"- max_hit_max_ticks_ratio: `{args.max_hit_max_ticks_ratio}`",
+        f"- max_first_active_tick: `{args.max_first_active_tick}`",
+        f"- max_late_ignition_ratio: `{args.max_late_ignition_ratio}`",
+        f"- min_mean_branch_len: `{args.min_mean_branch_len}`",
+        "",
         "## Search Space",
         "",
         "```json",
@@ -553,6 +592,9 @@ def write_report(
                 "",
                 f"- balanced_score: `{row['balanced_score']:.4f}`",
                 f"- pareto_front: `{bool(row['is_pareto_front'])}`",
+                f"- feasible: `{bool(row['is_feasible'])}`",
+                f"- constraint_penalty: `{row['constraint_penalty']:.6f}`",
+                f"- constraint_failures: `{row['constraint_failures']}`",
                 f"- mean_branch_len: `{row['mean_branch_len']:.4f}`",
                 f"- len1_ratio: `{row['len1_ratio']:.4f}`",
                 f"- hit_max_ticks_ratio: `{row['hit_max_ticks_ratio']:.4f}`",
@@ -601,6 +643,11 @@ def main() -> None:
     parser.add_argument("--target-first-active-tolerance", type=float, default=12.0)
     parser.add_argument("--target-active-window-ratio", type=float, default=0.45)
     parser.add_argument("--target-active-window-tolerance", type=float, default=0.35)
+    parser.add_argument("--max-len1-ratio", type=float, default=None)
+    parser.add_argument("--max-hit-max-ticks-ratio", type=float, default=None)
+    parser.add_argument("--max-first-active-tick", type=float, default=None)
+    parser.add_argument("--max-late-ignition-ratio", type=float, default=None)
+    parser.add_argument("--min-mean-branch-len", type=float, default=None)
     parser.add_argument("--output-dir", default=str(Path("outputs") / "branch_optimize" / "latest"))
     args = parser.parse_args()
 
@@ -661,8 +708,8 @@ def main() -> None:
     summary_df = pd.DataFrame(summary_rows)
     summary_df = mark_pareto_front(summary_df)
     summary_df = summary_df.sort_values(
-        by=["balanced_score", "len1_ratio", "hit_max_ticks_ratio", "mean_branch_len"],
-        ascending=[False, True, True, False],
+        by=["is_feasible", "constraint_penalty", "balanced_score", "len1_ratio", "hit_max_ticks_ratio", "mean_branch_len"],
+        ascending=[False, True, False, True, True, False],
     ).reset_index(drop=True)
     detail_df = pd.concat(sample_frames, ignore_index=True) if sample_frames else pd.DataFrame()
     tick_df = pd.concat(tick_frames, ignore_index=True) if tick_frames else pd.DataFrame()

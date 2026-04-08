@@ -1,0 +1,18 @@
+{
+  "completed_runs": 17,
+  "recommended_rows": 8,
+  "parameter_evidence_csv": "outputs\\branch_calibration\\reference_calibration_rdp_v1\\parameter_evidence.csv",
+  "parameter_recommendations_csv": "outputs\\branch_calibration\\reference_calibration_rdp_v1\\parameter_recommendations.csv",
+  "sample_details_csv": "outputs\\branch_calibration\\reference_calibration_rdp_v1\\sample_details.csv",
+  "tick_details_csv": "outputs\\branch_calibration\\reference_calibration_rdp_v1\\tick_details.csv",
+  "figure_paths": [
+    "outputs\\branch_calibration\\reference_calibration_rdp_v1\\figures\\activity_count_delta_eps_calibration.svg",
+    "outputs\\branch_calibration\\reference_calibration_rdp_v1\\figures\\convergence_patience_calibration.svg",
+    "outputs\\branch_calibration\\reference_calibration_rdp_v1\\figures\\fatigue_gain_calibration.svg",
+    "outputs\\branch_calibration\\reference_calibration_rdp_v1\\figures\\inhibitory_suppression_gain_calibration.svg",
+    "outputs\\branch_calibration\\reference_calibration_rdp_v1\\figures\\intrinsic_alignment_gain_calibration.svg",
+    "outputs\\branch_calibration\\reference_calibration_rdp_v1\\figures\\k_decay_calibration.svg",
+    "outputs\\branch_calibration\\reference_calibration_rdp_v1\\figures\\k_remem_base_calibration.svg",
+    "outputs\\branch_calibration\\reference_calibration_rdp_v1\\figures\\k_threshold_base_calibration.svg"
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "k_threshold_base": [
+    0.68,
+    0.7,
+    0.72,
+    0.74
+  ],
+  "k_remem_base": [
+    1.0,
+    1.05,
+    1.1
+  ],
+  "k_decay": [
+    0.91,
+    0.93,
+    0.95
+  ],
+  "intrinsic_alignment_gain": [
+    0.2,
+    0.24,
+    0.28
+  ],
+  "fatigue_gain": [
+    0.15,
+    0.2,
+    0.25
+  ],
+  "inhibitory_suppression_gain": [
+    0.12,
+    0.18,
+    0.24
+  ],
+  "convergence_patience": [
+    3,
+    4,
+    6
+  ],
+  "activity_count_delta_eps": [
+    1.0,
+    2.0,
+    3.0
+  ]
+}

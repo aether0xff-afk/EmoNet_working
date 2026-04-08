@@ -22,7 +22,10 @@ from emonet.cli import build_model as build_emonet_model, maybe_print_progress, 
 from emonet.cli import (
     _init_parallel_model,
     _require_parallel_model,
+    build_worker_fallback_plan,
     estimate_executor_chunksize,
+    is_parallel_pool_failure,
+    print_worker_fallback,
     prepare_parallel_model_payload,
     resolve_num_workers,
 )
@@ -138,34 +141,61 @@ def analyze_sample_runs(
     sample_rows: list[dict[str, object]] = []
     tick_rows: list[dict[str, object]] = []
     start_time = time.perf_counter()
-    worker_count = resolve_num_workers(num_workers)
+    fallback_plan = build_worker_fallback_plan(num_workers)
+    worker_count = fallback_plan[0]
+    indexed_texts = list(enumerate(texts, start=1))
 
     if worker_count <= 1:
         if model is None:
             raise ValueError("model is required when num_workers <= 1")
-        for idx, text in enumerate(texts, start=1):
-            sample_row, sample_tick_rows = _analyze_single_text(model, idx, text)
+        for sample_index, text in indexed_texts:
+            sample_row, sample_tick_rows = _analyze_single_text(model, sample_index, text)
             sample_rows.append(sample_row)
             tick_rows.extend(sample_tick_rows)
-            maybe_print_progress("branch-analysis", idx, len(texts), start_time, every=progress_every, unit="samples")
+            maybe_print_progress(
+                "branch-analysis",
+                len(sample_rows),
+                len(texts),
+                start_time,
+                every=progress_every,
+                unit="samples",
+            )
     else:
         if model_args is None:
             raise ValueError("model_args is required when num_workers > 1")
         payload = prepare_parallel_model_payload(model_args)
-        chunksize = estimate_executor_chunksize(len(texts), worker_count, preferred=32)
-        task_iter = ((idx, text) for idx, text in enumerate(texts, start=1))
-        with ProcessPoolExecutor(
-            max_workers=worker_count,
-            initializer=_init_parallel_model,
-            initargs=(payload,),
-        ) as executor:
-            for idx, (sample_row, sample_tick_rows) in enumerate(
-                executor.map(_parallel_analyze_record, task_iter, chunksize=chunksize),
-                start=1,
-            ):
-                sample_rows.append(sample_row)
-                tick_rows.extend(sample_tick_rows)
-                maybe_print_progress("branch-analysis", idx, len(texts), start_time, every=progress_every, unit="samples")
+        completed = 0
+        for plan_idx, current_workers in enumerate(fallback_plan):
+            remaining_tasks = indexed_texts[completed:]
+            if not remaining_tasks:
+                break
+            if current_workers <= 1:
+                serial_model = model if model is not None else build_emonet_model(model_args)
+                for sample_index, text in remaining_tasks:
+                    sample_row, sample_tick_rows = _analyze_single_text(serial_model, sample_index, text)
+                    sample_rows.append(sample_row)
+                    tick_rows.extend(sample_tick_rows)
+                    completed += 1
+                    maybe_print_progress("branch-analysis", completed, len(texts), start_time, every=progress_every, unit="samples")
+                break
+
+            try:
+                chunksize = estimate_executor_chunksize(len(remaining_tasks), current_workers, preferred=32)
+                with ProcessPoolExecutor(
+                    max_workers=current_workers,
+                    initializer=_init_parallel_model,
+                    initargs=(payload,),
+                ) as executor:
+                    for sample_row, sample_tick_rows in executor.map(_parallel_analyze_record, remaining_tasks, chunksize=chunksize):
+                        sample_rows.append(sample_row)
+                        tick_rows.extend(sample_tick_rows)
+                        completed += 1
+                        maybe_print_progress("branch-analysis", completed, len(texts), start_time, every=progress_every, unit="samples")
+                break
+            except Exception as exc:
+                if not is_parallel_pool_failure(exc) or plan_idx >= len(fallback_plan) - 1:
+                    raise
+                print_worker_fallback("branch-analysis", current_workers, fallback_plan[plan_idx + 1], exc)
 
     sample_df = pd.DataFrame(sample_rows)
     tick_df = pd.DataFrame(tick_rows)

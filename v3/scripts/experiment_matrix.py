@@ -14,6 +14,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from emonet.cli import (
     DEFAULT_STYLE_PROFILE,
+    MODEL_OPTIONAL_CONFIG_FIELDS,
     append_csv_rows,
     append_jsonl,
     build_model as build_emonet_model,
@@ -434,6 +435,10 @@ def main() -> None:
     parser.add_argument("--z-encoder-mode", choices=["auto", "stat", "transformer"], default="auto")
     parser.add_argument("--z-encoder-path", default=None)
     parser.add_argument("--style-profile", choices=["core32", "extended40"], default=DEFAULT_STYLE_PROFILE)
+    config_defaults = EmoNet().config
+    for field_name in MODEL_OPTIONAL_CONFIG_FIELDS:
+        default_value = getattr(config_defaults, field_name)
+        parser.add_argument(f"--{field_name.replace('_', '-')}", dest=field_name, type=type(default_value), default=None)
     args = parser.parse_args()
 
     conditions = parse_conditions(args.conditions)

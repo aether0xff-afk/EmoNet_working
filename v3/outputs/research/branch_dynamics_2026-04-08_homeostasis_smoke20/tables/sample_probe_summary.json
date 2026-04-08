@@ -1,16 +1,20 @@
 {
   "rows": 20,
-  "mean_branch_len": 113.4,
-  "p95_branch_len": 114.55000000000001,
-  "mean_ticks_run": 128.0,
+  "mean_branch_len": 63.45,
+  "p95_branch_len": 126.0,
+  "mean_ticks_run": 69.25,
   "p95_ticks_run": 128.0,
-  "hit_max_ticks_ratio": 1.0,
-  "mean_path_coverage": 0.9982339698804534,
-  "mean_silent_tail_ticks": 0.0,
+  "hit_max_ticks_ratio": 0.35,
+  "mean_path_coverage": 0.6978174603174603,
+  "mean_silent_tail_ticks": 3.3,
   "termination_counts": [
     {
+      "termination_reason": "delta_k",
+      "count": 13
+    },
+    {
       "termination_reason": "max_ticks",
-      "count": 20
+      "count": 7
     }
   ]
 }

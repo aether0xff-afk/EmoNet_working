@@ -13,31 +13,38 @@
 
 - Current hard cap is `max_ticks=128` with `min_ticks_before_converged=6`.
 - Full export improved mean dominant branch length to `18.96` and reduced `L1` ratio to `0.0154`, but the upper tail is still bounded (`p95=25.0`, `max=30`).
-- `100.0%` of sampled runs terminated by hitting `max_ticks`, so the hard cap is already a material bottleneck.
+- `35.0%` of sampled runs terminated by hitting `max_ticks`, so the hard cap is already a material bottleneck.
+- Mean ticks run is `69.25`, well below the cap, which indicates the current `delta_k` convergence test is still aggressive.
+- Mean dominant-path coverage is only `0.698`, so many active ticks do not survive into the selected branch. This suggests a second bottleneck in path selection or connectivity continuity, not only raw depth.
+- Silent tail after the last active tick averages `3.30` ticks, which means the model often keeps stepping after meaningful branch activity has already decayed.
 
 ## Version Summary
 
- rows      mean  median  len1_count  len1_ratio  p90  p95  max                                dataset                                                                                               source_csv
-51628  1.053944     1.0       50257    0.973445  1.0  1.0  8.0              out_z_training_extended40              C:\Users\esl01\OneDrive\문서\GitHub\EmoNet_working\v3\outputs\z\out_z_training_extended40.csv
-51628  2.730824     1.0       42509    0.823371  9.0 14.0 26.0    out_z_training_extended40_branchfix    C:\Users\esl01\OneDrive\문서\GitHub\EmoNet_working\v3\outputs\z\out_z_training_extended40_branchfix.csv
-51628  6.156117     1.0       35595    0.689451 23.0 26.0 35.0 out_z_training_extended40_branchfix_v2 C:\Users\esl01\OneDrive\문서\GitHub\EmoNet_working\v3\outputs\z\out_z_training_extended40_branchfix_v2.csv
-51628 18.964922    20.0         796    0.015418 24.0 25.0 30.0    out_z_training_extended40_structfix    C:\Users\esl01\OneDrive\문서\GitHub\EmoNet_working\v3\outputs\z\out_z_training_extended40_structfix.csv
+ rows      mean  median  len1_count  len1_ratio  p90  p95  max                                dataset                                                                                              source_csv
+51628  1.053944     1.0       50257    0.973445  1.0  1.0  8.0              out_z_training_extended40              C:\Users\remote\Documents\GitHub\EmoNet_working\v3\outputs\z\out_z_training_extended40.csv
+51628  2.730824     1.0       42509    0.823371  9.0 14.0 26.0    out_z_training_extended40_branchfix    C:\Users\remote\Documents\GitHub\EmoNet_working\v3\outputs\z\out_z_training_extended40_branchfix.csv
+51628  6.156117     1.0       35595    0.689451 23.0 26.0 35.0 out_z_training_extended40_branchfix_v2 C:\Users\remote\Documents\GitHub\EmoNet_working\v3\outputs\z\out_z_training_extended40_branchfix_v2.csv
+51628 18.964922    20.0         796    0.015418 24.0 25.0 30.0    out_z_training_extended40_structfix    C:\Users\remote\Documents\GitHub\EmoNet_working\v3\outputs\z\out_z_training_extended40_structfix.csv
 
 ## Sample Probe Summary
 
 {
   "rows": 20,
-  "mean_branch_len": 113.4,
-  "p95_branch_len": 114.55000000000001,
-  "mean_ticks_run": 128.0,
+  "mean_branch_len": 63.45,
+  "p95_branch_len": 126.0,
+  "mean_ticks_run": 69.25,
   "p95_ticks_run": 128.0,
-  "hit_max_ticks_ratio": 1.0,
-  "mean_path_coverage": 0.9982339698804534,
-  "mean_silent_tail_ticks": 0.0,
+  "hit_max_ticks_ratio": 0.35,
+  "mean_path_coverage": 0.6978174603174603,
+  "mean_silent_tail_ticks": 3.3,
   "termination_counts": [
     {
+      "termination_reason": "delta_k",
+      "count": 13
+    },
+    {
       "termination_reason": "max_ticks",
-      "count": 20
+      "count": 7
     }
   ]
 }

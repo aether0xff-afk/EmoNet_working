@@ -275,7 +275,7 @@ class EmoNetSmokeTests(unittest.TestCase):
             threshold, remem = model._compute_local_activation_params(neuron, 0.72, 0.95)
 
             self.assertAlmostEqual(threshold, 0.92, places=6)
-            self.assertAlmostEqual(remem, 1.025, places=6)
+            self.assertAlmostEqual(remem, 1.05, places=6)
 
     def test_alignment_drive_and_fire_value_are_modulated_by_fatigue(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir_name:
@@ -308,6 +308,64 @@ class EmoNetSmokeTests(unittest.TestCase):
 
             self.assertGreater(low_fatigue_drive, high_fatigue_drive)
             self.assertGreater(low_fatigue_fire, high_fatigue_fire)
+
+    def test_lateral_inhibition_suppresses_neighbor_candidates(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            stim_config = self.make_stim_encoder_config(Path(temp_dir_name))
+            model = EmoNet(
+                EmoNetConfig(
+                    seed=37,
+                    fire_output_log_gain=0.0,
+                    inhibitory_suppression_gain=0.5,
+                ),
+                stim_encoder_config=stim_config,
+            )
+            inhibitory = model.state.neurons[0]
+            inhibitory.neuron_type = "inhibitory"
+            inhibitory.out_neighbors = {1}
+            inhibitory.K = 2.0
+            target = model.state.neurons[1]
+            target.K = 1.0
+            target.k_threshold = 0.75
+
+            surviving = model._apply_lateral_inhibition([0, 1])
+
+            self.assertEqual(surviving, [0])
+            self.assertEqual(target.K, 0.0)
+
+    def test_tick_stability_uses_count_edge_and_set_churn(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            stim_config = self.make_stim_encoder_config(Path(temp_dir_name))
+            model = EmoNet(
+                EmoNetConfig(
+                    seed=41,
+                    activity_count_delta_eps=2.0,
+                    edge_count_delta_eps=12.0,
+                    activity_churn_eps=0.02,
+                ),
+                stim_encoder_config=stim_config,
+            )
+            stable_prev = TickRecord(
+                tick=10,
+                active_nodes=[1, 2, 3, 4],
+                node_states={},
+                edges_fired=[(1, 2)] * 30,
+            )
+            stable_curr = TickRecord(
+                tick=11,
+                active_nodes=[1, 2, 3, 4],
+                node_states={},
+                edges_fired=[(1, 2)] * 34,
+            )
+            unstable_curr = TickRecord(
+                tick=11,
+                active_nodes=[5, 6, 7, 8],
+                node_states={},
+                edges_fired=[(1, 2)] * 34,
+            )
+
+            self.assertTrue(model._tick_is_stable(stable_prev, stable_curr))
+            self.assertFalse(model._tick_is_stable(stable_prev, unstable_curr))
 
     def test_command_probe_branch_reports_stats(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir_name:
@@ -344,6 +402,10 @@ class EmoNetSmokeTests(unittest.TestCase):
             args.z_encoder_path = None
             args.max_ticks = None
             args.min_ticks_before_converged = None
+            args.convergence_patience = None
+            args.activity_count_delta_eps = None
+            args.edge_count_delta_eps = None
+            args.activity_churn_eps = None
             args.k_threshold_base = None
             args.k_remem_base = None
             args.k_decay = None
@@ -367,6 +429,7 @@ class EmoNetSmokeTests(unittest.TestCase):
             args.fatigue_threshold_gain = None
             args.fatigue_k_leak = None
             args.fire_output_log_gain = None
+            args.inhibitory_suppression_gain = None
             args.max_out_degree = None
             args.min_out_degree = None
             args.dopa_rewire_gain = None

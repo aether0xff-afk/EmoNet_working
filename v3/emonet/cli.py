@@ -41,6 +41,10 @@ MODEL_OPTIONAL_CONFIG_FIELDS = [
     "k_threshold_base",
     "k_remem_base",
     "k_decay",
+    "convergence_patience",
+    "activity_count_delta_eps",
+    "edge_count_delta_eps",
+    "activity_churn_eps",
     "refractory_ticks",
     "input_topk",
     "input_signal_clip",
@@ -61,6 +65,7 @@ MODEL_OPTIONAL_CONFIG_FIELDS = [
     "fatigue_threshold_gain",
     "fatigue_k_leak",
     "fire_output_log_gain",
+    "inhibitory_suppression_gain",
     "max_out_degree",
     "min_out_degree",
     "dopa_rewire_gain",
@@ -3658,6 +3663,10 @@ def build_parser() -> argparse.ArgumentParser:
         subparser.add_argument("--z-encoder-path", dest="z_encoder_path", type=str, default=str(DEFAULT_Z_ENCODER_MODEL_PATH))
         subparser.add_argument("--max-ticks", dest="max_ticks", type=int, default=None)
         subparser.add_argument("--min-ticks-before-converged", dest="min_ticks_before_converged", type=int, default=None)
+        subparser.add_argument("--convergence-patience", dest="convergence_patience", type=int, default=None)
+        subparser.add_argument("--activity-count-delta-eps", dest="activity_count_delta_eps", type=float, default=None)
+        subparser.add_argument("--edge-count-delta-eps", dest="edge_count_delta_eps", type=float, default=None)
+        subparser.add_argument("--activity-churn-eps", dest="activity_churn_eps", type=float, default=None)
         subparser.add_argument("--k-threshold-base", dest="k_threshold_base", type=float, default=None)
         subparser.add_argument("--k-remem-base", dest="k_remem_base", type=float, default=None)
         subparser.add_argument("--k-decay", dest="k_decay", type=float, default=None)
@@ -3681,6 +3690,7 @@ def build_parser() -> argparse.ArgumentParser:
         subparser.add_argument("--fatigue-threshold-gain", dest="fatigue_threshold_gain", type=float, default=None)
         subparser.add_argument("--fatigue-k-leak", dest="fatigue_k_leak", type=float, default=None)
         subparser.add_argument("--fire-output-log-gain", dest="fire_output_log_gain", type=float, default=None)
+        subparser.add_argument("--inhibitory-suppression-gain", dest="inhibitory_suppression_gain", type=float, default=None)
         subparser.add_argument("--max-out-degree", dest="max_out_degree", type=int, default=None)
         subparser.add_argument("--min-out-degree", dest="min_out_degree", type=int, default=None)
         subparser.add_argument("--dopa-rewire-gain", dest="dopa_rewire_gain", type=float, default=None)

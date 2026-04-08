@@ -429,6 +429,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--z-encoder-path", default=None)
     parser.add_argument("--max-ticks", dest="max_ticks", type=int, default=None)
     parser.add_argument("--min-ticks-before-converged", dest="min_ticks_before_converged", type=int, default=None)
+    parser.add_argument("--convergence-patience", dest="convergence_patience", type=int, default=None)
+    parser.add_argument("--activity-count-delta-eps", dest="activity_count_delta_eps", type=float, default=None)
+    parser.add_argument("--edge-count-delta-eps", dest="edge_count_delta_eps", type=float, default=None)
+    parser.add_argument("--activity-churn-eps", dest="activity_churn_eps", type=float, default=None)
     parser.add_argument("--k-threshold-base", dest="k_threshold_base", type=float, default=None)
     parser.add_argument("--k-remem-base", dest="k_remem_base", type=float, default=None)
     parser.add_argument("--k-decay", dest="k_decay", type=float, default=None)
@@ -445,6 +449,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--fatigue-threshold-gain", dest="fatigue_threshold_gain", type=float, default=None)
     parser.add_argument("--fatigue-k-leak", dest="fatigue_k_leak", type=float, default=None)
     parser.add_argument("--fire-output-log-gain", dest="fire_output_log_gain", type=float, default=None)
+    parser.add_argument("--inhibitory-suppression-gain", dest="inhibitory_suppression_gain", type=float, default=None)
     parser.add_argument("--global-recovery-rate", dest="global_recovery_rate", type=float, default=None)
     parser.add_argument("--branch-end-window", dest="branch_end_window", type=int, default=None)
     parser.add_argument("--branch-length-bonus", dest="branch_length_bonus", type=float, default=None)
@@ -507,6 +512,10 @@ def main() -> None:
     config = {
         "max_ticks": int(config_model.config.max_ticks),
         "min_ticks_before_converged": int(config_model.config.min_ticks_before_converged),
+        "convergence_patience": int(config_model.config.convergence_patience),
+        "activity_count_delta_eps": float(config_model.config.activity_count_delta_eps),
+        "edge_count_delta_eps": float(config_model.config.edge_count_delta_eps),
+        "activity_churn_eps": float(config_model.config.activity_churn_eps),
         "k_threshold_base": float(config_model.config.k_threshold_base),
         "k_decay": float(config_model.config.k_decay),
         "input_topk": int(config_model.config.input_topk),
@@ -517,6 +526,7 @@ def main() -> None:
         "fatigue_threshold_gain": float(config_model.config.fatigue_threshold_gain),
         "fatigue_k_leak": float(config_model.config.fatigue_k_leak),
         "fire_output_log_gain": float(config_model.config.fire_output_log_gain),
+        "inhibitory_suppression_gain": float(config_model.config.inhibitory_suppression_gain),
     }
     write_report(
         output_dir / "BRANCH_DYNAMICS_RESEARCH.md",

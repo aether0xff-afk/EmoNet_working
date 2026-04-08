@@ -171,6 +171,10 @@ class EmoNetConfig:
     max_ticks: int = 128
     min_ticks_before_converged: int = 6
     delta_k_eps: float = 1e-3
+    convergence_patience: int = 6
+    activity_count_delta_eps: float = 2.0
+    edge_count_delta_eps: float = 12.0
+    activity_churn_eps: float = 0.02
 
     k_threshold_base: float = 0.72
     k_remem_base: float = 0.95
@@ -199,6 +203,7 @@ class EmoNetConfig:
     fatigue_threshold_gain: float = 0.18
     fatigue_k_leak: float = 0.08
     fire_output_log_gain: float = 0.75
+    inhibitory_suppression_gain: float = 0.18
 
     max_out_degree: int = 12
     min_out_degree: int = 1
@@ -235,6 +240,8 @@ class EmoNetConfig:
             raise ValueError("s_dim must be positive")
         if self.min_ticks_before_converged < 0:
             raise ValueError("min_ticks_before_converged must be non-negative")
+        if self.convergence_patience < 0:
+            raise ValueError("convergence_patience must be non-negative")
         if self.branch_end_window <= 0:
             raise ValueError("branch_end_window must be positive")
         if self.input_topk <= 0:
@@ -257,6 +264,10 @@ class EmoNetConfig:
             "fatigue_threshold_gain",
             "fatigue_k_leak",
             "fire_output_log_gain",
+            "inhibitory_suppression_gain",
+            "activity_count_delta_eps",
+            "edge_count_delta_eps",
+            "activity_churn_eps",
         ):
             if getattr(self, field_name) < 0.0:
                 raise ValueError(f"{field_name} must be non-negative")
@@ -1339,6 +1350,53 @@ class EmoNet:
             raw_k = math.log1p(self.config.fire_output_log_gain * raw_k) / self.config.fire_output_log_gain
         return raw_k / (1.0 + float(neuron.fatigue))
 
+    def _apply_lateral_inhibition(self, active_candidates: list[int]) -> list[int]:
+        if self.config.inhibitory_suppression_gain <= 0.0 or not active_candidates:
+            return active_candidates
+
+        suppression_by_node = np.zeros(self.config.n_neurons, dtype=np.float32)
+        for node_id in active_candidates:
+            neuron = self.state.neurons[node_id]
+            if neuron.neuron_type != "inhibitory":
+                continue
+            suppression_value = self.config.inhibitory_suppression_gain * self._compute_fire_value(neuron)
+            if suppression_value <= 0.0:
+                continue
+            for dst in neuron.out_neighbors:
+                suppression_by_node[dst] += float(suppression_value)
+
+        if not np.any(suppression_by_node > 0.0):
+            return active_candidates
+
+        surviving_candidates: list[int] = []
+        for node_id in active_candidates:
+            neuron = self.state.neurons[node_id]
+            suppression = float(suppression_by_node[node_id])
+            if suppression > 0.0:
+                neuron.K = max(0.0, neuron.K - suppression)
+            if neuron.K > neuron.k_threshold:
+                surviving_candidates.append(node_id)
+        return surviving_candidates
+
+    @staticmethod
+    def _compute_activity_churn(prev_nodes: Sequence[int], curr_nodes: Sequence[int]) -> float:
+        prev_set = set(int(node_id) for node_id in prev_nodes)
+        curr_set = set(int(node_id) for node_id in curr_nodes)
+        union = prev_set | curr_set
+        if not union:
+            return 0.0
+        return 1.0 - float(len(prev_set & curr_set)) / float(len(union))
+
+    def _tick_is_stable(self, prev_record: TickRecord, curr_record: TickRecord) -> bool:
+        active_delta = abs(len(curr_record.active_nodes) - len(prev_record.active_nodes))
+        edge_delta = abs(len(curr_record.edges_fired) - len(prev_record.edges_fired))
+        activity_churn = self._compute_activity_churn(prev_record.active_nodes, curr_record.active_nodes)
+        return (
+            active_delta <= self.config.activity_count_delta_eps
+            and edge_delta <= self.config.edge_count_delta_eps
+            and activity_churn <= self.config.activity_churn_eps
+        )
+
     def run_tick(self, base_stim_vec: np.ndarray, text: str) -> TickRecord:
         self._restore_awake_neurons()
 
@@ -1387,6 +1445,7 @@ class EmoNet:
             self._apply_memory_sequence(neuron, text, neuron.k_remem)
             self._apply_type_effect(neuron)
 
+        active_candidates = self._apply_lateral_inhibition(active_candidates)
         self._apply_modulatory_effects(active_candidates)
 
         final_active_nodes = [
@@ -1441,13 +1500,20 @@ class EmoNet:
         base_stim_vec = self.text_to_stim_vec(text)
         self.last_base_stim_vec = base_stim_vec.copy()
         input_text = text if isinstance(text, str) else repr(list(np.asarray(base_stim_vec, dtype=float)))
+        stability_streak = 0
 
         while self.state.tick < self.config.max_ticks:
             self.run_tick(base_stim_vec, input_text)
-            if (
-                self.state.tick >= self.config.min_ticks_before_converged
-                and self._last_delta_k < self.config.delta_k_eps
-            ):
+            if self.state.tick < self.config.min_ticks_before_converged:
+                continue
+            if self._last_delta_k < self.config.delta_k_eps:
+                break
+            if len(self.state.branch_log) >= 2:
+                if self._tick_is_stable(self.state.branch_log[-2], self.state.branch_log[-1]):
+                    stability_streak += 1
+                else:
+                    stability_streak = 0
+            if self.config.convergence_patience > 0 and stability_streak >= self.config.convergence_patience:
                 break
 
         return base_stim_vec

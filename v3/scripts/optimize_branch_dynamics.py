@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import importlib.util
 import itertools
 import json
 import math
@@ -21,6 +20,9 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
 
 from emonet.cli import (
     DEFAULT_Z_ENCODER_MODEL_PATH,
@@ -31,6 +33,8 @@ from emonet.cli import (
     resolve_text_column,
 )
 from emonet.core import EmoNetConfig
+
+import analyze_branch_dynamics as ANALYSIS
 
 
 SWEEPABLE_FIELDS: dict[str, type] = {
@@ -82,19 +86,6 @@ PRESET_SEARCH_SPACES: dict[str, dict[str, list[Any]]] = {
         "state_base_stim_mix": [0.05, 0.10, 0.15],
     }
 }
-
-
-def load_analysis_module():
-    helper_path = PROJECT_ROOT / "scripts" / "analyze_branch_dynamics.py"
-    spec = importlib.util.spec_from_file_location("analyze_branch_dynamics_module", helper_path)
-    module = importlib.util.module_from_spec(spec)
-    assert spec is not None and spec.loader is not None
-    spec.loader.exec_module(module)
-    return module
-
-
-ANALYSIS = load_analysis_module()
-
 
 def parse_assignment(raw: str) -> tuple[str, Any]:
     if "=" not in raw:

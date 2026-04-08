@@ -101,6 +101,20 @@ Balanced score rewards low `len1_ratio`, low `hit_max_ticks_ratio`, low late ign
 
 ## Top Candidates
 
+### grid:k_threshold_base=0.72;intrinsic_alignment_gain=0.28
+
+- balanced_score: `79.7712`
+- pareto_front: `True`
+- feasible: `True`
+- constraint_penalty: `0.000000`
+- constraint_failures: ``
+- mean_branch_len: `93.7500`
+- len1_ratio: `0.0000`
+- hit_max_ticks_ratio: `0.2500`
+- mean_first_active_tick: `2.1250`
+- active_window_ratio: `0.7334`
+- params_json: `{"activity_churn_eps": 0.01, "activity_count_delta_eps": 2.0, "branch_end_window": 6, "branch_length_bonus": 0.35, "convergence_patience": 4, "dopa_rewire_gain": 0.8, "edge_count_delta_eps": 12.0, "fatigue_decay": 0.9, "fatigue_gain": 0.2, "fatigue_k_leak": 0.04, "fatigue_threshold_gain": 0.18, "fire_output_log_gain": 0.5, "global_recovery_rate": 0.1, "hysteresis_k_bonus": 0.08, "hysteresis_remem_gain": 0.02, "hysteresis_threshold_gain": 0.03, "inhibitory_suppression_gain": 0.18, "input_signal_clip": 0.8, "input_topk": 2, "intrinsic_alignment_gain": 0.28, "k_decay": 0.93, "k_remem_base": 1.05, "k_threshold_base": 0.72, "max_out_degree": 12, "max_ticks": 128, "mela_dropout_gain": 0.04, "memory_decay": 0.97, "memory_k_mix": 0.35, "memory_stim_mix": 0.25, "min_out_degree": 1, "min_ticks_before_converged": 6, "ne_remem_reduce_gain": 0.25, "ne_thresh_reduce_gain": 0.25, "recent_activity_decay": 0.3, "refractory_ticks": 1, "sero_prune_gain": 0.04, "state_base_stim_mix": 0.1, "state_bias_stim_mix": 0.05, "state_parent_stim_mix": 0.25, "state_self_stim_mix": 0.55, "topk_branches": 4}`
+
 ### grid:k_threshold_base=0.68;intrinsic_alignment_gain=0.2
 
 - balanced_score: `71.5495`
@@ -129,33 +143,33 @@ Balanced score rewards low `len1_ratio`, low `hit_max_ticks_ratio`, low late ign
 - active_window_ratio: `0.7881`
 - params_json: `{"activity_churn_eps": 0.01, "activity_count_delta_eps": 2.0, "branch_end_window": 6, "branch_length_bonus": 0.35, "convergence_patience": 4, "dopa_rewire_gain": 0.8, "edge_count_delta_eps": 12.0, "fatigue_decay": 0.9, "fatigue_gain": 0.2, "fatigue_k_leak": 0.04, "fatigue_threshold_gain": 0.18, "fire_output_log_gain": 0.5, "global_recovery_rate": 0.1, "hysteresis_k_bonus": 0.08, "hysteresis_remem_gain": 0.02, "hysteresis_threshold_gain": 0.03, "inhibitory_suppression_gain": 0.18, "input_signal_clip": 0.8, "input_topk": 2, "intrinsic_alignment_gain": 0.24, "k_decay": 0.93, "k_remem_base": 1.05, "k_threshold_base": 0.68, "max_out_degree": 12, "max_ticks": 128, "mela_dropout_gain": 0.04, "memory_decay": 0.97, "memory_k_mix": 0.35, "memory_stim_mix": 0.25, "min_out_degree": 1, "min_ticks_before_converged": 6, "ne_remem_reduce_gain": 0.25, "ne_thresh_reduce_gain": 0.25, "recent_activity_decay": 0.3, "refractory_ticks": 1, "sero_prune_gain": 0.04, "state_base_stim_mix": 0.1, "state_bias_stim_mix": 0.05, "state_parent_stim_mix": 0.25, "state_self_stim_mix": 0.55, "topk_branches": 4}`
 
-### baseline
+### grid:k_threshold_base=0.72;intrinsic_alignment_gain=0.2
 
-- balanced_score: `69.1667`
+- balanced_score: `69.4792`
+- pareto_front: `True`
+- feasible: `True`
+- constraint_penalty: `0.000000`
+- constraint_failures: ``
+- mean_branch_len: `103.5000`
+- len1_ratio: `0.0000`
+- hit_max_ticks_ratio: `0.5000`
+- mean_first_active_tick: `3.3750`
+- active_window_ratio: `0.8105`
+- params_json: `{"activity_churn_eps": 0.01, "activity_count_delta_eps": 2.0, "branch_end_window": 6, "branch_length_bonus": 0.35, "convergence_patience": 4, "dopa_rewire_gain": 0.8, "edge_count_delta_eps": 12.0, "fatigue_decay": 0.9, "fatigue_gain": 0.2, "fatigue_k_leak": 0.04, "fatigue_threshold_gain": 0.18, "fire_output_log_gain": 0.5, "global_recovery_rate": 0.1, "hysteresis_k_bonus": 0.08, "hysteresis_remem_gain": 0.02, "hysteresis_threshold_gain": 0.03, "inhibitory_suppression_gain": 0.18, "input_signal_clip": 0.8, "input_topk": 2, "intrinsic_alignment_gain": 0.2, "k_decay": 0.93, "k_remem_base": 1.05, "k_threshold_base": 0.72, "max_out_degree": 12, "max_ticks": 128, "mela_dropout_gain": 0.04, "memory_decay": 0.97, "memory_k_mix": 0.35, "memory_stim_mix": 0.25, "min_out_degree": 1, "min_ticks_before_converged": 6, "ne_remem_reduce_gain": 0.25, "ne_thresh_reduce_gain": 0.25, "recent_activity_decay": 0.3, "refractory_ticks": 1, "sero_prune_gain": 0.04, "state_base_stim_mix": 0.1, "state_bias_stim_mix": 0.05, "state_parent_stim_mix": 0.25, "state_self_stim_mix": 0.55, "topk_branches": 4}`
+
+### grid:k_threshold_base=0.7;intrinsic_alignment_gain=0.2
+
+- balanced_score: `69.3750`
 - pareto_front: `False`
 - feasible: `True`
 - constraint_penalty: `0.000000`
 - constraint_failures: ``
-- mean_branch_len: `107.1250`
+- mean_branch_len: `106.2500`
 - len1_ratio: `0.0000`
 - hit_max_ticks_ratio: `0.5000`
-- mean_first_active_tick: `3.0000`
-- active_window_ratio: `0.8369`
-- params_json: `{"activity_churn_eps": 0.01, "activity_count_delta_eps": 2.0, "branch_end_window": 6, "branch_length_bonus": 0.35, "convergence_patience": 4, "dopa_rewire_gain": 0.8, "edge_count_delta_eps": 12.0, "fatigue_decay": 0.9, "fatigue_gain": 0.2, "fatigue_k_leak": 0.04, "fatigue_threshold_gain": 0.18, "fire_output_log_gain": 0.5, "global_recovery_rate": 0.1, "hysteresis_k_bonus": 0.08, "hysteresis_remem_gain": 0.02, "hysteresis_threshold_gain": 0.03, "inhibitory_suppression_gain": 0.18, "input_signal_clip": 0.8, "input_topk": 2, "intrinsic_alignment_gain": 0.24, "k_decay": 0.93, "k_remem_base": 1.05, "k_threshold_base": 0.72, "max_out_degree": 12, "max_ticks": 128, "mela_dropout_gain": 0.04, "memory_decay": 0.97, "memory_k_mix": 0.35, "memory_stim_mix": 0.25, "min_out_degree": 1, "min_ticks_before_converged": 6, "ne_remem_reduce_gain": 0.25, "ne_thresh_reduce_gain": 0.25, "recent_activity_decay": 0.3, "refractory_ticks": 1, "sero_prune_gain": 0.04, "state_base_stim_mix": 0.1, "state_bias_stim_mix": 0.05, "state_parent_stim_mix": 0.25, "state_self_stim_mix": 0.55, "topk_branches": 4}`
-
-### grid:k_threshold_base=0.68;intrinsic_alignment_gain=0.28
-
-- balanced_score: `57.0833`
-- pareto_front: `False`
-- feasible: `False`
-- constraint_penalty: `0.250000`
-- constraint_failures: `hit_max_ticks_ratio>0.7`
-- mean_branch_len: `124.2500`
-- len1_ratio: `0.0000`
-- hit_max_ticks_ratio: `0.8750`
-- mean_first_active_tick: `2.0000`
-- active_window_ratio: `0.9707`
-- params_json: `{"activity_churn_eps": 0.01, "activity_count_delta_eps": 2.0, "branch_end_window": 6, "branch_length_bonus": 0.35, "convergence_patience": 4, "dopa_rewire_gain": 0.8, "edge_count_delta_eps": 12.0, "fatigue_decay": 0.9, "fatigue_gain": 0.2, "fatigue_k_leak": 0.04, "fatigue_threshold_gain": 0.18, "fire_output_log_gain": 0.5, "global_recovery_rate": 0.1, "hysteresis_k_bonus": 0.08, "hysteresis_remem_gain": 0.02, "hysteresis_threshold_gain": 0.03, "inhibitory_suppression_gain": 0.18, "input_signal_clip": 0.8, "input_topk": 2, "intrinsic_alignment_gain": 0.28, "k_decay": 0.93, "k_remem_base": 1.05, "k_threshold_base": 0.68, "max_out_degree": 12, "max_ticks": 128, "mela_dropout_gain": 0.04, "memory_decay": 0.97, "memory_k_mix": 0.35, "memory_stim_mix": 0.25, "min_out_degree": 1, "min_ticks_before_converged": 6, "ne_remem_reduce_gain": 0.25, "ne_thresh_reduce_gain": 0.25, "recent_activity_decay": 0.3, "refractory_ticks": 1, "sero_prune_gain": 0.04, "state_base_stim_mix": 0.1, "state_bias_stim_mix": 0.05, "state_parent_stim_mix": 0.25, "state_self_stim_mix": 0.55, "topk_branches": 4}`
+- mean_first_active_tick: `3.2500`
+- active_window_ratio: `0.8320`
+- params_json: `{"activity_churn_eps": 0.01, "activity_count_delta_eps": 2.0, "branch_end_window": 6, "branch_length_bonus": 0.35, "convergence_patience": 4, "dopa_rewire_gain": 0.8, "edge_count_delta_eps": 12.0, "fatigue_decay": 0.9, "fatigue_gain": 0.2, "fatigue_k_leak": 0.04, "fatigue_threshold_gain": 0.18, "fire_output_log_gain": 0.5, "global_recovery_rate": 0.1, "hysteresis_k_bonus": 0.08, "hysteresis_remem_gain": 0.02, "hysteresis_threshold_gain": 0.03, "inhibitory_suppression_gain": 0.18, "input_signal_clip": 0.8, "input_topk": 2, "intrinsic_alignment_gain": 0.2, "k_decay": 0.93, "k_remem_base": 1.05, "k_threshold_base": 0.7, "max_out_degree": 12, "max_ticks": 128, "mela_dropout_gain": 0.04, "memory_decay": 0.97, "memory_k_mix": 0.35, "memory_stim_mix": 0.25, "min_out_degree": 1, "min_ticks_before_converged": 6, "ne_remem_reduce_gain": 0.25, "ne_thresh_reduce_gain": 0.25, "recent_activity_decay": 0.3, "refractory_ticks": 1, "sero_prune_gain": 0.04, "state_base_stim_mix": 0.1, "state_bias_stim_mix": 0.05, "state_parent_stim_mix": 0.25, "state_self_stim_mix": 0.55, "topk_branches": 4}`
 
 ## Figures
 

@@ -20,6 +20,84 @@ def load_module(module_name: str, relative_path: str):
 
 
 class ExperimentToolTests(unittest.TestCase):
+    def test_calibrate_reference_config_outputs_evidence_and_recommendation(self) -> None:
+        module = load_module("calibrate_reference_config_module", "scripts/calibrate_reference_config.py")
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            input_csv = temp_dir / "probe_input.csv"
+            dataset_csv = temp_dir / "dataset_for_regression.csv"
+            benchmark_csv = temp_dir / "benchmark_results.csv"
+            model_cache = temp_dir / "stim_encoder.joblib"
+            output_dir = temp_dir / "branch_calibration"
+
+            pd.DataFrame(
+                [
+                    {"text": "요즘 너무 예민하고 피곤하다."},
+                    {"text": "일이 너무 많아서 버겁다."},
+                ]
+            ).to_csv(input_csv, index=False, encoding="utf-8-sig")
+
+            pd.DataFrame(
+                [
+                    {"text": "urgent critical alert now", "label": "E10", "y": 0.05, "talk_id": "t1", "persona_id": "p1"},
+                    {"text": "i feel calm and safe with support", "label": "E20", "y": 0.90, "talk_id": "t2", "persona_id": "p2"},
+                    {"text": "too tired and burned out i need rest", "label": "E30", "y": 0.20, "talk_id": "t3", "persona_id": "p3"},
+                    {"text": "this risk is scary and stressful", "label": "E40", "y": 0.10, "talk_id": "t4", "persona_id": "p4"},
+                ]
+            ).to_csv(dataset_csv, index=False, encoding="utf-8-sig")
+
+            pd.DataFrame(
+                [{"vector": "char_tfidf", "model": "Ridge", "status": "ok", "MAE(mean)": 0.1, "RMSE(mean)": 0.2}]
+            ).to_csv(benchmark_csv, index=False, encoding="utf-8-sig")
+
+            import sys
+
+            original_argv = sys.argv[:]
+            try:
+                sys.argv = [
+                    "calibrate_reference_config.py",
+                    "--input-csv",
+                    str(input_csv),
+                    "--dataset-csv",
+                    str(dataset_csv),
+                    "--benchmark-csv",
+                    str(benchmark_csv),
+                    "--model-cache-path",
+                    str(model_cache),
+                    "--force-refit",
+                    "--sample-size",
+                    "1",
+                    "--sample-mode",
+                    "head",
+                    "--progress-every",
+                    "0",
+                    "--calibrate-params",
+                    "k_threshold_base,intrinsic_alignment_gain",
+                    "--space",
+                    "k_threshold_base=0.72,0.90",
+                    "--space",
+                    "intrinsic_alignment_gain=0.20,0.24",
+                    "--fixed",
+                    "max_ticks=8",
+                    "--output-dir",
+                    str(output_dir),
+                ]
+                module.main()
+            finally:
+                sys.argv = original_argv
+
+            evidence = pd.read_csv(output_dir / "parameter_evidence.csv")
+            recommendations = pd.read_csv(output_dir / "parameter_recommendations.csv")
+
+            self.assertTrue((output_dir / "center_config.json").exists())
+            self.assertTrue((output_dir / "calibrated_reference_config.json").exists())
+            self.assertTrue((output_dir / "combined_validation.json").exists())
+            self.assertTrue((output_dir / "CALIBRATION_REPORT.md").exists())
+            self.assertTrue((output_dir / "figures" / "k_threshold_base_calibration.svg").exists())
+            self.assertIn("no_activity_ratio", evidence.columns)
+            self.assertIn("is_recommended", evidence.columns)
+            self.assertEqual(set(recommendations["parameter_name"].tolist()), {"intrinsic_alignment_gain", "k_threshold_base"})
+
     def test_analyze_branch_traces_outputs_report_and_figures(self) -> None:
         module = load_module("analyze_branch_traces_module", "scripts/analyze_branch_traces.py")
         with tempfile.TemporaryDirectory() as temp_dir_name:

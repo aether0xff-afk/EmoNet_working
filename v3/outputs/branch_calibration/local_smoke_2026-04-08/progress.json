@@ -1,0 +1,12 @@
+{
+  "completed_runs": 2,
+  "recommended_rows": 2,
+  "parameter_evidence_csv": "v3\\outputs\\branch_calibration\\local_smoke_2026-04-08\\parameter_evidence.csv",
+  "parameter_recommendations_csv": "v3\\outputs\\branch_calibration\\local_smoke_2026-04-08\\parameter_recommendations.csv",
+  "sample_details_csv": "v3\\outputs\\branch_calibration\\local_smoke_2026-04-08\\sample_details.csv",
+  "tick_details_csv": "v3\\outputs\\branch_calibration\\local_smoke_2026-04-08\\tick_details.csv",
+  "figure_paths": [
+    "v3\\outputs\\branch_calibration\\local_smoke_2026-04-08\\figures\\intrinsic_alignment_gain_calibration.svg",
+    "v3\\outputs\\branch_calibration\\local_smoke_2026-04-08\\figures\\k_threshold_base_calibration.svg"
+  ]
+}

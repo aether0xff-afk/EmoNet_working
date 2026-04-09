@@ -1,0 +1,135 @@
+# Batch Emotion Trajectory Report
+
+- samples: 120
+- unique_top_emotions: 5
+
+## Top Emotion By Sample
+
+- s_001444: 예민함/신경과민 (0.6709), pattern=mixed, signal=공세적 긴장
+- s_000869: 예민함/신경과민 (0.6567), pattern=mixed, signal=추동/접근
+- s_000798: 예민함/신경과민 (0.6558), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_000889: 예민함/신경과민 (0.6513), pattern=high_arousal_persistence, signal=추동/접근
+- s_001055: 예민함/신경과민 (0.6502), pattern=high_arousal_persistence, signal=추동/접근
+- s_000393: 예민함/신경과민 (0.6496), pattern=mixed, signal=공세적 긴장
+- s_003551: 예민함/신경과민 (0.6482), pattern=mixed, signal=공세적 긴장
+- s_001006: 예민함/신경과민 (0.6480), pattern=mixed, signal=공세적 긴장
+- s_001146: 예민함/신경과민 (0.6479), pattern=mixed, signal=공세적 긴장
+- s_001703: 예민함/신경과민 (0.6475), pattern=mixed, signal=추동/접근
+- s_000033: 예민함/신경과민 (0.6469), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_002359: 예민함/신경과민 (0.6457), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_001552: 예민함/신경과민 (0.6455), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_002131: 예민함/신경과민 (0.6445), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_000705: 예민함/신경과민 (0.6444), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_000538: 예민함/신경과민 (0.6409), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_000179: 예민함/신경과민 (0.6398), pattern=mixed, signal=공세적 긴장
+- s_001242: 예민함/신경과민 (0.6384), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_000463: 예민함/신경과민 (0.6342), pattern=mixed, signal=공세적 긴장
+- s_003782: 예민함/신경과민 (0.6301), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_001987: 예민함/신경과민 (0.6291), pattern=mixed, signal=추동/접근
+- s_003936: 예민함/신경과민 (0.6285), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_000070: 예민함/신경과민 (0.6271), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_002230: 예민함/신경과민 (0.6245), pattern=mixed, signal=추동/접근
+- s_000879: 예민함/신경과민 (0.6244), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_003321: 예민함/신경과민 (0.6230), pattern=mixed, signal=추동/접근
+- s_000787: 예민함/신경과민 (0.6226), pattern=mixed, signal=공세적 긴장
+- s_001988: 예민함/신경과민 (0.6208), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_002515: 예민함/신경과민 (0.6207), pattern=mixed, signal=공세적 긴장
+- s_003596: 예민함/신경과민 (0.6197), pattern=high_arousal_persistence, signal=추동/접근
+- s_000211: 예민함/신경과민 (0.6179), pattern=mixed, signal=공세적 긴장
+- s_003022: 예민함/신경과민 (0.6127), pattern=mixed, signal=공세적 긴장
+- s_001822: 예민함/신경과민 (0.6088), pattern=high_arousal_persistence, signal=추동/접근
+- s_003331: 예민함/신경과민 (0.6078), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_003836: 예민함/신경과민 (0.6072), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_003318: 소진/탈진 (0.6025), pattern=high_arousal_persistence, signal=피로성 경계
+- s_002540: 소진/탈진 (0.6018), pattern=mixed, signal=피로성 경계
+- s_002212: 예민함/신경과민 (0.5956), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_003918: 예민함/신경과민 (0.5940), pattern=high_arousal_persistence, signal=추동/접근
+- s_003887: 예민함/신경과민 (0.5877), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_003491: 예민함/신경과민 (0.5846), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_002329: 예민함/신경과민 (0.5846), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_000670: 예민함/신경과민 (0.5835), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_002858: 예민함/신경과민 (0.5824), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_002295: 예민함/신경과민 (0.5822), pattern=mixed, signal=공세적 긴장
+- s_001502: 예민함/신경과민 (0.5800), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_000314: 예민함/신경과민 (0.5769), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_003143: 예민함/신경과민 (0.5769), pattern=mixed, signal=공세적 긴장
+- s_000555: 예민함/신경과민 (0.5755), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_002383: 예민함/신경과민 (0.5752), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_003409: 예민함/신경과민 (0.5751), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_000721: 예민함/신경과민 (0.5745), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_000605: 예민함/신경과민 (0.5737), pattern=mixed, signal=공세적 긴장
+- s_001174: 예민함/신경과민 (0.5726), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_001226: 예민함/신경과민 (0.5706), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_002862: 예민함/신경과민 (0.5706), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_003952: 예민함/신경과민 (0.5698), pattern=mixed, signal=공세적 긴장
+- s_001674: 예민함/신경과민 (0.5692), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_001417: 예민함/신경과민 (0.5691), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_002299: 예민함/신경과민 (0.5691), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_000321: 예민함/신경과민 (0.5684), pattern=mixed, signal=공세적 긴장
+- s_001815: 예민함/신경과민 (0.5673), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_003224: 예민함/신경과민 (0.5672), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_001487: 예민함/신경과민 (0.5668), pattern=mixed, signal=공세적 긴장
+- s_000807: 예민함/신경과민 (0.5658), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_002456: 예민함/신경과민 (0.5647), pattern=mixed, signal=공세적 긴장
+- s_003482: 예민함/신경과민 (0.5636), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_001411: 예민함/신경과민 (0.5635), pattern=mixed, signal=공세적 긴장
+- s_001320: 예민함/신경과민 (0.5631), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_003539: 예민함/신경과민 (0.5630), pattern=mixed, signal=공세적 긴장
+- s_002989: 예민함/신경과민 (0.5630), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_001582: 예민함/신경과민 (0.5624), pattern=mixed, signal=공세적 긴장
+- s_001952: 예민함/신경과민 (0.5623), pattern=mixed, signal=공세적 긴장
+- s_000803: 예민함/신경과민 (0.5621), pattern=mixed, signal=공세적 긴장
+- s_003865: 예민함/신경과민 (0.5601), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_000166: 예민함/신경과민 (0.5596), pattern=mixed, signal=공세적 긴장
+- s_003148: 예민함/신경과민 (0.5593), pattern=mixed, signal=공세적 긴장
+- s_001116: 예민함/신경과민 (0.5593), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_000032: 예민함/신경과민 (0.5590), pattern=mixed, signal=추동/접근
+- s_000109: 예민함/신경과민 (0.5585), pattern=mixed, signal=공세적 긴장
+- s_003248: 예민함/신경과민 (0.5584), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_000471: 예민함/신경과민 (0.5567), pattern=mixed, signal=공세적 긴장
+- s_003858: 예민함/신경과민 (0.5560), pattern=mixed, signal=공세적 긴장
+- s_000008: 예민함/신경과민 (0.5558), pattern=mixed, signal=공세적 긴장
+- s_003925: 예민함/신경과민 (0.5555), pattern=mixed, signal=공세적 긴장
+- s_002292: 예민함/신경과민 (0.5550), pattern=mixed, signal=피로성 경계
+- s_000205: 예민함/신경과민 (0.5540), pattern=mixed, signal=공세적 긴장
+- s_000567: 예민함/신경과민 (0.5540), pattern=mixed, signal=공세적 긴장
+- s_001255: 예민함/신경과민 (0.5529), pattern=mixed, signal=공세적 긴장
+- s_000929: 예민함/신경과민 (0.5528), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_002578: 예민함/신경과민 (0.5525), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_003240: 예민함/신경과민 (0.5522), pattern=mixed, signal=공세적 긴장
+- s_003047: 예민함/신경과민 (0.5514), pattern=mixed, signal=공세적 긴장
+- s_003749: 예민함/신경과민 (0.5511), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_000594: 예민함/신경과민 (0.5498), pattern=high_arousal_persistence, signal=추동/접근
+- s_003549: 예민함/신경과민 (0.5496), pattern=mixed, signal=공세적 긴장
+- s_003249: 예민함/신경과민 (0.5488), pattern=mixed, signal=공세적 긴장
+- s_003078: 예민함/신경과민 (0.5474), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_001992: 예민함/신경과민 (0.5473), pattern=mixed, signal=공세적 긴장
+- s_000414: 예민함/신경과민 (0.5410), pattern=high_arousal_persistence, signal=공세적 긴장
+- s_003238: 예민함/신경과민 (0.5375), pattern=mixed, signal=공세적 긴장
+- s_002464: 예민함/신경과민 (0.5363), pattern=mixed, signal=경계/날카로움
+- s_001261: 소진/탈진 (0.5343), pattern=escalation_to_fatigue_shift, signal=추동/접근
+- s_003379: 예민함/신경과민 (0.5243), pattern=high_arousal_persistence, signal=추동/접근
+- s_001498: 방어적 경계 (0.5215), pattern=mixed, signal=공세적 긴장
+- s_001621: 예민함/신경과민 (0.5167), pattern=mixed, signal=공세적 긴장
+- s_002647: 예민함/신경과민 (0.5159), pattern=mixed, signal=공세적 긴장
+- s_000184: 예민함/신경과민 (0.5032), pattern=mixed, signal=추동/접근
+- s_000196: 짜증/분노압 (0.4831), pattern=mixed, signal=추동/접근
+- s_003414: 예민함/신경과민 (0.4807), pattern=mixed, signal=공세적 긴장
+- s_000014: 짜증/분노압 (0.4774), pattern=mixed, signal=추동/접근
+- s_003590: 예민함/신경과민 (0.4755), pattern=high_arousal_persistence, signal=추동/접근
+- s_001185: 예민함/신경과민 (0.4609), pattern=high_arousal_persistence, signal=추동/접근
+- s_001978: 방어적 경계 (0.4523), pattern=mixed, signal=추동/접근
+- s_003301: 짜증/분노압 (0.4520), pattern=high_arousal_persistence, signal=추동/접근
+- s_003656: 예민함/신경과민 (0.4472), pattern=mixed, signal=공세적 긴장
+- s_000149: 방어적 경계 (0.4464), pattern=high_arousal_persistence, signal=추동/접근
+- s_001756: 짜증/분노압 (0.4413), pattern=mixed, signal=추동/접근
+- s_000527: 무기력/철수 (0.3000), pattern=mixed, signal=거의 무색
+- s_001424: 무기력/철수 (0.3000), pattern=mixed, signal=거의 무색
+
+## Phase Counts
+
+- dormant: 120
+- escalation: 58
+- fatigue_shift: 1
+- ignition: 118
+- persistence: 118

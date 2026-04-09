@@ -56,6 +56,11 @@ CONDITION_SPECS: dict[str, dict[str, object]] = {
         "description": "Raw branch trace summary only.",
         "needs_profile": True,
     },
+    "appraisal_trace": {
+        "group": "trace",
+        "description": "Appraisal-based affect summary only.",
+        "needs_profile": True,
+    },
     "hybrid_trace": {
         "group": "trace",
         "description": "Raw branch trace plus style controls.",
@@ -115,6 +120,7 @@ OUTPUT_COLUMNS = [
     "style_summary_text",
     "expression_cues_text",
     "trace_summary_text",
+    "appraisal_summary_text",
     "anti_softening_mode",
     "anti_softening_rules_json",
     "grounding_mode",
@@ -311,6 +317,13 @@ def build_condition_prompt(condition: str, input_text: str, profile: dict[str, o
             input_text=input_text,
             profile=profile,
             conditioning_mode="raw_trace",
+            template_path=None,
+        )
+    if condition == "appraisal_trace":
+        return build_conditioned_generation_prompt(
+            input_text=input_text,
+            profile=profile,
+            conditioning_mode="appraisal_trace",
             template_path=None,
         )
     if condition == "hybrid_trace":
@@ -527,6 +540,7 @@ def main() -> None:
                 "style_summary_text": "",
                 "expression_cues_text": "",
                 "trace_summary_text": "",
+                "appraisal_summary_text": "",
                 "anti_softening_mode": "",
                 "anti_softening_rules_json": "[]",
                 "grounding_mode": "",
@@ -578,6 +592,7 @@ def main() -> None:
                     row["style_summary_text"] = str(profile["style_summary_text"])
                     row["expression_cues_text"] = str(profile["expression_cues_text"])
                     row["trace_summary_text"] = str(profile.get("trace_summary_text", ""))
+                    row["appraisal_summary_text"] = str(profile.get("appraisal_summary_text", ""))
                     row["anti_softening_mode"] = str(profile.get("anti_softening_mode", ""))
                     row["anti_softening_rules_json"] = json.dumps(profile.get("anti_softening_rules", []), ensure_ascii=False)
                     row["grounding_mode"] = str(profile.get("grounding_mode", ""))

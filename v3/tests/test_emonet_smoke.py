@@ -596,6 +596,29 @@ class EmoNetSmokeTests(unittest.TestCase):
         self.assertIn("[RAW_TRACE]", hybrid_prompt)
         self.assertEqual(hybrid_sections, "raw_trace,style_tags,style_summary,anti_softening_rules,grounding_rules")
 
+    def test_build_conditioned_generation_prompt_supports_appraisal_trace(self) -> None:
+        profile = {
+            "style_dict": {axis: 0.5 for axis in STYLE_AXIS_NAMES},
+            "style_tags": ["직설적", "건조함"],
+            "style_summary": {"warmth": 0.2, "directness": 0.7, "raw_negative_affect": 0.6},
+            "anti_softening_rules": ["불편한 정서를 임의로 순화하지 않는다."],
+            "grounding_rules": ["첫 문장에서 입력의 정서를 짚고 바로 답한다."],
+            "appraisal_lines": [
+                "핵심 appraisal: 목표 차단 높음, 소진 중간, 위협감 낮음",
+                "감정의 주된 방향은 상황이나 업무 맥락 쪽이다.",
+                "현재 행동 성향은 '회복/후퇴' 쪽이 상대적으로 우세하다.",
+            ],
+        }
+        prompt, sections = build_conditioned_generation_prompt(
+            input_text="지금 너무 예민하고 피곤해.",
+            profile=profile,
+            conditioning_mode="appraisal_trace",
+            template_path=None,
+        )
+        self.assertIn("[APPRAISAL_TRACE]", prompt)
+        self.assertIn("목표 차단 높음", prompt)
+        self.assertEqual(sections, "appraisal_trace,anti_softening_rules,grounding_rules")
+
     def test_build_grounding_policy_turns_grounded_for_distress_text(self) -> None:
         mode, rules = build_grounding_policy(
             input_text="지금 너무 예민하고 피곤해.",

@@ -1311,6 +1311,10 @@ def command_generate_response(args: argparse.Namespace) -> None:
         "expression_cues_text": str(profile["expression_cues_text"]),
         "trace_summary_text": str(profile.get("trace_summary_text", "")),
         "trace_lines": list(profile.get("trace_lines", [])),
+        "appraisal_summary_text": str(profile.get("appraisal_summary_text", "")),
+        "appraisal_lines": list(profile.get("appraisal_lines", [])),
+        "appraisal_target": str(profile.get("appraisal_target", "")),
+        "appraisal_tendency": str(profile.get("appraisal_tendency", "")),
         "ticks_run": int(profile.get("ticks_run", 0)),
         "termination_reason": str(profile.get("termination_reason", "")),
         "anti_softening_mode": str(profile["anti_softening_mode"]),
@@ -1387,6 +1391,10 @@ def command_generate_response_batch(args: argparse.Namespace) -> None:
             row["expression_cues_text"] = str(profile["expression_cues_text"])
             row["trace_summary_text"] = str(profile.get("trace_summary_text", ""))
             row["trace_lines_json"] = json.dumps(profile.get("trace_lines", []), ensure_ascii=False)
+            row["appraisal_summary_text"] = str(profile.get("appraisal_summary_text", ""))
+            row["appraisal_lines_json"] = json.dumps(profile.get("appraisal_lines", []), ensure_ascii=False)
+            row["appraisal_target"] = str(profile.get("appraisal_target", ""))
+            row["appraisal_tendency"] = str(profile.get("appraisal_tendency", ""))
             row["ticks_run"] = int(profile.get("ticks_run", 0))
             row["termination_reason"] = str(profile.get("termination_reason", ""))
             row["anti_softening_mode"] = str(profile["anti_softening_mode"])
@@ -2507,6 +2515,92 @@ TRACE_AXIS_LABELS = (
     "긴장/날카로움",
     "피로/둔화",
 )
+APPRAISAL_LABELS = {
+    "goal_blockage": "목표 차단",
+    "social_exclusion": "배제감",
+    "injustice": "억울함/불공정",
+    "control_loss": "통제 상실",
+    "exhaustion": "소진",
+    "threat": "위협감",
+}
+BLOCKAGE_HINTS = {
+    "막혔",
+    "안돼",
+    "안 되",
+    "실패",
+    "꼬였",
+    "답답",
+    "막막",
+    "손에 안 잡",
+    "지연",
+    "blocked",
+    "fail",
+    "stuck",
+}
+EXCLUSION_HINTS = {
+    "제외",
+    "빼고",
+    "무시",
+    "소외",
+    "왕따",
+    "혼자",
+    "ignored",
+    "left out",
+    "excluded",
+}
+INJUSTICE_HINTS = {
+    "억울",
+    "부당",
+    "불공평",
+    "불공정",
+    "차별",
+    "편파",
+    "unfair",
+    "unjust",
+}
+CONTROL_LOSS_HINTS = {
+    "어쩔 수 없",
+    "통제",
+    "불확실",
+    "마음대로 안",
+    "손에 안 잡",
+    "답이 안",
+    "불안",
+    "uncertain",
+    "out of control",
+}
+TARGET_OTHER_HINTS = {
+    "상사",
+    "대표",
+    "팀장",
+    "회사",
+    "그 사람",
+    "걔",
+    "they",
+    "boss",
+    "manager",
+}
+TARGET_SELF_HINTS = {
+    "내가",
+    "나는",
+    "저는",
+    "나만",
+    "내 탓",
+    "i ",
+    "me ",
+    "myself",
+}
+TARGET_SITUATION_HINTS = {
+    "업무",
+    "일",
+    "상황",
+    "결과",
+    "심사",
+    "야근",
+    "deadline",
+    "result",
+    "work",
+}
 
 
 def describe_trace_axis_level(value: float) -> str:
@@ -2531,6 +2625,11 @@ def summarize_trace_stim_signature(stim_vec: Sequence[float] | np.ndarray, top_n
         for idx in top_indices
     ]
     return ", ".join(parts)
+
+
+def hint_fraction(text: str, hints: set[str], cap: float = 1.0) -> float:
+    hits = sum(1 for token in hints if token in text)
+    return min(hits / 3.0, cap)
 
 
 def _segment_branch(branch: Sequence[Any], start: int, end: int) -> Sequence[Any]:
@@ -2642,6 +2741,115 @@ def build_trace_profile(
     }
 
 
+def describe_appraisal_level(value: float) -> str:
+    if value >= 0.75:
+        return "매우 높음"
+    if value >= 0.55:
+        return "높음"
+    if value >= 0.35:
+        return "중간"
+    if value >= 0.15:
+        return "낮음"
+    return "매우 낮음"
+
+
+def build_appraisal_profile(
+    *,
+    input_text: str,
+    stim_vec: Sequence[float] | np.ndarray,
+    trace_profile: dict[str, object],
+    style_summary: dict[str, float],
+) -> dict[str, object]:
+    text = str(input_text).lower()
+    stim = np.asarray(stim_vec, dtype=np.float32).reshape(-1)
+    dopamine = float(stim[0]) if stim.size > 0 else 0.0
+    serotonin = float(stim[1]) if stim.size > 1 else 0.0
+    norepinephrine = float(stim[2]) if stim.size > 2 else 0.0
+    melatonin = float(stim[3]) if stim.size > 3 else 0.0
+    raw_negative = float(style_summary.get("raw_negative_affect", 0.0))
+    active_window_ticks = int(trace_profile.get("active_window_ticks", 0))
+    ticks_run = max(1, int(trace_profile.get("ticks_run", 1)))
+    active_window_ratio = float(active_window_ticks) / float(ticks_run)
+
+    goal_blockage = max(
+        hint_fraction(text, BLOCKAGE_HINTS),
+        min(1.0, 0.45 * norepinephrine + 0.20 * raw_negative + 0.20 * (1.0 - serotonin)),
+    )
+    social_exclusion = max(
+        hint_fraction(text, EXCLUSION_HINTS),
+        min(1.0, 0.70 * hint_fraction(text, EXCLUSION_HINTS) + 0.20 * raw_negative),
+    )
+    injustice = max(
+        hint_fraction(text, INJUSTICE_HINTS),
+        min(1.0, 0.50 * social_exclusion + 0.35 * raw_negative + 0.15 * norepinephrine),
+    )
+    control_loss = max(
+        hint_fraction(text, CONTROL_LOSS_HINTS),
+        min(1.0, 0.40 * norepinephrine + 0.25 * (1.0 - dopamine) + 0.20 * (1.0 - serotonin)),
+    )
+    exhaustion = max(
+        hint_fraction(text, FATIGUE_HINTS),
+        min(1.0, 0.65 * melatonin + 0.15 * active_window_ratio),
+    )
+    threat = max(
+        hint_fraction(text, THREAT_HINTS.union(ALERT_HINTS)),
+        min(1.0, 0.60 * norepinephrine + 0.15 * control_loss + 0.10 * raw_negative),
+    )
+
+    target_scores = {
+        "self": hint_fraction(text, TARGET_SELF_HINTS) + 0.20 * exhaustion,
+        "other": hint_fraction(text, TARGET_OTHER_HINTS) + 0.40 * social_exclusion + 0.20 * injustice,
+        "situation": hint_fraction(text, TARGET_SITUATION_HINTS) + 0.30 * goal_blockage + 0.20 * control_loss,
+    }
+    sorted_targets = sorted(target_scores.items(), key=lambda item: item[1], reverse=True)
+    target_label = sorted_targets[0][0]
+    if len(sorted_targets) >= 2 and abs(sorted_targets[0][1] - sorted_targets[1][1]) < 0.12:
+        target_label = "mixed"
+
+    tendencies = {
+        "대치/표출": 0.55 * injustice + 0.45 * social_exclusion + 0.20 * raw_negative,
+        "방어/경계": 0.60 * threat + 0.35 * control_loss,
+        "회복/후퇴": 0.70 * exhaustion + 0.20 * (1.0 - dopamine),
+        "정리/수습": 0.50 * goal_blockage + 0.30 * control_loss + 0.20 * serotonin,
+    }
+    dominant_tendency = max(tendencies.items(), key=lambda item: item[1])[0]
+
+    appraisal_scores = {
+        "goal_blockage": float(min(goal_blockage, 1.0)),
+        "social_exclusion": float(min(social_exclusion, 1.0)),
+        "injustice": float(min(injustice, 1.0)),
+        "control_loss": float(min(control_loss, 1.0)),
+        "exhaustion": float(min(exhaustion, 1.0)),
+        "threat": float(min(threat, 1.0)),
+    }
+    sorted_axes = sorted(appraisal_scores.items(), key=lambda item: item[1], reverse=True)
+    top_axes = sorted_axes[:3]
+    top_axis_text = ", ".join(
+        f"{APPRAISAL_LABELS[key]} {describe_appraisal_level(value)}" for key, value in top_axes
+    )
+    target_text_map = {
+        "self": "감정의 주된 방향은 자기 상태와 자기 해석 쪽이다.",
+        "other": "감정의 주된 방향은 타인이나 관계 쪽이다.",
+        "situation": "감정의 주된 방향은 상황이나 업무 맥락 쪽이다.",
+        "mixed": "감정의 주된 방향이 자기, 타인, 상황에 걸쳐 섞여 있다.",
+    }
+    appraisal_lines = [
+        f"핵심 appraisal: {top_axis_text}",
+        target_text_map[target_label],
+        f"현재 행동 성향은 '{dominant_tendency}' 쪽이 상대적으로 우세하다.",
+        f"stimulus 요약: {summarize_trace_stim_signature(stim)}",
+        f"trace 요약: {str(trace_profile.get('trace_summary_text', ''))}",
+    ]
+    appraisal_summary_text = " / ".join(appraisal_lines[:3])
+    return {
+        "appraisal_scores": appraisal_scores,
+        "appraisal_lines": appraisal_lines,
+        "appraisal_summary_text": appraisal_summary_text,
+        "appraisal_target": target_label,
+        "appraisal_tendency": dominant_tendency,
+    }
+
+
 def build_response_generation_prompt(
     input_text: str,
     style_dict: dict[str, float],
@@ -2712,6 +2920,54 @@ def build_trace_generation_prompt(
             "- RAW_TRACE의 숫자나 섹션 이름을 그대로 언급하지 않는다.",
             "- 감정의 거친 결, 짜증, 예민함, 피로, 소진감이 핵심이면 그 결을 남긴다.",
             "- 불필요하게 달래거나 과잉 해석하지 않는다.",
+            "- 한국어 평문으로만 2~5문장 이내로 답한다.",
+            "- 같은 문장이나 핵심 구절을 반복하지 않는다.",
+            "- 문장을 중간에 끊거나 조건절로 끝내지 않는다. 마지막 문장은 완결된 문장으로 끝낸다.",
+            "- bullet, markdown, JSON, 코드블록을 쓰지 않는다.",
+        ]
+    )
+
+
+def build_appraisal_generation_prompt(
+    input_text: str,
+    appraisal_lines: Sequence[str],
+    anti_softening_rules: list[str] | None = None,
+    grounding_rules: list[str] | None = None,
+) -> str:
+    appraisal_block = "\n".join(f"- {line}" for line in appraisal_lines) if appraisal_lines else "- appraisal 정보 없음"
+    anti_block = (
+        "\n".join(format_anti_softening_lines(anti_softening_rules or []))
+        if anti_softening_rules
+        else "- 입력에 없는 위로나 공손함을 자동으로 덧붙이지 않는다."
+    )
+    grounding_block = (
+        "\n".join(format_grounding_lines(grounding_rules or []))
+        if grounding_rules
+        else "- 첫 문장은 입력의 정서와 직접 연결되게 시작한다."
+    )
+    return "\n".join(
+        [
+            "[ROLE]",
+            "당신은 사용자의 감정을 appraisal 관점에서 읽고 그 결을 유지한 채 한국어로 답하는 응답 생성기다.",
+            "",
+            "[USER_INPUT]",
+            input_text.strip(),
+            "",
+            "[APPRAISAL_TRACE]",
+            appraisal_block,
+            "",
+            "[ANTI_SOFTENING_RULES]",
+            anti_block,
+            "",
+            "[GROUNDING_RULES]",
+            grounding_block,
+            "",
+            "[INSTRUCTIONS]",
+            "- 사용자 입력의 내용에 직접 답한다.",
+            "- APPRAISAL_TRACE를 보고 왜 이런 감정이 생겼는지, 감정이 어디를 향하는지, 어떤 행동 성향이 우세한지 반영한다.",
+            "- APPRAISAL_TRACE의 숫자나 섹션 이름을 그대로 언급하지 않는다.",
+            "- 감정의 핵심이 짜증, 배제감, 억울함, 소진, 위협감이라면 그 결을 남긴다.",
+            "- 불필요하게 달래거나 도덕적 훈계를 하지 않는다.",
             "- 한국어 평문으로만 2~5문장 이내로 답한다.",
             "- 같은 문장이나 핵심 구절을 반복하지 않는다.",
             "- 문장을 중간에 끊거나 조건절로 끝내지 않는다. 마지막 문장은 완결된 문장으로 끝낸다.",
@@ -2809,6 +3065,16 @@ def build_conditioned_generation_prompt(
             ),
             "raw_trace,anti_softening_rules,grounding_rules",
         )
+    if conditioning_mode == "appraisal_trace":
+        return (
+            build_appraisal_generation_prompt(
+                input_text=input_text,
+                appraisal_lines=list(profile.get("appraisal_lines", [])),
+                anti_softening_rules=list(profile.get("anti_softening_rules", [])),
+                grounding_rules=list(profile.get("grounding_rules", [])),
+            ),
+            "appraisal_trace,anti_softening_rules,grounding_rules",
+        )
     if conditioning_mode == "hybrid_trace":
         return (
             build_hybrid_trace_generation_prompt(
@@ -2857,6 +3123,12 @@ def infer_style_profile(
         termination_reason=str(outputs.get("termination_reason", "unknown")),
         ticks_run=int(outputs.get("ticks_run", 0)),
     )
+    appraisal_profile = build_appraisal_profile(
+        input_text=text,
+        stim_vec=stim_vec,
+        trace_profile=trace_profile,
+        style_summary=style_summary,
+    )
     return {
         "stim_vec": stim_vec,
         "dominant_branch_len": len(outputs["dominant_branch"]),
@@ -2876,6 +3148,11 @@ def infer_style_profile(
         "trace_profile": trace_profile,
         "ticks_run": int(trace_profile["ticks_run"]),
         "termination_reason": str(trace_profile["termination_reason"]),
+        "appraisal_scores": dict(appraisal_profile["appraisal_scores"]),
+        "appraisal_lines": list(appraisal_profile["appraisal_lines"]),
+        "appraisal_summary_text": str(appraisal_profile["appraisal_summary_text"]),
+        "appraisal_target": str(appraisal_profile["appraisal_target"]),
+        "appraisal_tendency": str(appraisal_profile["appraisal_tendency"]),
     }
 
 
@@ -2960,7 +3237,16 @@ def generate_response_from_profile(
 
 def serialize_generation_log(record: dict[str, object]) -> dict[str, object]:
     payload = dict(record)
-    for key in ("stim_vec", "z", "s_pred", "style_tags", "anti_softening_rules", "grounding_rules", "trace_lines"):
+    for key in (
+        "stim_vec",
+        "z",
+        "s_pred",
+        "style_tags",
+        "anti_softening_rules",
+        "grounding_rules",
+        "trace_lines",
+        "appraisal_lines",
+    ):
         if key in payload:
             payload[key] = json.dumps(payload[key], ensure_ascii=False)
     if "style_summary" in payload and isinstance(payload["style_summary"], dict):
@@ -4166,7 +4452,7 @@ def build_parser() -> argparse.ArgumentParser:
         subparser.add_argument("--style-profile", choices=sorted(STYLE_AXIS_PROFILES), default=DEFAULT_STYLE_PROFILE)
         subparser.add_argument(
             "--conditioning-mode",
-            choices=["style", "raw_trace", "hybrid_trace"],
+            choices=["style", "raw_trace", "appraisal_trace", "hybrid_trace"],
             default="style",
         )
         subparser.add_argument("--base-url", default="http://127.0.0.1:11434/v1")

@@ -49,6 +49,18 @@ def clamp01(value: float) -> float:
     return float(min(1.0, max(0.0, value)))
 
 
+def to_jsonable(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {str(key): to_jsonable(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [to_jsonable(item) for item in value]
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, np.ndarray):
+        return [to_jsonable(item) for item in value.tolist()]
+    return value
+
+
 def describe_level(value: float) -> str:
     if value >= 0.75:
         return "매우 높음"
@@ -520,15 +532,20 @@ def main() -> None:
     tick_summary.to_csv(output_dir / "tick_summary.csv", index=False, encoding="utf-8-sig")
     candidates.to_csv(output_dir / "emotion_candidates.csv", index=False, encoding="utf-8-sig")
     top_nodes.to_csv(output_dir / "top_nodes.csv", index=False, encoding="utf-8-sig")
-    (output_dir / "raw_trace.json").write_text(json.dumps(raw_trace_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    (output_dir / "raw_trace.json").write_text(
+        json.dumps(to_jsonable(raw_trace_payload), ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
     (output_dir / "emotion_trace_summary.json").write_text(
         json.dumps(
-            {
-                "input_text": text,
-                "input_meta": input_meta,
-                **summary,
-                "top_emotions": candidates.head(5).to_dict(orient="records"),
-            },
+            to_jsonable(
+                {
+                    "input_text": text,
+                    "input_meta": input_meta,
+                    **summary,
+                    "top_emotions": candidates.head(5).to_dict(orient="records"),
+                }
+            ),
             ensure_ascii=False,
             indent=2,
         ),

@@ -84,6 +84,67 @@ class ExperimentToolTests(unittest.TestCase):
             self.assertIn("tick", tick_summary.columns)
             self.assertIn("combined_alarm", tick_summary.columns)
 
+    def test_inspect_emotion_trace_serializes_csv_row_metadata(self) -> None:
+        module = load_module("inspect_emotion_trace_module", "scripts/inspect_emotion_trace.py")
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            dataset_csv = temp_dir / "dataset_for_regression.csv"
+            benchmark_csv = temp_dir / "benchmark_results.csv"
+            model_cache = temp_dir / "stim_encoder.joblib"
+            input_csv = temp_dir / "samples.csv"
+            output_dir = temp_dir / "emotion_trace_csv"
+
+            pd.DataFrame(
+                [
+                    {"text": "urgent critical alert now", "label": "E10", "y": 0.05, "talk_id": "t1", "persona_id": "p1"},
+                    {"text": "i feel calm and safe with support", "label": "E20", "y": 0.90, "talk_id": "t2", "persona_id": "p2"},
+                    {"text": "too tired and burned out i need rest", "label": "E30", "y": 0.20, "talk_id": "t3", "persona_id": "p3"},
+                    {"text": "this risk is scary and stressful", "label": "E40", "y": 0.10, "talk_id": "t4", "persona_id": "p4"},
+                ]
+            ).to_csv(dataset_csv, index=False, encoding="utf-8-sig")
+
+            pd.DataFrame(
+                [{"vector": "char_tfidf", "model": "Ridge", "status": "ok", "MAE(mean)": 0.1, "RMSE(mean)": 0.2}]
+            ).to_csv(benchmark_csv, index=False, encoding="utf-8-sig")
+
+            pd.DataFrame(
+                [
+                    {"sample_id": "s_1", "text": "지금 너무 예민하고 피곤하다.", "talk_id": 123, "priority": 2},
+                ]
+            ).to_csv(input_csv, index=False, encoding="utf-8-sig")
+
+            import sys
+
+            original_argv = sys.argv[:]
+            try:
+                sys.argv = [
+                    "inspect_emotion_trace.py",
+                    "--input-csv",
+                    str(input_csv),
+                    "--record-id-column",
+                    "sample_id",
+                    "--record-id",
+                    "s_1",
+                    "--dataset-csv",
+                    str(dataset_csv),
+                    "--benchmark-csv",
+                    str(benchmark_csv),
+                    "--model-cache-path",
+                    str(model_cache),
+                    "--force-refit",
+                    "--max-ticks",
+                    "8",
+                    "--output-dir",
+                    str(output_dir),
+                ]
+                module.main()
+            finally:
+                sys.argv = original_argv
+
+            payload = json.loads((output_dir / "raw_trace.json").read_text(encoding="utf-8"))
+            self.assertEqual(payload["input_meta"]["sample_id"], "s_1")
+            self.assertEqual(payload["input_meta"]["talk_id"], 123)
+
     def test_calibrate_reference_config_outputs_evidence_and_recommendation(self) -> None:
         module = load_module("calibrate_reference_config_module", "scripts/calibrate_reference_config.py")
         with tempfile.TemporaryDirectory() as temp_dir_name:

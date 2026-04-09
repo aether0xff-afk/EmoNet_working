@@ -1,0 +1,36 @@
+{
+  "episode_label": "미점화된 승진 불안 보류",
+  "stimulus_reading": "자극은 내일 발표되는 승진 심사와 그 결과가 가족의 소비 가능성까지 좌우한다는 상황이다. 하지만 네트워크 내부에서는 이 자극이 강한 감정 episode로 실제 점화되지 않고, 걱정 서술만 표면에 존재한 채 처리 보류 상태로 남아 있다.",
+  "appraisal": {
+    "primary_appraisal": "중요한 평가 상황이라는 인지는 있으나, 내부적으로는 위협·희망 어느 쪽도 유의미하게 활성화되지 않은 미점화 상태로 읽힌다.",
+    "secondary_appraisal": "승진이 월급 상승과 아들에게 장난감을 사주고 싶은 목표와 연결되어 있어 접근 동기는 있다. 다만 그 동기 역시 실제 활성 신호로 이어지지 못해 정서적으로는 둔화되거나 보류된 상태다.",
+    "target": "situation",
+    "control_state": "mixed",
+    "social_orientation": "mixed"
+  },
+  "trajectory": {
+    "overall_pattern": "전 구간이 dormant로 유지된 비활성 trajectory다. 표면 발화에는 걱정과 초조가 있으나, 네트워크 흔적상 감정의 점화-증폭-해소 과정이 거의 없다.",
+    "ignition": "점화 구간이 사실상 없다. tick 0부터 active_nodes와 signal이 모두 0이라 자극이 내부 회로를 실질적으로 켜지 못했다.",
+    "persistence": "지속이나 증폭도 없다. persistence_ratio와 saturation_ratio가 모두 0이며 dominant_branch_len도 1이라 하나의 감정 분기도 형성되지 않았다.",
+    "resolution": "마지막도 안정 수렴이지만 해소라기보다 처음부터 활성화되지 않은 채 평탄하게 종료된 상태다. 즉 불안 해소가 아니라 미처리 보류에 가깝다."
+  },
+  "action_tendency": "행동 성향은 강한 회피나 돌진보다 판단 보류, 정서적 정지, 형식적 걱정 반복 쪽이다. 실제로는 중요한 일을 앞두고도 감정 에너지가 안 붙어 멍함이나 손에 안 잡힘 같은 기능 저하로 갈 가능성이 있다.",
+  "rawness": {
+    "valence": "flat",
+    "arousal": "low",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "표면의 걱정 표현과 달리 내부 처리에서는 거의 아무것도 점화되지 않았다는 점, 그리고 기대·불안이 모두 실질 신호로 연결되지 않은 정지감을 남겨야 한다.",
+    "avoid": "강한 불안, 공황, 절망, 혹은 따뜻한 희망 episode로 과장하면 안 된다. 상담식 위로로 '많이 불안하셨겠다'라고만 덮는 것도 왜곡이다.",
+    "tone_hint": "건조하고 진단적으로, 과장 없이 미점화·보류 상태를 명시"
+  },
+  "evidence": [
+    "GLOBAL_TRACE에서 \"dominant_global_signal=거의 무색\", \"signal_means=(drive=0.0000, brake=0.0000, alarm=0.0000, fatigue=0.0000)\"로 모든 핵심 신호가 0이다.",
+    "TRAJECTORY에서 \"phase_sequence=dormant\"이고, PHASE_SEGMENTS에 \"dormant | tick 0-7 | duration=8 | active_nodes=0.00 | edges=0.00\"라고 되어 있어 전 구간 비활성이다.",
+    "KEY_TICKS에서 tick 0과 tick 7 모두 \"active_nodes=0\", \"edges_fired=0\", \"dominant_signal=거의 무색\"으로 시작과 끝이 동일한 무점화 상태다.",
+    "입력 발화에는 \"바로 내일이야. 일도 손에 안 잡히고 제정신이 아니야.\"라고 표면적 초조가 있지만, 이 내용이 내부 trace에서 alarm이나 fatigue 상승으로 이어지지 않았다."
+  ],
+  "confidence": 0.97
+}

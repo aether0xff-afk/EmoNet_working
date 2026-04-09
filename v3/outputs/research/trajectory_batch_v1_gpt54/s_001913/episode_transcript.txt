@@ -1,0 +1,52 @@
+[SAMPLE]
+id=s_001913
+
+[INPUT_TEXT]
+오늘 소개팅 처음 받아봤어. [SEP] 처음 한 소개팅이 어떠셨나요? [SEP] 내 이상형이어서 긴장도 했는데 기분 좋은 시간이었어. [SEP] 행복한 시간을 보냈다니 상당히 좋으셨군요. 어떤 면이 마음에 드셨었나요? [SEP] 같이 있다 보면 이미 오랜 친구였던 것처럼 편안한 기분이었어. [SEP] 같이 있으면 편한 분과 함께해 좋으시군요. 앞으로도 만날 생각이신가요?
+
+[GLOBAL_TRACE]
+- ticks_run=83
+- termination_reason=stable_convergence
+- dominant_branch_len=78
+- active_tick_count=78
+- persistence_ratio=0.9398
+- saturation_ratio=0.5476
+- dominant_global_signal=추동/접근
+- signal_means=(drive=0.5985, brake=0.4042, alarm=0.2841, fatigue=0.1875)
+- node_mix=(inh=0.3968, exc=0.5029, mod=0.1003)
+
+[TRAJECTORY]
+- trajectory_pattern=mixed
+- phase_count=3
+- phase_sequence=dormant -> ignition -> persistence
+- peak_alarm_tick=21
+- peak_fatigue_tick=5
+- peak_conflict_tick=0
+
+[PHASE_SEGMENTS]
+- dormant | tick 0-4 | duration=5 | active_nodes=0.00 | edges=0.00 | dominant_signal=추동/접근 | signal_conflict=1.0000
+- ignition | tick 5-7 | duration=3 | active_nodes=64.67 | edges=770.00 | dominant_signal=완충/억제 | signal_conflict=0.9311
+- persistence | tick 8-82 | duration=75 | active_nodes=152.56 | edges=1822.17 | dominant_signal=추동/접근 | signal_conflict=0.8208
+
+[KEY_TICKS]
+- tick=0 | active_nodes=0 | edges_fired=0 | dominant_signal=거의 무색 | combined=(drive=0.0000, brake=0.0000, alarm=0.0000, fatigue=0.0000) | mix=(inh=0.0000, exc=0.0000, mod=0.0000)
+- tick=5 | active_nodes=1 | edges_fired=11 | dominant_signal=완충/억제 | combined=(drive=0.1610, brake=0.3944, alarm=0.1251, fatigue=0.2193) | mix=(inh=1.0000, exc=0.0000, mod=0.0000)
+- tick=8 | active_nodes=156 | edges_fired=1840 | dominant_signal=추동/접근 | combined=(drive=0.3241, brake=0.2889, alarm=0.3098, fatigue=0.1867) | mix=(inh=0.3846, exc=0.5064, mod=0.1090)
+- tick=21 | active_nodes=158 | edges_fired=1883 | dominant_signal=추동/접근 | combined=(drive=0.4930, brake=0.3563, alarm=0.3813, fatigue=0.1879) | mix=(inh=0.3924, exc=0.5063, mod=0.1013)
+- tick=82 | active_nodes=148 | edges_fired=1775 | dominant_signal=추동/접근 | combined=(drive=0.6020, brake=0.4337, alarm=0.2755, fatigue=0.1876) | mix=(inh=0.4054, exc=0.5000, mod=0.0946)
+
+[TOP_ACTIVE_NODES]
+- node=145 | type=excitatory | bias=추동/접근 | activity_ticks=76 | k_mean=2692.7964 | stim=(drive=0.8589, brake=0.4876, alarm=0.2061, fatigue=0.0021)
+- node=200 | type=excitatory | bias=추동/접근 | activity_ticks=75 | k_mean=2489.3598 | stim=(drive=0.9250, brake=0.4212, alarm=0.1409, fatigue=0.0031)
+- node=245 | type=excitatory | bias=추동/접근 | activity_ticks=77 | k_mean=2393.2691 | stim=(drive=0.8735, brake=0.4492, alarm=0.1621, fatigue=0.0032)
+- node=209 | type=excitatory | bias=공세적 긴장 | activity_ticks=76 | k_mean=2422.1317 | stim=(drive=0.9077, brake=0.3945, alarm=0.1939, fatigue=0.0022)
+- node=155 | type=modulatory | bias=공세적 긴장 | activity_ticks=77 | k_mean=2163.1327 | stim=(drive=0.5714, brake=0.3754, alarm=0.2694, fatigue=0.1609)
+- node=158 | type=inhibitory | bias=완충/억제 | activity_ticks=76 | k_mean=1994.2361 | stim=(drive=0.4235, brake=0.3745, alarm=0.3223, fatigue=0.2891)
+- node=162 | type=excitatory | bias=추동/접근 | activity_ticks=76 | k_mean=1993.8308 | stim=(drive=0.8805, brake=0.3856, alarm=0.1920, fatigue=0.0025)
+- node=180 | type=excitatory | bias=공세적 긴장 | activity_ticks=77 | k_mean=1936.7110 | stim=(drive=0.8723, brake=0.4227, alarm=0.2107, fatigue=0.0030)
+
+[IMPORTANT]
+- 감정은 입력 자극 자체가 아니라, 이 자극이 네트워크 안에서 어떻게 점화되고 지속되고 충돌하고 수렴하는지의 episode로 해석한다.
+- 단일 high-arousal 상태를 자동으로 분노로 단정하지 않는다.
+- 접근 신호가 크고 alarm이 지배적이지 않다면 기대/호감/들뜸 같은 positive arousal 가능성을 검토한다.
+- 활성화가 거의 없으면 강한 감정을 꾸며내지 말고 미점화, 보류, anticipatory state 가능성을 명시한다.

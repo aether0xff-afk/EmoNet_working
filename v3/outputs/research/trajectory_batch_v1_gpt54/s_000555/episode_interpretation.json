@@ -1,0 +1,38 @@
+{
+  "episode_label": "공개적 배제에 대한 공세적 경계-분노 혼란",
+  "stimulus_reading": "자극은 단순히 커피를 못 받은 일이 아니라, 대표가 공개된 조직 장면에서 화자만 배제했다는 사회적 신호로 읽혔다. 네트워크는 이를 실수 가능성보다 노골적 차별과 체면 손상 가능성이 큰 사건으로 처리했다.",
+  "appraisal": {
+    "primary_appraisal": "타인이 공개적으로 자신을 낮추거나 배제했다는 위협/모욕 평가가 핵심이다.",
+    "secondary_appraisal": "주변 사람들이 이를 어떻게 봤을지까지 계산하며 사회적 평판 손상과 관계 질서의 왜곡을 함께 읽는다. 동시에 화는 강하지만 바로 취할 행동은 선명하지 않아 통제감은 떨어진다.",
+    "target": "other",
+    "control_state": "mixed",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "짧게 점화되고 오래 지속되는 고각성 지속형 episode다. 초반에 빠르게 경계와 공세성이 올라간 뒤, 진정으로 수렴하지 않고 날카로운 긴장이 거의 전 구간 유지된다.",
+    "ignition": "tick 2-4에서 활성 노드와 엣지가 급증하며 사건을 위협적·부당한 대우로 즉시 해석했다. 초기부터 공세적 긴장이 우세해 단순 당혹감보다 방어적 분노 쪽으로 빠르게 이동했다.",
+    "persistence": "tick 5-54의 대부분에서 경계/날카로움이 지배했고 persistence_ratio 0.9636, saturation_ratio 0.8893로 반응이 오래 고착됐다. alarm 평균이 0.5712이고 마지막 tick에서 0.5768로 더 높아져, 정리되기보다 경계와 각성이 유지·증폭됐다.",
+    "resolution": "termination은 stable_convergence지만 정서적 해소가 아니라 공세적 긴장 상태로의 고정 수렴이다. 즉 결론은 '이건 부당하다'는 쪽으로 굳었고, 행동 선택만 미정인 채 날 선 상태가 남았다."
+  },
+  "action_tendency": "상대의 부당함을 규정하고 이유를 따지거나 항의하고 싶어지는 방향이다. 다만 실제 실행 단계에서는 '뭘 어떻게 해야 할지 모르겠어'가 보여주듯 즉각 행동보다 분노 상태의 유지, 상황 재해석, 대응 방식 탐색으로 간다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "공개적 배제, 부당함, 사회적 시선 의식, 높은 각성 속 행동 미결정이라는 결을 남겨야 한다.",
+    "avoid": "단순한 서운함이나 가벼운 당혹감으로 축소하면 안 된다. 이미 내부 처리는 차별/모욕 가능성이 큰 사건으로 굳어져 있으므로 '오해일 수도 있다' 식 완화는 왜곡이다.",
+    "tone_hint": "차갑고 진단적으로, 날 선 경계와 분노의 지속을 숨기지 않는 톤"
+  },
+  "evidence": [
+    "대표님이 나만 빼고 팀원 모두에게 커피를 돌린 거 있지? 정말 당혹스러웠어.",
+    "대표란 사람이 그렇게 공개적으로 차별 대우를 한다는 게 말이 안 되잖아. 다들 어떻게 생각했겠어.",
+    "너무 화가 나는데 뭘 어떻게 해야 할지 모르겠어.",
+    "trajectory_pattern=high_arousal_persistence",
+    "dominant_global_signal=공세적 긴장",
+    "phase_sequence=dormant -> ignition -> persistence"
+  ],
+  "confidence": 0.94
+}

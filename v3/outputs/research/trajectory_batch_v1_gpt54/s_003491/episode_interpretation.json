@@ -1,0 +1,38 @@
+{
+  "episode_label": "소진 위협에 대한 공세적 긴장",
+  "stimulus_reading": "직접 자극은 3일 연속 야근과 그로 인한 체력 저하, 감기 증세의 누적이다. 네트워크는 이를 단순한 피곤함이 아니라 계속 밀어붙여야 하는 상황 속에서 몸 상태가 무너지는 위협으로 읽었다.",
+  "appraisal": {
+    "primary_appraisal": "상황이 이미 과부하 상태이며 신체 컨디션 악화가 진행 중이라는 위협 평가가 핵심이다.",
+    "secondary_appraisal": "완전히 무기력하게 꺼지기보다는 버텨야 한다는 추동이 함께 살아 있어, 고통을 호소하면서도 경계와 대응 준비가 유지되는 상태로 처리됐다.",
+    "target": "situation",
+    "control_state": "mixed",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "전형적인 고각성 지속형 episode다. 짧게 점화된 뒤 빠르게 증폭되고, 해소 없이 높은 경계 상태로 오래 고정됐다.",
+    "ignition": "초기에는 거의 무색 상태였다가 tick 2-4에서 바로 경계/날카로움으로 점화됐다. 피곤함 자체보다 '또 야근해야 한다'는 압박이 경계 반응을 먼저 켰다.",
+    "persistence": "tick 5 이후 공세적 긴장이 우세해졌고, persistence 비율 0.9459로 거의 끝까지 유지됐다. 피로 peak는 비교적 이른 tick 11에 왔지만 alarm peak는 tick 35로 더 늦게 상승해, 단순 탈진보다 위협 경계가 후반에 더 커졌다.",
+    "resolution": "termination_reason은 stable_convergence지만 진정 수렴이 아니라 높은 공세적 긴장 상태로 굳어졌다는 뜻에 가깝다. 마지막도 alarm이 높고 drive도 유지되어 안심이나 체념으로 내려오지 않았다."
+  },
+  "action_tendency": "쉬어야 한다는 신호는 있으나 내부 처리상 더 강한 방향은 상황을 방어하고 버티며 압박 원인을 경계하는 쪽이다. 즉, 도움 요청이나 문제 제거 욕구는 커지지만 정서적으로는 편안한 위로 수용보다 날 선 대응 준비에 가깝다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "피로 호소를 넘어서, 몸이 무너지는 와중에도 경계와 압박 반응이 계속 올라가는 날카로운 결을 유지해야 한다.",
+    "avoid": "그냥 '많이 힘드시겠어요' 같은 순한 공감으로 축소하거나, 단순 슬픔/우울로 오독하면 안 된다. 분노로 단정하는 것도 과하다.",
+    "tone_hint": "담백하지만 단호하게, 과부하·위협·지속 경계라는 진단어를 직접 써도 된다."
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "peak_alarm_tick=35",
+    "persistence_ratio=0.9459",
+    "오늘 세 시간 정도 야근해야겠네. 벌써 삼 일째 야근인데 체력이 바닥난 거 같고 괴롭다."
+  ],
+  "confidence": 0.93
+}

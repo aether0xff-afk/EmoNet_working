@@ -20,6 +20,151 @@ def load_module(module_name: str, relative_path: str):
 
 
 class ExperimentToolTests(unittest.TestCase):
+    def test_interpret_emotion_trajectory_outputs_episode_artifacts(self) -> None:
+        module = load_module("interpret_emotion_trajectory_module", "scripts/interpret_emotion_trajectory.py")
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            input_dir = temp_dir / "trajectory_batch"
+            sample_dir = input_dir / "s_1"
+            output_dir = temp_dir / "episode_interp"
+            sample_dir.mkdir(parents=True, exist_ok=True)
+
+            (sample_dir / "emotion_trace_summary.json").write_text(
+                json.dumps(
+                    {
+                        "input_text": "대표가 나만 공개적으로 무시해서 화가 난다.",
+                        "input_meta": {"sample_id": "s_1"},
+                        "ticks_run": 12,
+                        "termination_reason": "stable_convergence",
+                        "dominant_branch_len": 10,
+                        "active_tick_count": 10,
+                        "persistence_ratio": 0.83,
+                        "saturation_ratio": 0.72,
+                        "dominant_global_signal": "공세적 긴장",
+                        "drive": 0.22,
+                        "brake": 0.18,
+                        "alarm": 0.61,
+                        "fatigue": 0.14,
+                        "inhibitory_ratio": 0.42,
+                        "excitatory_ratio": 0.48,
+                        "modulatory_ratio": 0.10,
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+
+            (sample_dir / "emotion_trajectory_summary.json").write_text(
+                json.dumps(
+                    {
+                        "input_text": "대표가 나만 공개적으로 무시해서 화가 난다.",
+                        "input_meta": {"sample_id": "s_1"},
+                        "trajectory_pattern": "high_arousal_persistence",
+                        "phase_count": 3,
+                        "phase_sequence": ["dormant", "ignition", "persistence"],
+                        "peak_alarm_tick": 9,
+                        "peak_fatigue_tick": 3,
+                        "peak_conflict_tick": 0,
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+
+            pd.DataFrame(
+                [
+                    {"phase_index": 0, "phase": "dormant", "start_tick": 0, "end_tick": 1, "duration": 2, "mean_active_nodes": 0.0, "mean_edges_fired": 0.0, "dominant_signal": "추동/접근", "signal_conflict": 1.0},
+                    {"phase_index": 1, "phase": "ignition", "start_tick": 2, "end_tick": 4, "duration": 3, "mean_active_nodes": 120.0, "mean_edges_fired": 580.0, "dominant_signal": "경계/날카로움", "signal_conflict": 0.94},
+                    {"phase_index": 2, "phase": "persistence", "start_tick": 5, "end_tick": 11, "duration": 7, "mean_active_nodes": 210.0, "mean_edges_fired": 940.0, "dominant_signal": "경계/날카로움", "signal_conflict": 0.72},
+                ]
+            ).to_csv(sample_dir / "trajectory_phases.csv", index=False, encoding="utf-8-sig")
+
+            pd.DataFrame(
+                [
+                    {"tick": 0, "active_nodes": 0, "edges_fired": 0, "dominant_signal": "거의 무색", "combined_drive": 0.0, "combined_brake": 0.0, "combined_alarm": 0.0, "combined_fatigue": 0.0, "inhibitory_ratio": 0.0, "excitatory_ratio": 0.0, "modulatory_ratio": 0.0, "phase": "dormant"},
+                    {"tick": 2, "active_nodes": 88, "edges_fired": 430, "dominant_signal": "공세적 긴장", "combined_drive": 0.26, "combined_brake": 0.16, "combined_alarm": 0.52, "combined_fatigue": 0.12, "inhibitory_ratio": 0.10, "excitatory_ratio": 0.75, "modulatory_ratio": 0.15, "phase": "ignition"},
+                    {"tick": 9, "active_nodes": 230, "edges_fired": 1012, "dominant_signal": "공세적 긴장", "combined_drive": 0.27, "combined_brake": 0.20, "combined_alarm": 0.64, "combined_fatigue": 0.18, "inhibitory_ratio": 0.43, "excitatory_ratio": 0.47, "modulatory_ratio": 0.10, "phase": "persistence"},
+                    {"tick": 11, "active_nodes": 214, "edges_fired": 922, "dominant_signal": "공세적 긴장", "combined_drive": 0.24, "combined_brake": 0.18, "combined_alarm": 0.58, "combined_fatigue": 0.16, "inhibitory_ratio": 0.42, "excitatory_ratio": 0.48, "modulatory_ratio": 0.10, "phase": "persistence"},
+                ]
+            ).to_csv(sample_dir / "trajectory_ticks.csv", index=False, encoding="utf-8-sig")
+
+            pd.DataFrame(
+                [
+                    {"node_id": 145, "neuron_type": "excitatory", "bias_label": "공세적 긴장", "activity_ticks": 10, "k_mean": 420.0, "stim_drive": 0.03, "stim_brake": 0.01, "stim_alarm": 0.92, "stim_fatigue": 0.02},
+                    {"node_id": 201, "neuron_type": "inhibitory", "bias_label": "완충/억제", "activity_ticks": 10, "k_mean": 380.0, "stim_drive": 0.18, "stim_brake": 0.25, "stim_alarm": 0.39, "stim_fatigue": 0.21},
+                ]
+            ).to_csv(sample_dir / "top_nodes.csv", index=False, encoding="utf-8-sig")
+
+            fake_payload = {
+                "episode_label": "배제 자극에 의해 유지되는 방어적 분노",
+                "stimulus_reading": "공개적 무시를 사회적 배제와 불공정 사건으로 처리한 episode다.",
+                "appraisal": {
+                    "primary_appraisal": "불공정과 배제",
+                    "secondary_appraisal": "통제 곤란",
+                    "target": "other",
+                    "control_state": "low",
+                    "social_orientation": "defend",
+                },
+                "trajectory": {
+                    "overall_pattern": "고각성 경계가 점화 뒤 길게 유지된다.",
+                    "ignition": "초기 점화는 alarm 우세의 공격적 긴장에서 시작된다.",
+                    "persistence": "중반 이후에도 경계와 방어가 높은 수준으로 지속된다.",
+                    "resolution": "명확한 해소 없이 방어적 긴장으로 수렴한다.",
+                },
+                "action_tendency": "즉각 반격하거나 정면 대응하고 싶지만 방향은 아직 정리되지 않은 상태",
+                "rawness": {
+                    "valence": "negative",
+                    "arousal": "high",
+                    "softened_output_risk": "high",
+                    "should_preserve_harshness": True,
+                },
+                "response_guidance": {
+                    "preserve": "억울함과 날카로운 경계",
+                    "avoid": "과도한 위로나 상담원 톤",
+                    "tone_hint": "직설적이되 과잉 진정시키지 않는 톤",
+                },
+                "evidence": [
+                    "phase_sequence가 dormant -> ignition -> persistence로 이어지고 persistence가 길다.",
+                    "dominant_global_signal이 공세적 긴장이고 alarm 평균이 0.61로 높다.",
+                ],
+                "confidence": 0.86,
+            }
+
+            import sys
+
+            original_argv = sys.argv[:]
+            try:
+                sys.argv = [
+                    "interpret_emotion_trajectory.py",
+                    "--input-dir",
+                    str(input_dir),
+                    "--output-dir",
+                    str(output_dir),
+                    "--progress-every",
+                    "0",
+                ]
+                with unittest.mock.patch.dict("os.environ", {"OPENAI_API_KEY": "test-key"}, clear=False), unittest.mock.patch.object(
+                    module, "ensure_model_server_ready"
+                ), unittest.mock.patch.object(
+                    module,
+                    "request_json_response",
+                    return_value=(fake_payload, json.dumps(fake_payload, ensure_ascii=False)),
+                ):
+                    module.main()
+            finally:
+                sys.argv = original_argv
+
+            summary_df = pd.read_csv(output_dir / "episode_summary.csv")
+            self.assertEqual(len(summary_df), 1)
+            self.assertTrue((output_dir / "episode_payloads.jsonl").exists())
+            self.assertTrue((output_dir / "EPISODE_INTERPRETATION_REPORT.md").exists())
+            self.assertTrue((output_dir / "s_1" / "episode_transcript.txt").exists())
+            self.assertTrue((output_dir / "s_1" / "episode_interpretation.json").exists())
+            self.assertEqual(summary_df.loc[0, "episode_label"], fake_payload["episode_label"])
+            self.assertEqual(summary_df.loc[0, "target"], "other")
+
     def test_analyze_emotion_trajectory_batch_outputs_aggregate_artifacts(self) -> None:
         module = load_module("analyze_emotion_trajectory_batch_module", "scripts/analyze_emotion_trajectory_batch.py")
         with tempfile.TemporaryDirectory() as temp_dir_name:

@@ -1,0 +1,38 @@
+{
+  "episode_label": "긴장 섞인 호감 접근",
+  "stimulus_reading": "자극은 '처음 소개팅'이라는 사회적 평가 가능성이 있는 상황과, 상대가 '내 이상형'이라는 높은 매력·기대 가치의 결합이다. 즉 편안한 회상이지만 내부 처리에서는 단순한 만족보다, 가치가 큰 대상을 향한 접근 욕구와 초기 긴장이 같이 점화된 episode로 읽힌다.",
+  "appraisal": {
+    "primary_appraisal": "가치 높은 타인과의 만남을 긍정적 기회로 해석했고, 전반 평가는 '좋은 방향으로 더 다가가고 싶은 대상'에 가깝다.",
+    "secondary_appraisal": "동시에 첫 소개팅·이상형이라는 조건 때문에 자기표현 실패 가능성이나 사회적 긴장이 초기에 동반되었으나, 위협 판정이 주도권을 가져가지는 못했다.",
+    "target": "other",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "초기엔 반응 보류에 가깝다가 짧게 억제성 점화가 들어온 뒤, 곧 접근 추동이 장기 지속되는 패턴이다. 즉 '긴장했지만 좋았다'가 아니라, 내부적으로는 '긴장을 통과해 접근 회로가 안정적으로 우세해진 상태'다.",
+    "ignition": "점화 구간에서 dominant_signal이 완충/억제로 잡히고 conflict가 높아, 처음에는 감정을 바로 폭발시키기보다 사회적 신중함과 자기조절이 먼저 개입했다.",
+    "persistence": "이후 persistence 구간이 75틱으로 매우 길고 dominant_global_signal도 추동/접근이며 persistence_ratio가 0.9398로 높다. 호감·관심·더 이어가고 싶은 방향성이 일시적 들뜸이 아니라 안정적으로 유지됐다.",
+    "resolution": "마지막에도 drive가 0.6020으로 가장 높고 alarm은 0.2755 수준으로 내려가, 불안에 먹히지 않은 채 긍정적 접근 의도가 남은 수렴이다. 다만 brake도 0.4337로 낮지 않아, 무방비한 도취보다 약간의 조심성을 보존한 채 끝난다."
+  },
+  "action_tendency": "상대와의 관계를 더 이어 보고 싶어 하며, 추가 접촉·재만남·호감 신호 탐색 쪽으로 기울어 있다. 다만 들이받는 방식보다 신중하게 반응을 확인하며 접근하는 성향이다.",
+  "rawness": {
+    "valence": "positive",
+    "arousal": "medium",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "호감과 접근 추동이 주도했다는 점, 그러나 초기에 사회적 긴장과 억제가 분명히 있었고 마지막까지 약한 브레이크가 남아 있다는 결을 유지해야 한다.",
+    "avoid": "그냥 '행복했다'는 표면 정서로 납작하게 만들거나, 반대로 긴장을 과장해 불안 episode로 왜곡하면 안 된다.",
+    "tone_hint": "담백하고 진단적으로, 긍정이지만 들뜬 미화 없이 설명"
+  },
+  "evidence": [
+    "\"내 이상형이어서 긴장도 했는데 기분 좋은 시간이었어.\"",
+    "\"같이 있다 보면 이미 오랜 친구였던 것처럼 편안한 기분이었어.\"",
+    "\"dominant_global_signal=추동/접근\"",
+    "\"phase_sequence=dormant -> ignition -> persistence\"",
+    "\"ignition | tick 5-7 | dominant_signal=완충/억제 | signal_conflict=0.9311\"",
+    "\"persistence | tick 8-82 | duration=75 | dominant_signal=추동/접근\""
+  ],
+  "confidence": 0.94
+}

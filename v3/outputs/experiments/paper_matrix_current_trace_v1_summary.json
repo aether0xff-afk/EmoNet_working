@@ -1,0 +1,36 @@
+{
+  "path": "outputs\\experiments\\paper_matrix_current_trace_v1.csv",
+  "rows": 600,
+  "conditions": {
+    "direct": {
+      "rows": 120,
+      "ok_rows": 120,
+      "error_rows": 0,
+      "mean_response_length": 205.35
+    },
+    "emonet_full": {
+      "rows": 120,
+      "ok_rows": 119,
+      "error_rows": 1,
+      "mean_response_length": 188.95
+    },
+    "hybrid_trace": {
+      "rows": 120,
+      "ok_rows": 120,
+      "error_rows": 0,
+      "mean_response_length": 177.208
+    },
+    "raw_trace": {
+      "rows": 120,
+      "ok_rows": 120,
+      "error_rows": 0,
+      "mean_response_length": 164.4
+    },
+    "stim_only": {
+      "rows": 120,
+      "ok_rows": 120,
+      "error_rows": 0,
+      "mean_response_length": 210.0
+    }
+  }
+}

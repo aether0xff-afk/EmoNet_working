@@ -1,0 +1,42 @@
+{
+  "path": "outputs\\experiments\\paper_matrix_current_appraisal_v1.csv",
+  "rows": 723,
+  "conditions": {
+    "appraisal_trace": {
+      "rows": 120,
+      "ok_rows": 120,
+      "error_rows": 0,
+      "mean_response_length": 183.383
+    },
+    "direct": {
+      "rows": 120,
+      "ok_rows": 120,
+      "error_rows": 0,
+      "mean_response_length": 204.133
+    },
+    "emonet_full": {
+      "rows": 123,
+      "ok_rows": 120,
+      "error_rows": 3,
+      "mean_response_length": 177.008
+    },
+    "hybrid_trace": {
+      "rows": 120,
+      "ok_rows": 120,
+      "error_rows": 0,
+      "mean_response_length": 184.008
+    },
+    "raw_trace": {
+      "rows": 120,
+      "ok_rows": 120,
+      "error_rows": 0,
+      "mean_response_length": 165.15
+    },
+    "stim_only": {
+      "rows": 120,
+      "ok_rows": 120,
+      "error_rows": 0,
+      "mean_response_length": 200.883
+    }
+  }
+}

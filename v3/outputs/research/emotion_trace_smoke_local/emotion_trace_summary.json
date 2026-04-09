@@ -1,0 +1,56 @@
+{
+  "input_text": "지금 너무 예민하고 피곤하다.",
+  "input_meta": {
+    "source": "direct_text"
+  },
+  "ticks_run": 8,
+  "termination_reason": "max_ticks",
+  "dominant_branch_len": 5,
+  "active_tick_count": 5,
+  "persistence_ratio": 0.625,
+  "mean_active_nodes": 119.375,
+  "max_active_nodes": 255,
+  "mean_edges_fired": 583.0,
+  "max_edges_fired": 1236,
+  "saturation_ratio": 0.46630859375,
+  "drive": 0.2726438343524933,
+  "brake": 0.2834683954715729,
+  "alarm": 0.3491476774215698,
+  "fatigue": 0.26742541790008545,
+  "inhibitory_ratio": 0.43455497382198954,
+  "excitatory_ratio": 0.45654450261780105,
+  "modulatory_ratio": 0.10890052356020942,
+  "dominant_global_signal": "경계/날카로움",
+  "top_emotions": [
+    {
+      "emotion": "소진/탈진",
+      "score": 0.4023095563054085,
+      "explanation": "피로 부하와 잔류 활성의 결합",
+      "level": "중간"
+    },
+    {
+      "emotion": "짜증/분노압",
+      "score": 0.39741363734631013,
+      "explanation": "경계 + 추동 + 낮은 완충",
+      "level": "중간"
+    },
+    {
+      "emotion": "무기력/철수",
+      "score": 0.3910253197906529,
+      "explanation": "피로와 접근 동기 저하의 결합",
+      "level": "중간"
+    },
+    {
+      "emotion": "방어적 경계",
+      "score": 0.3869167997808981,
+      "explanation": "경계 신호 위에 억제/보호 성향이 얹힌 상태",
+      "level": "중간"
+    },
+    {
+      "emotion": "예민함/신경과민",
+      "score": 0.3585940092802048,
+      "explanation": "경계 신호와 지속 활성의 결합",
+      "level": "중간"
+    }
+  ]
+}

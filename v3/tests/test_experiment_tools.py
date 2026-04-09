@@ -20,6 +20,70 @@ def load_module(module_name: str, relative_path: str):
 
 
 class ExperimentToolTests(unittest.TestCase):
+    def test_inspect_emotion_trace_outputs_raw_trace_artifacts(self) -> None:
+        module = load_module("inspect_emotion_trace_module", "scripts/inspect_emotion_trace.py")
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            dataset_csv = temp_dir / "dataset_for_regression.csv"
+            benchmark_csv = temp_dir / "benchmark_results.csv"
+            model_cache = temp_dir / "stim_encoder.joblib"
+            output_dir = temp_dir / "emotion_trace"
+
+            pd.DataFrame(
+                [
+                    {"text": "urgent critical alert now", "label": "E10", "y": 0.05, "talk_id": "t1", "persona_id": "p1"},
+                    {"text": "i feel calm and safe with support", "label": "E20", "y": 0.90, "talk_id": "t2", "persona_id": "p2"},
+                    {"text": "too tired and burned out i need rest", "label": "E30", "y": 0.20, "talk_id": "t3", "persona_id": "p3"},
+                    {"text": "this risk is scary and stressful", "label": "E40", "y": 0.10, "talk_id": "t4", "persona_id": "p4"},
+                ]
+            ).to_csv(dataset_csv, index=False, encoding="utf-8-sig")
+
+            pd.DataFrame(
+                [{"vector": "char_tfidf", "model": "Ridge", "status": "ok", "MAE(mean)": 0.1, "RMSE(mean)": 0.2}]
+            ).to_csv(benchmark_csv, index=False, encoding="utf-8-sig")
+
+            import sys
+
+            original_argv = sys.argv[:]
+            try:
+                sys.argv = [
+                    "inspect_emotion_trace.py",
+                    "--text",
+                    "지금 너무 예민하고 피곤하다.",
+                    "--dataset-csv",
+                    str(dataset_csv),
+                    "--benchmark-csv",
+                    str(benchmark_csv),
+                    "--model-cache-path",
+                    str(model_cache),
+                    "--force-refit",
+                    "--max-ticks",
+                    "8",
+                    "--output-dir",
+                    str(output_dir),
+                ]
+                module.main()
+            finally:
+                sys.argv = original_argv
+
+            summary = json.loads((output_dir / "emotion_trace_summary.json").read_text(encoding="utf-8"))
+            candidates = pd.read_csv(output_dir / "emotion_candidates.csv")
+            tick_summary = pd.read_csv(output_dir / "tick_summary.csv")
+
+            self.assertTrue((output_dir / "raw_trace.json").exists())
+            self.assertTrue((output_dir / "node_catalog.csv").exists())
+            self.assertTrue((output_dir / "node_trace.csv").exists())
+            self.assertTrue((output_dir / "top_nodes.csv").exists())
+            self.assertTrue((output_dir / "figures" / "tick_activity.svg").exists())
+            self.assertTrue((output_dir / "figures" / "raw_signal_curves.svg").exists())
+            self.assertTrue((output_dir / "figures" / "emotion_candidates.svg").exists())
+            self.assertIn("top_emotions", summary)
+            self.assertIn("dominant_global_signal", summary)
+            self.assertIn("emotion", candidates.columns)
+            self.assertIn("score", candidates.columns)
+            self.assertIn("tick", tick_summary.columns)
+            self.assertIn("combined_alarm", tick_summary.columns)
+
     def test_calibrate_reference_config_outputs_evidence_and_recommendation(self) -> None:
         module = load_module("calibrate_reference_config_module", "scripts/calibrate_reference_config.py")
         with tempfile.TemporaryDirectory() as temp_dir_name:

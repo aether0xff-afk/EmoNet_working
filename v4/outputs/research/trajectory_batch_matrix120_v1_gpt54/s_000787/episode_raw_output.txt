@@ -1,0 +1,40 @@
+{
+  "episode_label": "불안이 섞인 관계복구 집착",
+  "stimulus_reading": "자극은 단순히 '전화를 안 받음'이 아니라, 자신이 약속을 어기고 늦은 뒤 상대가 화났을 가능성이 높다는 인식이다. 네트워크는 이를 외부 공격보다도 자기 과실로 인해 관계가 손상될 수 있는 위기 신호로 읽고, 즉시 복구 행동을 향한 긴장 상태로 들어갔다.",
+  "appraisal": {
+    "primary_appraisal": "내 실수 때문에 중요한 관계가 틀어질 수 있다는 위협 평가가 핵심이다.",
+    "secondary_appraisal": "아직 돌이킬 수는 있으며, 사과와 복구 행동으로 상황을 되돌려야 한다는 과제 지향 해석이 강하게 붙어 있다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 미점화 뒤 빠르게 고각성 경계 상태로 점화되고, 이후 진정되지 않은 채 장시간 관계복구 방향의 긴장으로 지속되는 패턴이다. 회피보다 접근이 우세하지만, 편안한 접근이 아니라 불안과 압박이 실린 접근이다.",
+    "ignition": "tick 2부터 활성 노드와 엣지가 급증하며 사실상 즉시 점화된다. 이때 지배 신호가 '경계/날카로움'과 '공세적 긴장'으로 잡혀, 단순 후회가 아니라 위기 대응 모드로 넘어간다.",
+    "persistence": "전체 128 tick 중 126 tick이 활성이고 persistence_ratio가 0.9844라서, 감정이 짧게 치솟고 꺼진 것이 아니라 거의 끝까지 붙들린다. alarm 평균 0.6036, drive 평균 0.5118로 불안과 복구 추동이 함께 유지되며, fatigue는 낮아 쉽게 꺼지지 않는다.",
+    "resolution": "마지막에도 alarm 0.6035, drive 0.5374로 수렴이 아니라 미해결 긴장 상태다. 내부적으로는 '사과해야 한다, 풀어야 한다'는 행동 준비가 강화됐지, 정서적으로 해소되지는 않았다."
+  },
+  "action_tendency": "상대에게 다시 연락하고, 만나서 직접 사과하고, 책임을 인정하며 관계를 복구하려는 행동으로 밀어붙이는 성향이다. 다만 이 접근은 차분한 설득보다 조급하고 매달리는 형태로 나타날 가능성이 높다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "자기 과실 인식, 관계 손상 위협, 높은 불안, 그리고 사과/복구로 몰리는 조급한 접근성을 그대로 유지해야 한다.",
+    "avoid": "이를 단순한 '미안함'이나 부드러운 걱정 정도로 축소하면 왜곡이다. 또 고각성 상태를 곧바로 분노로 오독하는 것도 피해야 한다.",
+    "tone_hint": "건조하고 진단적으로, 미해결된 긴장과 복구 집착을 분명히 드러내는 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "signal_means=(drive=0.5118, brake=0.2262, alarm=0.6036, fatigue=0.1833)",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "persistence_ratio=0.9844",
+    "peak_alarm_tick=118",
+    "tick=127 | active_nodes=161 | edges_fired=1930 | dominant_signal=공세적 긴장 | combined=(drive=0.5374, brake=0.2279, alarm=0.6035, fatigue=0.1847)",
+    "피시방에 간 것이 너무 후회돼. 여자친구의 화를 풀어주고 싶어.",
+    "만나서 싹싹 빌어야지. 앞으로는 절대 약속을 잊지 않을 거야."
+  ],
+  "confidence": 0.93
+}

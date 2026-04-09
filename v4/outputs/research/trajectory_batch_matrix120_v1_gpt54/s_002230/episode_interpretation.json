@@ -1,0 +1,38 @@
+{
+  "episode_label": "죄책감 기반의 관계접근 호소",
+  "stimulus_reading": "자극의 핵심은 성적 자체보다 '주변의 높은 기대에 못 미친다'는 평가 압박이다. 네트워크는 이를 자기 잘못감으로 읽되, 단순 위축보다 누군가에게 들리고 싶다는 접근 성향까지 함께 묶어 처리했다.",
+  "appraisal": {
+    "primary_appraisal": "나는 기대를 충족하지 못했고 그래서 잘못하고 있다는 자기비난성 해석",
+    "secondary_appraisal": "이 상태를 혼자 견디기보다 타인에게 이해받고 정서적으로 수용받아야 한다는 관계적 필요가 활성화됨",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 점화는 빠르고, 이후 장시간 높은 활성 상태가 안정적으로 지속된다. 즉 순간적 울컥함보다 반복 반추와 관계추구가 결합된 지속형 episode다.",
+    "ignition": "tick 2-4에서 활성 노드와 엣지가 급증했고 dominant signal이 바로 추동/접근으로 잡혔다. 자극은 곧바로 자기평가 위협과 해결/접촉 욕구를 동시에 점화했다.",
+    "persistence": "tick 5-98의 긴 persistence 구간에서 persistence_ratio가 0.9798로 매우 높고, alarm도 높지만 drive가 더 우세하게 유지됐다. 이는 무너져 멈추는 상태보다 불편함을 안고 계속 해소 통로를 찾는 상태다.",
+    "resolution": "종결은 해소가 아니라 stable_convergence다. 즉 감정이 풀린 것이 아니라 '죄책감 + 불안 + 누군가에게 기대고 싶은 접근' 조합으로 굳어졌다."
+  },
+  "action_tendency": "자기비난을 계속 품은 채, 혼자 삭이기보다 누군가에게 털어놓고 확인받으려는 방향으로 간다. 회피보다는 호소·상담·관계적 접촉 시도가 더 자연스럽다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "자기잘못감이 핵심이지만, 내부 동역학은 순수한 위축이 아니라 불편을 견디며 타인 쪽으로 손을 뻗는 접근성이라는 점",
+    "avoid": "그냥 위로가 필요하다거나 단순 슬픔으로 축소하지 말 것. 해소된 상태나 차분한 수용으로 오독하면 안 됨.",
+    "tone_hint": "건조하고 진단적으로, 죄책감과 접근 충동의 동시성을 분명히 적시"
+  },
+  "evidence": [
+    "dominant_global_signal=추동/접근",
+    "signal_means=(drive=0.5946, brake=0.2445, alarm=0.5806, fatigue=0.1979)",
+    "termination_reason=stable_convergence",
+    "persistence_ratio=0.9798",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "peak_alarm_tick=84"
+  ],
+  "confidence": 0.94
+}

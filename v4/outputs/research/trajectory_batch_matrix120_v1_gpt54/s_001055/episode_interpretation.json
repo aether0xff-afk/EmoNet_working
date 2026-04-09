@@ -1,0 +1,38 @@
+{
+  "episode_label": "죄책감이 추진력으로 전환된 자구책 모색",
+  "stimulus_reading": "핵심 자극은 부모에게 경제적으로 의존해야 한다는 상황이 자기비난과 전공 후회로 읽힌 것이다. 이 자극은 단순한 낙담으로 끝나지 않고, '내가 벌어야 한다'는 방향의 긴장된 해결 추동을 강하게 점화했다.",
+  "appraisal": {
+    "primary_appraisal": "현재 상태를 자기 선택의 실패와 부담 전가로 해석하며, 그대로 있으면 안 된다는 압박을 강하게 느낀다.",
+    "secondary_appraisal": "상황 통제감은 낮거나 혼합적이지만, 완전한 무력감으로 붕괴하지 않고 수익화 시도를 통해 부분 통제를 회복할 수 있다고 본다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 점화 이후 고각성 상태가 길게 유지되며, 후회·죄책감이 정지나 회피보다 해결 행동 쪽으로 조직된 패턴이다. 정서 톤은 부정적이지만 처리 방식은 공격적 긴장과 접근 추동의 결합에 가깝다.",
+    "ignition": "점화 구간에서 '경계/날카로움'과 매우 높은 갈등이 빠르게 올라오며, 자극이 민감한 자기평가 문제로 읽혔음을 보여준다. 단순 슬픔보다 찔림, 압박, 자책성 긴장이 먼저 붙었다.",
+    "persistence": "지속 구간이 60틱으로 매우 길고 persistence_ratio도 높아, 상태가 쉽게 가라앉지 않았다. 다만 alarm만 독주한 것이 아니라 drive가 함께 높아져, 괴로움이 계속 문제 해결 충동을 밀어붙였다.",
+    "resolution": "말미에는 dominant_global_signal이 '추동/접근'으로 수렴한다. 즉 감정 episode는 후회에서 끝난 것이 아니라, 자력 생계 확보를 위한 실행 방향으로 정렬된 채 안정 수렴했다."
+  },
+  "action_tendency": "부모 의존을 줄이기 위해 결과물을 상품화하고 직접 수익을 만들려는 쪽으로 밀어붙인다. 멈춰 울기보다, 자책을 연료로 삼아 생산·판매·자립 시도에 들어가는 행동 성향이다.",
+  "rawness": {
+    "valence": "mixed",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "죄책감과 전공 후회가 실제로는 강한 자구적 추진력으로 재조직되는 결을 유지해야 한다.",
+    "avoid": "그냥 위로가 필요한 슬픔, 단순한 진로 고민, 혹은 밝은 희망 회복으로 순화하면 왜곡이다.",
+    "tone_hint": "건조하고 직설적으로, 자책-긴장-실행 전환 구조를 분명히 드러내는 톤"
+  },
+  "evidence": [
+    "입력에서 직접 자극이 제시됨: \"부모님한테 손 벌리는 것이 너무 죄책감 들어서 내가 미술 전공한 것이 너무 후회돼.\"",
+    "부담의 해석이 강화됨: \"미술을 하니까 돈이 유독 많이 들어서 마음이 어려워. 이쪽 길은 내 길이 아니었어.\"",
+    "해결 방향이 자발적으로 생성됨: \"내 작품으로 상품을 만들어서 판매해볼래. 적어도 내 생활비는 내가 벌면 좋겠어.\"",
+    "전역 추적에서 정서가 오래 지속됨: \"trajectory_pattern=high_arousal_persistence\", \"persistence_ratio=0.9692\"",
+    "지속 구간의 지배 신호가 긴장성임: \"phase_sequence=dormant -> ignition -> persistence\", \"persistence | tick 5-64 | dominant_signal=경계/날카로움\"",
+    "최종 수렴은 접근 추동 쪽임: \"dominant_global_signal=추동/접근\", \"tick=64 | dominant_signal=추동/접근 | combined=(drive=0.6009, ... alarm=0.5990 ...)\""
+  ],
+  "confidence": 0.93
+}

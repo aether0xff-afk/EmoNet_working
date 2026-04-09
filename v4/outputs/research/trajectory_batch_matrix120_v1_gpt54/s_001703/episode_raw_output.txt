@@ -1,0 +1,38 @@
+{
+  "episode_label": "수치 기반의 불안한 고백 압박",
+  "stimulus_reading": "핵심 자극은 단순한 투자 손실 자체보다, 그 손실을 배우자에게 드러내야 하는 상황에서 자기 체면이 무너졌다고 읽힌 점이다. 네트워크는 금전 손실을 곧바로 대인적 평가 위협과 고백 압박으로 연결해 처리했다.",
+  "appraisal": {
+    "primary_appraisal": "자기 책임이 큰 실패가 관계 안에서 노출될 위협으로 해석되며, 체면 손상과 비난 가능성이 동시에 점화된 상태다.",
+    "secondary_appraisal": "그럼에도 회피로 끝나지 않고 결국 말해야 한다는 방향으로 추동이 유지되어, 불안 속 접근 준비가 함께 굳어졌다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "mixed"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 미점화 후 빠른 점화, 짧은 증폭을 거쳐 매우 길게 지속되는 고긴장 상태다. 단발 충격이라기보다, 불안과 고백 충동이 같이 붙어 오래 유지된 episode다.",
+    "ignition": "tick 3-5에서 경계/날카로움이 우세하게 켜지며, 사건이 단순 손실이 아니라 사회적 노출 위험으로 재해석되면서 급점화되었다.",
+    "persistence": "tick 8-95의 긴 persistence 구간에서 경계/날카로움이 지속되지만 전체 평균과 후반부는 추동/접근이 높다. 즉 얼어붙기보다, 긴장한 채 말해야 한다는 압박과 대비가 오래 유지된 구조다.",
+    "resolution": "종결은 해소가 아니라 stable_convergence 형태의 고정이다. 마지막까지 drive와 alarm이 함께 높아, 감정이 풀린 것이 아니라 불안한 고백 결심 쪽으로 수렴했다."
+  },
+  "action_tendency": "배우자에게 사실을 털어놓는 쪽으로 기울지만, 편안한 소통이 아니라 면목 없음·비난 예상·자기방어를 동반한 긴장된 접근으로 갈 가능성이 높다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "수치심, 관계 평가 위협, 그리고 회피 못 하고 결국 말해야 한다는 압박의 동시성",
+    "avoid": "단순한 당황, 일반적 걱정, 또는 차분한 상담 필요 상태로만 순화하는 것",
+    "tone_hint": "건조하고 진단적으로, 체면 손상과 고백 압박을 직접적으로 명시"
+  },
+  "evidence": [
+    "입력에서 \"집사람 볼 면목이 없어.\"라고 하여 손실이 자기 체면과 대인 평가 위협으로 번역되어 있다.",
+    "입력에서 \"고민이야. 많이 당황할 것 같은데 그래도 말은 해야겠지?\"라고 하여 회피보다 긴장된 고백 압박이 드러난다.",
+    "GLOBAL_TRACE에서 \"dominant_global_signal=추동/접근\"이며 signal_means가 \"drive=0.6163, alarm=0.6104\"로 둘 다 높아, 불안만이 아니라 행동 압박이 함께 유지된다.",
+    "TRAJECTORY에서 \"phase_sequence=dormant -> ignition -> escalation -> persistence\"이고 persistence가 88 ticks로 길어, 순간 당황보다 지속적 고긴장 episode임을 보여준다.",
+    "PHASE_SEGMENTS에서 persistence 구간의 dominant_signal이 \"경계/날카로움\"이며 signal_conflict=0.9887로 매우 높아, 접근과 경계가 강하게 엉킨 상태다.",
+    "KEY_TICKS에서 tick=87과 tick=95의 dominant_signal이 다시 \"추동/접근\"으로 나타나 마지막이 회피가 아니라 긴장된 접근 쪽 수렴임을 보여준다."
+  ],
+  "confidence": 0.92
+}

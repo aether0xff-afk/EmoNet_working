@@ -1,0 +1,40 @@
+{
+  "episode_label": "압박성 불안-방어 긴장",
+  "stimulus_reading": "핵심 자극은 노후 준비 실패에 대한 미래 불안 자체와, 그 위에 아내의 비난/잔소리가 겹쳐진 이중 압박이다. 네트워크는 이를 단순한 걱정이 아니라 지속적으로 경계해야 하는 위협 상황으로 읽었다.",
+  "appraisal": {
+    "primary_appraisal": "재정적 미래 위험이 이미 크게 지각된 상태에서 가까운 타인의 반복적 비난이 추가되어, 상황이 안전하지 않고 계속 압박된다고 해석했다.",
+    "secondary_appraisal": "완전한 무력 붕괴보다는 경계하면서 대응책을 찾아야 한다는 문제해결 추동이 남아 있다. 즉, 겁먹고 얼어붙기만 한 상태가 아니라 방어적으로 버티며 출구를 찾는 상태다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "짧게 점화된 뒤 빠르게 고각성 상태로 올라가고, 해소 없이 거의 전 구간 지속되는 고각성 지속형 episode다. 불안이 중심이지만 공격적 긴장이 함께 묻어 있어 순수 위축형보다는 압박-방어형에 가깝다.",
+    "ignition": "입력 초반에 바로 경계/날카로움이 붙으며 활성 노드가 급증했다. 이는 표면의 '불안' 진술보다도 비난받는 관계 맥락이 내부에서 즉시 위협 신호를 증폭시켰다는 뜻이다.",
+    "persistence": "지속 구간이 115틱으로 매우 길고 persistence_ratio가 0.9835로 높다. alarm 평균이 0.5785로 지배적이며 마지막 tick에서도 0.5809로 유지되어, 잠깐의 감정 표출이 아니라 오래 붙들린 긴장 상태로 처리됐다.",
+    "resolution": "종결은 진정 해소가 아니라 stable_convergence 형태의 고착 수렴이다. 대화와 최선책 탐색이라는 인지적 정리가 나오지만, 내부 신호는 낮아지지 않고 경계 상태로 수렴했다."
+  },
+  "action_tendency": "눈치를 보며 방어적으로 관계 마찰을 관리하되, 동시에 문제를 통제 가능한 대화/계획으로 묶으려는 성향이다. 즉각적 공격보다는 압박을 견디면서 해결 프레임을 만들려는 쪽으로 간다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "불안만이 아니라 비난에 눌린 방어 긴장, 지속성, 해소되지 않은 압박감을 남겨야 한다.",
+    "avoid": "단순한 '걱정'이나 차분한 문제해결 의지로 미화하면 왜곡이다. 분노로 단정하는 것도 과잉 해석이다.",
+    "tone_hint": "건조하고 진단적으로, 압박과 경계의 지속을 숨기지 않는 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "persistence_ratio=0.9835",
+    "signal_means=(drive=0.2470, brake=0.2311, alarm=0.5785, fatigue=0.1956)",
+    "peak_alarm_tick=120",
+    "맞아. 하루 종일 잔소리를 해서 눈치를 보게 돼.",
+    "아내와 진지하게 며칠정도 이야기를 해보고 최선책을 찾아봐야겠어."
+  ],
+  "confidence": 0.93
+}

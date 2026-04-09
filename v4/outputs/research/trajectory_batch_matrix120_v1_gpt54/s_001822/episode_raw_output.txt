@@ -1,0 +1,38 @@
+{
+  "episode_label": "감사-미안함의 보답 추동",
+  "stimulus_reading": "핵심 자극은 교통사고라는 위기 상황 자체보다, 그때 어머니가 밤새 간호해주었다는 돌봄 기억이 강하게 재활성화된 것이다. 이 돌봄을 현재의 자기 기여 부족과 연결하면서 감사와 부채감이 함께 점화되었고, 곧바로 효도 행동으로 전환하려는 내부 처리로 이어졌다.",
+  "appraisal": {
+    "primary_appraisal": "타인의 헌신이 매우 크게 지각되었고, 그에 비해 자신이 충분히 돌려주지 못했다는 비대칭 평가가 형성되었다.",
+    "secondary_appraisal": "이 상태는 단순 감상에 머물지 않고 지금이라도 보답할 수 있다는 가능성 평가로 이어져, 정서가 행동 계획 쪽으로 밀어붙여졌다.",
+    "target": "mixed",
+    "control_state": "high",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "고각성의 긍정-부채 혼합 정서가 빠르게 점화된 뒤 오래 지속되며, 억제보다 접근 추동이 우세하게 유지된 episode다. 불안 신호가 동반되지만 회피로 꺾이지 않고 관계 회복/보답 방향으로 수렴한다.",
+    "ignition": "초기 dormant 이후 tick 2-4에서 활성 노드와 edge가 급증했고, dominant_signal이 즉시 추동/접근으로 고정되었다. 즉 자극은 망설임보다 즉시 행동 준비를 유발했다.",
+    "persistence": "tick 5-56의 긴 persistence 구간에서 persistence_ratio=0.9649, saturation_ratio=0.8398로 매우 안정적인 지속 활성화가 나타난다. drive 평균이 brake보다 훨씬 높고, alarm도 중간 이상 유지되어 감사만이 아니라 미안함과 긴장감이 행동 동력으로 같이 작동했다.",
+    "resolution": "종결은 소진이나 완화가 아니라 stable_convergence이며 마지막 tick에서도 drive=0.6070, alarm=0.5606으로 높은 추진 상태가 남아 있다. 즉 감정이 해소된 것이 아니라 효도 실행 의도로 정렬되어 수렴한 상태다."
+  },
+  "action_tendency": "감사 표현에 그치지 않고 실제 보답 행동을 조직하려는 성향이 강하다. 말, 집안일, 요리, 돌봄 제공처럼 구체적이고 관계 지향적인 접근 행동으로 이어질 가능성이 높다.",
+  "rawness": {
+    "valence": "mixed",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "감사와 함께 자기부족감, 빚진 느낌, 지금 당장 갚고 싶어지는 추동이 동시에 존재한다는 점",
+    "avoid": "그냥 따뜻하고 훈훈한 감사 정서로만 순화하는 것, 또는 high arousal을 불안/공포로 오독하는 것",
+    "tone_hint": "담백하지만 단호하게, 보답 압력이 실제 동력이라는 점을 분명히 드러내는 톤"
+  },
+  "evidence": [
+    "나는 어머니께 해준 것도 없는데 미안하고 감사한 마음이 커. 지금이라도 효도하고 싶어.",
+    "집안일을 도와드리고 요리도 내가 직접 해드려야겠어.",
+    "dominant_global_signal=추동/접근",
+    "trajectory_pattern=high_arousal_persistence",
+    "termination_reason=stable_convergence",
+    "tick=56 | combined=(drive=0.6070, brake=0.2370, alarm=0.5606, fatigue=0.1905)"
+  ],
+  "confidence": 0.94
+}

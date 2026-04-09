@@ -1,0 +1,55 @@
+[SAMPLE]
+id=s_000471
+
+[INPUT_TEXT]
+갑자기 배가 아파 산부인과 갔는데 임신 삼 개월에 아이를 유산해서 충격이야. [SEP] 복통으로 산부인과 갔는데 아이 유산 통보를 받아 충격이 크겠어요. [SEP] 아이가 유산돼서 너무 슬프고 비통해. [SEP] 아이가 유산되서 비통하시군요. 어떻게 하면 충격 받은 마음을 가라앉힐 수 있을까요? [SEP] 명상을 하며 마음을 다잡으려고 노력 중이야. [SEP] 명상을 통해 마음의 안정을 얻으려 하시는군요.
+
+[GLOBAL_TRACE]
+- ticks_run=93
+- termination_reason=stable_convergence
+- dominant_branch_len=91
+- active_tick_count=91
+- persistence_ratio=0.9785
+- saturation_ratio=0.6783
+- dominant_global_signal=공세적 긴장
+- signal_means=(drive=0.2497, brake=0.2398, alarm=0.5747, fatigue=0.1879)
+- node_mix=(inh=0.4082, exc=0.4860, mod=0.1058)
+
+[TRAJECTORY]
+- trajectory_pattern=mixed
+- phase_count=4
+- phase_sequence=dormant -> ignition -> escalation -> persistence
+- peak_alarm_tick=75
+- peak_fatigue_tick=9
+- peak_conflict_tick=0
+
+[PHASE_SEGMENTS]
+- dormant | tick 0-1 | duration=2 | active_nodes=0.00 | edges=0.00 | dominant_signal=추동/접근 | signal_conflict=1.0000
+- ignition | tick 2-4 | duration=3 | active_nodes=42.67 | edges=496.33 | dominant_signal=경계/날카로움 | signal_conflict=0.9642
+- escalation | tick 5-5 | duration=1 | active_nodes=160.00 | edges=1882.00 | dominant_signal=경계/날카로움 | signal_conflict=0.9766
+- persistence | tick 6-92 | duration=87 | active_nodes=182.30 | edges=1648.34 | dominant_signal=경계/날카로움 | signal_conflict=0.7165
+
+[KEY_TICKS]
+- tick=0 | active_nodes=0 | edges_fired=0 | dominant_signal=거의 무색 | combined=(drive=0.0000, brake=0.0000, alarm=0.0000, fatigue=0.0000) | mix=(inh=0.0000, exc=0.0000, mod=0.0000)
+- tick=2 | active_nodes=10 | edges_fired=109 | dominant_signal=공세적 긴장 | combined=(drive=0.2292, brake=0.2267, alarm=0.3042, fatigue=0.1883) | mix=(inh=0.1000, exc=0.0000, mod=0.9000)
+- tick=5 | active_nodes=160 | edges_fired=1882 | dominant_signal=경계/날카로움 | combined=(drive=0.2540, brake=0.2886, alarm=0.3120, fatigue=0.2246) | mix=(inh=0.4750, exc=0.4000, mod=0.1250)
+- tick=6 | active_nodes=198 | edges_fired=2323 | dominant_signal=경계/날카로움 | combined=(drive=0.2675, brake=0.2875, alarm=0.3317, fatigue=0.2273) | mix=(inh=0.4343, exc=0.4545, mod=0.1111)
+- tick=9 | active_nodes=205 | edges_fired=2337 | dominant_signal=경계/날카로움 | combined=(drive=0.2822, brake=0.2966, alarm=0.3786, fatigue=0.2342) | mix=(inh=0.4244, exc=0.4585, mod=0.1171)
+- tick=75 | active_nodes=177 | edges_fired=1399 | dominant_signal=공세적 긴장 | combined=(drive=0.2513, brake=0.2385, alarm=0.5776, fatigue=0.1867) | mix=(inh=0.3842, exc=0.5085, mod=0.1073)
+- tick=92 | active_nodes=181 | edges_fired=1319 | dominant_signal=공세적 긴장 | combined=(drive=0.2487, brake=0.2381, alarm=0.5767, fatigue=0.1870) | mix=(inh=0.4033, exc=0.4917, mod=0.1050)
+
+[TOP_ACTIVE_NODES]
+- node=64 | type=excitatory | bias=추동/접근 | activity_ticks=87 | k_mean=8964.3539 | stim=(drive=0.0221, brake=0.0253, alarm=0.9450, fatigue=0.0123)
+- node=71 | type=inhibitory | bias=완충/억제 | activity_ticks=89 | k_mean=8677.0730 | stim=(drive=0.2133, brake=0.2471, alarm=0.3964, fatigue=0.2356)
+- node=214 | type=excitatory | bias=추동/접근 | activity_ticks=88 | k_mean=7939.8718 | stim=(drive=0.0278, brake=0.0689, alarm=0.9306, fatigue=0.0178)
+- node=80 | type=modulatory | bias=공세적 긴장 | activity_ticks=88 | k_mean=7274.3106 | stim=(drive=0.1491, brake=0.2141, alarm=0.6484, fatigue=0.1422)
+- node=239 | type=inhibitory | bias=완충/억제 | activity_ticks=85 | k_mean=7436.0735 | stim=(drive=0.2164, brake=0.2579, alarm=0.3946, fatigue=0.2425)
+- node=82 | type=inhibitory | bias=완충/억제 | activity_ticks=87 | k_mean=6690.0502 | stim=(drive=0.2117, brake=0.2414, alarm=0.3905, fatigue=0.2212)
+- node=49 | type=modulatory | bias=공세적 긴장 | activity_ticks=86 | k_mean=6661.4784 | stim=(drive=0.1531, brake=0.2391, alarm=0.6523, fatigue=0.1917)
+- node=202 | type=excitatory | bias=공세적 긴장 | activity_ticks=85 | k_mean=6646.4665 | stim=(drive=0.0176, brake=0.0228, alarm=0.9472, fatigue=0.0166)
+
+[IMPORTANT]
+- 감정은 입력 자극 자체가 아니라, 이 자극이 네트워크 안에서 어떻게 점화되고 지속되고 충돌하고 수렴하는지의 episode로 해석한다.
+- 단일 high-arousal 상태를 자동으로 분노로 단정하지 않는다.
+- 접근 신호가 크고 alarm이 지배적이지 않다면 기대/호감/들뜸 같은 positive arousal 가능성을 검토한다.
+- 활성화가 거의 없으면 강한 감정을 꾸며내지 말고 미점화, 보류, anticipatory state 가능성을 명시한다.

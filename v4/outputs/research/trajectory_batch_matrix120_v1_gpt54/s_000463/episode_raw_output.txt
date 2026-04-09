@@ -1,0 +1,40 @@
+{
+  "episode_label": "도전-방어형 공세적 긴장",
+  "stimulus_reading": "자극의 핵심은 단순한 성적 경쟁이 아니라, 성적 우위의 상대에게 공개적으로 낮게 평가되고 조롱당한 뒤 그 평가를 뒤집어야 하는 상황이다. 그래서 이 사건은 불안한 시험 대비가 아니라 자존심 회복과 능력 증명의 압박으로 읽혔다.",
+  "appraisal": {
+    "primary_appraisal": "상대의 조롱으로 손상된 자기평가를 경쟁 성과로 복구해야 하는 위협-도전 상황으로 해석됐다.",
+    "secondary_appraisal": "이길 수 있을지 확신은 낮지만, 물러서기보다 준비를 통해 역전 가능성을 만들 수 있다는 계산이 함께 붙었다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 미점화 후 짧게 급점화되고, 이후 높은 각성과 접근 추동이 오래 유지되는 지속형 episode다. 순수 공포나 순수 분노보다, 경계가 깔린 채 상대를 이기려는 공세적 긴장이 주도했다.",
+    "ignition": "tick 2-4에서 활성 노드와 edge가 급증하며 빠르게 점화됐다. 조롱당한 기억과 경쟁 과제가 결합되면서 경계/날카로움이 즉시 전면으로 올라왔다.",
+    "persistence": "tick 5-96의 긴 persistence 구간에서 alarm과 drive가 함께 높게 유지됐다. 불안만으로 꺼지지 않고, 이겨서 보여주려는 접근 동기가 계속 긴장을 먹여 살린 패턴이다.",
+    "resolution": "마지막에는 진정이나 해소보다 안정 수렴 형태로 굳었다. 즉 감정이 풀린 것이 아니라, '무리하지 말고 내가 할 수 있는 만큼 준비한다'는 실행 모드로 공세적 긴장이 정착했다."
+  },
+  "action_tendency": "상대를 피하거나 포기하기보다, 공부 계획을 세워 성과로 반박하고 자존심을 회복하려는 방향으로 간다. 다만 동력이 경쟁적 방어에서 오기 때문에, 수행 압박과 과도한 경계가 같이 따라붙을 가능성이 높다.",
+  "rawness": {
+    "valence": "mixed",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "긴장의 바닥에 있는 것은 단순한 떨림이 아니라 모욕 반응, 경쟁 압박, 증명 욕구가 결합된 공세성이라는 점",
+    "avoid": "그냥 열심히 해보려는 건강한 동기나 가벼운 긴장으로 순화하는 것",
+    "tone_hint": "차갑고 분석적으로, 경쟁적 방어 상태를 그대로 명명"
+  },
+  "evidence": [
+    "걔가 나 공부 못 한다고 놀렸어. 이 기회에 코를 납작하게 눌러주고 싶은데 걱정이야.",
+    "전교에서 일등 하는 여자애와 성적 내기를 해야 하는데 질까 봐 긴장돼.",
+    "dominant_global_signal=공세적 긴장",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "persistence_ratio=0.9794",
+    "tick=50 | dominant_signal=공세적 긴장 | combined=(drive=0.5688, brake=0.2263, alarm=0.6014, fatigue=0.1927)",
+    "tick=96 | dominant_signal=공세적 긴장 | combined=(drive=0.5977, brake=0.2368, alarm=0.5985, fatigue=0.2001)",
+    "우선 처음부터 무리하지 않을 거야. 내가 집중할 수 있는 만큼 공부에 집중하고 싶어."
+  ],
+  "confidence": 0.93
+}

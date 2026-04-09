@@ -1,0 +1,38 @@
+{
+  "episode_label": "결핍 비교로 점화된 방어적 자책-경계",
+  "stimulus_reading": "자극의 핵심은 단순한 '가난' 진술이 아니라, 자기 경제상태를 타인과 비교하며 뒤처짐과 선택 실패를 묶어 해석한 것이다. '우리 집은 왜 이렇게 가난한지'와 '나만 빼고 다 잘 사는 것 같아', '자영업을 하지 말 걸'이 결합되며 결핍, 비교, 후회가 한 episode로 묶였다.",
+  "appraisal": {
+    "primary_appraisal": "현재 처지를 위협적이고 불리한 상태로 읽고, 자신이 구조적으로 밀리고 있다는 경계 반응이 우세하다.",
+    "secondary_appraisal": "동시에 원인을 자기 선택 실패와 무능 쪽으로 돌리며 자책이 섞였지만, 순수한 침잠보다 날카로운 방어 경계가 더 강하다.",
+    "target": "mixed",
+    "control_state": "low",
+    "social_orientation": "withdraw"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 억제 후 빠르게 경계 신호로 치솟고, 이후 해소 없이 날카로운 상태가 길게 고착된 mixed trajectory다.",
+    "ignition": "점화 초반에는 완충/억제가 먼저 올라와 즉시 폭발하기보다 눌러 담는 처리로 시작했다. 그러나 짧은 구간 뒤 곧바로 경계/날카로움으로 전환되며 사건을 위협적으로 고정했다.",
+    "persistence": "지속 구간이 61틱으로 매우 길고 persistence_ratio도 높아, 반응이 스쳐 지나간 것이 아니라 내부에서 계속 반추·경계된 상태로 유지됐다. alarm 평균과 peak 모두 높고 dominant_global_signal도 경계/날카로움이라, 가라앉은 우울보다는 예민하게 붙잡힌 고통에 가깝다.",
+    "resolution": "termination은 stable_convergence지만 정서 해소가 아니라 경계 상태의 안정화다. 마지막까지 alarm이 높게 유지돼 '정리됨'이 아니라 '날카롭게 굳어짐'으로 수렴했다."
+  },
+  "action_tendency": "타인과 자신을 비교하며 손실 원인을 캐고, 선택을 후회하고, 외부 위로에는 쉽게 풀리지 않은 채 스스로를 방어적으로 움츠리거나 냉소적으로 밀어내는 성향으로 간다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "결핍감, 비교로 인한 날카로움, 자책과 경계가 함께 묶인 거친 결을 유지해야 한다.",
+    "avoid": "단순한 '저축이 힘들어서 속상함'이나 잔잔한 우울로 순화하면 왜곡이다. 또한 응원받고 안정된 것으로 해석하면 안 된다.",
+    "tone_hint": "건조하고 직설적으로, 방어적 긴장과 자책의 동시성을 드러내는 톤"
+  },
+  "evidence": [
+    "\"나만 빼고 다 잘 사는 것 같아. 자영업을 하지 말 걸 그랬나 봐.\"",
+    "\"우리 집은 왜 이렇게 가난한지 모르겠어. 나는 저축이 왜 힘든 거지.\"",
+    "\"dominant_global_signal=경계/날카로움\"",
+    "\"phase_sequence=dormant -> ignition -> escalation -> persistence\"",
+    "\"persistence_ratio=0.9559\"",
+    "\"peak_alarm_tick=55\" 및 \"combined=(drive=0.2574, brake=0.2626, alarm=0.5571, fatigue=0.2014)\""
+  ],
+  "confidence": 0.94
+}

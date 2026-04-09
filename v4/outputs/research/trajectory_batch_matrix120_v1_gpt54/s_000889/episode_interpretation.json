@@ -1,0 +1,38 @@
+{
+  "episode_label": "죄책감 기반의 초조한 만회 추동",
+  "stimulus_reading": "자녀에게 도움이 되고 싶지만 몸이 아파 아무것도 못 한다는 자기상황 인식이 핵심 자극이었다. 단순한 슬픔보다, 자신의 무능력이 자녀를 더 힘들게 한다는 해석이 붙으면서 문제 해결 압박이 강하게 점화됐다.",
+  "appraisal": {
+    "primary_appraisal": "나는 보호자 역할을 충분히 못 하고 있고, 그 결핍이 자녀에게 부담을 준다는 자기비난성 해석",
+    "secondary_appraisal": "상황이 고정된 것은 아닐 수 있으니 어떻게든 할 수 있는 일을 찾아 만회해야 한다는 복구 지향 해석",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 점화 후 빠르게 높은 각성으로 올라간 뒤, 단순 침잠이 아니라 경계와 추동이 함께 오래 지속되는 복구 집착형 패턴이다. 감정이 풀린 것이 아니라 해결 행동 쪽으로 긴장이 고정됐다.",
+    "ignition": "tick 2-4에서 활성 노드와 엣지가 급증했고 dominant_signal이 곧바로 경계/날카로움으로 바뀌었다. 이는 상실감 자체보다 '이대로 있으면 안 된다'는 위기성 평가가 빠르게 붙었음을 뜻한다.",
+    "persistence": "tick 5-97의 긴 persistence 구간에서 persistence_ratio 0.9796, phase pattern high_arousal_persistence가 나타난다. alarm과 drive가 둘 다 높게 유지되어 불안만도 아니고 의욕만도 아닌, 초조한 해결 추동이 장기 고정된 상태다.",
+    "resolution": "종결은 정서 해소가 아니라 stable_convergence 상태의 접근 수렴이다. 마지막에는 dominant_global_signal이 추동/접근으로 잡히지만 alarm도 거의 같은 수준으로 높아, 안심보다는 불안을 동반한 '뭐라도 해야 한다'로 굳었다."
+  },
+  "action_tendency": "자기비난을 연료로 삼아 작게라도 할 수 있는 역할을 찾고, 자녀에게 짐이 아니라 도움이 되려는 방향으로 움직이려 한다. 다만 정서적으로는 안정된 결심이 아니라 초조함이 섞인 만회 시도라 과잉책임감이나 무리한 자기압박으로 이어질 가능성이 있다.",
+  "rawness": {
+    "valence": "mixed",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "미안함, 자기책임감, 자녀에게 짐이 된다는 압박, 그리고 그 압박이 해결추동으로 고정된 결",
+    "avoid": "그냥 슬픔이나 따뜻한 희망으로 순화하는 것, 또는 단순 무기력으로만 해석하는 것",
+    "tone_hint": "정서 위로보다 구조 진단형, 건조하고 직접적으로"
+  },
+  "evidence": [
+    "입력에 \"몸이 아파 뭘 할 수 없어. 자식들에게 미안해.\"라고 되어 있어 자극의 핵심이 신체 제약과 자녀에 대한 죄책감임이 직접 드러난다.",
+    "\"내가 이러니 자식들도 힘들어해. 상황이 더 나아질 순 없는 걸까?\"는 자기상태를 자녀 부담으로 연결하고, 곧바로 개선 가능성을 묻는 복구 지향 평가를 보여준다.",
+    "\"내가 할 수 있는 일을 찾아보려고 해. 자식들에게 도움이 될 수 있도록.\"은 정서가 회피보다 접근/만회 행동으로 수렴함을 보여준다.",
+    "GLOBAL_TRACE에서 dominant_global_signal=추동/접근, signal_means=(drive=0.6002, alarm=0.5988)로 drive와 alarm이 함께 높아 불안과 해결추동의 결합 상태가 확인된다.",
+    "TRAJECTORY에 trajectory_pattern=high_arousal_persistence, persistence_ratio=0.9796, phase_sequence=dormant -> ignition -> persistence로 기록되어, 감정이 짧게 지나간 것이 아니라 고각성 상태로 지속되었음이 명확하다.",
+    "PHASE_SEGMENTS에서 ignition과 persistence의 dominant_signal이 계속 경계/날카로움이고, 후반 key tick 66과 97에서 dominant_signal이 추동/접근으로 바뀌어도 alarm이 drive와 거의 같은 수준으로 유지된다."
+  ],
+  "confidence": 0.91
+}

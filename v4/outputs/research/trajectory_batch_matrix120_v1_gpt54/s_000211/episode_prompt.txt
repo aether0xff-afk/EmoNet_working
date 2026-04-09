@@ -1,0 +1,99 @@
+[ROLE]
+당신은 감정을 자극 라벨이 아니라 정보 전달 episode로 해석하는 분석가다.
+
+[TASK]
+아래 trajectory transcript를 읽고, 입력 사건이 네트워크 내부에서 어떤 감정 episode로 처리되었는지 한국어 JSON 하나로 해석하라.
+
+[RULES]
+- 입력 문장의 표면 감정 표현보다 trace evidence를 우선한다.
+- 감정은 stimulus, appraisal, trajectory, action tendency를 함께 본 episode로 해석한다.
+- evidence에는 반드시 transcript에서 직접 근거가 되는 문장 2개 이상을 적는다.
+- soft한 상담 답변을 만들지 말고, 내부 처리 상태를 솔직하게 진단한다.
+
+[OUTPUT_JSON_SCHEMA]
+{
+  "episode_label": "짧은 한국어 라벨",
+  "stimulus_reading": "무슨 일이 자극이었는지 1-2문장",
+  "appraisal": {
+    "primary_appraisal": "핵심 해석",
+    "secondary_appraisal": "보조 해석",
+    "target": "self|other|situation|mixed",
+    "control_state": "low|mixed|high",
+    "social_orientation": "approach|defend|withdraw|mixed"
+  },
+  "trajectory": {
+    "overall_pattern": "trajectory pattern 해석",
+    "ignition": "점화 구간 해석",
+    "persistence": "지속/증폭 구간 해석",
+    "resolution": "마지막 수렴 상태 해석"
+  },
+  "action_tendency": "지금 이 상태가 어떤 행동 성향으로 가는지",
+  "rawness": {
+    "valence": "negative|positive|mixed|flat",
+    "arousal": "low|medium|high",
+    "softened_output_risk": "low|medium|high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "출력에서 반드시 남겨야 할 결",
+    "avoid": "순화하거나 왜곡하면 안 되는 것",
+    "tone_hint": "응답 표면 톤 힌트"
+  },
+  "evidence": ["근거1", "근거2"],
+  "confidence": 0.0
+}
+
+[TRANSCRIPT]
+[SAMPLE]
+id=s_000211
+
+[INPUT_TEXT]
+엄마가 재혼하신대. 새아빠가 생기는 것은 좋지만 한편으로 걱정돼. [SEP] 새아빠가 생기는 것이 좋으면서도 걱정되시는군요. [SEP] 엄마는 내가 싫으면 재혼하지 않으신대. 내 마음을 나도 모르겠고 너무 우유부단해진 것 같아. [SEP] 예전에 이처럼 마음을 잘 모를 때는 어떻게 하셨나요? [SEP] 다이어리에 좋은 점과 싫은 점에 대해 적어놓고 충분히 고민하는 시간을 가졌었어. [SEP] 이번에도 충분히 고민하는 시간을 가져 후회 없는 선택을 하시길 바라요.
+
+[GLOBAL_TRACE]
+- ticks_run=95
+- termination_reason=stable_convergence
+- dominant_branch_len=93
+- active_tick_count=93
+- persistence_ratio=0.9789
+- saturation_ratio=0.6428
+- dominant_global_signal=공세적 긴장
+- signal_means=(drive=0.5229, brake=0.2315, alarm=0.5916, fatigue=0.1932)
+- node_mix=(inh=0.4340, exc=0.4722, mod=0.0938)
+
+[TRAJECTORY]
+- trajectory_pattern=mixed
+- phase_count=3
+- phase_sequence=dormant -> ignition -> persistence
+- peak_alarm_tick=80
+- peak_fatigue_tick=7
+- peak_conflict_tick=0
+
+[PHASE_SEGMENTS]
+- dormant | tick 0-1 | duration=2 | active_nodes=0.00 | edges=0.00 | dominant_signal=추동/접근 | signal_conflict=1.0000
+- ignition | tick 2-4 | duration=3 | active_nodes=88.67 | edges=1047.67 | dominant_signal=경계/날카로움 | signal_conflict=0.9738
+- persistence | tick 5-94 | duration=90 | active_nodes=170.73 | edges=1997.63 | dominant_signal=경계/날카로움 | signal_conflict=0.8838
+
+[KEY_TICKS]
+- tick=0 | active_nodes=0 | edges_fired=0 | dominant_signal=거의 무색 | combined=(drive=0.0000, brake=0.0000, alarm=0.0000, fatigue=0.0000) | mix=(inh=0.0000, exc=0.0000, mod=0.0000)
+- tick=2 | active_nodes=28 | edges_fired=332 | dominant_signal=공세적 긴장 | combined=(drive=0.2995, brake=0.1611, alarm=0.3168, fatigue=0.1516) | mix=(inh=0.0357, exc=0.6786, mod=0.2857)
+- tick=5 | active_nodes=184 | edges_fired=2169 | dominant_signal=공세적 긴장 | combined=(drive=0.2835, brake=0.2666, alarm=0.3212, fatigue=0.2156) | mix=(inh=0.4457, exc=0.4565, mod=0.0978)
+- tick=7 | active_nodes=187 | edges_fired=2172 | dominant_signal=공세적 긴장 | combined=(drive=0.3047, brake=0.2706, alarm=0.3543, fatigue=0.2210) | mix=(inh=0.4492, exc=0.4545, mod=0.0963)
+- tick=80 | active_nodes=160 | edges_fired=1920 | dominant_signal=공세적 긴장 | combined=(drive=0.5224, brake=0.2279, alarm=0.5949, fatigue=0.1903) | mix=(inh=0.4250, exc=0.4875, mod=0.0875)
+- tick=94 | active_nodes=161 | edges_fired=1932 | dominant_signal=공세적 긴장 | combined=(drive=0.5375, brake=0.2323, alarm=0.5926, fatigue=0.1944) | mix=(inh=0.4348, exc=0.4783, mod=0.0870)
+
+[TOP_ACTIVE_NODES]
+- node=100 | type=excitatory | bias=추동/접근 | activity_ticks=91 | k_mean=11383.4282 | stim=(drive=0.6132, brake=0.0155, alarm=0.9204, fatigue=0.0166)
+- node=134 | type=excitatory | bias=추동/접근 | activity_ticks=91 | k_mean=10433.3111 | stim=(drive=0.7042, brake=0.0114, alarm=0.9397, fatigue=0.0072)
+- node=8 | type=excitatory | bias=추동/접근 | activity_ticks=92 | k_mean=10032.6381 | stim=(drive=0.6544, brake=0.0095, alarm=0.9331, fatigue=0.0069)
+- node=43 | type=excitatory | bias=공세적 긴장 | activity_ticks=92 | k_mean=10025.9929 | stim=(drive=0.5261, brake=0.0093, alarm=0.9430, fatigue=0.0062)
+- node=57 | type=inhibitory | bias=완충/억제 | activity_ticks=90 | k_mean=9795.9483 | stim=(drive=0.3668, brake=0.3041, alarm=0.4442, fatigue=0.2953)
+- node=0 | type=excitatory | bias=공세적 긴장 | activity_ticks=90 | k_mean=9479.6507 | stim=(drive=0.4481, brake=0.0102, alarm=0.9342, fatigue=0.0188)
+- node=115 | type=excitatory | bias=공세적 긴장 | activity_ticks=91 | k_mean=9003.8587 | stim=(drive=0.5838, brake=0.0143, alarm=0.9343, fatigue=0.0109)
+- node=125 | type=excitatory | bias=공세적 긴장 | activity_ticks=91 | k_mean=8919.9492 | stim=(drive=0.4581, brake=0.0323, alarm=0.8756, fatigue=0.0404)
+
+[IMPORTANT]
+- 감정은 입력 자극 자체가 아니라, 이 자극이 네트워크 안에서 어떻게 점화되고 지속되고 충돌하고 수렴하는지의 episode로 해석한다.
+- 단일 high-arousal 상태를 자동으로 분노로 단정하지 않는다.
+- 접근 신호가 크고 alarm이 지배적이지 않다면 기대/호감/들뜸 같은 positive arousal 가능성을 검토한다.
+- 활성화가 거의 없으면 강한 감정을 꾸며내지 말고 미점화, 보류, anticipatory state 가능성을 명시한다.

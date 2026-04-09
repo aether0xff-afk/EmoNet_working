@@ -1,0 +1,38 @@
+{
+  "episode_label": "불공정 지각에 따른 공세적 항의 모드",
+  "stimulus_reading": "자극은 담임이 특정 집단인 모범생만 반복적으로 챙긴다는 지각이다. 네트워크는 이를 단순 서운함보다 '공정성 위반과 배제' 사건으로 읽고, 자신을 덜 대우받는 위치에 놓인 것으로 처리했다.",
+  "appraisal": {
+    "primary_appraisal": "상황을 불공정하고 편파적인 처우로 해석하며, 현재 질서가 나에게 불리하게 작동한다고 평가한다.",
+    "secondary_appraisal": "완전한 무력감보다는 대응 가능성이 남아 있다고 본다. 그래서 단순 위축보다 눈에 띄기, 성과 올리기, 대우를 바꾸기 같은 개입 욕구가 같이 활성화된다.",
+    "target": "other",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "전형적인 고각성 지속형이다. 초기 점화가 빠르고, 이후 긴장과 경계가 거의 풀리지 않은 채 오랫동안 유지되며 안정 수렴했다.",
+    "ignition": "점화 구간에서 활성 노드와 엣지가 급증했고 지배 신호가 바로 '경계/날카로움'으로 형성됐다. 이는 감정이 천천히 숙성된 것이 아니라, 편파 대우 자극을 위협적·부당한 것으로 즉시 읽었다는 뜻이다.",
+    "persistence": "지속 구간이 99틱으로 매우 길고 persistence_ratio도 높다. alarm이 후반부까지 오르며 peak_alarm_tick이 93에 찍힌 점은, 분출 후 해소가 아니라 억눌린 긴장과 항의성이 오래 유지되었다는 증거다.",
+    "resolution": "종결은 진정 해소가 아니라 '안정된 공세적 긴장' 쪽 수렴이다. 즉 화제가 정리된 것이 아니라, 불공정 인식이 유지된 채 대응 방향만 정돈된 상태다."
+  },
+  "action_tendency": "직접 항의하거나, 인정받기 위해 더 적극적으로 드러나거나, 비교 구도에서 자신의 위치를 회복하려는 행동으로 간다. 수동적 철수보다는 '나도 보게 만들어야 한다'는 경쟁적 접근 성향이 강하다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "불공정 지각, 배제감, 그리고 그것이 단순 서운함이 아니라 공격적으로 버티는 긴장 상태로 지속되었다는 결을 남겨야 한다.",
+    "avoid": "이를 단순한 투정, 순간적 분노, 혹은 곧바로 건설적 동기부여로 미화하면 왜곡이다. 해소된 것처럼 말하는 것도 틀리다.",
+    "tone_hint": "건조하고 진단적으로, 편파 대우에 대한 경계와 항의성이 지속된 상태라고 명시"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "persistence_ratio=0.9808",
+    "peak_alarm_tick=93",
+    "persistence | tick 5-103 | duration=99 | dominant_signal=경계/날카로움"
+  ],
+  "confidence": 0.94
+}

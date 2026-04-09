@@ -1,0 +1,40 @@
+{
+  "episode_label": "실패회피형 경계 수렴",
+  "stimulus_reading": "자극의 핵심은 대학 지원 자체보다, 상향 지원이 실패로 이어질 경우 자기 상태가 '끝'이라고 해석되는 위협 시나리오다. 네트워크는 이를 단순 걱정보다 실패 가능성에 과도하게 매달리는 고각성 경계 episode로 처리했다.",
+  "appraisal": {
+    "primary_appraisal": "도전 선택이 곧 치명적 손실로 연결될 수 있다는 위협 평가가 중심이다.",
+    "secondary_appraisal": "불확실성을 감수하기보다 안전한 선택으로 위험을 줄여야 한다는 자기보호적 계산이 뒤따른다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "withdraw"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 점화 후 빠르게 고각성 경계 상태로 올라가고, 해소보다 장기 지속 쪽으로 수렴한 패턴이다. 상담자의 완충성 입력이 있었지만 alarm 우세가 꺾이지 않아 정서가 진정되기보다 방어적 결정으로 굳었다.",
+    "ignition": "tick 2-4에서 활성 노드와 edge가 급증하며 경계/날카로움이 빠르게 점화됐다. 이는 '떨어지면 끝'이라는 파국화 표현이 내부에서 즉시 위협 신호로 읽혔다는 뜻이다.",
+    "persistence": "tick 6-36의 긴 persistence 구간에서 active_nodes와 edges가 높게 유지되고, persistence_ratio 0.9459와 saturation_ratio 0.8053이 나타난다. 불안이 잠깐 치솟고 꺼진 것이 아니라, 실패 회피 계산이 지속적으로 재가동된 상태다.",
+    "resolution": "종결은 정서 해소가 아니라 위험 축소 쪽으로의 안정화다. '성적에 맞는 데 써야겠어'는 안심의 회복보다 회피 결정을 통해 긴장을 관리한 수렴으로 해석된다."
+  },
+  "action_tendency": "상향 도전을 접고 안전한 옵션으로 후퇴하며, 불확실성을 줄이는 선택을 즉시 고정하려는 성향이 강하다. 탐색이나 낙관보다 손실 회피, 자기보호, 가능성 축소가 우선이다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "파국화된 실패 예상, 높은 경계 지속, 안정보다 회피로 수렴한 결을 그대로 남겨야 한다.",
+    "avoid": "이를 단순한 '조심스러움'이나 차분한 현실 판단으로 미화하면 안 된다. 실제 내부 처리는 고각성 위협 반응에 가깝다.",
+    "tone_hint": "건조하고 진단적으로, 불안의 지속성과 회피 수렴을 명확히 짚는 톤"
+  },
+  "evidence": [
+    "\"괜히 높게 지원했다가 떨어지면 난 진짜 끝이거든.\"",
+    "\"그냥 내 성적에 맞는 데 써야겠어. 불안에 떠는 것보다 그게 나을 것 같아.\"",
+    "\"trajectory_pattern=high_arousal_persistence\"",
+    "\"phase_sequence=dormant -> ignition -> escalation -> persistence\"",
+    "\"dominant_global_signal=공세적 긴장\"",
+    "\"signal_means=(drive=0.2843, brake=0.2534, alarm=0.5434, fatigue=0.2026)\"",
+    "\"peak_alarm_tick=35\"",
+    "\"persistence_ratio=0.9459\""
+  ],
+  "confidence": 0.93
+}

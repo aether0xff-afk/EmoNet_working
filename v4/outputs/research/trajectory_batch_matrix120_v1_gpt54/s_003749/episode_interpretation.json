@@ -1,0 +1,38 @@
+{
+  "episode_label": "자기상실에 대한 경계성 슬픔",
+  "stimulus_reading": "직접 자극은 거울 속 자신의 늙은 모습에 대한 지각이지만, 내부에서는 단순 외모 충격보다 오랫동안 자신을 후순위로 밀어둔 삶 전체가 한꺼번에 재평가된 사건으로 읽혔다. 즉 '늙어 보임'이 방아쇠이고, 실제 점화 대상은 자기소외와 자기연민의 누적 손실감이다.",
+  "appraisal": {
+    "primary_appraisal": "나는 돌보지 못한 채 소모되었고, 그 결과가 지금의 내 모습으로 드러났다는 손실/훼손 평가",
+    "secondary_appraisal": "상황이 끝난 것은 아니며, 나를 다시 회수해야 한다는 복구 지향이 동시에 살아 있음",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "표면상 '슬픔' 진술이지만 내부 동역학은 저각성 침잠이 아니라 고각성 지속형이다. 상실감이 조용히 가라앉지 않고 경계와 긴장 속에서 오래 붙들린 episode다.",
+    "ignition": "초기 dormant 이후 짧은 구간에서 곧바로 경계/날카로움으로 점화되며 활성 노드와 연결 수가 급증한다. 이는 단순한 서글픔보다 자기상태 평가가 위협 신호처럼 처리되었음을 뜻한다.",
+    "persistence": "escalation 직후 긴 persistence가 이어지고, alarm이 후반으로 갈수록 더 높아진다. 감정이 해소되기보다 '이대로 살 수 없다'는 내적 경계가 유지되면서 자기연민과 복구 충동이 함께 증폭된 상태다.",
+    "resolution": "termination은 stable_convergence지만 진정이나 완화가 아니라 높은 alarm과 공세적 긴장이 안정적으로 고착된 수렴이다. 즉 마음이 풀린 것이 아니라 방향을 정한 채 긴장 상태로 정리되었다."
+  },
+  "action_tendency": "자기방치 상태를 더는 두지 않으려는 자기회수, 삶 재정렬, 자기돌봄 회복 쪽으로 밀어붙이는 성향이 강하다. 울고 끝나는 슬픔보다 '나를 다시 챙겨야 한다'는 행동 압력이 동반된다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "단순 위로가 아니라 자기상실을 뒤늦게 자각하며 경계가 선 슬픔, 그리고 자기회수 욕구가 같이 있는 결",
+    "avoid": "그냥 우울하거나 담담한 슬픔으로 순화하는 것, 혹은 희망적 결심만 과장해 손실감과 날카로움을 지우는 것",
+    "tone_hint": "차갑고 명료하게, 손실 인식과 긴장 지속을 직접적으로 드러내는 톤"
+  },
+  "evidence": [
+    "입력 텍스트: \"어느 날 거울을 보니 내가 너무 늙어있는 걸 보고 슬퍼졌어.\"",
+    "입력 텍스트: \"집안일과 아이들이 우선이었지 나는 뒷전이었던 것 같아. 나 자신이 너무 불쌍해.\"",
+    "입력 텍스트: \"나에게 나 관심을 가지고 내 삶을 다시 살아가고 싶어.\"",
+    "GLOBAL_TRACE: \"dominant_global_signal=공세적 긴장\", \"signal_means=(drive=0.2449, brake=0.2376, alarm=0.5525, fatigue=0.1999)\"",
+    "TRAJECTORY: \"trajectory_pattern=high_arousal_persistence\", \"phase_sequence=dormant -> ignition -> escalation -> persistence\"",
+    "KEY_TICKS: \"peak_alarm_tick=34\" 및 tick 34~37에서 \"dominant_signal=공세적 긴장\"과 \"alarm=0.5599\"가 유지됨"
+  ],
+  "confidence": 0.91
+}

@@ -1,0 +1,40 @@
+{
+  "episode_label": "고각성 접근형 기대-만족",
+  "stimulus_reading": "핵심 자극은 사랑하는 사람과의 결혼이 임박했다는 미래 사건과, 그 관계에서 상대가 자신에게 귀 기울이고 공감해 준다는 확인이다. 네트워크는 이를 단순한 기쁨 문장으로 처리한 것이 아니라, 이미 가치가 높은 대상과의 결속이 강화되고 가까운 미래 보상이 확정되어 가는 상황으로 읽었다.",
+  "appraisal": {
+    "primary_appraisal": "원하는 미래가 실제화되고 있으며, 중요한 타인과의 관계가 안전하고 보상적이라는 해석이 중심이다.",
+    "secondary_appraisal": "고양감 속에 약한 경계와 각성도 함께 유지되지만 위협 판정은 주도권을 잡지 못했고, 오히려 기대를 오래 붙드는 쪽으로 조절됐다.",
+    "target": "mixed",
+    "control_state": "high",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "짧게 점화된 뒤 빠르게 고각성 접근 상태로 올라가고, 이후 긴 시간 안정적으로 지속된 anticipatory positive arousal episode다. 급격히 치솟지만 붕괴나 회피로 꺾이지 않고, 기대와 만족이 결합된 채 오래 유지된다.",
+    "ignition": "초기 점화는 매우 빠르다. dormant가 2틱뿐이고 tick 2부터 추동/접근이 우세해지며 활성 노드가 빠르게 열린다. 결혼과 공감받는 관계라는 자극이 즉시 보상 예측 회로를 건드린 상태다.",
+    "persistence": "tick 6 이후 112틱 동안 persistence가 이어지고 persistence_ratio가 0.9831로 매우 높다. drive 평균이 가장 높고 alarm은 존재하지만 지배적이지 않아서, 불안보다는 들뜸과 기대의 지속으로 보는 것이 맞다. 피로 peak가 늦게 오지만 상태를 꺼뜨리지 못해 '계속 좋고 계속 기대되는' 유지형 episode로 수렴한다.",
+    "resolution": "종결 이유가 stable_convergence인 점에서 마지막은 폭발적 흥분의 해소가 아니라, 미래지향적 만족과 접근 동기가 안정적으로 고정된 상태다. 즉 '행복하다'에서 끝난 것이 아니라 '이 기대를 계속 붙들고 나아가려는 상태'로 마무리됐다."
+  },
+  "action_tendency": "관계와 미래 계획에 더 깊게 투자하고, 상대와의 결속을 확인하며, 다가올 삶을 적극적으로 상상·준비·공유하려는 행동 성향으로 간다.",
+  "rawness": {
+    "valence": "positive",
+    "arousal": "high",
+    "softened_output_risk": "medium",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "단순한 잔잔한 행복이 아니라, 강한 접근 동기와 미래 보상 확신이 오래 지속되는 들뜬 만족감을 남겨야 한다.",
+    "avoid": "이를 막연한 설렘이나 얌전한 안정감으로만 순화하면 왜곡이다. 또한 high arousal만 보고 불안이나 긴장으로 오독하면 안 된다.",
+    "tone_hint": "담백하지만 선명하게, 고양감의 지속성과 접근성을 분명히 드러내는 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=추동/접근",
+    "trajectory_pattern=high_arousal_persistence",
+    "termination_reason=stable_convergence",
+    "persistence_ratio=0.9831",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "tick=117 | dominant_signal=추동/접근 | combined=(drive=0.5286, brake=0.2955, alarm=0.2743, fatigue=0.2044)",
+    "앞으로의 날들이 너무 기대돼.",
+    "곧 사랑하는 사람과 결혼하게 돼서 너무 만족스러워."
+  ],
+  "confidence": 0.97
+}

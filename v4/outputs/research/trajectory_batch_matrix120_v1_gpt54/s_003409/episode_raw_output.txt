@@ -1,0 +1,38 @@
+{
+  "episode_label": "눈치 기반 경계-대응 긴장",
+  "stimulus_reading": "자극은 며느리의 우울증 자체보다, 내가 말하거나 행동할 때 상대의 상태를 건드릴 수 있다는 대인관계 위험 신호로 읽혔다. 그래서 상황은 단순 걱정보다 '지속적으로 눈치를 보며 실패를 피해야 하는 관계 관리 과제'로 처리되었다.",
+  "appraisal": {
+    "primary_appraisal": "상대를 자극하면 문제가 커질 수 있는 민감한 상황이라는 위협 평가가 핵심이다.",
+    "secondary_appraisal": "완전한 무력감으로 주저앉기보다는, 불편하더라도 직접 말해 조정해보려는 접근적 해결 시도가 함께 붙어 있다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "mixed"
+  },
+  "trajectory": {
+    "overall_pattern": "고각성 상태가 빠르게 점화된 뒤 오래 지속된 경계성 episode다. 정서가 짧게 치솟고 꺼진 것이 아니라, 관계적 위협을 계속 스캔하며 긴장을 유지하는 패턴이다.",
+    "ignition": "초기 점화는 매우 빠르다. dormant가 2틱뿐이고 곧바로 ignition으로 넘어가며 dominant_signal이 '경계/날카로움'으로 바뀌어, 입력을 즉시 민감한 대인위험으로 읽었다.",
+    "persistence": "지속 구간이 49틱으로 길고 persistence_ratio가 0.9630이라, 불안이 일회성 반응이 아니라 반복적 경계와 스트레스 루프로 굳어졌다. peak_alarm_tick이 45로 늦게 나타난 점은 시간이 갈수록 소모되기보다 경계가 유지·증폭되었음을 뜻한다.",
+    "resolution": "종결은 해소가 아니라 stable_convergence 형태의 고정이다. 마지막에는 감정이 풀린 것이 아니라 '말해봐야겠다'는 행동 방향으로 수렴하면서도 공세적 긴장이 그대로 남아 있다."
+  },
+  "action_tendency": "계속 눈치를 보며 경계하다가, 한계가 오면 상대에게 직접 불편을 말해 관계 규칙을 재조정하려는 방향으로 간다. 즉 회피만이 아니라 압박된 상태에서의 조심스러운 대면·표현 성향이다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "불안, 경계, 눈치, 스트레스, 그리고 끝내 말해보려는 압박된 접근성을 함께 남겨야 한다.",
+    "avoid": "이를 단순한 배려심, 잔잔한 걱정, 혹은 순수한 우울 공감으로 순화하면 안 된다. 내부 처리는 훨씬 더 날카롭고 지속적인 경계 상태다.",
+    "tone_hint": "건조하고 진단적으로, 관계 스트레스의 경직성을 숨기지 않는 톤"
+  },
+  "evidence": [
+    "입력에서 \"며느리가 우울증이어서 혹시나 신경을 건드릴까 봐 불안해.\"라고 하여 자극이 상대의 취약성 자체보다 '건드릴 위험'으로 표상되었다.",
+    "\"계속 눈치 보니 스트레스받아.\"라는 문장은 상태가 순간 감정이 아니라 지속적 경계와 소진을 동반한 episode임을 직접 보여준다.",
+    "GLOBAL_TRACE에서 dominant_global_signal이 \"공세적 긴장\"이고 signal_means에서 alarm=0.5760으로 가장 높아, 내부 처리가 안정적 공감보다 위협-경계 중심이었음이 드러난다.",
+    "TRAJECTORY에서 trajectory_pattern이 \"high_arousal_persistence\", phase_sequence가 \"dormant -> ignition -> persistence\"이며 persistence 구간이 49틱으로 길어, 감정이 오래 붙잡혀 있었다.",
+    "peak_alarm_tick=45와 tick=45의 combined=(drive=0.2527, brake=0.2216, alarm=0.5825, fatigue=0.1822)는 시간이 지나도 경계가 꺼지지 않고 오히려 후반까지 유지·증폭됐음을 보여준다.",
+    "마지막 발화 \"며느리한테 너무 눈치 보인다고 말해봐야겠어.\"는 철수보다 직접 말하기 쪽의 행동 경향이 살아 있음을 보여준다."
+  ],
+  "confidence": 0.91
+}

@@ -1,0 +1,38 @@
+{
+  "episode_label": "감사 기반의 목표추동 결의",
+  "stimulus_reading": "자극은 단순히 '부모님께 감사하다'는 표면 감정이 아니라, 부모가 자신의 시험 준비를 믿고 지지해준 사실이 자기 목표와 결합된 것이다. 이 지지가 정서적 안정만 만든 것이 아니라 합격과 효도로 이어지는 수행 동기를 강하게 점화했다.",
+  "appraisal": {
+    "primary_appraisal": "타인의 지지를 자신에 대한 신뢰와 후원으로 해석하며, 그 신뢰에 보답해야 할 과제가 생겼다고 본다.",
+    "secondary_appraisal": "감사 자체는 부드럽지만 내부 처리에서는 보은·성과·책임이 결합되어 있어 정적인 따뜻함보다 목표지향적 긴장이 더 크다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "초기에는 약한 완충/억제가 끼지만 곧 접근 추동이 주도권을 잡고 길게 유지되는, 감사가 행동 결의로 번역된 패턴이다.",
+    "ignition": "점화 초반은 conflict가 높고 ignition 구간의 dominant_signal이 완충/억제인 점에서, 감사를 말하면서도 감정이 바로 평온으로 가지 않고 자기통제와 의미 정리가 먼저 들어간다.",
+    "persistence": "이후 persistence가 44틱으로 매우 길고 dominant_global_signal이 추동/접근이며 persistence_ratio가 0.9592라서, 상태는 일시적 감상이 아니라 지속적 동기화로 굳어진다. 공세적 긴장과 접근 노드가 상위 활성에 다수 포함된 점도 '고마움'이 곧 수행 압력과 의욕으로 조직됐음을 보여준다.",
+    "resolution": "마지막은 stable_convergence로 끝나며 접근 신호가 유지된다. 즉 감정이 해소되어 사라진 것이 아니라, '합격해서 보답하겠다'는 안정된 결심 상태로 수렴했다."
+  },
+  "action_tendency": "부모의 지지를 근거로 공부를 더 밀어붙이고, 성과를 통해 보답하려는 방향으로 간다. 정서 표현보다 실행·증명·성과회수 쪽 행동 성향이 강하다.",
+  "rawness": {
+    "valence": "positive",
+    "arousal": "medium",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "감사라는 표면 아래에 있는 책임감, 보답 압력, 목표추동의 결을 반드시 남겨야 한다.",
+    "avoid": "그냥 따뜻하고 평온한 감사, 잔잔한 효심으로만 순화하면 왜곡이다. 내부적으로는 접근 동기와 공세적 긴장이 꽤 강하다.",
+    "tone_hint": "담백하지만 단정적으로, 미화 없이 동기화된 긴장을 짚는 톤"
+  },
+  "evidence": [
+    "부모님이 시험을 준비하겠다는 나를 믿고 지지해주셨거든. 그래서 감사해.",
+    "응 맞아. 시험에 합격하면 꼭 효도할 거야.",
+    "dominant_global_signal=추동/접근",
+    "persistence_ratio=0.9592",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "TOP_ACTIVE_NODES에서 공세적 긴장 bias 노드(37, 211, 49)와 추동/접근 bias 노드(95, 107, 70)가 장시간 활성"
+  ],
+  "confidence": 0.94
+}

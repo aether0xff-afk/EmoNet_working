@@ -1,0 +1,40 @@
+{
+  "episode_label": "후회 기반 관계위협 경계",
+  "stimulus_reading": "자극의 핵심은 과거에 어린 자녀의 마음을 헤아려주지 못했다는 자기평가와, 그 결과로 현재 자녀와 정서적·대화적 단절이 생겼다는 관계 손상 인식이다. 네트워크는 이를 단순한 슬픔보다 '이미 벌어진 손실을 되돌리기 어렵다'는 경계성 위협으로 읽었다.",
+  "appraisal": {
+    "primary_appraisal": "과거의 실패가 현재 관계 단절로 굳어졌다는 손실-위협 평가가 중심이다. 후회는 표면 라벨이지만 내부적으로는 관계 회복 실패 가능성에 대한 알람이 더 강하게 작동했다.",
+    "secondary_appraisal": "자기책임 인식이 강하지만, 완전한 무기력보다는 아직 접촉·복구를 시도하고 싶은 접근 성향이 남아 있다. 다만 그 접근은 따뜻한 화해 충동이라기보다 긴장된 복구 시도에 가깝다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "mixed"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 공백 뒤 빠르게 점화되고, 이후 거의 전 구간에서 높은 경계 상태가 오래 유지된 지속형 episode다. 단발성 서러움이 아니라 반복 반추와 관계위협 감시가 굳어진 패턴이다.",
+    "ignition": "tick 2-4에서 활성 노드와 edge가 급증하며 빠르게 점화됐다. 이때 지배 신호가 '경계/날카로움'과 '공세적 긴장'으로 잡혀, 입력을 회한의 진술보다 문제상황 대응 경보로 해석했다.",
+    "persistence": "tick 5-50의 긴 구간에서 높은 활성과 높은 persistence_ratio가 유지됐다. alarm 평균이 높고 마지막 peak_alarm이 tick 50에 찍혀 있어 시간이 갈수록 가라앉기보다 관계 손상에 대한 위협 감시가 누적·재점화된 것으로 보인다.",
+    "resolution": "정서적 해소나 수용으로 수렴하지 않았다. termination은 stable_convergence지만 내용상 안정된 평정이 아니라 경계가 굳어진 안정화이며, 마지막도 공세적 긴장 우세 상태로 닫혔다."
+  },
+  "action_tendency": "자기비난을 품은 채 관계 단절 신호를 계속 스캔하고, 대화를 복구하려는 충동과 상처받지 않기 위한 방어가 동시에 작동하는 상태다. 즉 바로 접촉하고 싶지만 거절 가능성을 크게 읽어 긴장된 접근-주저가 반복될 가능성이 높다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "후회 자체보다 관계 손상에 대한 경계, 자기책임, 지속적 긴장을 남겨야 한다.",
+    "avoid": "그냥 슬프다거나 따뜻한 그리움으로 순화하면 왜곡이다. 이미 멀어졌고 대화가 끊겼다는 위협성과, 마지막까지 알람이 올라간 점을 지워선 안 된다.",
+    "tone_hint": "차분하지만 단호하게, 미화 없이 진단적으로"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "signal_means=(drive=0.2571, brake=0.2191, alarm=0.5910, fatigue=0.1844)",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "persistence_ratio=0.9608",
+    "peak_alarm_tick=50",
+    "tick=50 | dominant_signal=공세적 긴장 | combined=(drive=0.2558, brake=0.2154, alarm=0.5990, fatigue=0.1797)",
+    "지금은 서로 많이 멀어진 것 같아.",
+    "자녀가 나와 대화를 나누려고 하지 않아."
+  ],
+  "confidence": 0.92
+}

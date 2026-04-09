@@ -1,0 +1,38 @@
+{
+  "episode_label": "생계 위협에 대한 경계적 불안-해결추동",
+  "stimulus_reading": "핵심 자극은 가게 적자 지속으로 인해 생활 기반과 퇴직금까지 잠식될 수 있다는 인식이다. 단순한 속상함이 아니라 자산 고갈과 생계 불안이 구체적으로 상상되면서, 위협 평가와 동시에 해결책 탐색이 같이 점화됐다.",
+  "appraisal": {
+    "primary_appraisal": "상황이 계속되면 재정적 안전망이 무너진다는 생계 위협으로 해석됐다.",
+    "secondary_appraisal": "완전한 무력감으로 붕괴하지는 않았고, 외부 자원(정부 보조금) 탐색을 통해 아직 개입 가능성이 남아 있다고 평가했다.",
+    "target": "situation",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "고각성 상태가 짧게 점화된 뒤 오래 지속되는 경계형 episode다. 회피성 침잠보다 문제를 붙들고 계속 계산하고 대책을 찾는 쪽으로 수렴했다.",
+    "ignition": "적자와 퇴직금 소진 전망이 들어오자 dormant에서 즉시 ignition으로 넘어가며 경계/날카로움이 올라갔다. 초반부터 alarm과 drive가 함께 올라 단순 낙담보다 위기 대응 모드가 강했다.",
+    "persistence": "escalation 이후 거의 전 구간이 persistence로 유지됐고, persistence_ratio 0.9740과 dominant_global_signal 공세적 긴장이 이를 뒷받침한다. 피로는 낮고 alarm과 drive가 높아, 지친 체념보다 불안을 붙든 채 해결책을 밀어붙이는 지속적 각성 상태였다.",
+    "resolution": "마지막도 진정 해소가 아니라 안정적 수렴된 경계 상태다. 보조금 정보가 완전한 안도감을 만들기보다, 문제 해결 가능성을 붙잡은 채 긴장을 유지하는 방향으로 마감됐다."
+  },
+  "action_tendency": "재정 손실을 막기 위해 정보원을 다시 확인하고, 보조금·지원책·대안 수입 경로를 캐묻고 실행하려는 성향이 강하다. 즉 정서적 위축보다 손실 방어와 자원 확보를 위한 실무적 접근이 우세하다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "생계가 무너질 수 있다는 실제 위협감, 그리고 그 위협 앞에서 불안을 붙든 채 대책을 찾는 공세적 긴장을 남겨야 한다.",
+    "avoid": "막연한 위로, 단순한 슬픔 라벨링, 이미 안심한 상태처럼 해석하는 왜곡을 피해야 한다.",
+    "tone_hint": "건조하고 직설적으로, 불안과 해결추동이 함께 있다는 점을 명확히 기술"
+  },
+  "evidence": [
+    "“계속 이러다가는 퇴직금까지 다 깎아 먹고 수중에 남는 게 없겠어.”",
+    "“이 상황을 해결할 수 있는 방법이 있을까요?”",
+    "“노인들을 위한 정부의 보조금이 있다는 이야기를 김 서방한테 들었어. 다시 물어봐야지.”",
+    "“trajectory_pattern=high_arousal_persistence”",
+    "“dominant_global_signal=공세적 긴장”",
+    "“phase_sequence=dormant -> ignition -> escalation -> persistence”"
+  ],
+  "confidence": 0.94
+}

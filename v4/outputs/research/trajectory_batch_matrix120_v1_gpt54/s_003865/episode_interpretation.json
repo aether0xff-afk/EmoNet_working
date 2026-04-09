@@ -1,0 +1,38 @@
+{
+  "episode_label": "모욕-부당함에 대한 공세적 항의",
+  "stimulus_reading": "자극은 단순한 실직이 아니라 성 정체성을 이유로 한 차별적 해고로 읽혔다. 네트워크는 이를 개인적 상실보다 규범 위반과 모욕, 부당한 공격으로 처리했고 곧바로 대응 필요성이 붙었다.",
+  "appraisal": {
+    "primary_appraisal": "상황을 부당하고 공격적인 침해로 해석하며, 그냥 슬퍼하기보다 맞서야 할 사안으로 본다.",
+    "secondary_appraisal": "정서 표면에는 슬픔과 억울함이 있으나, 내부 처리는 피해감의 반추보다 경계와 공세 준비가 더 중심이다.",
+    "target": "situation",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "고각성 상태가 빠르게 점화된 뒤 오래 지속되는 패턴이며, 진정이나 철회보다 날카로운 경계와 행동 준비가 유지된다.",
+    "ignition": "초기 dormant 이후 tick 2-4에서 활성 노드와 엣지가 급증하며 '경계/날카로움'으로 급점화된다. 이는 단순 충격보다 즉시적인 위협 판정과 항의 성향의 개시를 시사한다.",
+    "persistence": "tick 5-40의 긴 persistence 구간에서 alarm이 계속 우세하고 dominant_global_signal도 '공세적 긴장'으로 유지된다. 드라이브와 브레이크가 비슷하게 공존해 무작정 폭발하기보다 긴장된 통제 하의 공격적 준비가 지속된다.",
+    "resolution": "termination은 stable_convergence지만 완화 수렴이 아니라 높은 alarm을 유지한 채 입장이 굳어진 수렴이다. 즉, 감정이 풀린 것이 아니라 대응 방향으로 정렬된 채 고정됐다."
+  },
+  "action_tendency": "부당성을 외부에 제기하고 제도적·사회적 채널을 동원해 반격하려는 성향이다. 울분 표출에 머물기보다 신고, 고발, 공개화 같은 적극적 시정 행동으로 이어지기 쉽다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "억울함·슬픔보다 부당한 침해에 대한 날 선 경계와 맞대응 의지를 중심 결로 남겨야 한다.",
+    "avoid": "단순 위로 중심의 슬픔 episode나 순수 무기력 상태로 순화하면 왜곡이다. 또한 자동으로 폭발적 분노로만 단정하는 것도 과하다.",
+    "tone_hint": "차갑고 진단적으로, 부당성 인식과 공세적 대응 준비를 분명히 적시"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "persistence_ratio=0.9512",
+    "peak_alarm_tick=36",
+    "tick=36 | dominant_signal=공세적 긴장 | combined=(drive=0.2472, brake=0.2393, alarm=0.5659, fatigue=0.1968)"
+  ],
+  "confidence": 0.93
+}

@@ -1,0 +1,38 @@
+{
+  "episode_label": "걱정 기반의 조심스러운 확인 충동",
+  "stimulus_reading": "자극은 친구의 폐암 검사 결과를 기다리는 상황에서, 약속된 연락이 오지 않았다는 점이다. 핵심은 단순한 안부가 아니라 나쁜 소식 가능성을 염두에 둔 상태에서 먼저 물어봐도 되는지 판단해야 하는 사회적·건강 관련 불확실성이다.",
+  "appraisal": {
+    "primary_appraisal": "상황을 잠재적으로 위중한 건강 문제로 읽으면서도, 내가 먼저 접촉하는 행위가 상대에게 부담이나 침범이 될 수 있다고 해석한다.",
+    "secondary_appraisal": "연락하고 싶은 접근 충동은 분명하지만, 결과를 모르는 상태라 실수하거나 상처를 건드릴 위험을 함께 계산해 제동이 걸린다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "mixed"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 무색 상태에서 빠르게 억제-경계 혼합으로 점화된 뒤, 높은 경계가 길게 유지되는 예기적 긴장 episode다. 단발성 충격보다 '확인하고 싶지만 조심해야 한다'는 상반 신호가 오래 공존한다.",
+    "ignition": "점화 구간에서는 완충/억제가 먼저 우세해 바로 감정을 터뜨리기보다 표현을 통제하는 방향으로 진입했다. 즉, 걱정보다 먼저 '어떻게 물어야 하나'가 브레이크로 작동했다.",
+    "persistence": "이후 escalation과 persistence에서 경계/날카로움과 공세적 긴장이 장기 유지됐고, alarm이 계속 상승해 마지막까지 해소되지 않았다. 접근 신호도 살아 있어 완전한 회피가 아니라 '연락하고 싶은데 조심해야 하는' 긴장이 지속된 것이다.",
+    "resolution": "종결은 안정 수렴이지만 정서 해소가 아니라 조심스러운 경계 상태의 고정에 가깝다. 즉 결론은 안도나 단념이 아니라, 높은 걱정을 유지한 채 접촉 여부를 신중히 재는 상태다."
+  },
+  "action_tendency": "즉각적인 감정 표출보다는 문구를 조절해 먼저 확인하려는 행동으로 간다. 다만 행동 성향은 순수한 위로보다 위험 최소화형 접근으로, 상대 반응을 건드리지 않도록 간접적이고 탐색적인 연락을 택할 가능성이 높다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "걱정 자체보다 '위중할 수 있는 상황을 건드릴까 봐 경계하면서도 확인 충동이 강한 상태'라는 결을 유지해야 한다.",
+    "avoid": "단순한 배려심, 잔잔한 걱정, 따뜻한 공감 정도로 순화하면 왜곡된다. 내부 상태는 꽤 높은 alarm과 지속 긴장이다.",
+    "tone_hint": "차분하지만 긴장을 숨기지 않는 진단적 톤"
+  },
+  "evidence": [
+    "입력문: \"친구가 폐암 검사를 했다고 했어. 결과를 알려주기로 했는데 연락이 없길래 먼저 물어봐도 되나 싶어.\"",
+    "입력문: \"친구하고 통화를 해야 하는데 좀 조심스럽네.\"",
+    "GLOBAL_TRACE: \"dominant_global_signal=공세적 긴장\", \"signal_means=(drive=0.2667, brake=0.2483, alarm=0.5210, fatigue=0.1987)\"",
+    "TRAJECTORY: \"phase_sequence=dormant -> ignition -> escalation -> persistence\"",
+    "PHASE_SEGMENTS: \"persistence | tick 7-21 | duration=15 | dominant_signal=경계/날카로움\"",
+    "KEY_TICKS: \"tick=21 ... combined=(drive=0.2540, brake=0.2398, alarm=0.5548, fatigue=0.1928) | dominant_signal=공세적 긴장\""
+  ],
+  "confidence": 0.9
+}

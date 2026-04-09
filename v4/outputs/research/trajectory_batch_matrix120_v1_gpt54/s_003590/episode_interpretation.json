@@ -1,0 +1,38 @@
+{
+  "episode_label": "추억 재점화형 애정 고양",
+  "stimulus_reading": "자극의 핵심은 단순히 꽃을 받았다는 사실보다, 예상 밖의 선물이 연애 시절의 자기와 현재 관계를 다시 연결했다는 점이다. 네트워크는 이를 보상 자극이자 관계 회복/재활성화 신호로 읽었다.",
+  "appraisal": {
+    "primary_appraisal": "상대의 자발적 관심과 애정이 현재 관계의 정서적 가치를 다시 확인해준 사건으로 해석됐다.",
+    "secondary_appraisal": "예상 밖의 선물이라 초기에는 완충·억제와 약한 경계가 먼저 걸렸지만, 곧 위협보다 접근 가치가 더 크다고 판정되며 긍정적 고각성 상태로 넘어갔다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 미점화 후 짧은 억제 구간을 거쳐, 관계적 보상 의미가 크게 붙으면서 고각성 접근 상태가 오래 유지된 패턴이다. 단순한 잔잔한 만족이 아니라 재접속된 친밀감이 지속적으로 증폭된 episode다.",
+    "ignition": "tick 3-5에서 완충/억제가 우세한 것은 자극을 바로 폭발적으로 받기보다 의미를 확인하고 정서적 안전성을 정렬하는 과정으로 보인다.",
+    "persistence": "tick 8 이후 추동/접근이 지배하고 persistence 구간이 31틱 지속된 점은, 기분 좋음이 순간 반응이 아니라 기억·관계 의미와 결합해 오래 유지된 활성 상태였음을 뜻한다. alarm도 완전히 낮지 않아 단순 평온보다 들뜸과 긴장이 섞인 애정 고양에 가깝다.",
+    "resolution": "종결은 소진이 아니라 stable_convergence로 끝났고, 마지막까지 drive가 상승해 있어 감정이 꺼진 것이 아니라 긍정적 접근 상태로 안정 수렴했다."
+  },
+  "action_tendency": "상대와 더 대화하고, 친밀한 기억을 공유하고, 관계를 다시 따뜻하게 연결하려는 접근 행동으로 기운다. 감정 표현, 애정 확인, 관계 서사 회복 쪽으로 움직이기 쉽다.",
+  "rawness": {
+    "valence": "positive",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "예상 밖의 애정 신호가 과거 추억을 매개로 현재 관계의 활력을 재점화했다는 구조를 유지해야 한다.",
+    "avoid": "그냥 '기분 좋았다' 수준의 잔잔한 행복으로 축소하면 안 된다. 초기 억제와 이후의 강한 지속 활성, 그리고 약한 긴장 혼합을 지우면 왜곡이다.",
+    "tone_hint": "담백하지만 선명하게, 긍정적 고각성 episode로 진단하는 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=추동/접근",
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "persistence 구간이 tick 8-38로 duration=31이며 dominant_signal=추동/접근",
+    "termination_reason=stable_convergence",
+    "오늘 기념일도 아니었는데 남편이 퇴근하다가 꽃집을 보고 연애 시절의 내가 생각이 나서 사 왔대."
+  ],
+  "confidence": 0.94
+}

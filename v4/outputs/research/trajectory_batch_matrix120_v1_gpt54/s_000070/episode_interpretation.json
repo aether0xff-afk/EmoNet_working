@@ -1,0 +1,38 @@
+{
+  "episode_label": "불공정 인식에 묶인 공격적 환멸",
+  "stimulus_reading": "자극은 단순히 기분 나쁜 말이 아니라, 무능하다고 평가한 사장 아들이 혈연이라는 이유로 자신보다 더 많은 보상을 받는다는 사실의 확인이다. 이 정보는 능력-보상 질서가 깨졌다는 인식과 동시에 자신의 생계가 그 구조에 종속돼 있다는 현실을 함께 점화했다.",
+  "appraisal": {
+    "primary_appraisal": "핵심 해석은 '조직이 정당한 규칙으로 움직이지 않고, 부당한 특권이 노력과 기여를 압도한다'는 불공정 평가다.",
+    "secondary_appraisal": "보조 해석은 '상황이 잘못됐다는 판단은 강하지만, 내가 직접 움직일 통제력은 제한적이며 잘못 건드리면 내 생존이 위험해진다'는 제약 인식이다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "고각성 상태가 짧게 치솟고 곧바로 오래 지속된 패턴이다. 순간적 짜증이 아니라, 위협 감시와 공격 충동이 같이 붙은 채 안정적으로 고착된 episode에 가깝다.",
+    "ignition": "점화는 빠르다. dormant 이후 tick 2-4에서 바로 활성화가 크게 상승했고 dominant_signal이 공세적 긴장/경계-날카로움으로 잡힌다. 즉 사실 확인이 곧바로 도덕적 분노와 경계심을 동시에 켰다.",
+    "persistence": "지속 구간은 길고 강하다. persistence_ratio 0.9636, dominant_branch_len 53, trajectory_pattern high_arousal_persistence는 이 반응이 쉽게 꺼지지 않았음을 뜻한다. alarm 평균이 높고 마지막 tick에서 drive도 더 상승해, 단순 낙담보다 '계속 곱씹으며 날이 서는 상태'가 유지됐다.",
+    "resolution": "마지막은 해소가 아니라 억제된 수렴이다. termination_reason은 stable_convergence지만 진정으로 풀린 것이 아니라, 행동은 못 하고 내부적으로는 공세적 긴장을 유지한 채 묶인 상태로 정착했다."
+  },
+  "action_tendency": "직접 폭발보다는 부당함을 계속 감시하고, 상대와 조직을 낮게 평가하며, 필요시 방어적으로 거리 두거나 냉소적으로 대응하는 쪽으로 간다. 즉 들이받고 싶지만 실업 위험 때문에 실행을 보류하는 억제된 대항 성향이다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "불공정에 대한 날 선 평가, 공격 충동이 있으나 생계 때문에 눌러두는 구조, 해소되지 않은 환멸의 지속성",
+    "avoid": "단순 서운함, 가벼운 불만, 체념만 남은 상태로 순화하는 것",
+    "tone_hint": "차갑고 진단적으로, 부당함과 억제된 적대감을 분명히 드러내는 톤"
+  },
+  "evidence": [
+    "“일도 못하는 사장 아들이 나보다 월급을 많이 받는다는 사실을 알았어. 환멸이 나네.”",
+    "“응. 그 사장 아들이 하는 건 일이라고 할 수도 없어. 그냥 노는 게 전부야.”",
+    "“글쎄. 회사가 잘못 되면 나도 실업자가 되니 함부로 행동을 못 하고 있어.”",
+    "“trajectory_pattern=high_arousal_persistence”",
+    "“dominant_global_signal=공세적 긴장”",
+    "“phase_sequence=dormant -> ignition -> persistence”"
+  ],
+  "confidence": 0.94
+}

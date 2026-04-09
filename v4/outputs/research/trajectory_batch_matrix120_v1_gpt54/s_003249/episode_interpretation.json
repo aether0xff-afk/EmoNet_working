@@ -1,0 +1,38 @@
+{
+  "episode_label": "배신감이 굳어진 체념성 원망",
+  "stimulus_reading": "직접 자극은 입원 상황에서 자녀들이 병문안을 오지 않은 사건이다. 네트워크는 이를 단순한 서운함이 아니라 '내가 돈이 없어서 무시당한다'와 '키워줬는데 도리를 하지 않는다'는 관계적 배신과 가치 훼손으로 읽었다.",
+  "appraisal": {
+    "primary_appraisal": "가까운 타인에게 정당한 돌봄과 도리를 박탈당했다는 해석이 핵심이다. 손실은 정서적 방치이고, 의미는 무시·이용당함 쪽으로 조직된다.",
+    "secondary_appraisal": "상황을 바꿀 수 없다는 무력감이 빠르게 결합되어, 공격 충동이 살아 있어도 실제 행위 전망은 낮아진다. 즉 원망은 남아 있는데 실행 가능성 평가는 낮아 체념형으로 굳는다.",
+    "target": "mixed",
+    "control_state": "low",
+    "social_orientation": "mixed"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 미점화 뒤 짧은 점화와 급상승을 거쳐, 높은 경계 상태가 거의 끝까지 꺼지지 않는 지속형 episode다. 폭발적 분출보다 오래 붙들리는 원망-경계 루프에 가깝다.",
+    "ignition": "tick 2부터 활성 노드가 급증하고 dominant signal이 공세적 긴장/경계로 전환된다. 이는 표면의 '속상함'보다 관계 위협을 감지한 뒤 날카로운 평가가 빠르게 붙었다는 뜻이다.",
+    "persistence": "persistence_ratio 0.9844, dominant_branch_len 126, phase_sequence의 마지막이 persistence로 끝난 점이 중요하다. alarm 평균이 0.5516이고 peak_alarm이 tick 117에 있는 것은 감정이 초반에만 솟았다가 사라진 것이 아니라 후반까지 의심·경계·원망이 유지되었음을 보여준다.",
+    "resolution": "해결이나 진정으로 수렴하지 않았다. 마지막 상태는 누그러진 위로 수용이 아니라 '없어. 이제 그냥 체념했어.'에 맞물린 저행동성 체념이며, 내부적으로는 경계와 공격적 긴장이 잔존한다."
+  },
+  "action_tendency": "직접적 화해나 도움 요청보다는 관계 철회, 냉소적 단정, 도덕적 비난 유지 쪽으로 간다. 겉으로는 포기하지만 내부적으로는 '도리를 안 한 사람들'이라는 판정을 고정해 두는 성향이 강하다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "서운함보다 강한 배신감, 도리 위반에 대한 도덕적 분노, 그리고 결국 아무것도 바뀌지 않는다는 체념을 함께 남겨야 한다.",
+    "avoid": "단순 외로움이나 우울감만으로 축소하면 왜곡된다. 또한 이미 지속된 경계/원망을 무시하고 '대화해보자' 수준의 낙관적 해결 가능성으로 포장하면 안 된다.",
+    "tone_hint": "건조하고 직설적으로, 관계적 방치와 무력감이 동시에 작동한 상태라고 명명하는 톤"
+  },
+  "evidence": [
+    "아파서 입원했는데 자식들은 들여다보지도 않아. 내가 돈이 없어서 그런가 봐.",
+    "다 자식들 키우느라 돈이 들어간 건데 더 받을 궁리만 하고 도리는 하지 않아.",
+    "없어. 이제 그냥 체념했어.",
+    "dominant_global_signal=공세적 긴장",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "persistence_ratio=0.9844"
+  ],
+  "confidence": 0.94
+}

@@ -1,0 +1,37 @@
+{
+  "episode_label": "돌봄 압박이 섞인 충격성 경계",
+  "stimulus_reading": "자극의 핵심은 남편의 갑작스러운 반신불수라는 사건 자체보다, 그 사건이 곧바로 '평생 내가 책임져야 하는 돌봄 부담'으로 번역된 점이다. 내부에서는 상실·연민·미래 부담이 한 덩어리의 위기 과제로 읽혔다.",
+  "appraisal": {
+    "primary_appraisal": "예기치 않은 재난이 발생했고, 앞으로의 삶 전체가 무겁게 재구성되어야 하는 상황으로 평가됐다.",
+    "secondary_appraisal": "대상을 향한 연민은 분명하지만, 정서는 슬픔에 머무르지 않고 즉시 책임 인수와 장기 부담 계산으로 넘어갔다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "고각성 상태가 짧게 점화된 뒤 거의 끝까지 꺼지지 않고 지속된 episode다. 단발성 충격이 아니라, 경계와 책임 추동이 함께 붙어 장기화된 처리 패턴이다.",
+    "ignition": "초기 점화는 매우 빠르며, dormant 이후 곧바로 ignition으로 넘어가고 dominant signal이 '경계/날카로움'으로 바뀐다. 이는 단순 침울보다 위기 대응 모드가 먼저 켜졌다는 뜻이다.",
+    "persistence": "persistence 구간이 120틱으로 매우 길고 persistence_ratio=0.9609, saturation_ratio=0.9167이다. alarm과 drive가 함께 높게 유지되어, 무력 붕괴보다는 불안하게 깨어 있으면서 계속 책임과 상황을 붙드는 방식으로 지속됐다.",
+    "resolution": "명확한 해소 없이 max_ticks로 종료됐다. 마지막까지 dominant_global_signal이 '공세적 긴장'이어서, 수용이나 안정으로 수렴한 것이 아니라 긴장된 돌봄 준비 상태로 남았다."
+  },
+  "action_tendency": "상황을 도망치기보다 붙들고 책임지려는 성향이 강하다. 다만 그 접근은 따뜻한 안정감이 아니라, 불안과 압박을 동반한 과잉 책임 인수·돌봄 고착 쪽으로 기운다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "충격, 막막함, 그리고 '내가 평생 다 챙겨야 한다'는 압박성 책임감이 동시에 작동한다는 결을 유지해야 한다.",
+    "avoid": "단순한 슬픔, 순수한 연민, 혹은 차분한 수용으로 순화하면 왜곡이다. 내부 처리 상태는 이미 장기 부담을 떠안는 경계 모드다.",
+    "tone_hint": "위로형이 아니라 냉정한 상태 진단 톤"
+  },
+  "evidence": [
+    "입력에서 \"하루아침에 남편이 반신불수가 되어버렸어. 정말 믿기지 않아.\"라고 하여 사건을 급작스러운 재난과 현실 붕괴로 제시한다.",
+    "입력에서 \"앞으로가 너무 막막해.\"라고 하여 정서가 현재 충격을 넘어 미래 전반의 부담 평가로 확장된다.",
+    "입력에서 \"이제 평생 내가 옆에서 다 챙겨줘야겠지.\"라고 하여 내부 처리의 종착점이 연민보다 장기 돌봄 책임 인수임이 드러난다.",
+    "GLOBAL_TRACE에서 dominant_global_signal=공세적 긴장, signal_means=(drive=0.5723, alarm=0.5835)로 불안과 추동이 함께 높게 유지된다.",
+    "TRAJECTORY에서 trajectory_pattern=high_arousal_persistence, persistence_ratio=0.9609, phase_sequence=dormant -> ignition -> persistence로 점화 후 장기 지속 패턴이 확인된다."
+  ],
+  "confidence": 0.94
+}

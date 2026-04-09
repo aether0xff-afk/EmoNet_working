@@ -1,0 +1,38 @@
+{
+  "episode_label": "배척-자책 고착 경계상태",
+  "stimulus_reading": "자극은 단순한 외로움 호소가 아니라, 노화와 질병을 근거로 자신이 사회에서 밀려났다고 해석하는 자기위상 붕괴 신호였다. 이어서 고독과 허탈을 외부 배척과 자기 잘못으로 동시에 묶으면서 위협 평가가 내부적으로 크게 점화됐다.",
+  "appraisal": {
+    "primary_appraisal": "상황을 '나는 세상에서 밀려났고, 그 원인도 결국 나 자신이다'로 읽는 위협+결함 해석이 핵심이다.",
+    "secondary_appraisal": "위로 대화와 해결 제안이 들어와도 회복보다는 경계 상태가 길게 유지되어, 정서 처리상 이미 상처 진술보다 자기비난 구조가 더 강하게 굳어져 있는 것으로 보인다.",
+    "target": "mixed",
+    "control_state": "low",
+    "social_orientation": "withdraw"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 미점화 뒤 빠르게 고활성 경계 상태로 진입하고, 이후 큰 해소 없이 장시간 지속되는 고착형 trajectory다. 정서명으로는 단순 슬픔보다 배척감에 의해 점화된 자기비난성 위협 episode에 가깝다.",
+    "ignition": "tick 2-4에서 활성 노드와 edge가 급증하며 dormant에서 즉시 경계/날카로움으로 전환됐다. 이는 입력이 단순 공감 요청보다 사회적 배제와 자기 결함을 건드리는 자극으로 읽혔다는 뜻이다.",
+    "persistence": "tick 5-74의 긴 persistence와 0.9733의 높은 persistence_ratio는 감정이 짧게 치솟고 끝난 것이 아니라 거의 전 구간에서 유지되었음을 보여준다. alarm 평균이 0.5699이고 peak_alarm이 tick 64에 나타나 후반까지 경계가 누적·증폭됐다.",
+    "resolution": "termination_reason은 stable_convergence지만 진정한 완화라기보다 '공세적 긴장' 상태로 안정 고착된 수렴이다. 마지막 tick 74에서도 alarm 0.5712로 높아, 수습보다 경계와 자책 프레임이 유지된 채 끝났다."
+  },
+  "action_tendency": "타인에게 적극적으로 분노를 표출하기보다, 자신을 원인으로 돌리며 움츠러들고 관계로부터 한 걸음 물러나는 방향이다. 다만 내부 신호는 무기력 일변도가 아니라 지속적 경계와 자기점검을 동반해, 머릿속에서는 계속 이유를 캐고 자책을 반복할 가능성이 높다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "외로움 자체보다 '배척당했다'는 사회적 위협 해석과 '내 잘못'이라는 자기비난 결합을 분명히 남겨야 한다.",
+    "avoid": "단순 우울, 잔잔한 슬픔, 또는 독서 제안으로 완화된 상태처럼 순화하면 왜곡이다. stable_convergence를 회복으로 오인하면 안 된다.",
+    "tone_hint": "담담하지만 날것 그대로, 고착된 경계와 자책 구조를 직접적으로 진단하는 톤"
+  },
+  "evidence": [
+    "입력 진술: \"나이가 들면 들수록 내가 세상으로부터 배척된 것 같아.\"",
+    "입력 진술: \"너무 고독하고 허탈하지만 다 늙고 병든 내 잘못인 것만 같아.\"",
+    "GLOBAL_TRACE: \"dominant_global_signal=공세적 긴장\", \"signal_means=(drive=0.2550, brake=0.2307, alarm=0.5699, fatigue=0.1878)\"",
+    "TRAJECTORY: \"phase_sequence=dormant -> ignition -> persistence\", \"persistence_ratio=0.9733\"",
+    "PHASE_SEGMENTS: \"persistence | tick 5-74 | duration=70 | dominant_signal=경계/날카로움\"",
+    "KEY_TICKS: \"peak_alarm_tick=64\" 및 tick 74에서 \"combined=(drive=0.2540, brake=0.2295, alarm=0.5712, fatigue=0.1867)\""
+  ],
+  "confidence": 0.92
+}

@@ -1,0 +1,38 @@
+{
+  "episode_label": "노화 위협에 대한 경계적 수용불가",
+  "stimulus_reading": "자극의 핵심은 단순한 신체 피로 호소가 아니라, '나는 예외일 것'이라는 자기 전제가 무너진 사건이다. 몸의 변화 자체보다도 노화가 자기 정체감과 통제감에 침투했다는 읽기로 처리됐다.",
+  "appraisal": {
+    "primary_appraisal": "신체 변화가 일시적 불편이 아니라 자기 예외성의 붕괴이자 되돌리기 어려운 손실 신호로 해석됐다.",
+    "secondary_appraisal": "상담자의 공감 반응이 있었지만 진정으로 해소되기보다, 이미 점화된 경계 상태를 오래 유지하는 쪽으로 수렴했다.",
+    "target": "self",
+    "control_state": "low",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "저강도 우울이나 체념보다는 높은 각성의 경계 상태가 빠르게 점화된 뒤 길게 지속된 episode다. 슬픔의 침잠보다 '받아들이기 싫은 현실을 예민하게 붙드는' 패턴에 가깝다.",
+    "ignition": "초기에는 거의 무색이었지만 tick 2-4에서 바로 경계/날카로움으로 전환됐다. 입력이 신체 노화의 사실 확인을 건드리자 방어적 긴장이 급히 형성됐다.",
+    "persistence": "tick 7 이후 거의 전 구간에서 높은 활성과 높은 persistence가 유지됐다. alarm 평균이 가장 높고 후반 peak_alarm이 tick 35에 나타나, 시간이 지나며 누그러지기보다 위협 해석이 굳어졌다.",
+    "resolution": "termination은 stable_convergence지만 정서적 해소가 아니라 경계 상태의 안정화다. 마지막도 공세적 긴장 우세로 끝나서, 수용보다는 불편한 사실을 날카롭게 붙든 채 정착한 상태다."
+  },
+  "action_tendency": "자기 상태를 방어적으로 점검하고, 노화/쇠퇴 단서를 더 예민하게 스캔하며, 쉽게 위로받기보다 '이건 진짜 손실이다'라는 해석을 고수하려는 성향으로 간다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "상실감보다도 예외성 붕괴와 통제력 저하에 대한 경계적 긴장을 남겨야 한다.",
+    "avoid": "단순한 서글픔, 담담한 수용, 가벼운 건강 걱정으로 순화하면 안 된다.",
+    "tone_hint": "공감적 위로보다 구조적이고 냉정한 진단 톤"
+  },
+  "evidence": [
+    "입력 자체에서 \"원래 건강하고 체력도 막강했는데 나이 드니 확실히 힘에 부치네.\"라고 하여, 현재 불편보다 이전의 강한 자기상과 현재의 붕괴 대비가 핵심 자극으로 제시된다.",
+    "\"막연히 나는 신체 나이가 들지 않을 거라 생각했는데 그렇지 않네.\"라는 문장은 단순 피로가 아니라 자기 예외성의 붕괴를 직접 드러낸다.",
+    "[GLOBAL_TRACE]에서 dominant_global_signal=공세적 긴장, signal_means=(drive=0.2480, brake=0.2351, alarm=0.5579, fatigue=0.1948)로 alarm 우세가 분명하다.",
+    "[TRAJECTORY]에서 trajectory_pattern=high_arousal_persistence, phase_sequence=dormant -> ignition -> escalation -> persistence, persistence_ratio=0.9487로 점화 후 장기 지속 패턴이 확인된다.",
+    "[PHASE_SEGMENTS]에서 ignition, escalation, persistence 전 구간의 dominant_signal이 계속 \"경계/날카로움\"으로 유지된다.",
+    "[KEY_TICKS]에서 peak_alarm_tick=35이며 tick 35 combined alarm=0.5681, tick 38 alarm=0.5674로 후반에도 위협 해석이 약화되지 않았다."
+  ],
+  "confidence": 0.92
+}

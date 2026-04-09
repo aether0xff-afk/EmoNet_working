@@ -1,0 +1,37 @@
+{
+  "episode_label": "기대와 경계가 엉킨 가족재편 불안",
+  "stimulus_reading": "자극의 핵심은 엄마의 재혼 자체보다, 그 결정이 화자 자신의 의사와 연결되며 가족 구조가 바뀐다는 점이다. '좋음'이 분명 존재하지만, 선택 책임과 관계 재편에 대한 경계가 더 오래 내부에서 유지된 것으로 읽힌다.",
+  "appraisal": {
+    "primary_appraisal": "새로운 가족관계는 매력과 이득이 있지만 동시에 잠재적 위협과 불확실성을 동반하는 사건으로 평가되었다.",
+    "secondary_appraisal": "내 감정을 명확히 알지 못한 채 결정에 영향을 줄 수 있다는 점이 자기판단 부담과 우유부단감으로 번졌다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "mixed"
+  },
+  "trajectory": {
+    "overall_pattern": "초기에는 감정이 정리되지 않은 혼합 상태였으나, 짧게 점화된 뒤 빠르게 가라앉지 않고 장시간 경계성 활성으로 고정된 패턴이다. 긍정 접근도 살아 있으나 전체 지배 신호는 기대보다 경계와 공세적 긴장 쪽이다.",
+    "ignition": "점화는 매우 빠르다. dormant가 2틱뿐이고 이후 ignition에서 active_nodes와 edges가 급증해 사건이 즉시 내부 쟁점으로 부상했다. 표면상 '좋지만 걱정'이라는 양가감정이 실제 네트워크에서는 단순 중립이 아니라 날카로운 경계 활성로 전개되었다.",
+    "persistence": "지속 구간이 90틱으로 매우 길고 persistence_ratio가 0.9789라서, 이 상태는 스쳐가는 걱정이 아니라 오래 붙드는 문제로 처리되었다. peak_alarm_tick이 80으로 늦게 나온 점은 시간이 지나며 정리되기보다 오히려 경계 신호가 유지·증폭되었음을 시사한다.",
+    "resolution": "종결은 해소라기보다 stable_convergence다. 즉 감정이 풀린 것이 아니라, '좋음과 걱정이 함께 있으나 쉽게 결정 못 함'이라는 긴장된 균형점에 수렴했다."
+  },
+  "action_tendency": "즉시 찬성이나 거절로 움직이기보다, 관계 변화를 세밀하게 따져보고 자기감정을 확인한 뒤 판단하려는 신중한 보류로 간다. 다만 접근 신호도 높아서 완전 회피가 아니라 '가까이 가고 싶지만 안전성 검토를 먼저 하는' 탐색적 접근 성향이 강하다.",
+  "rawness": {
+    "valence": "mixed",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "좋아함이 있어도 내부 주도권은 경계와 부담이 쥐고 있다는 점, 그리고 우유부단함이 단순 성격 문제가 아니라 선택 책임 때문에 강화된 상태라는 점",
+    "avoid": "그냥 설레면서 조금 불안한 정도로 순화하는 것, 혹은 가족을 반대하는 감정으로 단순화하는 것",
+    "tone_hint": "다정한 위로보다 양가감정, 경계 지속, 결정 보류를 명확히 짚는 건조한 진단 톤"
+  },
+  "evidence": [
+    "입력에서 화자는 \"새아빠가 생기는 것은 좋지만 한편으로 걱정돼.\"라고 말해 접근과 경계가 동시에 존재함을 직접 드러낸다.",
+    "이어 \"엄마는 내가 싫으면 재혼하지 않으신대. 내 마음을 나도 모르겠고 너무 우유부단해진 것 같아.\"라고 하여 사건이 자기 의사결정 부담과 자기판단 혼란으로 번졌음을 보여준다.",
+    "GLOBAL_TRACE에서 dominant_global_signal이 \"공세적 긴장\"이고 signal_means가 drive=0.5229, alarm=0.5916으로 높아, 단순 슬픔보다 고각성 경계 상태가 우세하다.",
+    "TRAJECTORY에서 phase_sequence가 \"dormant -> ignition -> persistence\"이며 persistence 구간이 tick 5-94, duration=90으로 길어 걱정이 빠르게 사라지지 않고 지속된 것이 확인된다.",
+    "KEY_TICKS에서 peak_alarm_tick=80, tick=94에서도 dominant_signal이 계속 \"공세적 긴장\"이라 후반까지 경계가 남아 있다."
+  ],
+  "confidence": 0.91
+}

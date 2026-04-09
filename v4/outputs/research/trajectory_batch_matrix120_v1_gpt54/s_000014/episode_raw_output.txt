@@ -1,0 +1,39 @@
+{
+  "episode_label": "해방감 섞인 들뜬 접근",
+  "stimulus_reading": "핵심 자극은 질환으로 누적된 치료비 대출 부담이 주식 수익으로 일거에 상환되었다는 사건이다. 단순한 수익 기쁨보다, 오래 지속된 결핍과 압박이 해소되면서 즉시 보상·축하 행동으로 이동하는 해방 에피소드로 처리됐다.",
+  "appraisal": {
+    "primary_appraisal": "오랫동안 통제 불가능하게 느껴졌던 치료비 부담이 해결되며 손실 회복과 생존 압박 완화가 동시에 발생한 것으로 해석됐다.",
+    "secondary_appraisal": "안도만으로 닫히지 않고, 회복된 여유를 사회적 접촉과 작은 보상 행동으로 확장해도 된다는 판단이 붙었다.",
+    "target": "situation",
+    "control_state": "high",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 미점화 뒤 빠르게 접근 계열이 붙고, 이후 긴 지속 구간에서 흥분이 꺼지지 않은 채 안정적으로 유지되는 패턴이다. alarm이 완전히 낮지는 않지만 지배적이지 않아 위협 반응보다는 해소 이후의 고각성 긍정 접근으로 수렴했다.",
+    "ignition": "tick 2-4에서 활성 노드와 edge가 급증하며 사건 의미가 빠르게 붙었다. 빚 상환이라는 실질적 해소가 즉시 행동 가능성으로 번역되면서 점화가 강했다.",
+    "persistence": "tick 5-34의 긴 persistence에서 dominant_signal이 계속 추동/접근으로 유지됐다. persistence_ratio가 0.9429로 매우 높아 순간적 환희보다 계속 붙잡고 싶은 좋은 상태로 유지되었다.",
+    "resolution": "종결은 진정이나 소거가 아니라 stable_convergence다. 즉 흥분이 무너지지 않고, 친한 동생과 술 한잔 같은 가벼운 사회적 보상 행동으로 정리되는 안정된 접근 상태다."
+  },
+  "action_tendency": "기분을 혼자 삭이지 않고 가까운 타인과 공유하며 축하·소비·사교적 접촉으로 확장하려는 성향이 강하다. 당장의 회피나 경계보다 보상 누리기, 관계 접근, 해방감 확인 행동으로 간다.",
+  "rawness": {
+    "valence": "positive",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "단순히 '기쁘다'가 아니라 경제적 압박 해소에서 오는 해방감, 들뜸, 즉각적 접근 성향을 남겨야 한다.",
+    "avoid": "차분한 감사나 잔잔한 만족으로 순화하면 왜곡된다. 치료비 부담의 배경과 높은 접근 각성을 지우면 안 된다.",
+    "tone_hint": "담백하지만 선명하게, 안도+흥분+축하 욕구가 함께 있는 상태로 기술"
+  },
+  "evidence": [
+    "질환 때문에 치료비가 항상 부족했는데 그걸 이번 주식으로 다 갚게 되어서 아주 좋아.",
+    "주식으로 돈을 많이 벌어서 치료비로 대출받은 돈을 모두 갚았더니 아주 신이 나네.",
+    "주변에 친한 동생이 있는데 같이 간단하게 술이라도 한잔하고 싶네.",
+    "dominant_global_signal=추동/접근",
+    "persistence_ratio=0.9429",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "termination_reason=stable_convergence"
+  ],
+  "confidence": 0.96
+}

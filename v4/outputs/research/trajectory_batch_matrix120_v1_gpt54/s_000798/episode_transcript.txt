@@ -1,0 +1,55 @@
+[SAMPLE]
+id=s_000798
+
+[INPUT_TEXT]
+최근 들어서는 계속 적자가 나니까 마음이 힘드네. [SEP] 가게에서 수입이 나지 않아 불안하시겠어요. [SEP] 계속 이러다가는 퇴직금까지 다 깎아 먹고 수중에 남는 게 없겠어. [SEP] 이 상황을 해결할 수 있는 방법이 있을까요? [SEP] 노인들을 위한 정부의 보조금이 있다는 이야기를 김 서방한테 들었어. 다시 물어봐야지. [SEP] 보조금을 통해 사용자님의 문제가 해결되기를 바라요.
+
+[GLOBAL_TRACE]
+- ticks_run=77
+- termination_reason=stable_convergence
+- dominant_branch_len=74
+- active_tick_count=75
+- persistence_ratio=0.9740
+- saturation_ratio=0.8636
+- dominant_global_signal=공세적 긴장
+- signal_means=(drive=0.5860, brake=0.2434, alarm=0.6009, fatigue=0.2027)
+- node_mix=(inh=0.4376, exc=0.4596, mod=0.1028)
+
+[TRAJECTORY]
+- trajectory_pattern=high_arousal_persistence
+- phase_count=4
+- phase_sequence=dormant -> ignition -> escalation -> persistence
+- peak_alarm_tick=69
+- peak_fatigue_tick=8
+- peak_conflict_tick=0
+
+[PHASE_SEGMENTS]
+- dormant | tick 0-1 | duration=2 | active_nodes=0.00 | edges=0.00 | dominant_signal=추동/접근 | signal_conflict=1.0000
+- ignition | tick 2-4 | duration=3 | active_nodes=5.33 | edges=41.67 | dominant_signal=경계/날카로움 | signal_conflict=0.9294
+- escalation | tick 5-6 | duration=2 | active_nodes=117.00 | edges=880.00 | dominant_signal=경계/날카로움 | signal_conflict=0.9694
+- persistence | tick 7-76 | duration=70 | active_nodes=239.63 | edges=2675.23 | dominant_signal=경계/날카로움 | signal_conflict=0.9466
+
+[KEY_TICKS]
+- tick=0 | active_nodes=0 | edges_fired=0 | dominant_signal=거의 무색 | combined=(drive=0.0000, brake=0.0000, alarm=0.0000, fatigue=0.0000) | mix=(inh=0.0000, exc=0.0000, mod=0.0000)
+- tick=2 | active_nodes=1 | edges_fired=12 | dominant_signal=공세적 긴장 | combined=(drive=0.3319, brake=0.1142, alarm=0.4248, fatigue=0.1786) | mix=(inh=0.0000, exc=1.0000, mod=0.0000)
+- tick=5 | active_nodes=57 | edges_fired=495 | dominant_signal=공세적 긴장 | combined=(drive=0.3223, brake=0.2116, alarm=0.3461, fatigue=0.1925) | mix=(inh=0.1930, exc=0.6667, mod=0.1404)
+- tick=7 | active_nodes=252 | edges_fired=1685 | dominant_signal=공세적 긴장 | combined=(drive=0.3145, brake=0.2522, alarm=0.3590, fatigue=0.2147) | mix=(inh=0.4524, exc=0.4444, mod=0.1032)
+- tick=8 | active_nodes=254 | edges_fired=1697 | dominant_signal=공세적 긴장 | combined=(drive=0.3275, brake=0.2532, alarm=0.3812, fatigue=0.2162) | mix=(inh=0.4528, exc=0.4488, mod=0.0984)
+- tick=69 | active_nodes=229 | edges_fired=2743 | dominant_signal=공세적 긴장 | combined=(drive=0.5928, brake=0.2410, alarm=0.6047, fatigue=0.2009) | mix=(inh=0.4236, exc=0.4716, mod=0.1048)
+- tick=76 | active_nodes=232 | edges_fired=2784 | dominant_signal=공세적 긴장 | combined=(drive=0.5916, brake=0.2428, alarm=0.6032, fatigue=0.2023) | mix=(inh=0.4353, exc=0.4612, mod=0.1034)
+
+[TOP_ACTIVE_NODES]
+- node=70 | type=excitatory | bias=추동/접근 | activity_ticks=72 | k_mean=2352.7971 | stim=(drive=0.8446, brake=0.0065, alarm=0.9424, fatigue=0.0110)
+- node=6 | type=excitatory | bias=추동/접근 | activity_ticks=70 | k_mean=2340.9500 | stim=(drive=0.8385, brake=0.0079, alarm=0.9424, fatigue=0.0118)
+- node=211 | type=excitatory | bias=공세적 긴장 | activity_ticks=72 | k_mean=2274.2353 | stim=(drive=0.8236, brake=0.0062, alarm=0.9459, fatigue=0.0091)
+- node=187 | type=modulatory | bias=경계/날카로움 | activity_ticks=72 | k_mean=2219.4876 | stim=(drive=0.5993, brake=0.1222, alarm=0.7362, fatigue=0.1186)
+- node=24 | type=excitatory | bias=추동/접근 | activity_ticks=72 | k_mean=2181.4536 | stim=(drive=0.8208, brake=0.0040, alarm=0.9497, fatigue=0.0072)
+- node=43 | type=excitatory | bias=공세적 긴장 | activity_ticks=71 | k_mean=2191.9840 | stim=(drive=0.8284, brake=0.0063, alarm=0.9539, fatigue=0.0066)
+- node=42 | type=excitatory | bias=추동/접근 | activity_ticks=70 | k_mean=2156.3392 | stim=(drive=0.8311, brake=0.0053, alarm=0.9542, fatigue=0.0090)
+- node=176 | type=excitatory | bias=추동/접근 | activity_ticks=72 | k_mean=2085.2314 | stim=(drive=0.8164, brake=0.0057, alarm=0.9551, fatigue=0.0071)
+
+[IMPORTANT]
+- 감정은 입력 자극 자체가 아니라, 이 자극이 네트워크 안에서 어떻게 점화되고 지속되고 충돌하고 수렴하는지의 episode로 해석한다.
+- 단일 high-arousal 상태를 자동으로 분노로 단정하지 않는다.
+- 접근 신호가 크고 alarm이 지배적이지 않다면 기대/호감/들뜸 같은 positive arousal 가능성을 검토한다.
+- 활성화가 거의 없으면 강한 감정을 꾸며내지 말고 미점화, 보류, anticipatory state 가능성을 명시한다.

@@ -1,0 +1,38 @@
+{
+  "episode_label": "죄책감 기반 관계복구 추동",
+  "stimulus_reading": "자극의 핵심은 이별 자체보다, 이별 사유를 재해석하면서 '상대에게 부당한 상처를 줬다'고 내부적으로 판정한 순간이다. 성적 하락과 이별 결정을 연결한 뒤, 책임 귀속이 남자친구가 아니라 자기 자신에게 돌아오면서 강한 죄책감과 관계 회복 충동이 점화됐다.",
+  "appraisal": {
+    "primary_appraisal": "내가 잘못 판단했고 상대를 unfair하게 다치게 했다는 자기비난성 해석이 중심이다.",
+    "secondary_appraisal": "손상된 관계가 아직 복구 가능하다고 보고, 사과와 재접근이 필요하다는 문제해결 모드가 결합됐다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "고각성 부정 정서가 바로 회피로 가지 않고, 죄책감-긴장-복구추동이 묶여 오래 유지되는 접근형 episode다. alarm과 drive가 함께 높고 brake는 상대적으로 낮아, 괴로워하면서도 물러서기보다 행동 쪽으로 기운다.",
+    "ignition": "초기 dormant가 매우 짧고 tick 2부터 바로 추동/접근이 우세해졌다. 표면상 후회 진술이 들어오자 내부에서는 단순 침잠보다 즉시 '가서 바로 뭔가 해야 한다'는 방향으로 점화됐다.",
+    "persistence": "tick 6-127의 긴 persistence와 persistence_ratio 0.9844가 보여주듯 상태가 거의 풀리지 않았다. peak_alarm이 중반부 tick 65에 형성된 것은, 감정이 순간 폭발 후 꺼진 게 아니라 자기비난과 관계 손실 인식이 반복 증폭되며 오래 버틴다는 뜻이다.",
+    "resolution": "해소보다는 행동 결론으로 수렴했다. 정서적 정리는 안 됐고, '미안하다고 하고 다시 만나자'는 접근 행동 스크립트가 임시 종결점 역할을 한 상태다."
+  },
+  "action_tendency": "사과, 해명, 재회 요청처럼 관계를 직접 복구하려는 행동으로 나아갈 가능성이 높다. 다만 이 행동은 충분히 숙성된 판단이라기보다 죄책감 완화와 손실 복구를 동시에 노리는 압박성 접근에 가깝다.",
+  "rawness": {
+    "valence": "mixed",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "죄책감이 단순 반성이 아니라 강한 재접근 추동과 결합되어 있다는 점, 그리고 정서가 안정된 화해가 아니라 불편함을 견디지 못해 복구 행동으로 밀어붙이는 결을 남겨야 한다.",
+    "avoid": "이를 순수한 사랑의 확신, 따뜻한 후회, 차분한 성찰로 미화하면 안 된다. 내부 상태는 편안한 애정이 아니라 자기책임 판정과 관계 손실 공포가 섞인 고각성 접근이다.",
+    "tone_hint": "단정적이고 해부하듯 서술"
+  },
+  "evidence": [
+    "내 성적이 떨어진 게 남자 친구 탓이 아닌데 상처를 줘서 너무 죄책감이 들어.",
+    "남자 친구한테 가서 미안하다고 다시 만나자고 해야겠어.",
+    "dominant_global_signal=추동/접근",
+    "signal_means=(drive=0.5819, brake=0.2460, alarm=0.5792, fatigue=0.2014)",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "persistence_ratio=0.9844"
+  ],
+  "confidence": 0.92
+}

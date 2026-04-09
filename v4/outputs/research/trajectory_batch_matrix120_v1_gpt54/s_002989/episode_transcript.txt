@@ -1,0 +1,55 @@
+[SAMPLE]
+id=s_002989
+
+[INPUT_TEXT]
+친한 친구가 사고당했다는 소식이 왔어. [SEP] 친구분이 사고당하셨군요. [SEP] 운도 없게 음주운전 차에 치였다네. [SEP] 친구분의 소식에 마음이 아프시겠어요. [SEP] 의식을 영영 못 차릴 수도 있대. 가장 친한 친구였는데. [SEP] 친한 친구가 큰 사고로 못 일어날 수 있어 슬프시겠어요.
+
+[GLOBAL_TRACE]
+- ticks_run=105
+- termination_reason=stable_convergence
+- dominant_branch_len=103
+- active_tick_count=103
+- persistence_ratio=0.9810
+- saturation_ratio=0.7506
+- dominant_global_signal=공세적 긴장
+- signal_means=(drive=0.2459, brake=0.2224, alarm=0.5706, fatigue=0.1883)
+- node_mix=(inh=0.4354, exc=0.4757, mod=0.0889)
+
+[TRAJECTORY]
+- trajectory_pattern=high_arousal_persistence
+- phase_count=4
+- phase_sequence=dormant -> ignition -> escalation -> persistence
+- peak_alarm_tick=91
+- peak_fatigue_tick=13
+- peak_conflict_tick=0
+
+[PHASE_SEGMENTS]
+- dormant | tick 0-1 | duration=2 | active_nodes=0.00 | edges=0.00 | dominant_signal=추동/접근 | signal_conflict=1.0000
+- ignition | tick 2-4 | duration=3 | active_nodes=32.33 | edges=349.33 | dominant_signal=경계/날카로움 | signal_conflict=0.9498
+- escalation | tick 5-6 | duration=2 | active_nodes=158.50 | edges=1571.00 | dominant_signal=경계/날카로움 | signal_conflict=0.9485
+- persistence | tick 7-104 | duration=98 | active_nodes=201.64 | edges=1632.07 | dominant_signal=경계/날카로움 | signal_conflict=0.6996
+
+[KEY_TICKS]
+- tick=0 | active_nodes=0 | edges_fired=0 | dominant_signal=거의 무색 | combined=(drive=0.0000, brake=0.0000, alarm=0.0000, fatigue=0.0000) | mix=(inh=0.0000, exc=0.0000, mod=0.0000)
+- tick=2 | active_nodes=6 | edges_fired=71 | dominant_signal=공세적 긴장 | combined=(drive=0.2260, brake=0.2106, alarm=0.3271, fatigue=0.1992) | mix=(inh=0.0000, exc=0.1667, mod=0.8333)
+- tick=5 | active_nodes=138 | edges_fired=1388 | dominant_signal=경계/날카로움 | combined=(drive=0.2413, brake=0.2699, alarm=0.3142, fatigue=0.2232) | mix=(inh=0.4493, exc=0.4565, mod=0.0942)
+- tick=7 | active_nodes=191 | edges_fired=1863 | dominant_signal=경계/날카로움 | combined=(drive=0.2580, brake=0.2725, alarm=0.3459, fatigue=0.2367) | mix=(inh=0.4398, exc=0.4712, mod=0.0890)
+- tick=13 | active_nodes=210 | edges_fired=1947 | dominant_signal=경계/날카로움 | combined=(drive=0.2567, brake=0.2607, alarm=0.4493, fatigue=0.2484) | mix=(inh=0.4333, exc=0.4762, mod=0.0905)
+- tick=91 | active_nodes=200 | edges_fired=1465 | dominant_signal=공세적 긴장 | combined=(drive=0.2469, brake=0.2208, alarm=0.5735, fatigue=0.1864) | mix=(inh=0.4350, exc=0.4800, mod=0.0850)
+- tick=104 | active_nodes=202 | edges_fired=1438 | dominant_signal=공세적 긴장 | combined=(drive=0.2457, brake=0.2230, alarm=0.5702, fatigue=0.1883) | mix=(inh=0.4455, exc=0.4703, mod=0.0842)
+
+[TOP_ACTIVE_NODES]
+- node=145 | type=excitatory | bias=추동/접근 | activity_ticks=99 | k_mean=27938.2642 | stim=(drive=0.0107, brake=0.0147, alarm=0.9527, fatigue=0.0210)
+- node=180 | type=excitatory | bias=공세적 긴장 | activity_ticks=100 | k_mean=27474.7699 | stim=(drive=0.0058, brake=0.0075, alarm=0.9595, fatigue=0.0277)
+- node=48 | type=excitatory | bias=추동/접근 | activity_ticks=98 | k_mean=25942.4337 | stim=(drive=0.0109, brake=0.0059, alarm=0.9614, fatigue=0.0168)
+- node=209 | type=excitatory | bias=공세적 긴장 | activity_ticks=100 | k_mean=23841.8174 | stim=(drive=0.0107, brake=0.0096, alarm=0.9468, fatigue=0.0336)
+- node=194 | type=excitatory | bias=공세적 긴장 | activity_ticks=99 | k_mean=21534.4671 | stim=(drive=0.0037, brake=0.0064, alarm=0.9532, fatigue=0.0457)
+- node=81 | type=modulatory | bias=피로/둔화 | activity_ticks=98 | k_mean=21474.8346 | stim=(drive=0.1209, brake=0.1590, alarm=0.6166, fatigue=0.2127)
+- node=136 | type=inhibitory | bias=완충/억제 | activity_ticks=98 | k_mean=20001.5387 | stim=(drive=0.2077, brake=0.2347, alarm=0.4029, fatigue=0.2398)
+- node=170 | type=excitatory | bias=추동/접근 | activity_ticks=99 | k_mean=19389.6203 | stim=(drive=0.0056, brake=0.0125, alarm=0.9514, fatigue=0.0621)
+
+[IMPORTANT]
+- 감정은 입력 자극 자체가 아니라, 이 자극이 네트워크 안에서 어떻게 점화되고 지속되고 충돌하고 수렴하는지의 episode로 해석한다.
+- 단일 high-arousal 상태를 자동으로 분노로 단정하지 않는다.
+- 접근 신호가 크고 alarm이 지배적이지 않다면 기대/호감/들뜸 같은 positive arousal 가능성을 검토한다.
+- 활성화가 거의 없으면 강한 감정을 꾸며내지 말고 미점화, 보류, anticipatory state 가능성을 명시한다.

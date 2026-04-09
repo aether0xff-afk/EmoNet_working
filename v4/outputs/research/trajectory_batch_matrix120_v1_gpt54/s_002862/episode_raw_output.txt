@@ -1,0 +1,39 @@
+{
+  "episode_label": "배신 해석에 점화된 공세적 경계",
+  "stimulus_reading": "자극은 단순한 이별이 아니라, 전 애인이 헤어지자마자 다른 사람을 사귀었다는 사실이 '이미 마음이 떠나 있었거나 기다렸던 것 같다'는 의미로 읽힌 점이다. 네트워크는 이를 상실 자체보다 관계적 배신과 자기 위치의 훼손 신호로 처리했다.",
+  "appraisal": {
+    "primary_appraisal": "상대의 행동을 나를 가볍게 대하고 속인 듯한 배신 사건으로 해석하며, 위협-모욕-분노가 결합된 경계 상태로 평가했다.",
+    "secondary_appraisal": "완전한 무력 붕괴보다는 화를 붙들고 바깥으로 배출할 수 있는 여지가 남아 있어, 상처와 분노가 섞였지만 행동 억제보다는 긴장 유지 쪽으로 기울었다.",
+    "target": "other",
+    "control_state": "mixed",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 미점화 뒤 짧게 급점화하고, 이후 높은 각성의 경계 상태가 오래 유지되는 지속형 episode다. 순간 폭발형이라기보다 배신 해석이 붙은 뒤 화와 경계가 오래 내려가지 않는 패턴이다.",
+    "ignition": "tick 2-4에서 활성 노드와 엣지가 급증했고 지배 신호가 곧바로 '경계/날카로움'과 '공세적 긴장'으로 형성됐다. 즉, 사건을 듣는 순간 슬픔보다 먼저 방어적 공격성이 붙었다.",
+    "persistence": "tick 5 이후 종료까지 활성도가 높게 유지되고 persistence_ratio가 0.9574로 매우 높다. alarm 평균도 0.5780으로 높고 peak_alarm_tick이 39로 늦게 와서, 감정이 바로 식지 않고 되새김 속에서 오히려 경계가 재가열된 것으로 보인다.",
+    "resolution": "termination_reason은 stable_convergence지만 진정 회복이라기보다 '공세적 긴장' 상태로 안정화된 수렴이다. 즉 마지막도 편안해진 것이 아니라, 화를 밖으로 풀려는 방향으로 정렬된 채 굳었다."
+  },
+  "action_tendency": "상대를 좋게 해석하거나 접촉 회복하려는 쪽이 아니라, 배신 프레임을 유지한 채 분노를 외부로 배출하고 자기편 사람들과 뭉쳐 방어적으로 정리하려는 성향이다. 직접 대결 가능성도 있으나, transcript상 즉각적 행동은 친구들을 만나며 분노를 환기·배출하는 우회적 방출 쪽이다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "배신으로 읽힌 순간의 날카로움, 오래 지속되는 경계, 단순한 서운함이 아니라 공격성 섞인 방어 상태라는 점",
+    "avoid": "그냥 속상함이나 미련으로 축소하는 것, 이미 가라앉은 감정처럼 포장하는 것, 위로 중심으로 재서술하는 것",
+    "tone_hint": "건조하고 직설적으로, 상처-분노-방어가 결합된 상태라고 명확히 진단"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "persistence_ratio=0.9574",
+    "peak_alarm_tick=39",
+    "응. 마치 기다렸다는 듯이. 그 얘기 듣자마자 너무 화가 났어.",
+    "친구들 만나서 스트레스나 풀어야겠어."
+  ],
+  "confidence": 0.95
+}

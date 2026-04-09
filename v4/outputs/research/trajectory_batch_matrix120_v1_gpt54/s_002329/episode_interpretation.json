@@ -1,0 +1,38 @@
+{
+  "episode_label": "공세적으로 고착된 압박-분노 episode",
+  "stimulus_reading": "자극은 단순한 '회사 스트레스'가 아니라, 휴식이 박탈되고 자신이 사람 아닌 기계처럼 취급된다는 인식이다. 네트워크는 이를 일시적 짜증이 아니라 지속적 침해와 통제 상실이 결합된 위협 자극으로 읽었다.",
+  "appraisal": {
+    "primary_appraisal": "타자가 나를 과도하게 소모시키고 경계를 침범하며, 현재 상태가 견디기 어렵다는 위협/침해 해석이 핵심이다.",
+    "secondary_appraisal": "분노가 주표면이지만 내부적으로는 '어떻게 해야 할지 모르겠다'는 방향 상실과 약한 탈진이 함께 붙어 있다. 즉 공격적 긴장 위에 무력감이 얹힌 상태다.",
+    "target": "mixed",
+    "control_state": "low",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "빠르게 점화된 뒤 거의 꺼지지 않고 고수준 각성으로 유지되는 high_arousal_persistence 패턴이다. 반응은 폭발형이라기보다 장시간 고정된 경계-공세 상태에 가깝다.",
+    "ignition": "tick 3부터 활성 노드와 엣지가 급증하며 dormant에서 즉시 경계/날카로움으로 전환됐다. 초기 점화는 단순 우울이나 체념이 아니라 즉각적인 방어적 긴장과 공격 준비 쪽으로 붙었다.",
+    "persistence": "tick 6 이후 87틱 동안 persistence가 유지되고, alarm 평균이 0.5827로 지배적이며 persistence_ratio 0.9677, saturation_ratio 0.9286으로 매우 높다. 중간에 tick 11에서 피로성 경계가 잠깐 올라오지만, 전체는 탈진으로 꺼지지 않고 공세적 긴장으로 재수렴한다.",
+    "resolution": "종결은 해소가 아니라 stable_convergence다. 마지막까지 dominant signal이 공세적 긴장이고 alarm도 0.5816 수준이라, 문제를 정리한 것이 아니라 높은 경계 상태가 내부 기준점으로 굳어진 채 멈췄다."
+  },
+  "action_tendency": "즉각적인 행동 성향은 관계 회복보다 방어적 대치, 불만 표출, 거리두기, 상황 탈출 충동 쪽이다. 다만 통제감이 낮아 실제 실행은 명료한 행동보다 '화를 품은 채 멈춤/버팀'으로 나타날 가능성이 크다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "사람 취급받지 못한다는 침해감, 높은 경계, 오래 지속되는 공세적 긴장, 그리고 통제 상실감을 같이 남겨야 한다.",
+    "avoid": "단순히 '회사 때문에 속상함'이나 '화가 좀 난 상태'로 순화하면 왜곡이다. 위로형 언어로 탈진만 강조해도 공격적 긴장 축이 사라져 오판이 된다.",
+    "tone_hint": "건조하고 진단적으로, 날카로운 압박감이 지속된 상태라는 점을 직접적으로 기술"
+  },
+  "evidence": [
+    "입력 내용에서 \"사람을 쉬지도 못하게 해. 무슨 일만 하는 기계처럼 생각하는 거 같아.\"라고 하여 자극이 단순 피곤함이 아니라 비인격적 취급과 경계 침해로 제시된다.",
+    "입력 내용에서 \"너무 화가 나서 아무 생각도 안 나고 어떻게 해야 할지 모르겠어.\"라고 하여 고각성 분노와 동시에 방향 상실/통제 저하가 직접 드러난다.",
+    "GLOBAL_TRACE에서 \"dominant_global_signal=공세적 긴장\", \"signal_means=(drive=0.2441, brake=0.2273, alarm=0.5827, fatigue=0.1920)\"로 alarm 우세의 공격적 경계 상태가 확인된다.",
+    "TRAJECTORY에서 \"trajectory_pattern=high_arousal_persistence\", \"phase_sequence=dormant -> ignition -> persistence\"이며 persistence_ratio=0.9677로 반응이 장기 고착형임이 나타난다.",
+    "PHASE_SEGMENTS에서 persistence 구간이 \"tick 6-92 | duration=87 | dominant_signal=경계/날카로움\"으로 길게 유지되어 해소보다 지속이 핵심임을 보여준다.",
+    "KEY_TICKS에서 마지막 tick=92도 \"dominant_signal=공세적 긴장\"이고 combined alarm이 0.5816으로 남아 있어 종료 시점에도 진정되지 않았다."
+  ],
+  "confidence": 0.95
+}

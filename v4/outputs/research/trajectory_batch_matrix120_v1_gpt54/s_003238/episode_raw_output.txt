@@ -1,0 +1,38 @@
+{
+  "episode_label": "생계불안 기반의 경계적 대비 모드",
+  "stimulus_reading": "자극은 단순한 '걱정' 표현이 아니라, 노후 시점에 필요한 준비가 부족하다는 자기 평가와 그에 따른 생계 지속 가능성 위협이다. 특히 돈이 충분치 않다는 판단이 미래 생존·역할 유지 문제로 읽히면서, 막연한 우울보다 해결책 탐색을 동반한 경계 상태로 점화됐다.",
+  "appraisal": {
+    "primary_appraisal": "미래 생계와 노후 안정성이 위협받고 있으며, 현재 준비 수준이 부족하다는 위험 평가가 핵심이다.",
+    "secondary_appraisal": "완전한 무력감보다는 아직 대응 여지가 있다고 보고, 투자 외 노동/직장 확보 같은 실용적 출구를 찾으려는 해석이 함께 작동한다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 미점화 후 빠르게 경계가 점화되고, 이후 긴 시간 동안 해소 없이 지속되는 고지속성 불안-대비 episode다. 정서가 한 번 치솟고 꺼지는 형태가 아니라 문제를 계속 물고 늘어지는 숙고성 경계 상태에 가깝다.",
+    "ignition": "tick 2-4에서 활성 노드와 엣지가 급증하며 자극이 즉시 위협 신호로 번역됐다. 다만 추동/접근도 같이 살아 있어 순수 위축보다는 '불안하지만 뭔가 찾아야 한다'는 방향으로 붙었다.",
+    "persistence": "tick 5 이후 종료까지 경계/날카로움이 지배했고, persistence_ratio 0.9844와 dominant_branch_len 126은 이 문제가 내부에서 거의 끝까지 붙잡혔음을 뜻한다. alarm 평균 0.5460, peak_alarm_tick 109는 후반까지도 위협 평가가 식지 않았다는 증거다.",
+    "resolution": "실질적 해소 없이 경계 상태가 유지된 채 종료됐다. 마지막도 공세적 긴장이 우세해 안심이나 체념으로 수렴한 것이 아니라, 불안을 품은 채 대비 행동을 계속 찾는 상태로 끝났다."
+  },
+  "action_tendency": "막연히 주저앉기보다 재정 부족을 현실 위험으로 붙들고, 투자 외에 계속 일할 수 있는 자리·소득원·대안 경로를 탐색하려는 행동 성향으로 간다. 다만 탐색은 차분한 계획이라기보다 압박감이 실린 대비 행동에 가깝다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "미래 생계 불안, 준비 부족 감각, 해소되지 않은 경계 지속, 그리고 그 와중의 실용적 대안 탐색 성향을 함께 남겨야 한다.",
+    "avoid": "단순한 '노후가 걱정되시네요' 수준의 공감 라벨로 축소하거나, 차분한 재무 계획 상태처럼 과도하게 안정화해서 해석하면 왜곡이다.",
+    "tone_hint": "건조하고 진단적으로, 불안의 지속성과 대비 압박을 숨기지 않는 톤"
+  },
+  "evidence": [
+    "입력에서 \"십 년 후면 내가 어떤 것을 해야 할지 모르겠어. 모아놓은 돈이 많이 없네.\"라고 하여 미래 역할/생계 불확실성과 자원 부족이 직접 제시된다.",
+    "\"내가 생각하기에는 많이 부족한 것 같아. 노후를 대비해 투자 말고 일할 수 있는 곳이 있을까?\"에서 단순 정서 표출이 아니라 부족 평가 후 노동 대안을 찾는 접근적 대비가 드러난다.",
+    "GLOBAL_TRACE의 \"dominant_global_signal=공세적 긴장\", \"signal_means=(drive=0.2560, brake=0.2476, alarm=0.5460, fatigue=0.2016)\"는 피로보다 경계성 알람이 지배적임을 보여준다.",
+    "TRAJECTORY의 \"phase_sequence=dormant -> ignition -> persistence\"와 \"termination_reason=max_ticks\", \"persistence_ratio=0.9844\"는 점화 후 거의 전 구간 지속된 episode였음을 뒷받침한다.",
+    "PHASE_SEGMENTS에서 persistence 구간이 \"tick 5-127 | duration=123 | dominant_signal=경계/날카로움\"으로 길게 유지되어 해소보다 지속 경계가 핵심이었음을 보여준다.",
+    "KEY_TICKS에서 \"peak_alarm_tick=109\" 및 tick 127의 \"dominant_signal=공세적 긴장 | ... alarm=0.5457\"은 후반까지 위협 평가가 꺼지지 않았음을 보여준다."
+  ],
+  "confidence": 0.94
+}

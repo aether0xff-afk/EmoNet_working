@@ -1,0 +1,38 @@
+{
+  "episode_label": "모욕 자극에 대한 공세적 경계-수습 시도",
+  "stimulus_reading": "핵심 자극은 단순한 실수 자체보다, 상사가 공개적이거나 일방적으로 호통을 친 사건이다. 네트워크는 이를 업무 피드백이 아니라 부당한 공격 및 자존감 손상 신호로 읽고, 이후 관계를 다시 통제하려는 접근적 수습 시도로 이어 붙였다.",
+  "appraisal": {
+    "primary_appraisal": "최선을 다했는데도 상사에게 과도하게 공격받았다는 해석이 중심이다. 그래서 정서는 순수한 슬픔보다 '상처+경계+맞대응 준비'에 가깝다.",
+    "secondary_appraisal": "관계를 완전히 끊기보다 대화로 정렬해볼 여지가 있다고 판단한다. 즉 상황은 불쾌하고 위협적이지만, 완전 무력감으로 붕괴하지는 않고 통제 회복 시도를 남겨둔다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "전형적인 high_arousal_persistence 패턴으로, 자극이 빠르게 점화된 뒤 오래 식지 않는 경계 상태가 유지됐다. 표면 문장에는 씁쓸함·우울·슬픔이 있으나, 내부 동역학은 저각성 침잠보다 고각성 경계와 공세적 긴장이 우세하다.",
+    "ignition": "tick 2-4에서 활성 노드와 에지가 급증하며 급점화했다. 이는 사건을 가볍게 넘기지 않고 즉시 위협/모욕 신호로 태깅했다는 뜻이다.",
+    "persistence": "tick 5 이후 73틱 동안 경계/날카로움이 지속되고, alarm 평균이 가장 높으며 peak_alarm이 후반부 tick 52에 나온다. 즉 감정이 초기에만 욱하고 끝난 것이 아니라, 곱씹으면서 경계와 긴장을 유지한 episode다.",
+    "resolution": "termination은 stable_convergence지만 진정한 해소라기보다 '긴장 상태의 안정화'에 가깝다. 마지막도 공세적 긴장이 남아 있어, 저녁 식사 제안은 평온 회복보다 통제권과 관계 프레임을 되찾으려는 수습 행동으로 읽힌다."
+  },
+  "action_tendency": "상대를 피하기보다 직접 만나 설명하고 관계 구도를 재조정하려는 성향이 강하다. 다만 정서 바닥에는 상처와 방어가 남아 있어, 대화가 화해 시도이면서 동시에 자기 정당성 확인과 상대 반응 탐색의 성격을 띤다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "씁쓸함/우울로만 축소하지 말고, 모욕감 이후의 날카로운 경계와 접근적 수습 욕구를 함께 남겨야 한다.",
+    "avoid": "단순한 슬픔, 순한 서운함, 이미 잘 정리된 화해 의지로 미화하면 왜곡이다.",
+    "tone_hint": "건조하고 진단적으로, 불쾌감과 긴장 지속을 숨기지 않는 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "persistence | tick 5-77 | duration=73 | dominant_signal=경계/날카로움",
+    "peak_alarm_tick=52",
+    "signal_means=(drive=0.2588, brake=0.2454, alarm=0.5581, fatigue=0.1975)"
+  ],
+  "confidence": 0.92
+}

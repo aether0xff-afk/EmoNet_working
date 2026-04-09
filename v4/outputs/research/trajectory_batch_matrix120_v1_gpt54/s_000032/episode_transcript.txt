@@ -1,0 +1,53 @@
+[SAMPLE]
+id=s_000032
+
+[INPUT_TEXT]
+우리 부서에는 운동 잘하는 사람들이 모여 있어서 체육대회에서 우승할 것 같아. [SEP] 체육대회에서 우승할 것 같다니 좋으시겠어요. [SEP] 사람들이 운동을 다 잘해서 나도 더 열심히 해야겠다는 생각을 했어. [SEP] 앞으로 어떻게 하실 계획이세요? [SEP] 열심히 운동해서 우승까지 하고 싶어. [SEP] 운동으로 우승까지 원하시는군요.
+
+[GLOBAL_TRACE]
+- ticks_run=45
+- termination_reason=stable_convergence
+- dominant_branch_len=43
+- active_tick_count=43
+- persistence_ratio=0.9556
+- saturation_ratio=0.6234
+- dominant_global_signal=추동/접근
+- signal_means=(drive=0.5303, brake=0.2691, alarm=0.4986, fatigue=0.1996)
+- node_mix=(inh=0.4536, exc=0.4587, mod=0.0877)
+
+[TRAJECTORY]
+- trajectory_pattern=mixed
+- phase_count=4
+- phase_sequence=dormant -> ignition -> escalation -> persistence
+- peak_alarm_tick=44
+- peak_fatigue_tick=5
+- peak_conflict_tick=0
+
+[PHASE_SEGMENTS]
+- dormant | tick 0-1 | duration=2 | active_nodes=0.00 | edges=0.00 | dominant_signal=추동/접근 | signal_conflict=1.0000
+- ignition | tick 2-4 | duration=3 | active_nodes=37.33 | edges=436.67 | dominant_signal=경계/날카로움 | signal_conflict=0.9742
+- escalation | tick 5-5 | duration=1 | active_nodes=124.00 | edges=1458.00 | dominant_signal=완충/억제 | signal_conflict=0.9706
+- persistence | tick 6-44 | duration=39 | active_nodes=178.08 | edges=2077.56 | dominant_signal=추동/접근 | signal_conflict=0.9729
+
+[KEY_TICKS]
+- tick=0 | active_nodes=0 | edges_fired=0 | dominant_signal=거의 무색 | combined=(drive=0.0000, brake=0.0000, alarm=0.0000, fatigue=0.0000) | mix=(inh=0.0000, exc=0.0000, mod=0.0000)
+- tick=2 | active_nodes=8 | edges_fired=96 | dominant_signal=공세적 긴장 | combined=(drive=0.3030, brake=0.2048, alarm=0.3289, fatigue=0.1681) | mix=(inh=0.1250, exc=0.5000, mod=0.3750)
+- tick=5 | active_nodes=124 | edges_fired=1458 | dominant_signal=완충/억제 | combined=(drive=0.2699, brake=0.3058, alarm=0.2764, fatigue=0.2190) | mix=(inh=0.5323, exc=0.3548, mod=0.1129)
+- tick=6 | active_nodes=190 | edges_fired=2231 | dominant_signal=완충/억제 | combined=(drive=0.2926, brake=0.3023, alarm=0.2927, fatigue=0.2156) | mix=(inh=0.4737, exc=0.4316, mod=0.0947)
+- tick=44 | active_nodes=166 | edges_fired=1990 | dominant_signal=추동/접근 | combined=(drive=0.5625, brake=0.2594, alarm=0.5385, fatigue=0.2012) | mix=(inh=0.4337, exc=0.4819, mod=0.0843)
+
+[TOP_ACTIVE_NODES]
+- node=158 | type=inhibitory | bias=완충/억제 | activity_ticks=40 | k_mean=154.1270 | stim=(drive=0.3500, brake=0.2993, alarm=0.3464, fatigue=0.2490)
+- node=233 | type=excitatory | bias=추동/접근 | activity_ticks=41 | k_mean=144.1059 | stim=(drive=0.7367, brake=0.1078, alarm=0.6338, fatigue=0.0164)
+- node=184 | type=excitatory | bias=공세적 긴장 | activity_ticks=40 | k_mean=147.2098 | stim=(drive=0.7524, brake=0.0974, alarm=0.6853, fatigue=0.0098)
+- node=17 | type=inhibitory | bias=수축/둔화 | activity_ticks=39 | k_mean=147.4856 | stim=(drive=0.3555, brake=0.2974, alarm=0.3420, fatigue=0.2635)
+- node=9 | type=inhibitory | bias=완충/억제 | activity_ticks=41 | k_mean=140.2758 | stim=(drive=0.3396, brake=0.3012, alarm=0.3272, fatigue=0.2578)
+- node=55 | type=inhibitory | bias=완충/억제 | activity_ticks=41 | k_mean=131.5719 | stim=(drive=0.3490, brake=0.3065, alarm=0.3456, fatigue=0.2621)
+- node=31 | type=excitatory | bias=추동/접근 | activity_ticks=41 | k_mean=128.2969 | stim=(drive=0.6379, brake=0.1141, alarm=0.7059, fatigue=0.0218)
+- node=188 | type=inhibitory | bias=완충/억제 | activity_ticks=39 | k_mean=126.0295 | stim=(drive=0.3322, brake=0.3098, alarm=0.3219, fatigue=0.2723)
+
+[IMPORTANT]
+- 감정은 입력 자극 자체가 아니라, 이 자극이 네트워크 안에서 어떻게 점화되고 지속되고 충돌하고 수렴하는지의 episode로 해석한다.
+- 단일 high-arousal 상태를 자동으로 분노로 단정하지 않는다.
+- 접근 신호가 크고 alarm이 지배적이지 않다면 기대/호감/들뜸 같은 positive arousal 가능성을 검토한다.
+- 활성화가 거의 없으면 강한 감정을 꾸며내지 말고 미점화, 보류, anticipatory state 가능성을 명시한다.

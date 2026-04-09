@@ -1,0 +1,39 @@
+{
+  "episode_label": "체제 불신이 고착된 공세적 경계",
+  "stimulus_reading": "직접 자극은 진로특강에서 들은 '요즘 세대들 배불렀다'는 발화다. 이 발화는 단순히 한 사람의 무지로 처리되지 않고, '그런 사람이 진로특강을 하는 나라'라는 식으로 국가·체제 전체의 젊은 세대 비고려 증거로 확장 해석되었다.",
+  "appraisal": {
+    "primary_appraisal": "자극은 청자 집단인 젊은 세대를 무시하고 폄하하는 신호로 읽혔고, 따라서 상황은 부당하고 적대적인 것으로 평가되었다.",
+    "secondary_appraisal": "문제의 원인을 개인 실수보다 구조적 실패로 일반화하면서, 시스템 자체에 대한 신뢰 붕괴와 파국 예측이 덧붙었다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 미점화 후 빠르게 경계가 점화되고, 짧은 급상승 뒤 장시간 낮아지지 않는 지속형 공세 경계로 굳었다. 일시적 분출보다 해소되지 않은 적대적 각성이 유지된 episode다.",
+    "ignition": "tick 2-4에서 활성 노드와 엣지가 급증하며 '경계/날카로움'으로 진입했다. 표면상 불쾌감보다 모욕-위협 탐지가 먼저 걸린 형태다.",
+    "persistence": "tick 6-127의 긴 persistence 구간에서 alarm 우세가 계속 유지되고 persistence_ratio가 0.9844로 매우 높다. 즉 한 번 올라간 경계가 거의 꺼지지 않았고, 국가·세대 문제로 일반화된 해석이 각성을 붙잡고 있었다.",
+    "resolution": "실질적 해소 없이 공세적 긴장 상태로 종료됐다. 종료 사유도 max_ticks이며 마지막 tick에서도 alarm이 높아, 수렴은 진정이 아니라 경계의 고착에 가깝다."
+  },
+  "action_tendency": "부당함을 규탄하고, 대상 개인을 넘어 제도·국가를 비난하며, 방어적 언어로 자기 세대의 정당성을 지키려는 성향이 강하다. 대화적으로는 설명이나 타협보다 비판적 일반화와 단정으로 밀어붙일 가능성이 높다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "세대 비하를 구조적 배제 신호로 읽어낸 공격적 경계감, 그리고 체제 불신으로 확장된 해석을 남겨야 한다.",
+    "avoid": "단순한 서운함, 일시적 짜증, 추상적 절망으로 순화하면 안 된다. 특히 alarm 지속과 공세성을 지우고 '공감받고 싶음' 정도로 축소하면 왜곡이다.",
+    "tone_hint": "건조하고 진단적으로, 날 선 평가를 숨기지 않는 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "persistence_ratio=0.9844",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "peak_alarm_tick=99",
+    "tick=127 | dominant_signal=공세적 긴장 | combined=(drive=0.2495, brake=0.2360, alarm=0.5606, fatigue=0.1917)",
+    "진로특강을 들었는데 요즘 세대들 배불렀다고 하잖아.",
+    "그런 사람들이 진로특강을 하는 나라니 망할 것 같아."
+  ],
+  "confidence": 0.95
+}

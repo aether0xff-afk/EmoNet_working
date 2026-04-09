@@ -1,0 +1,38 @@
+{
+  "episode_label": "현실 수용 기반의 안정적 행복-계획 접근",
+  "stimulus_reading": "자극은 노화와 신체 통증이라는 손실 요소 자체보다, 그 조건 안에서도 친구들과 느긋하게 지내며 만족을 느끼고 이후 건강 관리를 위해 운동을 생각하는 서술이다. 네트워크는 이를 단순 위로 요청이 아니라 불편을 인정한 채 삶의 만족과 다음 행동을 조직하는 접근 episode로 처리했다.",
+  "appraisal": {
+    "primary_appraisal": "부정적 신체 상태는 존재하지만 현재 삶의 관계적 만족이 더 큰 가치로 평가되며, 그 만족을 유지하기 위해 현실적인 자기관리로 이어질 수 있는 상황으로 해석됐다.",
+    "secondary_appraisal": "통증과 건강 저하는 경미한 경계 신호를 남기지만 위협 지배 상태는 아니고, 오히려 향후 운동이라는 실행 가능 선택지가 있어 통제감이 보존된 상태로 읽혔다.",
+    "target": "mixed",
+    "control_state": "high",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 무색 상태에서 빠르게 점화된 뒤, 높은 지속률로 접근 신호가 오래 유지되는 안정 수렴형이다. 긍정 정서에 약한 경계가 섞인 mixed 패턴이지만 전체 방향은 분명히 접근 유지 쪽이다.",
+    "ignition": "tick 2부터 활성 노드와 엣지가 급증하며 즉시 의미화가 시작됐다. 몸의 아픔 때문에 alarm이 일부 동반되지만 같은 시점에 drive가 더 크게 형성되어 불편보다 만족과 향후 행동 가능성이 먼저 붙었다.",
+    "persistence": "tick 5 이후 47까지 긴 persistence가 이어지고 dominant signal이 계속 추동/접근으로 유지된다. alarm은 중간에 다소 오르지만 지배권을 가져가지 못했고, 억제와 흥분이 함께 작동하며 과열되지 않은 채 만족-실행 지향이 안정적으로 지속됐다.",
+    "resolution": "마지막 상태는 감상적 포만보다는 '행복하다, 그리고 운동할 생각이다'로 수렴하는 실용적 안정감이다. 즉, 편안한 만족 위에 자기관리 의도가 얹힌 채 종료됐다."
+  },
+  "action_tendency": "현재 상태는 관계적 안온함을 유지하면서 건강 악화를 방치하지 않고 운동 같은 자기관리 행동으로 옮기려는 성향으로 간다. 감정 소비보다 생활 유지와 조정 행동을 택하는 쪽이다.",
+  "rawness": {
+    "valence": "positive",
+    "arousal": "medium",
+    "softened_output_risk": "medium",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "행복의 핵심이 고통 부정이 아니라 고통을 포함한 현실 수용과 관계 만족, 그리고 후속 행동 계획이라는 점을 남겨야 한다.",
+    "avoid": "몸이 아프니 사실상 우울하거나 체념 상태라고 왜곡하면 안 되고, 반대로 아무 걱정 없는 낙관으로 순화해도 안 된다.",
+    "tone_hint": "담백하고 분석적으로, 긍정과 경계가 함께 있으나 주도권은 접근에 있다는 식으로 정리"
+  },
+  "evidence": [
+    "dominant_global_signal=추동/접근",
+    "persistence_ratio=0.9583",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "tick=47 | dominant_signal=추동/접근 | combined=(drive=0.5762, brake=0.2551, alarm=0.3308, fatigue=0.1838)",
+    "나이가 들어서 몸은 아프지만 느긋하게 친구들과 지낼 수있어 정말 행복해.",
+    "건강이 안 좋으니 운동을 할 생각이야."
+  ],
+  "confidence": 0.94
+}

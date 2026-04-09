@@ -1,0 +1,38 @@
+{
+  "episode_label": "자기경계가 섞인 공세적 긴장",
+  "stimulus_reading": "자극의 핵심은 며느리에게 반복적으로 짜증과 화를 내고 있다는 자기관찰과, 그 뒤에 따라오는 '그러지 말아야 한다'는 반성이다. 외부 사건 자체보다 자신의 감정 통제 실패가 내부에서 위협 신호로 읽히며, 관계 손상 가능성이 추가 자극으로 붙었다.",
+  "appraisal": {
+    "primary_appraisal": "자신의 최근 반응 패턴이 관계를 해치고 있으며 통제가 잘 되지 않는다는 위기 해석",
+    "secondary_appraisal": "상황을 바로잡아야 한다는 접근 동기가 함께 살아 있어 단순 붕괴나 무기력보다는 긴장된 수습 모드로 기운 상태",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "mixed"
+  },
+  "trajectory": {
+    "overall_pattern": "거의 즉시 점화된 뒤 오래 지속되는 고각성 긴장 상태다. 정서가 한번 올라온 뒤 가라앉기보다 경계와 공세가 섞인 채 유지되어, 반성은 있으나 안정화에는 실패한 패턴이다.",
+    "ignition": "초기 dormant가 매우 짧고 곧바로 ignition으로 넘어간다. 입력을 받자마자 '경계/날카로움'과 '공세적 긴장'이 활성화되어 이 사안을 내부에서 민감하고 위협적인 문제로 잡았다는 뜻이다.",
+    "persistence": "persistence 구간이 123틱으로 매우 길고 persistence_ratio가 0.9844라서, 감정 episode가 일시적 찔림이 아니라 계속 붙들린 처리 상태로 이어졌다. alarm이 후반까지 오르며 peak_alarm_tick이 114에 나타나, 시간이 지나며 오히려 불안·경계가 누적된 것으로 보인다.",
+    "resolution": "명확한 해소 없이 최대 틱까지 유지되며 종료됐다. 마지막에는 따뜻한 문자를 보내려는 수습 방향이 보이지만, 내부 신호는 여전히 공세적 긴장 우세라 정서적 진정에 도달한 것은 아니다."
+  },
+  "action_tendency": "관계를 바로잡기 위해 먼저 접촉하고 수습하려는 경향이 있으나, 그 바닥에는 예민함과 방어적 날카로움이 남아 있어 재자극 시 다시 짜증·비난으로 튈 가능성이 있다. 즉 '사과/수습하려는 접근'과 '건드리면 다시 날카로워지는 방어'가 같이 간다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "반성은 있지만 실제 내부 상태는 따뜻함보다 긴장과 경계가 더 강하다는 점, 그리고 통제 실패에 대한 자기경계가 핵심이라는 점",
+    "avoid": "단순히 우울해서 예민해졌다고 축소하거나, 이미 마음이 풀리는 방향으로 안정되었다고 미화하는 것",
+    "tone_hint": "건조하고 진단적으로, 수습 의도와 미해소 긴장을 동시에 드러내는 톤"
+  },
+  "evidence": [
+    "감정기복이 심해지고 뒤돌아서면 그러지 말아야지 하는데 매번 그러기가 쉽지가 않아.",
+    "며느리가 더 오해하기 전에 오늘은 따뜻한 마음을 담은 문자 한 통을 보내보려고 해.",
+    "dominant_global_signal=공세적 긴장",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "persistence_ratio=0.9844",
+    "peak_alarm_tick=114"
+  ],
+  "confidence": 0.9
+}

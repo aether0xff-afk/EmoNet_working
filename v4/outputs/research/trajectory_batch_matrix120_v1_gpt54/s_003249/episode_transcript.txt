@@ -1,0 +1,55 @@
+[SAMPLE]
+id=s_003249
+
+[INPUT_TEXT]
+아파서 입원했는데 자식들은 들여다보지도 않아. 내가 돈이 없어서 그런가 봐. [SEP] 자식들이 병문안을 오지 않아 많이 속상하시겠어요. [SEP] 다 자식들 키우느라 돈이 들어간 건데 더 받을 궁리만 하고 도리는 하지 않아. [SEP] 자녀들이 도리를 하지 않아 마음이 아픈 상황을 변화시키기 위해서 어떤 걸 시도해볼 수 있을까요? [SEP] 없어. 이제 그냥 체념했어. [SEP] 할 수 있는 일이 없다고 느껴지시는군요. 사용자님께 위로가 되고 싶어요.
+
+[GLOBAL_TRACE]
+- ticks_run=128
+- termination_reason=max_ticks
+- dominant_branch_len=126
+- active_tick_count=126
+- persistence_ratio=0.9844
+- saturation_ratio=0.7273
+- dominant_global_signal=공세적 긴장
+- signal_means=(drive=0.2482, brake=0.2458, alarm=0.5516, fatigue=0.2017)
+- node_mix=(inh=0.3993, exc=0.4861, mod=0.1146)
+
+[TRAJECTORY]
+- trajectory_pattern=mixed
+- phase_count=4
+- phase_sequence=dormant -> ignition -> escalation -> persistence
+- peak_alarm_tick=117
+- peak_fatigue_tick=9
+- peak_conflict_tick=0
+
+[PHASE_SEGMENTS]
+- dormant | tick 0-1 | duration=2 | active_nodes=0.00 | edges=0.00 | dominant_signal=추동/접근 | signal_conflict=1.0000
+- ignition | tick 2-4 | duration=3 | active_nodes=30.67 | edges=349.33 | dominant_signal=경계/날카로움 | signal_conflict=0.9586
+- escalation | tick 5-5 | duration=1 | active_nodes=147.00 | edges=1717.00 | dominant_signal=경계/날카로움 | signal_conflict=0.9619
+- persistence | tick 6-127 | duration=122 | active_nodes=193.38 | edges=1647.39 | dominant_signal=경계/날카로움 | signal_conflict=0.7288
+
+[KEY_TICKS]
+- tick=0 | active_nodes=0 | edges_fired=0 | dominant_signal=거의 무색 | combined=(drive=0.0000, brake=0.0000, alarm=0.0000, fatigue=0.0000) | mix=(inh=0.0000, exc=0.0000, mod=0.0000)
+- tick=2 | active_nodes=6 | edges_fired=60 | dominant_signal=공세적 긴장 | combined=(drive=0.2329, brake=0.2098, alarm=0.3040, fatigue=0.1931) | mix=(inh=0.1667, exc=0.5000, mod=0.3333)
+- tick=5 | active_nodes=147 | edges_fired=1717 | dominant_signal=경계/날카로움 | combined=(drive=0.2660, brake=0.2744, alarm=0.3125, fatigue=0.2170) | mix=(inh=0.4218, exc=0.4762, mod=0.1020)
+- tick=6 | active_nodes=209 | edges_fired=2444 | dominant_signal=경계/날카로움 | combined=(drive=0.2752, brake=0.2809, alarm=0.3263, fatigue=0.2238) | mix=(inh=0.4306, exc=0.4689, mod=0.1005)
+- tick=9 | active_nodes=215 | edges_fired=2446 | dominant_signal=경계/날카로움 | combined=(drive=0.2920, brake=0.2953, alarm=0.3713, fatigue=0.2326) | mix=(inh=0.4186, exc=0.4698, mod=0.1116)
+- tick=117 | active_nodes=196 | edges_fired=1366 | dominant_signal=공세적 긴장 | combined=(drive=0.2485, brake=0.2430, alarm=0.5550, fatigue=0.2007) | mix=(inh=0.3980, exc=0.4898, mod=0.1122)
+- tick=127 | active_nodes=201 | edges_fired=1363 | dominant_signal=공세적 긴장 | combined=(drive=0.2476, brake=0.2464, alarm=0.5506, fatigue=0.2020) | mix=(inh=0.4080, exc=0.4826, mod=0.1095)
+
+[TOP_ACTIVE_NODES]
+- node=230 | type=inhibitory | bias=완충/억제 | activity_ticks=122 | k_mean=172126.4249 | stim=(drive=0.2267, brake=0.2521, alarm=0.4182, fatigue=0.2472)
+- node=140 | type=modulatory | bias=경계/날카로움 | activity_ticks=122 | k_mean=165415.6886 | stim=(drive=0.1342, brake=0.1942, alarm=0.6808, fatigue=0.1621)
+- node=166 | type=modulatory | bias=완충/억제 | activity_ticks=124 | k_mean=152457.5259 | stim=(drive=0.1569, brake=0.2045, alarm=0.6772, fatigue=0.1731)
+- node=131 | type=inhibitory | bias=완충/억제 | activity_ticks=122 | k_mean=147630.3195 | stim=(drive=0.2285, brake=0.2647, alarm=0.3983, fatigue=0.2518)
+- node=203 | type=excitatory | bias=추동/접근 | activity_ticks=123 | k_mean=126437.6286 | stim=(drive=0.0233, brake=0.0434, alarm=0.9564, fatigue=0.0065)
+- node=14 | type=excitatory | bias=추동/접근 | activity_ticks=121 | k_mean=122747.5135 | stim=(drive=0.0189, brake=0.0108, alarm=0.9652, fatigue=0.0089)
+- node=97 | type=inhibitory | bias=완충/억제 | activity_ticks=121 | k_mean=120296.3436 | stim=(drive=0.2273, brake=0.2561, alarm=0.4062, fatigue=0.2442)
+- node=219 | type=inhibitory | bias=완충/억제 | activity_ticks=123 | k_mean=118001.9512 | stim=(drive=0.2225, brake=0.2463, alarm=0.3998, fatigue=0.2364)
+
+[IMPORTANT]
+- 감정은 입력 자극 자체가 아니라, 이 자극이 네트워크 안에서 어떻게 점화되고 지속되고 충돌하고 수렴하는지의 episode로 해석한다.
+- 단일 high-arousal 상태를 자동으로 분노로 단정하지 않는다.
+- 접근 신호가 크고 alarm이 지배적이지 않다면 기대/호감/들뜸 같은 positive arousal 가능성을 검토한다.
+- 활성화가 거의 없으면 강한 감정을 꾸며내지 말고 미점화, 보류, anticipatory state 가능성을 명시한다.

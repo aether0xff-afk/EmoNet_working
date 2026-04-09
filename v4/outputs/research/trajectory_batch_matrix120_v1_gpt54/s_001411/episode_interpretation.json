@@ -1,0 +1,38 @@
+{
+  "episode_label": "재정위협에 묶인 경계성 수용",
+  "stimulus_reading": "자극의 핵심은 신체 손상 자체보다도, 갑작스러운 큰 사고 이후 보험 미적용으로 수술비 부담이 크게 발생했다는 점이다. 네트워크는 이를 단순 슬픔보다 즉시 처리해야 하는 현실적 위협으로 읽었고, 감정은 불안 경계와 체념적 실행 준비가 결합된 episode로 굳어졌다.",
+  "appraisal": {
+    "primary_appraisal": "예상 밖 사고가 발생했고 비용 부담을 피할 수 없어 위험 관리가 시급하다는 해석",
+    "secondary_appraisal": "감정적으로 무너지기보다 선택지가 거의 없으니 치료를 감수해야 한다는 현실 수용",
+    "target": "situation",
+    "control_state": "mixed",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 미점화 뒤 빠르게 경계 상태로 점화되고, 긴 시간 동안 높은 alarm을 유지한 채 안정 수렴한 패턴이다. 즉 순간 충격으로 끝난 것이 아니라 비용·치료 문제를 계속 붙드는 지속성 높은 위협 처리다.",
+    "ignition": "tick 2-4에서 활성 노드와 엣지가 급증하며 경계/날카로움으로 전환되었다. 입력이 추상적 감상보다 즉각적 문제 상황으로 읽히면서 방어적 경계가 빠르게 형성됐다.",
+    "persistence": "tick 5-74의 긴 persistence 구간에서 dominant signal이 계속 경계/날카로움이었고, peak_alarm이 tick 62에 나타났다. 이는 초반 충격보다 시간이 지나며 수술비와 현실 부담이 더 크게 내부적으로 증폭·고착되었음을 뜻한다.",
+    "resolution": "종결은 해소가 아니라 stable_convergence다. 즉 불안을 충분히 낮춘 종결이 아니라, '별 수 없으니 수술하고 치료해야 한다'는 체념적 실행 모드로 수렴했다."
+  },
+  "action_tendency": "감정 표출이나 도움 요청 확대보다, 손실을 감수하고 필요한 치료를 진행하는 쪽으로 간다. 행동 성향은 적극적 낙관이 아니라 위협을 버티며 최소 대응을 실행하는 방어적 현실 처리다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "걱정의 초점이 몸 상태보다 수술비와 보험 미적용에서 비롯된 현실 위협이라는 점, 그리고 감정 결론이 위로가 아니라 체념 섞인 실행 결정이라는 점",
+    "avoid": "단순한 위로 필요 상태, 순한 걱정, 혹은 담담한 수용으로 미화하는 것. 내부적으로는 alarm 우세의 장기 지속 상태다.",
+    "tone_hint": "건조하고 직설적으로, 불안과 체념이 동시에 있는 현실 대응 톤"
+  },
+  "evidence": [
+    "입력 내용에서 \"은퇴하고 가입한 자전거 동호회에서 라이딩을 하다 크게 다쳤는데 수술비가 걱정이야.\"라고 하여 자극의 초점이 사고와 비용 부담에 놓여 있다.",
+    "\"몸도 몸이지만 보험도 적용이 안 돼 수술비가 많이 나올 것 같아.\"라는 문장에서 신체 고통보다 재정적 위협이 appraisal의 중심으로 강화된다.",
+    "\"별 수 있나. 수술 받고 치료해야지.\"는 해소된 안심이 아니라 선택지 부족 속 체념적 실행 결론을 직접 보여준다.",
+    "GLOBAL_TRACE에서 \"dominant_global_signal=공세적 긴장\", \"signal_means=(drive=0.2662, brake=0.2263, alarm=0.5753, fatigue=0.1882)\"로 alarm 우세의 긴장 상태가 명확하다.",
+    "TRAJECTORY에서 \"phase_sequence=dormant -> ignition -> persistence\", \"persistence_ratio=0.9733\", \"peak_alarm_tick=62\"로 빠른 점화 후 장기 지속되는 경계 episode임이 드러난다.",
+    "PHASE_SEGMENTS에서 persistence 구간이 \"tick 5-74 | duration=70 | dominant_signal=경계/날카로움\"으로 유지되어 감정이 짧게 스치지 않고 고착됐다."
+  ],
+  "confidence": 0.94
+}

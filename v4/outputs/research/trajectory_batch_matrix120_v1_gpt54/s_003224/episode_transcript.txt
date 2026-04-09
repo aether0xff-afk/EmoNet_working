@@ -1,0 +1,53 @@
+[SAMPLE]
+id=s_003224
+
+[INPUT_TEXT]
+내가 배달하다가 오토바이 사고를 당했는데 다리를 못 쓸 거 같다고 해. [SEP] 사고를 당해서 다리를 못 쓸 것 같은 상황이라 아주 슬프시겠어요. [SEP] 좌절할 가족들을 생각하면 마음이 너무 아파서 이 상황을 어떻게 해야 할지 모르겠어. [SEP] 지금 상황에서 어떻게 하는 것이 가장 좋을까요? [SEP] 솔직하게 지금의 상황을 얘기하고 가족들의 도움을 받아야겠어. [SEP] 가족들에게 솔직히 말씀드려서 지금의 어려움이 한결 나아지길 바라요.
+
+[GLOBAL_TRACE]
+- ticks_run=68
+- termination_reason=stable_convergence
+- dominant_branch_len=66
+- active_tick_count=66
+- persistence_ratio=0.9706
+- saturation_ratio=0.8268
+- dominant_global_signal=공세적 긴장
+- signal_means=(drive=0.2518, brake=0.2398, alarm=0.5683, fatigue=0.1952)
+- node_mix=(inh=0.4709, exc=0.4237, mod=0.1054)
+
+[TRAJECTORY]
+- trajectory_pattern=high_arousal_persistence
+- phase_count=3
+- phase_sequence=dormant -> ignition -> persistence
+- peak_alarm_tick=59
+- peak_fatigue_tick=8
+- peak_conflict_tick=0
+
+[PHASE_SEGMENTS]
+- dormant | tick 0-1 | duration=2 | active_nodes=0.00 | edges=0.00 | dominant_signal=추동/접근 | signal_conflict=1.0000
+- ignition | tick 2-4 | duration=3 | active_nodes=66.00 | edges=662.00 | dominant_signal=경계/날카로움 | signal_conflict=0.9378
+- persistence | tick 5-67 | duration=63 | active_nodes=225.32 | edges=1757.68 | dominant_signal=경계/날카로움 | signal_conflict=0.7145
+
+[KEY_TICKS]
+- tick=0 | active_nodes=0 | edges_fired=0 | dominant_signal=거의 무색 | combined=(drive=0.0000, brake=0.0000, alarm=0.0000, fatigue=0.0000) | mix=(inh=0.0000, exc=0.0000, mod=0.0000)
+- tick=2 | active_nodes=16 | edges_fired=191 | dominant_signal=공세적 긴장 | combined=(drive=0.2822, brake=0.1619, alarm=0.3598, fatigue=0.1693) | mix=(inh=0.0000, exc=0.7500, mod=0.2500)
+- tick=5 | active_nodes=204 | edges_fired=1852 | dominant_signal=경계/날카로움 | combined=(drive=0.2648, brake=0.2657, alarm=0.3432, fatigue=0.2216) | mix=(inh=0.4461, exc=0.4412, mod=0.1127)
+- tick=8 | active_nodes=230 | edges_fired=2035 | dominant_signal=공세적 긴장 | combined=(drive=0.2758, brake=0.2726, alarm=0.4041, fatigue=0.2364) | mix=(inh=0.4696, exc=0.4304, mod=0.1000)
+- tick=59 | active_nodes=219 | edges_fired=1564 | dominant_signal=공세적 긴장 | combined=(drive=0.2519, brake=0.2371, alarm=0.5717, fatigue=0.1932) | mix=(inh=0.4658, exc=0.4247, mod=0.1096)
+- tick=67 | active_nodes=223 | edges_fired=1550 | dominant_signal=공세적 긴장 | combined=(drive=0.2513, brake=0.2386, alarm=0.5704, fatigue=0.1939) | mix=(inh=0.4664, exc=0.4260, mod=0.1076)
+
+[TOP_ACTIVE_NODES]
+- node=103 | type=excitatory | bias=추동/접근 | activity_ticks=64 | k_mean=1328.6366 | stim=(drive=0.0260, brake=0.0061, alarm=0.9492, fatigue=0.0177)
+- node=217 | type=excitatory | bias=추동/접근 | activity_ticks=63 | k_mean=1245.8611 | stim=(drive=0.0186, brake=0.0082, alarm=0.9571, fatigue=0.0152)
+- node=96 | type=excitatory | bias=추동/접근 | activity_ticks=62 | k_mean=1170.6570 | stim=(drive=0.0141, brake=0.0083, alarm=0.9536, fatigue=0.0159)
+- node=138 | type=excitatory | bias=추동/접근 | activity_ticks=64 | k_mean=1119.8359 | stim=(drive=0.0253, brake=0.0080, alarm=0.9470, fatigue=0.0120)
+- node=86 | type=excitatory | bias=공세적 긴장 | activity_ticks=63 | k_mean=1119.5693 | stim=(drive=0.0143, brake=0.0090, alarm=0.9575, fatigue=0.0124)
+- node=29 | type=inhibitory | bias=완충/억제 | activity_ticks=64 | k_mean=1099.2129 | stim=(drive=0.2194, brake=0.2445, alarm=0.4124, fatigue=0.2504)
+- node=185 | type=inhibitory | bias=완충/억제 | activity_ticks=64 | k_mean=1094.2710 | stim=(drive=0.2183, brake=0.2472, alarm=0.4207, fatigue=0.2474)
+- node=254 | type=excitatory | bias=공세적 긴장 | activity_ticks=63 | k_mean=1093.8335 | stim=(drive=0.0135, brake=0.0104, alarm=0.9551, fatigue=0.0146)
+
+[IMPORTANT]
+- 감정은 입력 자극 자체가 아니라, 이 자극이 네트워크 안에서 어떻게 점화되고 지속되고 충돌하고 수렴하는지의 episode로 해석한다.
+- 단일 high-arousal 상태를 자동으로 분노로 단정하지 않는다.
+- 접근 신호가 크고 alarm이 지배적이지 않다면 기대/호감/들뜸 같은 positive arousal 가능성을 검토한다.
+- 활성화가 거의 없으면 강한 감정을 꾸며내지 말고 미점화, 보류, anticipatory state 가능성을 명시한다.

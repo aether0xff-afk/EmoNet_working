@@ -1,0 +1,38 @@
+{
+  "episode_label": "감사 위의 생존경계",
+  "stimulus_reading": "표면 자극은 아들이 병원비를 바로 보내준 일에 대한 고마움이다. 그러나 네트워크는 이를 단순한 감사로 받지 않고, 심해진 천식·치료 지속·완치 불확실성까지 묶인 건강 위기 상황 속의 관계적 의존 사건으로 처리했다.",
+  "appraisal": {
+    "primary_appraisal": "도움을 받았다는 안도보다, 질환 악화와 생존 관리 과제가 계속된다는 경계 상태가 핵심으로 읽혔다.",
+    "secondary_appraisal": "아들의 즉각적 지원은 보호 자원으로 평가되지만, 그 자원이 오히려 '버텨야 한다/나아져야 한다'는 압박과 책임감을 강화했다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "고각성 상태가 빠르게 점화된 뒤 거의 끝까지 풀리지 않고 지속된 episode다. 정서적 중심은 따뜻한 감사보다는 경계와 추동이 결합된 생존 지향 긴장이다.",
+    "ignition": "초기 dormant가 매우 짧고 tick 2-4에서 곧바로 높은 활성으로 전환된다. 이는 입력을 듣자마자 의미망이 빠르게 '도움'보다 '질병 악화-대처 필요' 축으로 점화되었음을 시사한다.",
+    "persistence": "tick 5 이후 69까지 공세적 긴장이 지배적이고 persistence_ratio가 0.9714로 매우 높다. alarm과 drive가 함께 높게 유지되어, 불안만이 아니라 적극적으로 버티고 관리해야 한다는 압박성 추동이 계속됐다.",
+    "resolution": "termination은 stable_convergence지만 이완 수렴이 아니라 긴장 상태의 안정화에 가깝다. 마지막도 alarm 0.5788, drive 0.5611 수준으로 남아 있어 '고맙다'에서 끝난 것이 아니라 '치료를 계속해야 한다'는 실천 모드로 굳어졌다."
+  },
+  "action_tendency": "도움에 기대며 치료와 건강관리를 더 밀어붙이려는 방향이다. 정서적으로는 아들에 대한 애착/감사를 유지하지만, 실제 행동 성향은 안심보다 치료 지속, 면역력 관리, 상태 호전 압박 쪽으로 기울어 있다.",
+  "rawness": {
+    "valence": "mixed",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "감사와 동시에 강한 질병 경계, 생존 압박, 관계 자원을 붙잡고 버티려는 결을 남겨야 한다.",
+    "avoid": "이를 단순한 훈훈한 효심 서사나 편안한 안도감으로 순화하면 안 된다. 내부 처리의 중심은 감사 자체보다 악화된 건강상태에 대한 지속 경계다.",
+    "tone_hint": "따뜻함을 인정하되, 기저 상태는 긴장된 관리 모드라고 단정적으로 말하는 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "persistence_ratio=0.9714",
+    "tick=65 | combined=(drive=0.5609, brake=0.2501, alarm=0.5799, fatigue=0.2030)",
+    "천식이 심해져서 병원비가 많이 나왔는데 아들한테 말했더니 바로 보내줘서 너무 고마워."
+  ],
+  "confidence": 0.88
+}

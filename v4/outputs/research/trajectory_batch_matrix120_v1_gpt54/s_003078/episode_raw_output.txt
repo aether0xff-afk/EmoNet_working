@@ -1,0 +1,38 @@
+{
+  "episode_label": "이해받지 못한 진로 좌절의 공세적 긴장",
+  "stimulus_reading": "자극은 단순한 가족 다툼이 아니라, 원하는 진로가 경제적 이유와 평가절하적 언어로 차단된 사건이다. 핵심은 '예고에 가고 싶다'는 자기 방향성이 가족의 거부와 불이해로 맞부딪히며 내부에서 위협-대응 episode로 처리된 점이다.",
+  "appraisal": {
+    "primary_appraisal": "원하는 미래 선택이 타인에 의해 부정되고, 자기 욕구가 정당한 탐색이 아니라 '헛바람'으로 취급되었다는 해석이 중심이다.",
+    "secondary_appraisal": "상황을 완전히 바꾸기 어렵다는 현실 인식이 함께 들어와 있어, 맞서고 싶은 긴장과 체념 쪽으로 밀리는 해석이 동시에 존재한다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "mixed"
+  },
+  "trajectory": {
+    "overall_pattern": "짧게 타오르고 꺼지는 반응이 아니라, 점화 후 오래 유지되는 고각성 지속형 episode다. 분노 하나로 정리되기보다 위협 경계, 억울함, 자기방향 고수 충동, 체념 압력이 한 덩어리로 지속됐다.",
+    "ignition": "tick 2-4에서 활성 노드와 엣지가 급증하며 빠르게 점화됐다. 이는 자극을 단순 슬픔이 아니라 즉각적인 대립/방어 사안으로 읽었다는 뜻이다.",
+    "persistence": "tick 5-42의 긴 persistence 구간에서 '경계/날카로움'이 유지되고, 후반부에는 alarm이 더 높아졌다. 즉 처음의 충돌감이 진정되기보다, 이해받지 못함과 진로 상실 위협이 계속 내부 재점화되며 긴장을 붙들었다.",
+    "resolution": "termination은 stable_convergence지만 정서적 해소라기보다 긴장 상태의 고정화에 가깝다. 마지막은 풀린 상태가 아니라 '공세적 긴장' 쪽으로 수렴해, 아직 반박·방어·버티기와 포기 압력이 함께 남아 있다."
+  },
+  "action_tendency": "자기 선택을 설명하거나 밀어붙이고 싶은 접근 성향이 남아 있지만, 동시에 현실 장벽 때문에 물러서며 대안을 체념적으로 검토하는 방향으로 간다. 즉 행동 성향은 '항변/정당화'와 '불가피한 후퇴 검토'가 같이 걸린 상태다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "억울함, 경계심, 진로 차단감, 이해받지 못했다는 날것의 결을 남겨야 한다.",
+    "avoid": "단순 위로형 '속상함'이나 잔잔한 고민으로 축소하면 안 된다. 또한 high arousal을 곧장 순수 분노로 단정하는 것도 왜곡이다.",
+    "tone_hint": "차갑고 진단적으로, 긴장 지속과 체념 압박을 함께 드러내는 톤"
+  },
+  "evidence": [
+    "\"가난한데 예고를 어떻게 가냐고 포기하래. 아무도 날 이해해주지 않네. 결국 인문계를 가야 하나.\"",
+    "\"dominant_global_signal=공세적 긴장\"",
+    "\"trajectory_pattern=high_arousal_persistence\"",
+    "\"phase_sequence=dormant -> ignition -> persistence\"",
+    "\"peak_alarm_tick=38\"",
+    "\"persistence_ratio=0.9535\""
+  ],
+  "confidence": 0.93
+}

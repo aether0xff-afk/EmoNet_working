@@ -1,0 +1,38 @@
+{
+  "episode_label": "들뜬 성취-추진 에피소드",
+  "stimulus_reading": "자극은 대학원 입학과 직장 허가라는 이중 성취 신호다. 네트워크는 이를 단순한 기쁨 표현보다 앞으로 밀고 나갈 수 있는 기회와 정당성 확보로 읽었다.",
+  "appraisal": {
+    "primary_appraisal": "원하는 방향으로 진입했고 실행 가능성도 확보됐다는 성취-접근 해석이 핵심이다.",
+    "secondary_appraisal": "흥분은 높지만 경계와 제동도 함께 남아 있어, 마냥 이완된 만족보다 앞으로 추진해야 할 과제가 붙은 각성 상태에 가깝다.",
+    "target": "situation",
+    "control_state": "high",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 점화 후 빠르게 높은 활성으로 올라가고, 별다른 붕괴 없이 접근 우세 상태가 길게 유지되는 고각성 지속 패턴이다.",
+    "ignition": "tick 2부터 활성 노드와 엣지가 급증하며 성취 신호가 즉시 점화됐다. 이때 alarm도 같이 오르지만 주도권은 접근 추동이 쥐고 있다.",
+    "persistence": "tick 5 이후 33까지 긴 지속 구간에서 drive가 꾸준히 유지·상승하고 active_nodes와 edges도 높게 유지된다. 즉 순간적 반짝 기쁨이 아니라 계속 밀고 가려는 추진 에너지로 굳어진 상태다.",
+    "resolution": "종결은 감쇠가 아니라 stable_convergence로 끝난다. 마지막에도 drive가 가장 높아, 안정된 만족이라기보다 계획 지속과 전진 의지가 남은 채 수렴했다."
+  },
+  "action_tendency": "축하를 받고 끝내기보다 공부 계획, 일정 조정, 목표 구체화처럼 다음 행동으로 바로 옮기려는 성향이 강하다.",
+  "rawness": {
+    "valence": "positive",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "단순히 '기쁘다'가 아니라 성취가 동력으로 전환된 추진성과 높은 각성을 남겨야 한다.",
+    "avoid": "차분한 행복이나 잔잔한 안도 정도로 순화하면 왜곡이다. alarm과 brake가 함께 있어 완전한 이완 상태로 묘사하면 안 된다.",
+    "tone_hint": "축하 정서는 가능하지만, 내부 진단은 들뜬 추진·실행 모드로 단호하게 적는다."
+  },
+  "evidence": [
+    "dominant_global_signal=추동/접근",
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "termination_reason=stable_convergence",
+    "tick=33 | dominant_signal=추동/접근 | combined=(drive=0.5638, brake=0.2792, alarm=0.2693, fatigue=0.1927)",
+    "TOP_ACTIVE_NODES에서 'bias=추동/접근' 노드 226, 74, 174가 30~31 ticks 지속 활성"
+  ],
+  "confidence": 0.92
+}

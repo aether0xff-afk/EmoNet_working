@@ -1,0 +1,38 @@
+{
+  "episode_label": "명예퍄손 위협에 대한 경계적 반격",
+  "stimulus_reading": "자극은 동호회 내부의 일부 인원이 화자에 대해 악의적이고 구체적인 거짓 소문을 퍼뜨린 사건이다. 단순한 불쾌감이 아니라 평판 손상과 금전 비리 누명까지 포함된 사회적 위협으로 읽혔고, 그래서 내부 처리는 방어를 넘어 반증 제시 쪽으로 기울었다.",
+  "appraisal": {
+    "primary_appraisal": "타인이 악의적으로 자신의 평판과 신뢰를 훼손하고 있으며, 방치하면 집단 내 지위와 신뢰가 실제로 손상될 수 있다는 위협 평가",
+    "secondary_appraisal": "상황이 불쾌하지만 완전히 무력한 것은 아니며, 회계 장부라는 검증 가능한 증거로 역으로 대응할 수 있다는 통제 가능성 평가",
+    "target": "other",
+    "control_state": "mixed",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 무색 상태에서 빠르게 경계/날카로움으로 점화된 뒤, 높은 alarm을 유지한 채 오래 지속되는 방어-공세 혼합형 episode다. 분노 폭발보다는 위협 감지와 명예 회복 욕구가 길게 유지되는 패턴에 가깝다.",
+    "ignition": "점화는 소문이 단순 험담이 아니라 '횡령' 같은 중대한 거짓 비난이라는 점에서 일어났다. tick 2부터 공세적 긴장이 올라가고, 짧은 ignition 뒤 곧바로 경계 상태가 고정됐다.",
+    "persistence": "지속 구간은 매우 길다. persistence_ratio 0.9844, dominant_branch_len 126, phase_sequence가 dormant -> ignition -> persistence로 끝나며 사실상 해소 없이 유지됐다. signal_means에서 alarm 0.5827이 drive 0.2502, brake 0.2285보다 분명히 높고, peak_alarm_tick이 112로 늦게 나타나 위협 평가가 시간이 지나도 식지 않았다.",
+    "resolution": "마지막 수렴은 정서적 진정이 아니라 '증거를 공개해 반박하겠다'는 실행 계획으로 수렴했다. 즉 감정이 풀린 것이 아니라 방어적 행동 전략으로 정렬된 상태다."
+  },
+  "action_tendency": "평판 훼손을 그냥 견디기보다 사실 자료를 제시해 상대 주장을 깨고 집단의 판단을 자신 쪽으로 되돌리려는 성향이다. 대인적 친화나 회피보다 공개 검증, 해명, 반박, 신뢰 회복 행동으로 간다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "악의적 소문으로 인한 사회적 위협감, 높은 경계심, 그리고 증거 기반 반격 의도를 분명히 남겨야 한다.",
+    "avoid": "단순 서운함, 속상함, 대화로 풀 수 있는 오해 수준으로 축소하면 왜곡이다. 이미 내부 처리는 '거짓 비난에 대한 방어전'으로 굳어져 있다.",
+    "tone_hint": "차갑고 분석적으로, 위협-방어 구조를 분명히 짚는 톤"
+  },
+  "evidence": [
+    "동호회 사람 중 몇 사람이 나에 대해 악의적인 소문을 퍼뜨리고 있어.",
+    "마치 내가 모든 것을 마음대로 하고 회비도 횡령했다고 거짓말을 하고 있어.",
+    "회계 장부를 보여줘야겠어. 사람들이 누구 말을 믿어야 할지 알 수 있을 거야.",
+    "dominant_global_signal=공세적 긴장",
+    "signal_means=(drive=0.2502, brake=0.2285, alarm=0.5827, fatigue=0.1862)",
+    "phase_sequence=dormant -> ignition -> persistence"
+  ],
+  "confidence": 0.95
+}

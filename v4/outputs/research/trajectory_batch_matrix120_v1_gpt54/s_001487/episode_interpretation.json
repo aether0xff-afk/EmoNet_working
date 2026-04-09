@@ -1,0 +1,38 @@
+{
+  "episode_label": "고립-노화 위협에 대한 경계성 침잠",
+  "stimulus_reading": "자극은 낙엽이라는 미적 장면 자체보다, 그 장면이 촉발한 '혼자임'과 '나이 들어감'의 자기 해석이다. 입력은 슬픔처럼 말해지지만, 네트워크 내부에서는 상실감 하나로 가라앉기보다 사회적 위축과 미래 폐쇄감을 경계적으로 오래 붙드는 episode로 처리되었다.",
+  "appraisal": {
+    "primary_appraisal": "나는 혼자이고, 시간이 지나며 관계 형성 가능성도 줄어든다는 자기위협 평가가 핵심이다.",
+    "secondary_appraisal": "문제를 바꾸고 싶어도 성향상 소극적이라 돌파가 어렵다는 낮은 실행 가능성 평가가 덧붙었다.",
+    "target": "self",
+    "control_state": "low",
+    "social_orientation": "withdraw"
+  },
+  "trajectory": {
+    "overall_pattern": "표면상 눈물/서글픔으로 시작하지만, 내부 궤적은 빠르게 점화된 뒤 장시간 높은 경계와 공세적 긴장을 유지하는 혼합형 지속 패턴이다. 즉 단순 애도보다 '고립 위협을 계속 경계하는 상태'에 가깝다.",
+    "ignition": "tick 2-4에서 활성 노드와 엣지가 급증하며 미약한 정서 표명이 곧바로 경계/날카로움으로 변환되었다. 입력의 핵심 의미가 정서 표현보다 자기위상 하락 신호로 읽힌 것이다.",
+    "persistence": "tick 6-88의 긴 persistence 구간에서 alarm이 계속 우세했고, peak alarm이 후반부 tick 68에 나온 점은 감정이 풀리기보다 되새김되며 굳어졌음을 보여준다. persistence_ratio 0.9775와 dominant_branch_len 87은 한 번 붙은 해석이 거의 끝까지 유지됐다는 뜻이다.",
+    "resolution": "종결은 해소가 아니라 stable_convergence다. 즉 진정한 완화보다 '나는 소극적이고 친구 사귀기 어렵다'는 자기규정 위에서 경계성 긴장이 안정적으로 고착된 채 수렴했다."
+  },
+  "action_tendency": "새 관계로 적극 접근하기보다는 스스로의 한계와 나이 듦을 근거로 뒤로 물러나고, 시도 자체를 줄이며, 외부의 낙관적 제안에는 내적 반박을 준비하는 성향으로 간다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "서정적 슬픔이 아니라 고립·노화·사회적 위축이 결합된 경계성 지속 상태라는 점",
+    "avoid": "그냥 외로워서 위로가 필요한 상태, 혹은 친구를 사귀면 해결될 문제처럼 순화하는 것",
+    "tone_hint": "건조하고 진단적으로, 자기위협과 낮은 통제감이 오래 지속된다고 명시"
+  },
+  "evidence": [
+    "나 혼자인 것 같고 나이만 자꾸 먹는 것 같아.",
+    "소극적이고 나이 먹어서 친구 사귀기가 쉽지 않아.",
+    "dominant_global_signal=공세적 긴장",
+    "signal_means=(drive=0.2541, brake=0.2169, alarm=0.5860, fatigue=0.1765)",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "persistence_ratio=0.9775"
+  ],
+  "confidence": 0.93
+}

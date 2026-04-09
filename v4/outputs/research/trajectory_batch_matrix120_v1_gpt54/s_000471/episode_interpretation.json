@@ -1,0 +1,38 @@
+{
+  "episode_label": "상실 충격의 경계 고착",
+  "stimulus_reading": "자극은 단순한 복통이 아니라 병원 방문 중 예상 밖의 유산 통보를 받은 사건이다. 네트워크는 이를 슬픔만으로 처리하지 않고, 갑작스러운 상실에 대한 경계성 충격과 지속되는 비상 상태로 읽고 있다.",
+  "appraisal": {
+    "primary_appraisal": "예고 없이 벌어진 중대한 상실이자 생식/가족 관련 핵심 가치 손상으로 평가되며, 즉각적인 정서적 안전이 붕괴된 사건으로 처리된다.",
+    "secondary_appraisal": "명상으로 진정하려는 시도는 감정 해소라기보다 이미 높게 점화된 경계 상태를 억제·관리하려는 사후 조절로 읽힌다.",
+    "target": "situation",
+    "control_state": "low",
+    "social_orientation": "withdraw"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 미점화 뒤 매우 빠르게 경계/날카로움으로 점화되고, 이후 단발 폭발보다 긴 지속 구간에 고착되는 패턴이다. 즉 순간 충격 후 가라앉는 슬픔이 아니라, 상실 충격이 비상 경계로 오래 유지되는 episode다.",
+    "ignition": "tick 2-4에서 활성 노드와 edge가 급증하며 급격히 점화된다. 이는 유산 통보가 인지되는 순간 의미 충돌과 위협 평가가 빠르게 형성된 것으로 해석된다.",
+    "persistence": "tick 6-92의 긴 persistence와 0.9785의 높은 persistence_ratio는 반응이 쉽게 꺼지지 않았음을 보여준다. peak_alarm이 tick 75에 늦게 나타난 점은 초기 충격이 시간이 지나며 오히려 경보성 각성으로 재강화되었음을 시사한다.",
+    "resolution": "termination은 stable_convergence지만 진정 회복이 아니라 공세적 긴장 상태로의 안정화다. 즉 정리된 애도라기보다, 날카로운 경계와 충격이 내부적으로 굳어진 채 수렴했다."
+  },
+  "action_tendency": "즉각적인 외부 공격보다는 멍함·회피·자기 진정 시도와 함께, 사건을 계속 붙들고 경계하는 방향으로 간다. 도움을 찾을 수는 있지만 정서 핵심은 위로 요청보다 비상 상태 관리에 가깝다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "갑작스러운 상실, 통제감 저하, 충격이 오래 꺼지지 않는 경계 상태라는 결을 유지해야 한다.",
+    "avoid": "단순한 슬픔, 차분한 애도, 명상으로 이미 안정되는 과정처럼 순화하면 왜곡이다.",
+    "tone_hint": "부드럽게 달래기보다 비상성·고착성·상실의 직접성을 분명히 짚는 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "signal_means=(drive=0.2497, brake=0.2398, alarm=0.5747, fatigue=0.1879)",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "persistence | tick 6-92 | duration=87 | active_nodes=182.30 | edges=1648.34 | dominant_signal=경계/날카로움",
+    "peak_alarm_tick=75",
+    "복통으로 산부인과 갔는데 아이 유산 통보를 받아 충격이 크겠어요."
+  ],
+  "confidence": 0.92
+}

@@ -1,0 +1,40 @@
+{
+  "episode_label": "자기비난성 부담-속죄 에피소드",
+  "stimulus_reading": "핵심 자극은 딸에게 생활비를 받는 현재 상황이 아버지 역할 실패와 직접 연결되어 해석된 것이다. 여기에 과거 도박과 노후준비 실패 기억이 결합되며, 현재의 의존 상태가 단순한 미안함이 아니라 '벌 받는 인생'이라는 자기처벌적 의미로 증폭되었다.",
+  "appraisal": {
+    "primary_appraisal": "현재의 도움받는 상황을 가족 간 상호부조가 아니라 자기 무능과 도덕적 실패의 증거로 평가한다.",
+    "secondary_appraisal": "통제력은 낮지만 완전히 붕괴하지는 않아, 노동 대신 손주 돌봄과 집안일로라도 빚을 갚고 존재가치를 회복하려는 보상적 계산이 붙는다.",
+    "target": "self",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 점화 뒤 길게 꺼지지 않는 고경계 상태로 유지되는, 자기비난 중심의 지속형 에피소드다. 표면상 슬픔/미안함이지만 내부 처리에서는 alarm과 공세적 긴장이 길게 우세해 단순 우울보다 '가만히 못 있는 속죄 압박'에 가깝다.",
+    "ignition": "점화는 매우 빠르다. dormant가 2틱뿐이고 tick 2-4에서 active_nodes와 edges가 급증하며 dominant_signal이 곧바로 경계/날카로움으로 전환된다. 이는 자극이 들어오자마자 의미 평가가 예민하게 걸린 것이다.",
+    "persistence": "지속 구간은 123틱으로 거의 전체를 차지하며 persistence_ratio 0.9844, dominant_global_signal 공세적 긴장, peak_alarm_tick 113이 말해주듯 자기비난이 오래 유지되고 후반까지 경계가 누적된다. 억제 노드도 강하게 붙어 있어 폭발보다는 계속 눌러 참으면서 긴장하는 형태다.",
+    "resolution": "실질적 해소 없이 최대 틱에서 종료됐다. 마지막도 공세적 긴장과 높은 alarm이 유지되어, '손주를 잘 봐주고 집안일도 돕겠다'는 결론은 안정 회복이라기보다 죄책감을 상쇄하려는 기능적 수렴이다."
+  },
+  "action_tendency": "관계를 끊거나 공격하기보다, 스스로를 낮추고 더 많이 기여하려 하며 돌봄/집안일 같은 보상 행동으로 존재 정당성을 회복하려는 성향이 강하다. 동시에 내면에서는 계속 자신을 채무자처럼 취급하는 방향으로 간다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "미안함을 넘어 자기처벌, 역할 실패감, 보상 강박이 함께 있는 결을 유지해야 한다.",
+    "avoid": "단순한 효심, 따뜻한 가족서사, 잔잔한 슬픔 정도로 순화하면 왜곡이다.",
+    "tone_hint": "담담하지만 냉정하게, 죄책감의 강도와 지속성을 직접 명명하는 톤"
+  },
+  "evidence": [
+    "딸에게 생활비를 받아쓰니 아비로써 도움이 되지도 못하고 짐만 되니 미안하고 괴로워.",
+    "젊은 날 도박으로 빚 갚느라 노후준비를 못 했어. 자식에게 짐만 되니 벌 받는 인생 같아.",
+    "나이가 많아 일하기 어려우니 딸이 출근한 동안 손주를 잘 봐주고 집안일도 도와주려 해.",
+    "termination_reason=max_ticks",
+    "persistence_ratio=0.9844",
+    "dominant_global_signal=공세적 긴장",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "peak_alarm_tick=113"
+  ],
+  "confidence": 0.95
+}

@@ -1,0 +1,38 @@
+{
+  "episode_label": "성과불일치로 인한 공세적 초조",
+  "stimulus_reading": "자극은 '열심히 공부하는데도 성적이 좋지 않다'는 노력-결과 불일치다. 네트워크는 이를 단순한 슬픔보다, 개선이 필요한 문제 상황으로 읽으면서 경계와 추진이 함께 걸린 상태로 처리했다.",
+  "appraisal": {
+    "primary_appraisal": "내가 투입한 노력에 비해 결과가 나오지 않는다는 실패/위협 평가가 핵심이다.",
+    "secondary_appraisal": "상황이 불쾌하지만 완전히 포기된 것은 아니며, 방법을 바꿔서 개입할 여지가 있는 문제로도 해석된다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "고각성 상태가 빠르게 점화된 뒤 오래 지속되는 패턴이다. 정서가 짧게 치솟고 꺼진 것이 아니라, 경계가 유지된 채 문제 해결 쪽으로 긴장 상태가 고정되었다.",
+    "ignition": "초기 dormant 이후 tick 2-4에서 바로 경계/날카로움이 점화되며 활성 노드와 엣지가 급증했다. 입력을 듣자마자 '속상함'보다 '문제 발생'으로 처리된 흔적이다.",
+    "persistence": "tick 7-30의 긴 persistence 구간에서 공세적 긴장이 계속 우세했고, alarm이 후반으로 갈수록 더 높아졌다. 즉 처음 잠깐 반응하고 끝난 것이 아니라, 해결 압박과 초조가 계속 유지·증폭되었다.",
+    "resolution": "termination은 stable_convergence지만 정서 해소가 아니라 긴장된 방식으로 수렴한 것이다. 마지막도 alarm 우세의 공세적 긴장이라, 진정이나 체념보다 '계속 손봐야 한다'는 상태에 가깝다."
+  },
+  "action_tendency": "자기 비난에 완전히 주저앉기보다 공부 방식 수정, 원인 탐색, 성과 개선 시도처럼 문제를 붙잡고 밀어붙이려는 성향으로 간다. 다만 바탕 정서는 편안한 동기보다 압박 섞인 초조라서, 해결 행동도 다급하고 날카롭게 나올 가능성이 높다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "노력 대비 결과 부진이 만든 위협감, 높은 alarm, 오래 지속된 공세적 긴장을 그대로 남겨야 한다.",
+    "avoid": "이를 단순한 '슬픔'이나 잔잔한 고민으로 순화하면 안 된다. 이미 내부에서는 문제 해결 압박이 강한 고각성 episode로 굳어졌다.",
+    "tone_hint": "담백하고 진단적으로, 날카로운 초조와 해결 압박을 숨기지 않는 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "peak_alarm_tick=29",
+    "tick=29 | dominant_signal=공세적 긴장 | combined=(drive=0.2538, brake=0.2370, alarm=0.5634, fatigue=0.1960)",
+    "성적이 나오지 않는 상황을 개선하기 위해서 어떤 일을 해볼 수 있을까요?"
+  ],
+  "confidence": 0.93
+}

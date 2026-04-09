@@ -1,0 +1,42 @@
+{
+  "episode_label": "충격성 위협-상실 경계 고착",
+  "stimulus_reading": "자극은 '가장 친한 친구'가 음주운전 차량 사고를 당했고, 의식을 영영 못 차릴 수도 있다는 정보다. 네트워크는 이를 단순한 슬픔보다도 돌이킬 수 없는 타격과 부당한 외부 위협이 한꺼번에 들어온 사건으로 읽었다.",
+  "appraisal": {
+    "primary_appraisal": "가까운 타인의 치명적 손상이 현실화되었고 회복 가능성이 낮다는 급성 위협/상실로 해석했다.",
+    "secondary_appraisal": "사고 원인이 음주운전이라는 점 때문에 우연한 불행이 아니라 외부의 가해적이고 부당한 사건으로 읽히며, 슬픔만이 아니라 날카로운 경계와 공세적 긴장이 동반되었다.",
+    "target": "mixed",
+    "control_state": "low",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 점화가 매우 빠르고, 이후 진정이나 애도형 저각성으로 내려가지 않은 채 고각성 경계 상태가 장시간 고착된 패턴이다. 즉, 울먹이는 슬픔보다는 충격-경계-붙들림의 episode다.",
+    "ignition": "tick 2-4에서 바로 활성 노드와 엣지가 급증했고 지배 신호가 곧바로 '경계/날카로움'으로 전환됐다. 자극을 듣자마자 보호적 경계와 비상 반응이 붙었다는 뜻이다.",
+    "persistence": "tick 7-104의 긴 persistence 구간에서 active_nodes가 200 안팎으로 유지되고 alarm 평균이 0.5706, persistence_ratio가 0.9810으로 매우 높다. 시간이 지나도 해소되지 않고 위협 표상이 계속 재점화되며, 후반에는 '공세적 긴장'이 다시 전면으로 올라온다.",
+    "resolution": "termination은 stable_convergence지만 정서적 해소가 아니라 고각성 상태의 안정화다. 마지막도 alarm 0.5702 수준의 공세적 긴장으로 수렴해, 받아들임보다는 경계된 채 굳어진 상태로 끝난다."
+  },
+  "action_tendency": "상태는 조용히 슬퍼하기보다 사건을 붙잡고, 원인과 가해성을 응시하며, 방어적 개입·확인·분노 섞인 긴장으로 기울어 있다. 즉각적 행동으로는 상황 확인, 분개, 책임 소재 응시, 친구를 지켜야 한다는 방어적 접근이 유력하다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "슬픔만으로 축소하지 말고, 충격·위협·부당성·방어적 긴장이 함께 묶여 있다는 결을 유지해야 한다.",
+    "avoid": "차분한 애도나 단순 공감으로 순화하면 왜곡이다. stable_convergence를 '괜찮아짐'으로 해석하면 안 된다.",
+    "tone_hint": "건조하고 직설적으로, 고각성의 지속과 방어적 긴장을 명확히 드러내는 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "persistence_ratio=0.9810",
+    "peak_alarm_tick=91",
+    "tick=91 | dominant_signal=공세적 긴장 | combined=(drive=0.2469, brake=0.2208, alarm=0.5735, fatigue=0.1864)",
+    "tick=104 | dominant_signal=공세적 긴장 | combined=(drive=0.2457, brake=0.2230, alarm=0.5702, fatigue=0.1883)",
+    "persistence | tick 7-104 | duration=98 | dominant_signal=경계/날카로움",
+    "입력 내용: '운도 없게 음주운전 차에 치였다네.'",
+    "입력 내용: '의식을 영영 못 차릴 수도 있대. 가장 친한 친구였는데.'"
+  ],
+  "confidence": 0.95
+}

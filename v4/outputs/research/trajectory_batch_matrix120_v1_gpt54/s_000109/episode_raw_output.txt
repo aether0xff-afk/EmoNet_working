@@ -1,0 +1,39 @@
+{
+  "episode_label": "권위위협에 대한 공세적 경계",
+  "stimulus_reading": "자극은 아들과의 대화에서 자신의 위치와 관점이 존중되지 않는다고 읽힌 대목이다. 표면상 '화'를 말하지만 내부 처리에서는 단순 분노보다, 아들의 태도를 아버지 권위와 상호배려 규범의 위반으로 해석하며 방어적으로 날을 세운 episode로 굳어졌다.",
+  "appraisal": {
+    "primary_appraisal": "상대가 자기주장만 앞세우고 나를 배려하지 않으며, 관계의 위계와 규범을 침범하고 있다는 해석이 중심이다.",
+    "secondary_appraisal": "자기 자신은 '꼰대'가 아니라고 방어하면서도 생각 차이가 너무 크다고 느껴, 문제 원인을 상호 오해보다 상대의 태도와 가치 차이에 더 배치한다.",
+    "target": "other",
+    "control_state": "mixed",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 미점화 후 매우 빠르게 경계 상태로 점화되고, 이후 거의 전 구간에서 낮아지지 않고 지속되는 장기 경직 패턴이다. 정서가 풀리거나 재평가로 이동하지 않고 방어적 해석이 안정적으로 고착됐다.",
+    "ignition": "tick 2부터 활성 노드가 급증하며 '공세적 긴장'과 '경계/날카로움'이 곧바로 전면에 올라온다. 이는 자극을 듣자마자 숙고보다 방어적 반응 회로가 먼저 붙었다는 뜻이다.",
+    "persistence": "tick 5 이후 99까지 persistence가 이어지고 persistence_ratio가 0.98로 매우 높다. alarm 평균이 0.5793으로 지배적이고 peak_alarm이 후반부 tick 72에 찍혀, 시간 경과에 따라 가라앉기보다 경계가 유지·증폭됐다.",
+    "resolution": "termination은 stable_convergence지만 해소가 아니라 동일한 방어 프레임으로 수렴한 것이다. 마지막도 여전히 '공세적 긴장' 우세라서 감정 episode는 진정이 아니라 입장 고정으로 끝난다."
+  },
+  "action_tendency": "상대의 관점을 탐색하기보다 자신의 정당성을 지키고, 아들의 태도를 교정하거나 반박하려는 방향으로 간다. 대화 행동으로는 설득, 훈계, 맞받아침, 관계 규범 요구가 우세하고, 공감적 접근은 약하다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "단순 서운함이 아니라 권위와 존중이 침해됐다고 읽으며 방어적으로 날이 선 상태라는 점",
+    "avoid": "이를 단순한 세대차 공감, 가벼운 섭섭함, 또는 이미 대화 의지가 충분한 상태로 순화하는 것",
+    "tone_hint": "차갑고 진단적으로, 방어적 고착과 공세적 경계를 분명히 짚는 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "persistence_ratio=0.9800",
+    "peak_alarm_tick=72",
+    "tick=99 | dominant_signal=공세적 긴장 | combined=(drive=0.2548, brake=0.2263, alarm=0.5799, fatigue=0.1899)",
+    "집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나.",
+    "나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아."
+  ],
+  "confidence": 0.94
+}

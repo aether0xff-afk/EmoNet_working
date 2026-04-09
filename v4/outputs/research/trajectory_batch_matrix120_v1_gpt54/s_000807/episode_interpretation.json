@@ -1,0 +1,38 @@
+{
+  "episode_label": "무력한 경계-개입 충동",
+  "stimulus_reading": "자극은 부모 관계 악화 자체와, 그 상황을 보면서도 자신이 실질적으로 개입하거나 바꿀 수 없다는 인식이다. 표면 문장은 슬픔이지만, 내부 처리에서는 단순 침잠보다 위협 감시와 개입 충동이 오래 붙잡힌 episode로 읽힌다.",
+  "appraisal": {
+    "primary_appraisal": "가까운 가족 체계의 불안정이 지속적 위협으로 읽혔고, 자신은 중요하지만 통제력이 낮은 위치에 있다고 평가했다.",
+    "secondary_appraisal": "상황을 그냥 두기 어렵다는 접근/개입 성향이 남아 있으나 실제 해결 수단이 부족해 긴장과 무력감이 함께 유지됐다.",
+    "target": "situation",
+    "control_state": "low",
+    "social_orientation": "mixed"
+  },
+  "trajectory": {
+    "overall_pattern": "고각성 상태가 빠르게 점화된 뒤 거의 끝까지 식지 않는 지속형 episode다. 정서 톤은 우울한 침잠보다 경계, 압박, 개입 욕구의 미해소 쪽에 가깝다.",
+    "ignition": "초기 dormant가 매우 짧고 tick 2-4에서 곧바로 대규모 활성화가 일어났다. 이는 자극을 듣자마자 상황을 위험/문제 상태로 즉시 태깅했다는 뜻이다.",
+    "persistence": "tick 5 이후 69틱 동안 경계/날카로움이 지배했고 persistence_ratio가 0.9730으로 매우 높다. alarm 평균이 0.5653이고 peak_alarm_tick이 56으로 늦게 나온 점은 감정이 해소되기보다 되새김과 감시 속에서 오히려 유지·증폭됐음을 보여준다.",
+    "resolution": "termination_reason은 stable_convergence지만 진정 수렴이 아니라 높은 경계 상태의 안정화다. 마지막까지 dominant signal이 공세적 긴장이라 안심이나 체념으로 풀린 것이 아니라, 불편한 긴장이 구조화된 채 굳었다."
+  },
+  "action_tendency": "직접 해결은 어렵다고 느끼면서도 상황을 계속 살피고, 개입 가능성을 찾고, 문제를 멈추게 하고 싶어 하는 성향으로 간다. 다만 통제감이 낮아 실제 행동은 적극 개입과 위축 사이를 오가며, 반복적 걱정·관계 감시·정서적 소진으로 이어질 가능성이 높다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "슬픔이라는 표면 라벨보다, 높은 alarm과 지속적 공세적 긴장, 낮은 통제감, 개입 욕구의 막힘을 남겨야 한다.",
+    "avoid": "단순한 우울, 순수한 체념, 혹은 잔잔한 공감 상태로 순화하면 왜곡이다. 또한 high arousal만 보고 분노로 단정하는 것도 피해야 한다.",
+    "tone_hint": "건조하고 진단적으로, 긴장-무력감의 동시 존재를 숨기지 않는 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "persistence_ratio=0.9730",
+    "peak_alarm_tick=56",
+    "tick=73 | dominant_signal=공세적 긴장 | combined=(drive=0.2543, brake=0.2400, alarm=0.5664, fatigue=0.1975)"
+  ],
+  "confidence": 0.92
+}

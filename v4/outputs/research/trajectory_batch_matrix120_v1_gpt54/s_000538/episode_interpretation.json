@@ -1,0 +1,38 @@
+{
+  "episode_label": "권한박탈에 대한 공세적 답답함",
+  "stimulus_reading": "자극은 결혼 준비 과정에서 당사자인 자신이 의사결정권을 빼앗긴 채 주변 가족, 특히 엄마와 큰언니에게 밀려난 상황이다. 핵심은 단순한 준비 스트레스가 아니라 '내 일인데 내가 못 고른다'는 권한 침해와 그에 따른 관계 긴장이다.",
+  "appraisal": {
+    "primary_appraisal": "자기 삶의 중요한 사건에서 정당한 선택권이 부당하게 박탈되었다는 해석이 중심이다.",
+    "secondary_appraisal": "상황을 바꾸고 싶지만 즉시 통제할 수단이 약하고, 가족 위계 때문에 직접 맞서기 어렵다는 압박이 함께 읽힌다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "짧게 점화된 뒤 오래 꺼지지 않는 고각성 지속형 episode다. 단순 서운함보다 경계와 추진이 같이 붙어 있어, 속으로 눌러 담는 수세적 침잠보다는 방어적 대항 욕구가 오래 유지된다.",
+    "ignition": "초기 dormant 이후 tick 2-4에서 활성 노드와 edge가 급증하며 곧바로 '경계/날카로움'과 '공세적 긴장'으로 붙었다. 자극을 듣자마자 위협-불공정 감지가 빠르게 점화된 형태다.",
+    "persistence": "tick 5-127의 긴 persistence 구간에서 alarm과 drive가 함께 높게 유지되고 persistence_ratio=0.9844로 거의 끝까지 붙들렸다. 이는 감정이 풀리기보다 '계속 신경 쓰이고 계속 맞서고 싶은' 상태로 유지되었음을 뜻한다.",
+    "resolution": "종결은 해소가 아니라 max_ticks 종료다. 마지막까지 dominant_global_signal이 공세적 긴장이고 peak_alarm이 후반부 tick 121에 찍혀, 시간이 지나며 가라앉기보다 오히려 경계가 재강화된 채 수렴하지 못했다."
+  },
+  "action_tendency": "직접적인 폭발보다는, 자기 몫의 선택권을 되찾기 위해 선을 긋고 입장을 주장하고 싶어지는 쪽으로 간다. 다만 가족 위계와 당혹감 때문에 즉시 행동으로 뻗기보다는 속으로 긴장을 유지한 채 방어적 주장 욕구가 축적되는 성향이다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "답답함만이 아니라 '내 결혼인데 내가 결정 못 한다'는 권한 침해감, 그리고 눌린 분노에 가까운 공세적 긴장을 남겨야 한다.",
+    "avoid": "단순한 결혼 준비 스트레스, 막연한 불안, 순한 서운함 정도로 축소하면 왜곡이다. 또한 곧바로 순수한 분노로 단정하는 것도 부정확하다.",
+    "tone_hint": "차갑고 명료하게, 억눌린 방어성과 통제권 박탈을 직설적으로 짚는 톤"
+  },
+  "evidence": [
+    "엄마와 큰언니가 모든 것을 결정해. 나는 막내라고 가만히 있으라고 하더라고. 나도 선택하고 싶은 게 있는데.",
+    "맞아. 내 결혼인데. 어떻게 하면 좋을지 모르겠어. 예비 신랑도 많이 당황하고 있고.",
+    "dominant_global_signal=공세적 긴장",
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "persistence_ratio=0.9844"
+  ],
+  "confidence": 0.91
+}

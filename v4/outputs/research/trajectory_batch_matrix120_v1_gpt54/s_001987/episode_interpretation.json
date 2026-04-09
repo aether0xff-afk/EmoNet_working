@@ -1,0 +1,35 @@
+{
+  "episode_label": "불안이 섞인 성취기대",
+  "stimulus_reading": "자극은 단순한 '기분 좋음'이 아니라, 반복된 취업 실패 뒤 이번 지원에서는 다르게 준비했고 그래서 결과를 앞당겨 긍정적으로 예측하게 된 상황이다. 즉 합격 기대가 핵심이지만, 그 바탕에는 누적된 불합격 경험이 남긴 경계 상태가 함께 붙어 있다.",
+  "appraisal": {
+    "primary_appraisal": "이번 기회는 실제로 성과로 이어질 수 있다는 접근적 해석이 우세하다. 단순 희망보다 '제대로 준비했다'는 자기 효능 평가가 기대를 점화한다.",
+    "secondary_appraisal": "이전의 반복 불합격 이력이 경보 신호를 계속 유지해, 들뜸이 완전히 편안한 낙관으로 풀리지 않고 긴장된 기대 형태로 지속된다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "전반적으로는 접근 우세의 고각성 상태가 빠르게 점화된 뒤 오래 지속되는 패턴이다. 다만 순수한 안정감이 아니라 기대와 경계가 함께 가는 혼합형이다.",
+    "ignition": "초기 dormant 뒤 ignition이 매우 짧고 바로 persistence로 넘어간다. 입력을 받자마자 의미 부여가 신속히 일어나며, 준비 노력과 합격 가능성 판단이 즉시 활성화된 것으로 보인다.",
+    "persistence": "persistence_ratio 0.9844, dominant_branch_len 126으로 거의 전 구간 지속된다. drive 평균이 높고 alarm도 거의 비슷한 수준으로 높아, '가고 싶다/될 것 같다'와 '혹시 또 아닐 수도 있다'가 동시에 유지되는 공세적 긴장 상태다.",
+    "resolution": "종결은 해소가 아니라 미완의 지속이다. termination_reason이 max_ticks이고 마지막까지 drive 0.5966, alarm 0.5891 수준이라, 감정 episode는 안정 수렴보다 긴장된 기대를 유지한 채 끝난다."
+  },
+  "action_tendency": "계속 결과를 상상하고, 자신의 준비를 근거로 합격 가능성을 강화하며, 외부 확인이나 다음 단계 행동으로 나아가려는 성향이다. 동시에 실패 재경험을 막기 위해 마음속으로 방어적 검증도 반복할 가능성이 높다.",
+  "rawness": {
+    "valence": "mixed",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "자신감이 실제로 존재하지만, 그것이 완전히 편안한 기쁨이 아니라 과거 실패를 등에 진 채 유지되는 긴장성 기대라는 결을 남겨야 한다.",
+    "avoid": "그냥 '설레고 긍정적이다'로 순화하면 왜곡이다. alarm이 높고 persistence가 길어서, 내부 상태는 밝은 확신보다 경계가 섞인 공세적 몰입에 가깝다.",
+    "tone_hint": "축하형 공감보다 냉정한 상태 진단 톤"
+  },
+  "evidence": [
+    "나 이번에 지원한 회사 최종합격할 것 같은 기분이 들어!",
+    "그동안 지원하는 곳마다 불합격이어서 우울했는데 이번에는 진짜 제대로 준비했어.",
+    "합격할 것 같다는 자신감이 들어."
+  ],
+  "confidence": 0.89
+}

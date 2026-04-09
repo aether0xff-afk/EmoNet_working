@@ -1,0 +1,40 @@
+{
+  "episode_label": "상실예고에 대한 경계성 먹먹함",
+  "stimulus_reading": "자극은 '다음 달 은퇴'를 계기로 삶의 한 시기가 끝난다는 사실이 현재화된 것이다. 표면에는 눈물과 먹먹함이 있지만, 내부 처리에서는 단순한 회고성 슬픔보다 종료·비가역성·붙잡을 수 없음에 대한 경계 반응이 강하게 붙었다.",
+  "appraisal": {
+    "primary_appraisal": "은퇴를 단순한 축하 사건이 아니라 되돌릴 수 없는 상실과 시간의 소멸로 읽고, 정서적으로 위협성 있는 전환으로 평가했다.",
+    "secondary_appraisal": "상실을 받아들이려는 억제와 의미화가 함께 작동하지만, 실제로는 불안을 정리하지 못한 채 긴장 상태가 오래 유지된다.",
+    "target": "situation",
+    "control_state": "low",
+    "social_orientation": "withdraw"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 미점화 후 매우 빠르게 경계성 각성이 붙고, 이후 해소 없이 장시간 지속된 혼합형 episode다. 슬픔 자체보다 '붙잡을 수 없음'이 경계 신호를 계속 살린 패턴이다.",
+    "ignition": "tick 2부터 바로 공세적 긴장이 생기고 ignition 단계에서 이미 경계/날카로움이 우세하다. 이는 자극을 차분한 회상으로 처리한 것이 아니라 즉시 위협성 전환으로 읽었다는 뜻이다.",
+    "persistence": "tick 6-127의 긴 persistence 구간 동안 alarm이 계속 높고 dominant signal도 공세적 긴장/경계로 유지된다. 억제 노드도 강하게 붙어 있어 무너져 터지기보다는 버티며 긴장하는 형태다.",
+    "resolution": "실질적 해소 없이 종료되었다. 마지막에도 alarm이 높고 termination_reason이 max_ticks라서 정서가 수렴했다기보다 계속 붙잡힌 채 끝난 상태다."
+  },
+  "action_tendency": "회고와 의미화의 말을 하면서도 실제 행동 성향은 상황을 받아들이기보다 움츠러들고, 종료의 의미를 반복 확인하며, 감정을 완전히 풀지 못한 채 붙들리는 쪽이다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "단순한 잔잔한 슬픔이 아니라, 상실 예고가 경계와 긴장을 오래 점화한 상태라는 점",
+    "avoid": "따뜻한 공감 문구로 '자연스러운 아쉬움' 정도로 축소하는 것",
+    "tone_hint": "담담하지만 날것의 긴장과 미해소성을 분명히 드러내는 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "persistence_ratio=0.9844",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "persistence | tick 6-127 | duration=122 | dominant_signal=경계/날카로움",
+    "peak_alarm_tick=97",
+    "tick=127 | dominant_signal=공세적 긴장 | combined=(drive=0.2504, brake=0.2262, alarm=0.5834, fatigue=0.1831)",
+    "다음 달이 은퇴라고 생각하니 가슴이 먹먹하고 눈물이 난다.",
+    "세월이 참 빠른 거 같아. 지나가는 세월을 잡을 수도 없고."
+  ],
+  "confidence": 0.89
+}

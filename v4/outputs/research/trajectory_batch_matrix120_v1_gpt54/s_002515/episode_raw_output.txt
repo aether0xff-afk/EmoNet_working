@@ -1,0 +1,41 @@
+{
+  "episode_label": "재피해 예기 속 경계-대응 긴장",
+  "stimulus_reading": "핵심 자극은 이미 맞았다는 사건 자체보다, 그 뒤에 이어진 '내일 또 맞을 수 있다'는 반복 피해 예상이다. 네트워크는 이를 단순 슬픔보다 즉각적 위협 평가와 대응 필요가 걸린 학교/대인 상황으로 읽었다.",
+  "appraisal": {
+    "primary_appraisal": "상황을 현재진행형 위협으로 평가했다. 이미 발생한 폭력은 끝난 사건이 아니라 재발 가능성이 높은 위험 신호로 처리되었다.",
+    "secondary_appraisal": "무력하게 얼어붙기보다는 보호 자원(엄마에게 말하기)을 동원해 상황을 통제해야 한다는 대응 과제가 함께 활성화되었다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 점화 후 빠르게 높은 경계 상태로 올라가고, 해소 없이 오래 유지된 지속형 방어 episode다. 슬픔 표면표현은 있으나 내부 궤적은 공포성 경계와 대응 추동이 결합된 패턴이다.",
+    "ignition": "tick 2-4에서 활성 노드와 edge가 급증하며 급속 점화되었다. 입력이 들어오자 거의 즉시 '경계/날카로움'과 '공세적 긴장'으로 전환되어 사건을 위협 사안으로 판정했다.",
+    "persistence": "tick 5 이후 종료까지 높은 persistence_ratio(0.9844)로 유지되며 사실상 진정되지 않았다. alarm 평균이 0.5889로 높고 peak_alarm_tick이 111로 늦게 나타나, 시간이 지나며 가라앉기보다 재피해 상상이 계속 유지·증폭된 것으로 보인다.",
+    "resolution": "실질적 해소 단계 없이 최대 tick에서 종료되었다. 마지막 상태도 공세적 긴장으로 남아 있어, '엄마에게 말해야겠어'는 안정 회복이라기보다 불안 속 방어적 실행 결심에 가깝다."
+  },
+  "action_tendency": "학교 상황을 위험하게 보고 회피와 보호 요청을 동시에 준비하는 쪽으로 간다. 혼자 견디기보다 보호자 개입, 신고·상담, 상황 통제 확보 같은 방어 행동을 밀어 올리는 상태다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "두려움만이 아니라 재발 대비를 위한 날카로운 경계와 외부 도움 요청 추동이 함께 있다는 점",
+    "avoid": "이를 단순한 슬픔, 위로 필요 상태, 혹은 이미 진정된 결심 상태로 순화하는 것",
+    "tone_hint": "위협 인식과 방어적 긴장을 명확히 인정하는 단호한 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "persistence_ratio=0.9844",
+    "peak_alarm_tick=111",
+    "persistence | tick 5-127 | duration=123 | dominant_signal=경계/날카로움",
+    "tick=127 | dominant_signal=공세적 긴장 | combined=(drive=0.5714, brake=0.2369, alarm=0.5888, fatigue=0.1929)",
+    "오늘 같은 반 친구에게 맞았어.",
+    "내일 또 맞을까 봐 학교에 가는 게 걱정돼.",
+    "일이 더 커질까 두렵지만 엄마한테 말해야겠어."
+  ],
+  "confidence": 0.93
+}

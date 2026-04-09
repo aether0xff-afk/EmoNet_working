@@ -1,0 +1,37 @@
+{
+  "episode_label": "회복불능 위기감 속 공세적 긴장",
+  "stimulus_reading": "자극은 남편과의 관계가 회복되지 않고, 만나면 반복적으로 싸움으로 번진다는 관계 파열 신호다. 단순한 슬픔보다 '좋았던 과거가 있었는데 왜 이렇게 되었는가'라는 상실 대비가 붙으면서 위기 평가가 강화됐다.",
+  "appraisal": {
+    "primary_appraisal": "관계가 안전하게 복구되지 않으며, 접촉 자체가 곧 충돌로 이어진다는 위협성 높은 상황으로 해석됐다.",
+    "secondary_appraisal": "좋은 추억이 남아 있어 완전한 단절로 정리되지 못하고, 회복 욕구와 실패 인식이 동시에 걸리면서 경계와 집착성 반추가 지속되는 상태다.",
+    "target": "mixed",
+    "control_state": "low",
+    "social_orientation": "mixed"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 미점화 뒤 빠르게 경계/날카로움으로 점화되고, 이후 거의 전 구간에서 높은 지속성을 보이는 장기 고착형 episode다. 단발성 울분보다 관계 위협을 계속 스캔하는 긴장-반추 패턴에 가깝다.",
+    "ignition": "tick 2부터 활성 노드와 edge가 급증하며 공세적 긴장이 즉시 형성됐다. 입력을 듣자마자 방어적 해석이 아니라 충돌 대비 모드가 켜진 것으로 보인다.",
+    "persistence": "tick 5 이후 127까지 persistence가 이어지고 persistence_ratio가 0.9844로 매우 높다. alarm 평균이 0.5684로 지배적이며 peak_alarm도 후반부 tick 76에 나타나, 시간이 지나며 가라앉기보다 위기감이 유지·증폭됐다.",
+    "resolution": "실질적 해소 없이 최대 tick에서 종료됐다. 마지막도 공세적 긴장 우세라서 수렴은 안정이 아니라 '정리되지 않은 경계 상태의 유지'다."
+  },
+  "action_tendency": "대화를 통한 친밀 회복보다, 충돌 가능성을 미리 예상하며 예민하게 반응하고 관계를 계속 점검하거나 방어적으로 맞서는 쪽으로 기울어 있다. 동시에 좋은 추억 때문에 완전 철수도 못 해, 접근 욕구와 방어가 엉킨 채 반복적 반추로 갈 가능성이 높다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "괴로움의 핵심이 단순 서운함이 아니라 '관계 접촉=싸움'으로 학습된 위기감과 회복 실패의 고착이라는 점",
+    "avoid": "그리움이나 애정만 강조해 순한 부부 갈등처럼 축소하는 것, 또는 고각성 상태를 자동으로 분노 하나로 단정하는 것",
+    "tone_hint": "건조하고 진단적으로, 긴장과 지속성의 심각도를 숨기지 않는 톤"
+  },
+  "evidence": [
+    "입력 내용에서 \"서로 만나면 싸움 밖에 안 돼.\"라고 되어 있어, 상호작용 자체가 충돌로 조건화된 자극으로 읽힌다.",
+    "입력 내용의 \"좋은 추억도 많은데 언제부터 이렇게 됐을까 싶어.\"는 현재 갈등에 과거 애착과 상실 대비가 겹쳐 반추가 강화됨을 보여준다.",
+    "GLOBAL_TRACE에서 \"termination_reason=max_ticks\", \"persistence_ratio=0.9844\", \"dominant_global_signal=공세적 긴장\"으로, episode가 거의 끝까지 고착된 채 유지됐다.",
+    "PHASE_SEGMENTS에서 \"ignition | tick 2-4 ... dominant_signal=경계/날카로움\" 및 \"persistence | tick 5-127 ... dominant_signal=경계/날카로움\"이라, 점화 후 빠르게 경계 상태가 장기 지속됐다.",
+    "KEY_TICKS에서 \"peak_alarm_tick=76\"과 tick 127의 \"dominant_signal=공세적 긴장\", \"alarm=0.5684\"는 후반까지 위기 신호가 꺼지지 않았음을 직접 보여준다."
+  ],
+  "confidence": 0.92
+}

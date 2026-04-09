@@ -1,0 +1,38 @@
+{
+  "episode_label": "고각성 성취-접근 들뜸",
+  "stimulus_reading": "핵심 자극은 원하던 대학 합격이라는 성취 사건이다. 네트워크는 이를 단순한 기쁨 진술이 아니라, 앞으로의 활동 계획까지 곧바로 연결되는 접근 동기 자극으로 읽었다.",
+  "appraisal": {
+    "primary_appraisal": "원하던 목표를 획득했고, 그 결과가 자기 확장과 미래 행동으로 이어질 수 있다는 보상성 높은 사건으로 평가됐다.",
+    "secondary_appraisal": "긍정 사건이지만 단순 안정감보다는 각성된 추진 상태로 처리됐고, 약한 경계 신호가 함께 남아 있어 흥분이 완전히 이완되지는 않았다.",
+    "target": "self",
+    "control_state": "high",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 점화 후 매우 빠르게 고활성 상태로 올라가 장시간 유지되는 지속형 고각성 접근 episode다. 즐거움이 금방 사그라드는 패턴이 아니라, 성취가 곧 행동 에너지로 번역되는 패턴이다.",
+    "ignition": "tick 3-5에서 바로 점화되며 활성 노드와 엣지가 급증했다. 입력이 감정 확인에서 끝나지 않고 내부적으로 강한 추진 회로를 열었다.",
+    "persistence": "tick 8-54의 긴 persistence 구간에서 추동/접근이 계속 우세했고 persistence_ratio가 매우 높다. 중간에 피로는 약하고 alarm은 보조적으로만 동반되어, 흥분이 붕괴되지 않고 유지된다.",
+    "resolution": "종결은 stable_convergence로 끝났고 마지막까지 접근 신호가 우세하다. 즉, 해소되어 평온으로 가라앉기보다는 '좋다, 이제 해보자' 쪽으로 수렴했다."
+  },
+  "action_tendency": "기쁨을 표현하는 데서 멈추지 않고, 진학 후 공부·탐색·계획 실행으로 바로 나아가려는 전진 성향이 강하다. 대외적으로는 성취 공유와 미래 설계, 내부적으로는 기대를 동력으로 유지하는 쪽이다.",
+  "rawness": {
+    "valence": "positive",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "단순히 '기뻐함'이 아니라 고각성의 지속적 접근 추진 상태라는 점을 남겨야 한다.",
+    "avoid": "평온한 만족감이나 잔잔한 행복으로 순화하면 왜곡된다. 또한 high arousal만 보고 불안이나 공격성으로 오독해서도 안 된다.",
+    "tone_hint": "담백하지만 분명하게, 성취로 인한 들뜸과 추진 에너지를 직접적으로 기술"
+  },
+  "evidence": [
+    "\"dominant_global_signal=추동/접근\"",
+    "\"trajectory_pattern=high_arousal_persistence\"",
+    "\"phase_sequence=dormant -> ignition -> escalation -> persistence\"",
+    "\"persistence_ratio=0.9455\"",
+    "\"termination_reason=stable_convergence\"",
+    "\"오늘 내가 가고 싶어 했던 대학에 합격했어.\""
+  ],
+  "confidence": 0.95
+}

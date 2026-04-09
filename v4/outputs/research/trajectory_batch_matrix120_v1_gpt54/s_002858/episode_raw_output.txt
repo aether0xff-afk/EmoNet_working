@@ -1,0 +1,39 @@
+{
+  "episode_label": "모멸감 기반 자기붕괴 경계",
+  "stimulus_reading": "자극은 단순히 '무시당한다'는 표면 진술이 아니라, 사회적 평가 하락과 자기위상 붕괴를 한 덩어리로 읽은 것이다. 특히 타인에게 무시당한다는 지각이 곧바로 '예전엔 잘 나갔는데 지금은 초라하다'는 자기비난으로 연결되며 내부 경계 상태를 점화했다.",
+  "appraisal": {
+    "primary_appraisal": "사회적 폄하와 지위 손실이 발생했거나 발생 중이라는 위협 평가",
+    "secondary_appraisal": "문제의 원인을 외부 타인의 무시와 내부 자기결함 둘 다에 걸쳐 해석하면서 자기혐오를 증폭함",
+    "target": "mixed",
+    "control_state": "low",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 점화가 매우 빠르고, 이후 고각성 경계 상태가 거의 끝까지 꺼지지 않는 지속형 episode다. 위로·해결 제안이 들어와도 정서핵은 진정되기보다 경계된 채 안정 수렴했다.",
+    "ignition": "tick 2부터 활성 노드와 엣지가 급증하며 즉시 경계/날카로움으로 전환됐다. 이는 자극을 단순 슬픔이 아니라 사회적 위협으로 읽었음을 시사한다.",
+    "persistence": "tick 6-84의 긴 persistence 구간에서 alarm 우세가 유지됐고, peak_alarm이 81에 나타나 후반까지 위협 평가가 꺼지지 않았다. 즉 감정이 한 번 솟고 사라진 것이 아니라 오래 붙잡히는 반추성 경계로 굳었다.",
+    "resolution": "termination은 stable_convergence지만 평온 회복이 아니라 공세적 긴장이 유지된 채 수렴한 상태다. 독서라는 자가진정 방향이 제시됐어도 내부 episode의 핵심은 해소보다 관리 모드로 옮겨간 수준이다."
+  },
+  "action_tendency": "즉각적 공격보다는 타인의 평가를 경계하며 자신을 방어·수습하고, 동시에 자기비난 쪽으로 움츠러드는 성향이 강하다. 외부와 거리를 두고 안정화 행동을 찾되, 내면에서는 모멸감과 자기혐오를 계속 되씹을 가능성이 높다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "무시당한다는 사회적 위협감, 초라해졌다는 지위 추락감, 그리고 '내가 너무 싫어져'로 이어지는 자기붕괴 결을 그대로 남겨야 한다.",
+    "avoid": "단순한 우울감, 막연한 불안, 가벼운 위로 필요 상태로 순화하면 안 된다. 마지막의 독서 언급만 보고 이미 안정된 상태로 과대해석해서도 안 된다.",
+    "tone_hint": "건조하고 진단적으로, 경계와 자기혐오의 지속을 숨기지 않는 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "peak_alarm_tick=81",
+    "persistence_ratio=0.9765",
+    "내 정신이 멀쩡하지 않아서 그런 건지 사람들한테 무시당하는 느낌이 자꾸만 들어.",
+    "예전에는 잘 나가는 사람이었는데 이렇게 초라해지다니. 내가 너무 싫어져."
+  ],
+  "confidence": 0.92
+}

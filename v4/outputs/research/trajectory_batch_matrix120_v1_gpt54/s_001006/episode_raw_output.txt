@@ -1,0 +1,39 @@
+{
+  "episode_label": "생계위협 기반의 공세적 불안",
+  "stimulus_reading": "직접 자극은 코로나 이후 경기 악화 속 명예퇴직과 그 뒤에 이어지는 재취업 불확실성이다. 네트워크는 이를 단순한 상실감보다, 당장 대응해야 하는 생계·노후 리스크로 읽어 지속적 경계와 탐색 압박이 걸린 상태로 처리했다.",
+  "appraisal": {
+    "primary_appraisal": "현재 상황을 통제하기 어려운 위협으로 보면서도 가만히 있을 수 없는 문제로 평가했다. 즉 '위험하다'와 '지금 뭔가 해야 한다'가 동시에 붙은 해석이다.",
+    "secondary_appraisal": "자기 효능감이 완전히 붕괴된 것은 아니며, 재취업 시도를 계속해야 한다는 과제지향성이 유지된다. 다만 환경 제약이 커서 노력 대비 성과 가능성을 낮게 본다.",
+    "target": "situation",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 미점화 후 빠르게 점화되고, 짧은 상승 뒤 장시간 경계 상태에 고착된 패턴이다. 위협 회피보다 문제 해결을 향한 접근 신호가 함께 높아, 무기력보다 초조한 추진 상태에 가깝다.",
+    "ignition": "tick 2-4에서 활성 노드와 엣지가 급증하며 자극이 즉시 중요 과제로 분류됐다. 초기에는 추동/접근이 앞서 '대응 필요'가 먼저 붙었다.",
+    "persistence": "tick 5 이후 dominant signal이 경계/날카로움, 전체 dominant_global_signal은 공세적 긴장으로 유지됐다. persistence 구간이 73 tick, persistence_ratio 0.9750으로 매우 길어 걱정이 스쳐 지나가는 수준이 아니라 장기 점유 상태다. peak_alarm이 tick 63에 나타난 것도 뒤늦게 불안이 더 응축됐음을 뜻한다.",
+    "resolution": "종결은 해소가 아니라 stable_convergence다. 즉 감정 episode가 진정된 것이 아니라 '걱정하며 계속 알아보는' 긴장된 적응 상태로 수렴했다."
+  },
+  "action_tendency": "불안 때문에 멈추기보다는 계속 이력서를 넣고 기회를 탐색하는 쪽으로 간다. 다만 행동의 정서는 희망적 추진이 아니라 압박감에 밀린 지속 탐색이며, 실패 신호가 누적되면 예민함과 초조가 더 강해질 가능성이 높다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "상실 자체의 슬픔보다 생계·노후 위협에 대한 경계, 초조, 밀어붙이는 탐색성을 남겨야 한다.",
+    "avoid": "단순한 낙담이나 조용한 우울로 순화하면 왜곡된다. 또한 재취업 의지가 있으니 긍정적 의욕으로 미화하는 것도 틀리다.",
+    "tone_hint": "담담하지만 날것의 압박을 숨기지 않는 진단 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "persistence_ratio=0.9750",
+    "peak_alarm_tick=63",
+    "앞으로 취업할 수 있을지 걱정이야.",
+    "노후준비도 해야 하는데 재취업에 성공할 수 있을지 많이 걱정돼.",
+    "다시 알아보고 있어. 이력서를 넣고 있는데 채용하는 일자리가 많지 않아."
+  ],
+  "confidence": 0.94
+}

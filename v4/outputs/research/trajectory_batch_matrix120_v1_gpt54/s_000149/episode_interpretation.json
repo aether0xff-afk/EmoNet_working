@@ -1,0 +1,38 @@
+{
+  "episode_label": "신뢰 기반 기대 고양",
+  "stimulus_reading": "자극은 단순한 채용 정보가 아니라, 신뢰하는 친구가 직접 연결해 준 지원 기회라는 점이다. 네트워크는 이를 불확실한 취업 시도보다 '검증된 경로를 통한 진입 가능성'으로 읽고 강한 접근 동기를 형성했다.",
+  "appraisal": {
+    "primary_appraisal": "기회가 열렸고, 그 기회가 신뢰 가능한 사회적 연결망을 통해 들어왔다는 해석이 핵심이다.",
+    "secondary_appraisal": "행동 가치가 높고 즉시 움직일 만한 건으로 평가되지만, 약한 경계와 자기조절도 함께 작동해 단순 흥분이 아니라 실행 준비 상태에 가깝다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "전형적인 접근성 고양이 빠르게 점화된 뒤 오래 지속된 패턴이다. 정서가 순간 반짝이는 수준이 아니라, 행동으로 이어질 만한 추진력이 안정적으로 유지됐다.",
+    "ignition": "초기 dormant 이후 tick 2-4에서 바로 점화됐고, dominant_signal이 일관되게 추동/접근으로 잡혔다. 정보 수용 직후 '지원해보려는' 방향성이 내부적으로 곧바로 활성화된 것으로 보인다.",
+    "persistence": "tick 6-39의 긴 persistence 구간에서 active_nodes와 edges가 높게 유지됐고 persistence_ratio=0.9500으로 매우 높다. drive 평균이 brake보다 계속 높고 alarm은 보조 수준이라, 불안 주도 상태가 아니라 기대와 실행 의향이 오래 유지된 상태다.",
+    "resolution": "종결은 해소라기보다 stable_convergence다. 즉 감정이 식은 것이 아니라 '믿고 지원한다'와 '고마움을 표현한다'는 사회적-행동적 방향으로 수렴했다."
+  },
+  "action_tendency": "지원 행동으로 전진하고, 소개해 준 친구에게 호의와 보답을 표현하려는 성향이 강하다. 단순히 기분이 좋은 것이 아니라, 신뢰를 자원으로 삼아 실제 행동을 개시하려는 상태다.",
+  "rawness": {
+    "valence": "positive",
+    "arousal": "medium",
+    "softened_output_risk": "medium",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "신뢰가 접근 동력을 만든 점, 기대가 일회성 감탄이 아니라 지속적 실행 준비로 굳어진 점",
+    "avoid": "그냥 '기쁘다' 수준의 표면 감정으로 축소하는 것, 혹은 취업 불안/긴장을 주감정처럼 과장하는 것",
+    "tone_hint": "담백하고 단정하게, 긍정이지만 들뜬 미화 없이"
+  },
+  "evidence": [
+    "dominant_global_signal=추동/접근",
+    "trajectory_pattern=high_arousal_persistence",
+    "persistence_ratio=0.9500",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아.",
+    "친구에게 밥이나 한번 사야겠어."
+  ],
+  "confidence": 0.92
+}

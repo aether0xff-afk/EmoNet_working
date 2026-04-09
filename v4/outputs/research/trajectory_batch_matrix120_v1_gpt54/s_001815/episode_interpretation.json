@@ -1,0 +1,38 @@
+{
+  "episode_label": "막막함 기반의 경계성 불안-추진 혼합",
+  "stimulus_reading": "자극은 결혼 후의 장기 미래가 보이지 않는다는 인식과, 직장-집 반복 속에서 삶이 돈벌이로 환원됐다는 자기상황 평가였다. 표면상 슬픔 언급이 있지만 내부 처리에서는 상실감보다 미래 불확실성에 대한 경계와 이를 깨고 싶어 하는 추진 신호가 함께 점화됐다.",
+  "appraisal": {
+    "primary_appraisal": "현재 삶의 구조가 계속되면 미래도 공허하고 통제 불가능하게 굳어질 수 있다는 위협 해석",
+    "secondary_appraisal": "그럼에도 완전한 무기력으로 꺼지지 않고, 출구를 찾아 움직여야 한다는 탐색적 추진이 동반됨",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "mixed"
+  },
+  "trajectory": {
+    "overall_pattern": "고각성 상태가 짧게 점화된 뒤 오래 유지되는 지속형 episode다. 내부적으로는 진정이나 해소보다 경계가 안정적으로 고착된 상태에 가깝다.",
+    "ignition": "초기 dormant 이후 tick 2-4에서 바로 경계/날카로움으로 급점화됐다. 이는 입력을 단순한 우울 진술이 아니라 즉시 대응이 필요한 삶의 위협 신호로 읽었다는 뜻이다.",
+    "persistence": "tick 5 이후 64틱 동안 높은 활성과 높은 persistence_ratio로 경계 상태가 거의 풀리지 않았다. alarm 평균이 가장 높고 peak_alarm_tick이 후반부 53에 나온 점은 생각이 진행될수록 불안이 식지 않고 오히려 유지·증폭됐음을 보여준다.",
+    "resolution": "termination은 stable_convergence지만 정서적 해소가 아니라 공세적 긴장이 굳은 채 수렴한 것이다. 마지막에도 dominant_signal이 공세적 긴장이라, 결론은 안도보다 '불안한 채로 움직일 방향을 잡아보는' 상태다."
+  },
+  "action_tendency": "현상 유지에 눌려 가만히 있기보다, 당장 작은 탐색 행동이라도 통해 출구를 만들려는 경향이 강하다. 다만 이 행동은 편안한 희망 기반이 아니라 막막함을 견디기 위한 방어적 탐색에 가깝다.",
+  "rawness": {
+    "valence": "mixed",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "막막함, 경계 지속, 무기력 속에서도 억지로 출구를 찾으려는 방어적 추진을 그대로 남겨야 한다.",
+    "avoid": "단순한 슬픔, 잔잔한 우울, 이미 희망을 찾은 상태로 순화하면 왜곡이다. stable_convergence를 해소 완료로 번역하면 안 된다.",
+    "tone_hint": "건조하고 진단적으로, 불안의 지속성과 억지 추진을 분리하지 말고 함께 말할 것"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "persistence_ratio=0.9710",
+    "signal_means=(drive=0.2422, brake=0.2357, alarm=0.5657, fatigue=0.1977)",
+    "peak_alarm_tick=53"
+  ],
+  "confidence": 0.92
+}

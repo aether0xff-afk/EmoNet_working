@@ -1,0 +1,38 @@
+{
+  "episode_label": "상처의 반추로 굳어진 피로성 경계",
+  "stimulus_reading": "자녀와의 대화가 단순히 불편한 수준이 아니라, 대화 후 정서적 상처가 남고 밤까지 수면을 흔드는 사건으로 읽혔다. 네트워크는 이를 일회성 서운함보다 반복되는 관계 자극이 누적된 위협성 상호작용으로 처리했다.",
+  "appraisal": {
+    "primary_appraisal": "가까운 관계에서 반복적으로 상처를 입고 있으며, 대화가 회복보다 손상을 남긴다는 해석이 핵심이다.",
+    "secondary_appraisal": "예전처럼 빨리 흘려보내지 못하고 오래 붙잡히는 상태가 동반되어, 현재 자극보다 반추와 피로가 감정을 더 오래 유지시키는 것으로 읽힌다.",
+    "target": "mixed",
+    "control_state": "low",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "급속 점화 후 거의 전 구간에서 높은 각성과 지속성을 유지하는 고착형 경계 episode다. 폭발적 분출보다는 상처-경계-피로가 오래 붙는 패턴이다.",
+    "ignition": "초기 dormant가 매우 짧고 곧바로 ignition으로 넘어가며, tick 2부터 이미 피로성 경계가 잡힌다. 이는 자극을 듣자마자 의미 평가가 빠르게 위협/상처 축으로 수렴했다는 뜻이다.",
+    "persistence": "tick 6 이후 127까지 persistence가 이어지고 persistence_ratio가 0.9844로 매우 높다. alarm 평균 0.5654와 fatigue 평균 0.4745가 같이 높아, 날카로운 경계가 피곤함과 함께 장기 유지되는 반추성 지속 상태다.",
+    "resolution": "종결은 해소가 아니라 max_ticks 종료다. 마지막까지 dominant signal이 피로성 경계로 남아 있어 감정 episode가 정리되기보다 누적된 채 열린 상태로 끝난다."
+  },
+  "action_tendency": "직접적 공격보다는 대화 상황을 경계하고, 다시 상처받지 않기 위해 방어적으로 해석하며, 이후에도 혼자 곱씹는 쪽으로 기울 가능성이 높다. 필요 시 관계 접근 욕구는 남아 있으나 현재는 접근보다 자기보호적 대비가 우세하다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "상처가 즉시 사라지지 않고 밤까지 이어지는 반추성 경계, 그리고 피로와 날카로움이 함께 지속되는 결을 남겨야 한다.",
+    "avoid": "단순한 세대 차이, 가벼운 서운함, 따뜻한 이해 부족 정도로 순화하면 안 된다. 또한 high arousal을 곧바로 분노로 단정하는 것도 왜곡이다.",
+    "tone_hint": "담담하지만 차갑게, 내부적으로는 이미 많이 닳아 있고 예민해진 상태라는 점을 숨기지 않는 톤"
+  },
+  "evidence": [
+    "대화를 하고 나면 항상 마음에 상처가 남아서 밤새워 속상해서 잠을 설치곤 해.",
+    "예전에는 바로바로 잊어버렸는데 나이가 들어서인지 잊히지 않아.",
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "persistence_ratio=0.9844",
+    "dominant_global_signal=피로성 경계"
+  ],
+  "confidence": 0.95
+}

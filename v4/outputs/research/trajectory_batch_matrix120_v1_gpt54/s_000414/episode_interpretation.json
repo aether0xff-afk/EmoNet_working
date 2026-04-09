@@ -1,0 +1,38 @@
+{
+  "episode_label": "압박성 자기몰이 불안",
+  "stimulus_reading": "자극은 직장 성과 부진과 수입 부족, 그리고 지출 압박이 동시에 걸린 상태다. 네트워크는 이를 단순한 낙담보다 생계와 자기책임이 결합된 위협으로 읽고, 해결을 위해 스스로를 더 몰아붙여야 하는 상황으로 처리했다.",
+  "appraisal": {
+    "primary_appraisal": "현재 상태는 위험하고 부족하며, 그대로 두면 손실이 커진다는 위협 평가가 핵심이다.",
+    "secondary_appraisal": "통제감은 낮지 않지만 충분히 높지도 않아, 외부를 공격하기보다 자기 규율과 성실성 강화로 만회해야 한다는 해석이 붙는다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "감정 episode는 짧게 점화된 뒤 빠르게 고활성 상태로 올라가고, 해소 없이 경계와 긴장이 오래 지속되는 패턴이다. 즉 순간적 좌절이 아니라 지속적 압박 하의 경계-추동 결합 상태다.",
+    "ignition": "tick 2-4에서 활성 노드와 엣지가 급증하며 '경계/날카로움'이 전면으로 올라온다. 경제적 부족과 직장 부진이 위협 자극으로 빠르게 점화된 것이다.",
+    "persistence": "tick 6-24 동안 고활성이 유지되고 persistence_ratio가 0.92로 매우 높다. alarm 평균이 가장 높고 마지막 tick에서 peak alarm이 찍혀, 시간이 지나며 가라앉기보다 압박 해석이 누적됐다.",
+    "resolution": "종결은 안정적 수렴이지만 진정이 아니라 긴장 상태의 고착에 가깝다. 마지막 응답의 '성실하게 일을 맡아야겠어'는 정서 해소보다 자기통제 전략으로 수렴한 것이다."
+  },
+  "action_tendency": "외부에 감정을 터뜨리기보다 자기행동을 조이고, 게으름·실수·나태를 줄이며 버티고 만회하려는 성향으로 간다. 즉 회피형 무기력보다 자기감시와 성과 복구 시도로 기울지만, 바닥에는 불안 압박이 계속 남아 있다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "불안만이 아니라 자기몰이와 성과 압박이 결합된 결을 유지해야 한다.",
+    "avoid": "단순한 '고민', '의욕', '열심히 해보려는 마음' 정도로 순화하면 안 된다. 위협 평가와 지속 긴장을 삭제하면 왜곡이다.",
+    "tone_hint": "건조하고 진단적으로, 위로보다 상태 판독 중심"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "peak_alarm_tick=24",
+    "signal_means=(drive=0.2647, brake=0.2427, alarm=0.5393, fatigue=0.2025)",
+    "요즘 직장에서 일도 잘 안되고 돈도 쓸 곳이 많은데 그만큼 벌어지지 않아."
+  ],
+  "confidence": 0.9
+}

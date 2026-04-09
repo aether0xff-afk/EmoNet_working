@@ -1,0 +1,37 @@
+{
+  "episode_label": "비교회피 기반의 경계성 불안",
+  "stimulus_reading": "자극의 핵심은 단순히 '상황이 좋지 않다'는 진술이 아니라, 자신보다 비슷하거나 낮은 처지의 친구를 만나며 현재 자신의 하락한 위치를 우회적으로 확인하고 있다는 점이다. 이 회피적 비교가 잠깐의 완충은 주지만, 내부에서는 오히려 현재 문제를 계속 경계 대상으로 유지해 불안이 지속된 것으로 읽힌다.",
+  "appraisal": {
+    "primary_appraisal": "현재 자기 상황이 위협적이며, 타인 비교를 통해 잠시 피하려 해도 위험 신호가 해소되지 않는다고 해석했다.",
+    "secondary_appraisal": "문제는 외부 친구 자체보다 자기 현실 회피와 자기 위치 평가에 있고, 그래서 안정보다 초조가 반복된다고 처리됐다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "withdraw"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 미점화 이후 빠르게 경계 상태로 점화되고, 이후 해소 없이 장시간 고알람 상태가 유지된 지속형 episode다. 접근 성분이 아예 없는 것은 아니지만, 실제로는 문제 해결로 나아가는 추진보다 위협 감시와 자기상황 회피가 더 강하다.",
+    "ignition": "tick 2-4에서 활성 노드와 엣지가 급증하며 '경계/날카로움'으로 급점화됐다. 표면 문장에 있는 불안/초조 표현이 네트워크 내부에서도 실제 경계 신호로 바로 읽힌 경우다.",
+    "persistence": "tick 5-73의 긴 persistence 구간에서 alarm이 계속 우세했고, peak alarm이 후반부 tick 66에서 나타났다. 즉 초반 반응이 금방 꺼진 것이 아니라, 생각할수록 위협 평가가 더 공고해진 패턴이다.",
+    "resolution": "termination은 stable_convergence지만 진정 수렴이 아니라 '공세적 긴장' 상태로 굳어지는 수렴이다. 마지막도 불안이 정리된 상태가 아니라, 경계가 안정적으로 유지된 채 멈춘 것이다."
+  },
+  "action_tendency": "자기 문제를 정면 돌파하기보다 비교적으로 덜 위협적인 대상을 찾아 숨고, 동시에 내부에서는 현재 상태를 계속 스캔하며 초조를 유지하는 성향이다. 행동으로는 회피적 만남 선택, 현실 직면 지연, 불안 완화 방법 탐색이 같이 나타난다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "불안이 단순 기분 문제가 아니라 비교와 회피로 유지되는 경계 episode라는 점, 그리고 내부 상태가 꽤 오래 지속된 고알람이었다는 점",
+    "avoid": "친구를 만나서 위로받는 수준의 가벼운 사회불안으로 순화하는 것, 이미 안정화되었다고 왜곡하는 것, 따뜻한 격려문으로 덮는 것",
+    "tone_hint": "건조하고 진단적으로, 회피-불안의 연결을 분명히 드러내는 톤"
+  },
+  "evidence": [
+    "입력에서 \"나보다 못한 수준의 친구를 보며 내 현재 상황을 피하고 있지만 마음은 항상 불안해.\"라고 직접 말해, 회피와 불안의 동시 지속이 명시되어 있다.",
+    "\"상황이 좋지 않아서 나와 비슷한 여건이거나 못한 수준의 친구만 만나는데 불안하고 초조해.\"라는 문장은 사회적 접촉 자체보다 자기 위치 비교와 그로 인한 경계 반응이 핵심 자극임을 보여준다.",
+    "GLOBAL_TRACE에서 dominant_global_signal이 \"공세적 긴장\"이고 signal_means에서 alarm=0.5676으로 가장 높아, 내부 처리가 전반적으로 경계성 불안 축에 놓여 있음을 뒷받침한다.",
+    "TRAJECTORY에서 phase_sequence가 \"dormant -> ignition -> persistence\"이고 persistence_ratio=0.9730이라, 반응이 일시적이 아니라 길게 고착된 episode였음을 보여준다.",
+    "KEY_TICKS에서 peak_alarm_tick=66, tick=66의 dominant_signal이 \"공세적 긴장\"이며 alarm=0.5729로 후반부에 더 높아져, 시간이 지나며 안정되기보다 위협 감시가 유지·증폭된 양상이다."
+  ],
+  "confidence": 0.93
+}

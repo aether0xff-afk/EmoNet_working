@@ -1,0 +1,40 @@
+{
+  "episode_label": "생계압박형 경계 긴장",
+  "stimulus_reading": "퇴직 후 재취업 시도가 응답 부재와 실패로 이어지면서, 단순한 실망이 아니라 가족 부양 책임이 걸린 생계 위협으로 읽혔다. 자극은 '연락이 없다'는 불확실성과 '먹여 살려야 한다'는 책임 압박이 결합된 취업 불안이다.",
+  "appraisal": {
+    "primary_appraisal": "상황은 안전하지 않고 지체될수록 위험해지는 문제로 해석됐다. 슬픔 표면 아래에서 핵심 평가는 상실보다 경계와 압박이다.",
+    "secondary_appraisal": "완전한 무력감으로 꺼지지 않고, 위협을 줄이기 위해 계속 준비하고 다시 지원해야 한다는 과제 지향이 붙었다.",
+    "target": "situation",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 미점화 뒤 짧게 급점화되고, 이후 높은 경계 상태가 오래 유지되는 지속형 episode다. 정서가 한번 솟고 끝난 것이 아니라 문제 해결 압박이 안정적으로 붙들린 패턴이다.",
+    "ignition": "tick 6-8에서 활성 노드와 엣지가 급증하며 급격히 경계 모드로 전환됐다. 이는 단순 슬픔보다 취업 실패와 생계 책임이 결합될 때 즉시 위협 감시가 붙었다는 뜻이다.",
+    "persistence": "tick 9-74 동안 공세적 긴장/경계가 지속됐고 persistence_ratio가 0.92로 매우 높다. alarm 평균이 0.5979이고 peak_alarm이 후반 tick 63에 나온 점은 시간이 지나며 가라앉기보다 불안 감시가 유지·증폭됐음을 시사한다.",
+    "resolution": "termination_reason은 stable_convergence지만 평온 수렴이 아니라 경계 상태의 안정화다. 마지막도 alarm 0.6017 수준으로 끝나서 감정이 해소된 것이 아니라 '계속 준비하고 움직여야 한다'는 긴장된 과제 모드로 굳었다."
+  },
+  "action_tendency": "멈춰 주저앉기보다 불안을 동력으로 삼아 준비를 더 하고 반복 지원하며 통제감을 회복하려는 쪽으로 간다. 다만 접근은 희망적 여유가 아니라 압박 기반의 공세적 대처다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "슬픔보다 경계·생계압박·재취업 과제집중이 핵심이라는 결을 유지해야 한다.",
+    "avoid": "단순 위로형 슬픔, 체념, 우울 저각성 상태로 순화하면 왜곡이다. stable_convergence를 해소나 안정으로 번역하면 안 된다.",
+    "tone_hint": "건조하고 진단적으로, 불안이 행동 압박으로 조직된 상태라고 명확히 말할 것"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "signal_means=(drive=0.2590, brake=0.2086, alarm=0.5979, fatigue=0.1790)",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "persistence_ratio=0.9200",
+    "peak_alarm_tick=63",
+    "tick=74 | dominant_signal=공세적 긴장 | combined=(drive=0.2577, brake=0.2061, alarm=0.6017, fatigue=0.1778)",
+    "아직 가족들을 먹여 살려야 하는데 취업이 안 돼서 걱정이야.",
+    "좀 더 준비를 해서 계속 지원을 해봐야겠어."
+  ],
+  "confidence": 0.93
+}

@@ -1,0 +1,38 @@
+{
+  "episode_label": "진로위협에 대한 공세적 불안",
+  "stimulus_reading": "자극은 '승무원이 되고 싶다'는 목표 자체보다, 갈 수 있는 대학 선택지가 적다는 정보가 진로 경로를 막을 수 있다는 식으로 읽힌 점이다. 네트워크는 이를 단순 걱정이 아니라 목표 달성 가능성이 흔들리는 위협 신호로 처리했다.",
+  "appraisal": {
+    "primary_appraisal": "원하는 미래 진로가 구조적으로 제한될 수 있다는 위협 평가가 핵심이다.",
+    "secondary_appraisal": "완전한 무력감으로 가라앉기보다는, 부족한 점을 확인하고 대응책을 찾으려는 문제해결 접근이 일부 함께 살아 있다.",
+    "target": "situation",
+    "control_state": "mixed",
+    "social_orientation": "mixed"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 미점화 후 빠르게 경계 상태가 붙고, 짧은 급상승 뒤 오랫동안 높은 alarm 중심 긴장이 유지되는 지속형 episode다. 단발성 놀람이 아니라 계속 붙들리는 anticipatory anxiety에 가깝다.",
+    "ignition": "tick 2-4에서 소수 노드로 점화되지만 곧바로 '경계/날카로움' 우세로 전환된다. 표면 문장의 불안 표현보다, 진로 차단 가능성에 대한 위협 해석이 초기에 빠르게 붙었다.",
+    "persistence": "tick 6-75의 긴 persistence 구간에서 active node와 edge가 높게 유지되고, dominant_global_signal도 '공세적 긴장'으로 고정된다. 이는 감정이 쉽게 해소되지 않고 계속 스캔·경계하는 상태였다는 뜻이다.",
+    "resolution": "종료는 진정 해소가 아니라 stable_convergence다. 마지막까지 alarm이 높고 공세적 긴장이 유지돼, 네트워크는 안심으로 수렴한 것이 아니라 걱정 상태를 구조화해 붙잡은 채 멈췄다."
+  },
+  "action_tendency": "막연히 주저앉기보다 정보를 더 확인하고, 부족한 점을 점검하고, 외부 조언자에게 접근해 통제감을 회복하려는 성향으로 간다. 다만 기본 바닥은 불안이어서 행동도 차분한 계획이라기보다 위협 완화용 점검 행동에 가깝다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "진로 제한을 실제 위협으로 크게 읽고 있으며, 불안이 길게 지속되고 있다는 점",
+    "avoid": "단순한 '걱정이 있네요' 수준으로 축소하거나, 이미 안정적으로 해결 의지가 생긴 상태처럼 과장하는 것",
+    "tone_hint": "건조하고 진단적으로, 불안을 문제해결 시도와 함께 있는 지속 경계 상태로 설명"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "signal_means=(drive=0.2572, brake=0.2141, alarm=0.5980, fatigue=0.1837)",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "persistence_ratio=0.9737",
+    "peak_alarm_tick=68",
+    "대학을 가지 못해서 승무원이 될 수 없을까 봐 불안해."
+  ],
+  "confidence": 0.94
+}

@@ -1,0 +1,38 @@
+{
+  "episode_label": "경계가 섞인 감격",
+  "stimulus_reading": "자극은 친구의 출산 자체보다, 오랜 시간 알고 지낸 존재가 '엄마'라는 전혀 다른 위치로 급격히 전환되었다는 사실이다. 네트워크는 이를 단순한 기쁨보다 정체성 변화의 충격과 관계 재구성 신호로 읽었다.",
+  "appraisal": {
+    "primary_appraisal": "가까운 타인의 중대한 변화가 예상보다 크게 들어와 경이와 낯섦이 동시에 점화된 상태다.",
+    "secondary_appraisal": "좋은 일로 받아들이지만, 변화의 크기 때문에 내부 처리에서는 안정적 축하보다 경계성 각성과 긴장 유지가 더 강했다.",
+    "target": "other",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "긍정 자극으로 시작했지만 내부적으로는 높은 alarm과 접근 신호가 함께 묶인 혼합형 episode다. 초반 점화 뒤 빠르게 날카로운 경계 상태로 올라가고, 진정보다 지속 쪽으로 수렴했다.",
+    "ignition": "입력 초반에는 거의 무색이었지만 tick 2부터 바로 공세적 긴장이 붙었고, 관계의 친밀도와 역할 변화가 점화원으로 작동했다.",
+    "persistence": "tick 6-18의 긴 persistence 구간에서 '경계/날카로움'이 지배적이었고 alarm이 계속 상승해, 감동이 잔잔하게 풀리기보다 계속 붙들린 채 재순환되었다.",
+    "resolution": "종결은 해소가 아니라 stable_convergence 형태의 고정이다. 즉 울음은 배출이었지만 내부 상태는 차분한 따뜻함보다 긴장 섞인 감격으로 굳었다."
+  },
+  "action_tendency": "상대에게 더 다가가고 의미를 확인하려는 성향이 있으나, 동시에 변화의 크기를 계속 곱씹으며 감정적으로 붙들리는 방향으로 간다. 축하와 접촉은 원하지만 내적으로는 '믿기지 않음'을 반복 확인하는 쪽이다.",
+  "rawness": {
+    "valence": "mixed",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "단순한 따뜻한 감동이 아니라, 가까운 사람의 삶 전환을 마주한 고각성·경계성 감격이라는 결을 남겨야 한다.",
+    "avoid": "그냥 행복해서 운 것으로 순화하거나, 안정적 축하/포근함으로 덮어쓰면 왜곡이다.",
+    "tone_hint": "담백하고 분석적으로, 좋은 감정 안에 긴장과 충격이 섞였다고 분명히 말할 것"
+  },
+  "evidence": [
+    "\"초등학생 때부터 알던 친구라서 그런지 친구가 엄마가 되었다는 게 믿기지 않더라고.\"",
+    "\"얼마 전에 가장 친한 친구가 첫 출산을 했는데 내가 울었어.\"",
+    "\"dominant_global_signal=공세적 긴장\"",
+    "\"phase_sequence=dormant -> ignition -> escalation -> persistence\"",
+    "\"peak_alarm_tick=18\"",
+    "\"persistence | tick 6-18 | duration=13 | dominant_signal=경계/날카로움\""
+  ],
+  "confidence": 0.87
+}

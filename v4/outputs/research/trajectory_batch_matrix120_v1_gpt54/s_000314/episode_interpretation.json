@@ -1,0 +1,38 @@
+{
+  "episode_label": "강요에 대한 혐오성 방어 긴장",
+  "stimulus_reading": "핵심 자극은 가족 전체에 대한 막연한 싫음이 아니라, 중학생인 자신에게 공부를 과도하게 강요하는 가족의 통제 경험이다. 입력의 '구역질' 표현은 단순 과장이 아니라, 강요를 신체적 혐오로 번역한 방어적 반응으로 처리된 흔적이 강하다.",
+  "appraisal": {
+    "primary_appraisal": "가족의 요구를 보호나 관심이 아니라 자기 경계를 침범하는 압박으로 해석하고, 그 결과 대상에 대한 혐오와 경계가 결합된 상태로 평가한다.",
+    "secondary_appraisal": "스스로 상황을 바꾸기 어렵다는 통제 저하가 깔려 있어 단순 반발보다 지속적 긴장과 답답함이 남는다.",
+    "target": "other",
+    "control_state": "low",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "고각성 상태가 빠르게 점화된 뒤 거의 풀리지 않고 지속되는 방어적 경계 episode다. 순간 폭발형이라기보다, 자극이 들어오자마자 날카로움이 고정되고 끝까지 유지된다.",
+    "ignition": "tick 2부터 바로 활성화가 시작되며 dominant signal이 '공세적 긴장'으로 올라선다. 즉 자극을 받아들이기보다 즉시 맞서는 경계 태세가 형성된다.",
+    "persistence": "tick 6-71의 긴 persistence 구간에서 '경계/날카로움'이 지배적이고 persistence_ratio가 0.9722로 매우 높다. alarm 평균도 0.5841로 우세하며 peak_alarm_tick이 70인 점에서, 시간이 지나며 가라앉기보다 오히려 말미에 더 날카롭게 유지된다.",
+    "resolution": "termination_reason은 stable_convergence지만 안정은 진정이 아니라 동일한 방어 긴장이 굳어진 수렴이다. 마지막도 공세적 긴장과 높은 alarm이 유지되어 해소보다는 고착에 가깝다."
+  },
+  "action_tendency": "직접 순응하기보다 가족의 요구를 밀어내고, 언어적으로 날을 세우거나 정서적으로 거리를 두며, 통제에서 벗어나려는 반발 성향으로 간다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "혐오감, 압박감, 방어적 날카로움, 오래 지속되는 긴장이라는 결을 유지해야 한다.",
+    "avoid": "단순한 '속상함'이나 '서운함'으로 약화하거나, 가족의 의도를 선하게 재해석해 갈등 강도를 희석하면 안 된다.",
+    "tone_hint": "건조하고 진단적으로, 불편한 정서를 그대로 명명하는 톤"
+  },
+  "evidence": [
+    "입력에서 \"우리 가족이 나를 너무 구역질나게 해.\"라고 표현해 대상에 대한 직접적 혐오 반응이 전면에 있다.",
+    "이어 \"이제 중학생인 나에게 너무 공부만 강요해.\"라고 하여 혐오의 구체 자극이 가족의 통제적 강요임이 명시된다.",
+    "GLOBAL_TRACE에서 dominant_global_signal=공세적 긴장, signal_means=(drive=0.2479, brake=0.2182, alarm=0.5841, fatigue=0.1795)로 alarm 우세의 방어 긴장이 확인된다.",
+    "TRAJECTORY에서 trajectory_pattern=high_arousal_persistence, phase_sequence=dormant -> ignition -> escalation -> persistence, persistence_ratio=0.9722로 고각성 상태의 장기 지속이 드러난다.",
+    "PHASE_SEGMENTS에서 persistence 구간 tick 6-71의 dominant_signal=경계/날카로움으로, 감정이 단발 분출이 아니라 지속적 경계 상태로 유지된다.",
+    "KEY_TICKS에서 tick=70의 combined=(drive=0.2479, brake=0.2174, alarm=0.5862, fatigue=0.1783)이며 peak_alarm_tick=70이라 말미에 더욱 경계가 최고조에 이른다."
+  ],
+  "confidence": 0.95
+}

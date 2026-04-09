@@ -1,0 +1,38 @@
+{
+  "episode_label": "체념 위에 남은 경계적 적응",
+  "stimulus_reading": "자극의 핵심은 요실금 자체보다 '기저귀를 차는 자기 현실'을 장기적으로 받아들여야 하는 상황이다. 표면상으로는 무감정과 적응을 말하지만, 내부에서는 과거의 비참감과 현재의 현실 수용 압력이 함께 재점화된 것으로 보인다.",
+  "appraisal": {
+    "primary_appraisal": "돌이키기 어려운 손상된 현실에 적응해야 한다는 평가가 중심이다. 단순 슬픔보다는 자존감 손상과 현실 압박에 대한 경계가 남아 있다.",
+    "secondary_appraisal": "감정을 덜 느끼는 것은 회복이라기보다 반복 노출로 인한 둔감화·기능적 체념에 가깝다. 동시에 '극복'을 묻는 대목에서 아직 상황을 바꾸고 싶은 접근 성향도 일부 유지된다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "mixed"
+  },
+  "trajectory": {
+    "overall_pattern": "초반 무색/둔화에서 시작해 빠르게 경계성 활성로 점화되고, 이후 높은 지속성을 가진 긴장 상태로 굳어지는 패턴이다. 안정적 평온으로 수렴한 것이 아니라 적응 담론 아래 경계가 오래 남는 구조다.",
+    "ignition": "점화는 '처음에는 너무 비참했지'라는 자존감 손상 기억과 '극복' 요구가 결합되며 발생한 것으로 보인다. dormant 이후 ignition에서 바로 '경계/날카로움'이 우세해져 감정 회상이 얕지 않음을 보여준다.",
+    "persistence": "escalation과 persistence 구간이 길고 active node와 edge가 크게 늘어 내부 처리가 오래 붙잡혔다. 특히 peak_alarm_tick이 마지막인 18이고 persistence_ratio가 0.8947이라, 감정이 지나간 이야기가 아니라 뒤로 갈수록 경계가 더 선명해진 episode다.",
+    "resolution": "termination은 stable_convergence지만 정서적으로 해소된 종결이 아니다. '기저귀는 일상'이라는 인지적 정리로 수렴했으나, 내부 신호는 계속 공세적 긴장과 높은 alarm을 유지한 채 체념적 적응 쪽으로 굳었다."
+  },
+  "action_tendency": "감정을 크게 드러내기보다 현실 관리와 기능적 적응을 우선하려는 성향이 강하다. 다만 내면에서는 손상감과 경계가 남아 있어, 도움을 구하더라도 위로보다 해결책·통제감 회복을 원할 가능성이 높다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "medium",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "무감정=평온이 아니라 반복 노출 끝의 둔감화와 체념, 그리고 그 아래 남은 경계 신호를 유지해야 한다.",
+    "avoid": "단순한 수용, 성숙한 적응, 담담한 회복 서사로 미화하면 왜곡이다. 또한 high arousal만 보고 분노로 단정하는 것도 피해야 한다.",
+    "tone_hint": "담백하지만 직설적으로, 적응의 기능성과 잔존 긴장을 함께 짚는 톤"
+  },
+  "evidence": [
+    "입력 서사에서 \"요실금을 오래 겪었더니 이제는 기저귀차는 일이 아무 감정 없어.\"라고 말해 반복 노출 뒤 정서 둔감화를 직접 시사한다.",
+    "\"처음에는 너무 비참했지. 내가 기저귀를 차게 되었다니 말이야.\"라는 문장은 핵심 자극이 신체 문제 자체뿐 아니라 자기상 붕괴와 수치감이었다는 근거다.",
+    "\"이런 현실을 극복하기 위해서 어떻게 하면 좋을까요?\"에서 단순 회상이 아니라 아직 해결·통제 회복 욕구가 살아 있음을 확인할 수 있다.",
+    "\"이제 기저귀는 일상이라고 생각하고 적응해야겠어.\"는 해소가 아니라 기능적 현실 수용으로의 수렴을 보여준다.",
+    "GLOBAL_TRACE에서 dominant_global_signal이 \"공세적 긴장\"이고 signal_means에서 alarm=0.5087로 가장 높아, 표면적 무감정과 달리 내부는 경계성 처리가 우세하다.",
+    "TRAJECTORY에서 phase_sequence가 \"dormant -> ignition -> escalation -> persistence\"이고 peak_alarm_tick=18이라, 뒤로 갈수록 경계가 가라앉지 않고 지속된 episode임을 보여준다."
+  ],
+  "confidence": 0.92
+}

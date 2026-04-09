@@ -1,0 +1,37 @@
+{
+  "episode_label": "위협 예고 속 대처 모색 긴장",
+  "stimulus_reading": "자극은 수술 가능성과 시력 회복 여부를 의사에게 직접 확인하는 장면이다. 핵심 위협은 현재 고통 자체보다도 '앞을 보지 못한다는 진단을 들을 가능성'이 내부에서 미래 손실 예고로 읽힌 점이다.",
+  "appraisal": {
+    "primary_appraisal": "회복 가능성에 대한 중대한 불확실성이 자기 삶에 직접적인 손실로 연결될 수 있다는 위협 예측으로 처리되었다.",
+    "secondary_appraisal": "완전히 붕괴한 무력감보다는, 불안이 유지되는 가운데도 체력 관리 같은 수단을 찾아 통제감을 회복하려는 방향으로 보조 해석이 붙었다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "전형적인 고각성 지속형 episode다. 짧게 점화된 뒤 빠르게 큰 활성화로 올라가고, 이후 안정적으로 높은 긴장과 경계가 오래 유지되며 쉽게 가라앉지 않는다.",
+    "ignition": "초기 dormant 구간은 사실상 미점화 상태였지만 tick 7-9에서 급격히 '경계/날카로움'과 '공세적 긴장'이 올라오며 자극이 위협 질문으로 즉시 해석되었다.",
+    "persistence": "tick 10 이후 100틱 이상 높은 활성화가 유지되고 persistence_ratio가 0.9407로 매우 높다. alarm 평균 0.5896과 drive 평균 0.5790이 함께 높아, 단순 공포 정지가 아니라 불안을 붙든 채 해결 수단을 찾는 긴장성 접근이 지속된 상태다.",
+    "resolution": "종결은 해소가 아니라 stable_convergence다. 즉 불안이 사라진 것이 아니라 '운동해서 체력을 좋게 만들어야겠다'는 실천 방향으로 수렴하며 긴장을 관리 가능한 행동 계획에 묶어 둔 상태다."
+  },
+  "action_tendency": "나쁜 진단을 피하거나 대비하기 위해 정보를 확인하고, 가만히 있기보다 몸을 움직이며 준비도를 높이려는 행동 성향으로 간다. 회피보다는 불안을 동력으로 바꿔 대처 행동을 만드는 쪽이다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "불안이 단순한 걱정 수준이 아니라 장기간 유지되는 고각성 경계 상태이며, 동시에 대처 행동으로 밀고 가는 공세적 긴장이 함께 있다는 점",
+    "avoid": "이를 차분한 수용이나 단순 슬픔으로 순화하지 말 것. 또 high arousal만 보고 분노로 오독하지 말 것.",
+    "tone_hint": "담백하고 진단적으로, 불안-대처 결합 상태를 직접적으로 서술"
+  },
+  "evidence": [
+    "입력 내용에서 직접적으로 \"앞을 보는 건 어렵다는 이야기를 들을까 봐 불안했어.\"라고 말해 위협 예고형 불안이 명시되어 있다.",
+    "또 \"가만히 있는 것보다는 운동하면서 체력을 좋게 만들어야겠어.\"라고 하여 정지나 붕괴보다 행동화된 대처 경향이 나타난다.",
+    "GLOBAL_TRACE에서 dominant_global_signal이 \"공세적 긴장\"이고 signal_means가 drive=0.5790, alarm=0.5896으로 함께 높아, 불안과 접근적 추동이 결합된 상태임을 뒷받침한다.",
+    "TRAJECTORY에서 trajectory_pattern이 \"high_arousal_persistence\", phase_sequence가 \"dormant -> ignition -> persistence\", persistence_ratio=0.9407로 제시되어 짧은 점화 후 오래 지속되는 고각성 episode임이 확인된다.",
+    "PHASE_SEGMENTS에서 ignition과 persistence의 dominant_signal이 모두 \"경계/날카로움\"으로 유지되어, 해소보다는 경계 상태의 지속이 핵심 처리 양상임을 보여준다."
+  ],
+  "confidence": 0.95
+}

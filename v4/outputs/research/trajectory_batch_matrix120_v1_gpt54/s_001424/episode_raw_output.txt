@@ -1,0 +1,39 @@
+{
+  "episode_label": "도덕적 혐오의 언어화, 내부는 미점화",
+  "stimulus_reading": "자극은 직장 내 이간질과 따돌림을 반복적으로 목격한 상황이다. 다만 네트워크 내부에서는 이 사건이 강한 정서 episode로 점화되기보다, 이미 언어로 규정된 평가를 낮은 활성 상태에서 재진술한 것으로 처리됐다.",
+  "appraisal": {
+    "primary_appraisal": "상황을 추악하고 반복적인 조직 병리로 판단하는 인지적 평가가 있다.",
+    "secondary_appraisal": "즉시 개입하기보다 참고 지켜보다 한계점에서 보고하겠다는 조건부 대응 구도가 잡혀 있다.",
+    "target": "situation",
+    "control_state": "mixed",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "표면상 분노·혐오 어휘는 있으나 내부 궤적은 거의 전 구간 dormant로 유지된 미점화 패턴이다.",
+    "ignition": "점화 구간이 사실상 없다. peak alarm, fatigue, conflict가 모두 0이고 active_nodes도 0이라 감정 반응이 내부 동역학으로 증폭되지 않았다.",
+    "persistence": "지속도 없다. persistence_ratio와 saturation_ratio가 0이며 dominant_branch_len도 1이라 정서 episode가 이어지지 않고 판단 문장만 떠 있는 상태다.",
+    "resolution": "stable_convergence로 종료됐지만 해소라기보다 무반응 수렴에 가깝다. 결론은 '당장 폭발하지 않고 보류, 필요 시 보고'라는 낮은 에너지의 방어적 정리다."
+  },
+  "action_tendency": "즉각 confrontation보다는 관망과 억제 쪽으로 기울고, 임계치를 넘기면 공식 보고로 전환하려는 조건부 방어 행동 성향이다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "low",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "표면의 '화남'보다 실제 내부 처리의 저활성·보류·조건부 대응 성격을 유지해야 한다.",
+    "avoid": "강한 분노 폭발이나 깊은 상처 반응으로 과장하면 안 된다. 반대로 단순 무감정으로 축소하는 것도 왜곡이다.",
+    "tone_hint": "건조하고 진단적으로, 도덕적 불쾌감은 인정하되 내부 활성 부재를 분명히 말할 것"
+  },
+  "evidence": [
+    "dominant_global_signal=거의 무색",
+    "active_tick_count=0",
+    "persistence_ratio=0.0000",
+    "phase_sequence=dormant",
+    "peak_alarm_tick=0",
+    "응. 옛날부터 이게 도대체 몇 번째인지 모르겠어.",
+    "참다가 도저히 안 되겠으면 보고를 해볼 생각이야."
+  ],
+  "confidence": 0.94
+}

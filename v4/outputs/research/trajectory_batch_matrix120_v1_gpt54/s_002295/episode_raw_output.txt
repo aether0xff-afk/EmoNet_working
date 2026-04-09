@@ -1,0 +1,38 @@
+{
+  "episode_label": "억울함 기반의 공세적 대치",
+  "stimulus_reading": "외출 약속이라는 개인 계획이 있는 시점에 어머니가 동생 돌봄을 요구하면서, 자기 일정과 자율성이 갑자기 침해된 사건으로 읽혔다. 자극은 단순한 부탁이 아니라 '내 중요한 일이 밀려난다'는 의미로 처리되며 가족 내 역할 전가와 비교감도 함께 점화된 상태다.",
+  "appraisal": {
+    "primary_appraisal": "내 계획이 부당하게 후순위로 밀렸고, 지금 방어하지 않으면 계속 내 몫이 희생된다는 해석이 핵심이다.",
+    "secondary_appraisal": "상대와 상황에 대한 서운함이 있지만 완전한 무력감보다는 항의와 주장으로 되찾을 수 있다는 계산이 함께 붙어 있다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 무반응 이후 빠르게 경계와 공세가 점화되고, 이후 진정되기보다 높은 지속성으로 대치 긴장이 유지되는 패턴이다. 단순 슬픔보다는 손상 인식이 주장 충동과 결합된 episode다.",
+    "ignition": "tick 2부터 활성 노드와 edge가 급증하며 '경계/날카로움'과 '공세적 긴장'이 즉시 전면으로 올라온다. 이는 사건을 듣자마자 정서가 눌린 채 처리된 것이 아니라, 즉각적인 침해-방어 프레임으로 읽혔다는 뜻이다.",
+    "persistence": "persistence 구간이 44틱으로 길고 persistence_ratio가 0.9592로 매우 높다. alarm 평균이 0.5701이고 peak_alarm이 종료 직전 tick 47에 나타나므로, 시간이 지나며 풀리기보다 억울함과 경계가 오히려 정교하게 유지·증폭된 상태다.",
+    "resolution": "termination_reason은 stable_convergence지만 정서 해소가 아니라 공세적 긴장 상태로의 안정 수렴이다. 마지막은 달래짐이 아니라 '엄마에게 말해야겠다'는 주장형 정렬로 끝난다."
+  },
+  "action_tendency": "감정은 위축보다 항의, 설명 요구, 자기 일정의 정당성 주장으로 향한다. 직접적 공격까지는 아니지만, 관계를 잠시 긴장시키더라도 자기 우선순위를 복구하려는 행동 성향이 강하다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "서운함만이 아니라 억울함, 경계심, 자기 권리 회복 욕구가 결합된 공세적 결을 남겨야 한다.",
+    "avoid": "그냥 속상함이나 가족 간 오해 수준으로 순화하면 안 된다. 내부적으로는 상당히 오래 지속되는 대치 긴장이 형성됐다.",
+    "tone_hint": "차분하되 단호하게, 불편한 진단을 숨기지 않는 분석 톤"
+  },
+  "evidence": [
+    "\"dominant_global_signal=공세적 긴장\"",
+    "\"phase_sequence=dormant -> ignition -> persistence\"",
+    "\"persistence_ratio=0.9592\"",
+    "\"peak_alarm_tick=47\"",
+    "\"persistence | tick 5-48 | duration=44 | dominant_signal=경계/날카로움\"",
+    "\"엄마에게 내 약속도 중요한 거라고 이야기 해야겠어.\""
+  ],
+  "confidence": 0.95
+}

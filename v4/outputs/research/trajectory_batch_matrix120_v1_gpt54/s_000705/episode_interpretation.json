@@ -1,0 +1,38 @@
+{
+  "episode_label": "체면 위협에 대한 공세적 자기관리 긴장",
+  "stimulus_reading": "자극의 핵심은 운동 자체보다 '중년이라 허약해 보일 수 있다'는 사회적 평가 위협이다. 이어서 운동이 자기욕구가 아니라 '남들에게 잘 보이기 위한 무리'로 재규정되면서, 자기관리 욕구와 방어적 긴장이 함께 점화됐다.",
+  "appraisal": {
+    "primary_appraisal": "타인의 시선 속에서 약하고 초라하게 보일 위험을 실제 위협으로 읽고, 외형과 건강 이미지를 방어해야 한다고 해석한 상태다.",
+    "secondary_appraisal": "현재 방식이 자발적 즐거움이 아니라 과시·인상관리 중심이라 무리와 왜곡이 있다는 자기인식이 붙어 있다. 즉 단순 자부심이 아니라 체면 방어 + 자기비판이 결합된 해석이다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "전형적인 고각성 지속형 episode다. 짧게 점화된 뒤 빠르게 진정되지 않고, 경계/날카로움과 공세적 긴장이 거의 끝까지 유지된다.",
+    "ignition": "초기 dormant는 매우 짧고, tick 2-4에서 활성 노드와 edge가 급증하며 사회적 위신 위협이 즉시 경계 상태로 번역됐다. 점화 순간부터 signal_conflict가 높아 단순 동기보다 내적 충돌이 동반된 각성이었다.",
+    "persistence": "tick 5 이후 127까지 지속되며 persistence_ratio 0.9844, dominant_branch_len 126으로 사실상 끊기지 않았다. drive와 alarm이 함께 높고 brake는 중간 수준이라, 멈추기보다 밀어붙이되 계속 경계하는 형태로 증폭되었다.",
+    "resolution": "실질적 해소 없이 max_ticks로 종료되었고, 마지막 tick에서도 alarm 0.6007, drive 0.5872로 여전히 높다. 따라서 수렴은 안도나 정리가 아니라 '긴장된 자기통제 상태의 유지'에 가깝다."
+  },
+  "action_tendency": "타인 평가를 의식한 자기관리 행동을 더 밀어붙이고, 필요하면 무리해서라도 건강해 보이는 인상을 유지하려는 쪽으로 간다. 동시에 현재 방식이 부자연스럽다는 자각이 있어 방법 수정 욕구도 있으나, 정서 핵심은 편안한 자기돌봄보다 방어적 이미지 관리다.",
+  "rawness": {
+    "valence": "mixed",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "체면 위협, 타인 시선, 무리, 방어적 자기관리라는 결을 유지해야 한다.",
+    "avoid": "그냥 건강한 습관, 동기부여, 자기계발 의지로 미화하면 안 된다. 또한 고각성이라고 곧바로 분노로 단정하는 것도 왜곡이다.",
+    "tone_hint": "담담하지만 날것의 긴장과 방어성을 숨기지 않는 분석 톤"
+  },
+  "evidence": [
+    "내가 중년이라 허약해 보이는 것보다는 건강해 보이고 싶어서 하루에 두 시간씩 일부러 운동을 하고 있어.",
+    "그런데 하고 싶어서 하는 게 아니라 남들에게 잘 보이려고 일부러 하는 거라서 무리할 때도 있어.",
+    "dominant_global_signal=공세적 긴장",
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "peak_alarm_tick=127"
+  ],
+  "confidence": 0.92
+}

@@ -1,0 +1,38 @@
+{
+  "episode_label": "단념으로 굳어진 공세적 경계",
+  "stimulus_reading": "자극은 아들이 오랜 기간 부모를 무시하고 버릇없이 행동해 왔다는 서술이다. 네트워크는 이를 일회성 실망이 아니라 반복된 관계 손상과 권위 침해가 누적된 사건으로 읽고, 관계 회복 기대보다 방어적 단념 쪽으로 처리했다.",
+  "appraisal": {
+    "primary_appraisal": "상대가 지속적으로 선을 넘고 있으며 더는 기대를 걸 가치가 낮다는 해석이 핵심이다.",
+    "secondary_appraisal": "단순 슬픔보다 경계와 공격적 긴장이 우세하고, 관계 개선 질문에도 회복 의지보다 체념과 거리두기가 유지된다.",
+    "target": "other",
+    "control_state": "mixed",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 점화 뒤 빠르게 높은 각성 상태로 올라가고, 이후 완화 없이 장시간 경계/날카로움이 유지된 지속형 episode다. 감정이 지나가며 식는 흐름이 아니라 해석이 고정되어 내부적으로 계속 재확인되는 패턴이다.",
+    "ignition": "tick 2-4에서 활성 노드와 엣지가 급증하며 경계/날카로움이 빠르게 점화됐다. 이는 입력을 듣자마자 관계 손상 기억과 대인 방어 프레임이 즉시 불붙었다는 뜻이다.",
+    "persistence": "tick 6-64의 긴 persistence 구간에서 dominant_signal이 계속 공세적 긴장으로 유지되고, alarm이 후반으로 갈수록 더 높아진다. 즉 초반 분출이 아니라 후반에 더 굳어지는 경계 반응이다.",
+    "resolution": "종결은 해소가 아니라 stable_convergence로 끝난다. 마지막 상태는 진정이 아니라 '기대를 접고 최소한의 문제만 없으면 된다'는 냉각된 단념-방어 수렴이다."
+  },
+  "action_tendency": "관계를 적극 복구하기보다 기대를 철회하고, 정서적 투자와 접촉 강도를 낮추며, 상대를 문제 원인으로 고정해 거리두기 또는 통제적 대응으로 가기 쉽다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "냉소적 단념, 공세적 경계, 상대에 대한 평가 고착을 그대로 남겨야 한다.",
+    "avoid": "이를 단순한 서운함, 일시적 속상함, 관계 개선 의지가 남아 있는 상태로 순화하면 왜곡이다.",
+    "tone_hint": "차갑고 진단적으로, 체념과 방어성이 이미 굳었다는 점을 분명히 드러내는 톤"
+  },
+  "evidence": [
+    "“우리 아들한테는 기대를 접었어. 아주 못된 자식이야.”",
+    "“초등학교 들어가면서부터 부모를 무시하고 그러더라고. 고등학생 되더니 더 버르장머리가 없어.”",
+    "“이제는 기대도 안해. 집에나 들어오면 다행이지.”",
+    "GLOBAL_TRACE에서 “dominant_global_signal=공세적 긴장”, “persistence_ratio=0.9692”, “saturation_ratio=0.8992”로 높은 지속성과 포화가 확인된다.",
+    "TRAJECTORY에서 “trajectory_pattern=high_arousal_persistence”, “phase_sequence=dormant -> ignition -> escalation -> persistence”로 점화 후 장기 지속 패턴이 명시된다.",
+    "KEY_TICKS에서 후반부 “tick=62 ... alarm=0.5780”, “tick=64 ... alarm=0.5776”으로 경보 신호가 꺼지지 않고 끝까지 유지된다."
+  ],
+  "confidence": 0.94
+}

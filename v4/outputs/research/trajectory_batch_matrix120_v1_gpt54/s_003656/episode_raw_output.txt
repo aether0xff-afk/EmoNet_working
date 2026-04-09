@@ -1,0 +1,39 @@
+{
+  "episode_label": "관계 위축에 대한 경계성 긴장과 복구 시도",
+  "stimulus_reading": "자극의 핵심은 자녀와 함께 사는 일상 자체보다, 성장한 자녀와의 심리적 거리와 집 안에서 지속되는 긴장감이다. 네트워크는 이를 단순한 서운함보다 '가까워야 할 관계가 불편해진 상황'에 대한 경계 자극으로 읽었다.",
+  "appraisal": {
+    "primary_appraisal": "가족관계가 안전하고 편한 기반이 아니라 지속적으로 신경을 곤두세우게 만드는 문제 상황으로 해석됐다.",
+    "secondary_appraisal": "원인을 일부 자기 쪽의 소통 방식과 무뚝뚝함에서 찾으면서도, 관계를 회복하기 위해 먼저 접근해야 한다는 과제를 동시에 붙들고 있다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "초기에는 잠잠했지만, 관계 거리감이 인식되자 빠르게 경계성 활성화가 붙고 이후 안정적으로 가라앉지 않은 채 지속됐다. 회피로 꺼지기보다 긴장 속 접근 시도가 같이 유지되는 패턴이다.",
+    "ignition": "점화는 자녀와의 거리감과 집 안의 긴장에 대한 인식에서 시작됐다. ignition 이후 dominant_signal이 곧바로 '경계/날카로움'으로 고정되어 단순 슬픔보다 대인 경계가 먼저 올라왔다.",
+    "persistence": "escalation과 persistence 구간에서 active_nodes와 edges가 크게 증가했고, peak_alarm_tick이 마지막인 11에 찍혀 있어 시간이 지나며 진정되기보다 긴장 모니터링이 유지·증폭됐다. persistence_ratio 0.8333도 이 상태가 일시 반응이 아니라 계속 붙들린 episode임을 보여준다.",
+    "resolution": "종결은 해소가 아니라 stable_convergence다. 즉 감정이 풀린 것이 아니라 '대화를 시도해보자, 내가 무뚝뚝했을 수 있다'는 행동 계획으로 수렴했을 뿐, 내부 경계 수준은 여전히 높게 남아 있다."
+  },
+  "action_tendency": "관계를 끊거나 폭발하기보다는, 불편하고 긴장된 상태를 견디면서도 먼저 말을 걸고 분위기를 관리해보려는 복구 지향 접근 행동으로 간다. 다만 접근의 바닥 정서는 편안한 애정이 아니라 경계와 자기점검이므로, 행동은 조심스럽고 과잉의식적일 가능성이 높다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "가족관계의 거리감이 단순 아쉬움이 아니라 집 안에서 몸이 긴장하는 수준의 경계 상태였다는 점, 그리고 그 와중에도 관계 복구를 위해 접근하려는 이중성",
+    "avoid": "따뜻한 희망이나 소통 의지만 강조해서 이미 높은 alarm과 지속적 경계 반응을 지워버리는 것",
+    "tone_hint": "담백하고 진단적으로, 위로보다 상태 판독 중심"
+  },
+  "evidence": [
+    "입력 텍스트의 직접 근거: \"내 자식들이지만 같이 생활하는 게 쉽지 않아. 집에서도 긴장되네.\"",
+    "입력 텍스트의 직접 근거: \"어렸을 땐 몰랐는데 아이들이 크니까 나를 어려워하는 건지 점점 거리가 느껴져.\"",
+    "입력 텍스트의 직접 근거: \"저녁 먹을 때 사소한 것이라도 대화를 시도해봐야겠어. 내가 너무 무뚝뚝했나 봐.\"",
+    "글로벌 트레이스 근거: \"dominant_global_signal=공세적 긴장\"",
+    "트래젝토리 근거: \"phase_sequence=dormant -> ignition -> escalation -> persistence\"",
+    "지속 근거: \"peak_alarm_tick=11\" 및 \"persistence_ratio=0.8333\"",
+    "구간 근거: \"ignition | dominant_signal=경계/날카로움\", \"persistence | dominant_signal=경계/날카로움\""
+  ],
+  "confidence": 0.92
+}

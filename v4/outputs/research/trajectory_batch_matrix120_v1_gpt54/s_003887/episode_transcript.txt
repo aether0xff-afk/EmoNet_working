@@ -1,0 +1,53 @@
+[SAMPLE]
+id=s_003887
+
+[INPUT_TEXT]
+담임선생님이 맨날 모범생들만 챙겨서 너무 화나! [SEP] 담임선생님께서 모범생만 챙겨서 화가 나시는군요. [SEP] 모범생도 일반 학생과 똑같은데 똑같이 대우받을 순 없을까? [SEP] 똑같이 대우받기 위해 어떤 것을 할 수 있을까요? [SEP] 적극적으로 수업에 참여해서 눈에 띄어볼 거야! [SEP] 열심히 공부하셔서 성적도 오르고 다른 좋은 학교들도 찾을 수 있길 바랄게요.
+
+[GLOBAL_TRACE]
+- ticks_run=104
+- termination_reason=stable_convergence
+- dominant_branch_len=102
+- active_tick_count=102
+- persistence_ratio=0.9808
+- saturation_ratio=0.8530
+- dominant_global_signal=공세적 긴장
+- signal_means=(drive=0.2841, brake=0.2311, alarm=0.5847, fatigue=0.1921)
+- node_mix=(inh=0.4271, exc=0.4634, mod=0.1095)
+
+[TRAJECTORY]
+- trajectory_pattern=high_arousal_persistence
+- phase_count=3
+- phase_sequence=dormant -> ignition -> persistence
+- peak_alarm_tick=93
+- peak_fatigue_tick=8
+- peak_conflict_tick=0
+
+[PHASE_SEGMENTS]
+- dormant | tick 0-1 | duration=2 | active_nodes=0.00 | edges=0.00 | dominant_signal=추동/접근 | signal_conflict=1.0000
+- ignition | tick 2-4 | duration=3 | active_nodes=82.67 | edges=724.33 | dominant_signal=경계/날카로움 | signal_conflict=0.9453
+- persistence | tick 5-103 | duration=99 | active_nodes=226.90 | edges=1656.10 | dominant_signal=경계/날카로움 | signal_conflict=0.7388
+
+[KEY_TICKS]
+- tick=0 | active_nodes=0 | edges_fired=0 | dominant_signal=거의 무색 | combined=(drive=0.0000, brake=0.0000, alarm=0.0000, fatigue=0.0000) | mix=(inh=0.0000, exc=0.0000, mod=0.0000)
+- tick=2 | active_nodes=27 | edges_fired=275 | dominant_signal=공세적 긴장 | combined=(drive=0.2975, brake=0.1249, alarm=0.3397, fatigue=0.1525) | mix=(inh=0.0000, exc=0.8519, mod=0.1481)
+- tick=5 | active_nodes=209 | edges_fired=1683 | dominant_signal=공세적 긴장 | combined=(drive=0.2800, brake=0.2572, alarm=0.3496, fatigue=0.2220) | mix=(inh=0.4211, exc=0.4641, mod=0.1148)
+- tick=8 | active_nodes=226 | edges_fired=1773 | dominant_signal=공세적 긴장 | combined=(drive=0.3054, brake=0.2572, alarm=0.4130, fatigue=0.2303) | mix=(inh=0.4469, exc=0.4558, mod=0.0973)
+- tick=93 | active_nodes=225 | edges_fired=1532 | dominant_signal=공세적 긴장 | combined=(drive=0.2836, brake=0.2301, alarm=0.5865, fatigue=0.1911) | mix=(inh=0.4222, exc=0.4667, mod=0.1111)
+- tick=103 | active_nodes=227 | edges_fired=1518 | dominant_signal=공세적 긴장 | combined=(drive=0.2792, brake=0.2307, alarm=0.5845, fatigue=0.1916) | mix=(inh=0.4273, exc=0.4626, mod=0.1101)
+
+[TOP_ACTIVE_NODES]
+- node=217 | type=excitatory | bias=추동/접근 | activity_ticks=100 | k_mean=28687.3047 | stim=(drive=0.1784, brake=0.0027, alarm=0.9707, fatigue=0.0071)
+- node=115 | type=excitatory | bias=공세적 긴장 | activity_ticks=101 | k_mean=25941.8403 | stim=(drive=0.1522, brake=0.0036, alarm=0.9606, fatigue=0.0123)
+- node=142 | type=excitatory | bias=추동/접근 | activity_ticks=101 | k_mean=25561.9225 | stim=(drive=0.0649, brake=0.0023, alarm=0.9624, fatigue=0.0072)
+- node=11 | type=inhibitory | bias=완충/억제 | activity_ticks=100 | k_mean=24553.4895 | stim=(drive=0.3015, brake=0.2663, alarm=0.4486, fatigue=0.2650)
+- node=201 | type=inhibitory | bias=완충/억제 | activity_ticks=100 | k_mean=24288.0237 | stim=(drive=0.2653, brake=0.2496, alarm=0.4411, fatigue=0.2540)
+- node=82 | type=inhibitory | bias=완충/억제 | activity_ticks=100 | k_mean=24000.3620 | stim=(drive=0.2800, brake=0.2722, alarm=0.4037, fatigue=0.2655)
+- node=175 | type=inhibitory | bias=완충/억제 | activity_ticks=101 | k_mean=23612.7228 | stim=(drive=0.2583, brake=0.2455, alarm=0.4169, fatigue=0.2527)
+- node=77 | type=inhibitory | bias=완충/억제 | activity_ticks=97 | k_mean=24546.0742 | stim=(drive=0.2952, brake=0.2667, alarm=0.4507, fatigue=0.2656)
+
+[IMPORTANT]
+- 감정은 입력 자극 자체가 아니라, 이 자극이 네트워크 안에서 어떻게 점화되고 지속되고 충돌하고 수렴하는지의 episode로 해석한다.
+- 단일 high-arousal 상태를 자동으로 분노로 단정하지 않는다.
+- 접근 신호가 크고 alarm이 지배적이지 않다면 기대/호감/들뜸 같은 positive arousal 가능성을 검토한다.
+- 활성화가 거의 없으면 강한 감정을 꾸며내지 말고 미점화, 보류, anticipatory state 가능성을 명시한다.

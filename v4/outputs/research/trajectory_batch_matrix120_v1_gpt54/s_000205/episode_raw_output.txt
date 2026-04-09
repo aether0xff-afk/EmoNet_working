@@ -1,0 +1,40 @@
+{
+  "episode_label": "도덕위반에 대한 경계성 분개",
+  "stimulus_reading": "자극은 요양원 내 가혹행위라는 사회적 약자 대상 학대 정보였다. 네트워크는 이를 단순한 안타까움보다 '있어서는 안 되는 위반'으로 읽고, 보호 필요 대상에 대한 위해 신호로 처리했다.",
+  "appraisal": {
+    "primary_appraisal": "취약한 대상이 부당하게 다뤄지는 상황에 대한 도덕적 위반·위험 신호로 평가되었다.",
+    "secondary_appraisal": "즉각 개입하거나 해결할 통제력은 높지 않지만, 비난과 시정 요구를 유지해야 하는 사안으로 해석되었다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 무반응 뒤 빠르게 경계·날카로움으로 점화되고, 이후 높은 지속성을 가진 공세적 긴장 상태로 오래 유지되는 패턴이다. 슬픔이나 체념으로 꺼지기보다 비판적 각성을 붙든 episode다.",
+    "ignition": "tick 2부터 활성 노드와 엣지가 급증하며 거의 즉시 위협/위반 탐지가 켜졌다. 표면 문장은 절제돼 있지만 내부는 빠른 경계 점화로 반응했다.",
+    "persistence": "tick 5 이후 82까지 경계/날카로움이 장기 지속되고, alarm 평균이 가장 높으며 persistence_ratio도 매우 높다. 억제 노드가 함께 강하게 도는 것은 폭발보다 통제된 분개 상태를 오래 붙잡는 양상이다.",
+    "resolution": "종결은 해소가 아니라 stable_convergence 형태의 고정화다. 즉, 감정이 풀린 것이 아니라 '문제적이고 시정되어야 한다'는 긴장된 판단이 안정적으로 유지된 채 끝났다."
+  },
+  "action_tendency": "공개적 격노보다는 비판, 규범 확인, 보호 필요성 강조, 개선 요구 쪽으로 기운다. 회피보다 문제를 지적하고 바로잡아야 한다는 접근적 성향이 우세하다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "도덕적 위반감, 경계심, 보호 대상에 대한 위해 인식, 통제된 분개를 유지해야 한다.",
+    "avoid": "이를 단순한 안타까움, 담담한 공감, 일반적 걱정으로 순화하면 안 된다. 또한 순수한 분노 폭발로 과장하는 것도 왜곡이다.",
+    "tone_hint": "차갑고 또렷한 진단형 톤, 절제됐지만 비판의 날이 살아 있는 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "persistence_ratio=0.9759",
+    "peak_alarm_tick=54",
+    "persistence | tick 5-82 | duration=78 | dominant_signal=경계/날카로움",
+    "tick=54 | dominant_signal=공세적 긴장 | combined=(drive=0.2618, brake=0.2413, alarm=0.5684, fatigue=0.1960)",
+    "일부 요양원 종사자들이 환자에게 가혹한 행위를 하는 모양이야.",
+    "저런. 그런 일이 있어서는 안 되는데요."
+  ],
+  "confidence": 0.93
+}

@@ -1,0 +1,37 @@
+{
+  "episode_label": "처지 위축 속 해결 압박",
+  "stimulus_reading": "핵심 자극은 단순한 경제적 어려움 자체보다, 예전의 능력감과 현재의 의존 상태가 대비되며 자존감이 손상된 사건이다. 자녀에게 용돈을 받는 현재 처지가 자기상 붕괴로 읽히면서, 슬픔만이 아니라 해결을 서둘러야 한다는 긴장까지 함께 점화됐다.",
+  "appraisal": {
+    "primary_appraisal": "현재 상황을 '경제적 곤란'이 아니라 '내가 예전보다 무너졌고 자녀에게 기대는 처지로 떨어졌다'는 자기가치 손상으로 해석한다.",
+    "secondary_appraisal": "완전한 체념은 아니며, 상황을 방치하기보다 외부 자원 탐색으로 수습해야 한다는 문제해결 압박이 같이 작동한다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "고각성 상태가 빠르게 점화된 뒤 오래 유지되는 패턴이다. 정서 톤은 단순한 우울 침잠이 아니라 경계와 압박이 섞인 지속 긴장에 가깝다.",
+    "ignition": "초기 dormant 뒤 곧바로 ignition으로 넘어가며 active_nodes와 edges가 급증했다. 이는 '안쓰럽다, 처량하다, 슬프다'는 자기평가가 즉시 네트워크 경계 반응을 일으켰음을 뜻한다.",
+    "persistence": "persistence 구간이 40틱으로 길고 persistence_ratio=0.9556이며 dominant_global_signal이 계속 공세적 긴장이다. 감정이 한번 올라온 뒤 가라앉지 않고, 해결책 탐색 생각이 오히려 긴장을 유지하는 연료가 된 상태다.",
+    "resolution": "termination은 stable_convergence지만 진정이나 해소가 아니라 긴장된 해석 프레임으로 안정화된 것이다. 마지막까지 peak_alarm_tick=44로 경보가 최고치여서, 정서적 수렴은 '불안정한 현실을 인지한 채 움직이려는 상태'에 가깝다."
+  },
+  "action_tendency": "자기연민에 머무르기보다 체면 손상을 만회하려고 일자리나 제도적 도움을 찾는 쪽으로 나아간다. 다만 동력의 바탕은 희망보다 압박과 불안이어서, 행동은 차분한 계획형보다 다급한 복구 시도에 가깝다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "슬픔만이 아니라 자존감 손상, 의존 상태에 대한 수치심성 위축, 그리고 그로 인한 해결 압박을 함께 남겨야 한다.",
+    "avoid": "이를 단순한 '서운함'이나 '잔잔한 우울'로 순화하면 안 된다. 반대로 high arousal만 보고 분노로 오독하는 것도 피해야 한다.",
+    "tone_hint": "담담하지만 날것의 긴장을 숨기지 않는 진단 톤"
+  },
+  "evidence": [
+    "입력 서술에 \"소득이 감소해 자녀에게 용돈을 받아쓰는 내 신세가 안쓰러워.\"라고 있어 자극이 단순 소득 감소가 아니라 자기 처지의 하락과 의존 상태로 읽힌다.",
+    "\"나도 한때는 남부럽지 않게 벌었는데 나이가 들수록 경제적으로 힘들어져 처량하고 슬퍼져.\"라는 문장은 과거의 유능감과 현재의 추락을 대비하며 자기가치 손상 평가가 핵심임을 보여준다.",
+    "GLOBAL_TRACE에서 \"dominant_global_signal=공세적 긴장\", \"signal_means=(drive=0.2877, brake=0.2364, alarm=0.5613, fatigue=0.2022)\"로, 슬픔보다 경보와 압박이 우세한 처리 상태가 확인된다.",
+    "TRAJECTORY에 \"trajectory_pattern=high_arousal_persistence\", \"phase_sequence=dormant -> ignition -> persistence\", \"peak_alarm_tick=44\"라고 되어 있어 감정이 빠르게 점화된 뒤 후반까지 지속·증폭됐음을 보여준다.",
+    "\"가까운 구청에 가서 일자리가 없는지 물어볼 예정이야.\"는 철수보다 접근적 문제해결 경향이 남아 있음을 직접 보여준다."
+  ],
+  "confidence": 0.94
+}

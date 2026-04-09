@@ -1,0 +1,41 @@
+{
+  "episode_label": "해고 위협에 대한 경계적 결집",
+  "stimulus_reading": "표면에는 슬픔과 두려움이 언급되지만, 네트워크는 이를 단순한 상실감보다 '회사에 의해 교체·정리될 수 있다'는 생존 위협 신호로 읽었다. 특히 이미 해고당한 동료 사례가 자기 미래에 대한 임박한 위험 예측으로 번역되면서 경계 상태가 길게 고착되었다.",
+  "appraisal": {
+    "primary_appraisal": "자신이 조직에서 소모품처럼 취급되며 곧 배제될 수 있다는 위협 평가가 핵심이다.",
+    "secondary_appraisal": "완전한 무력 붕괴보다는 위험을 감시하고 사회적 자원을 모아 대비하려는 해석이 함께 붙어 있다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "고각성 상태가 빠르게 점화된 뒤 거의 풀리지 않고 지속되는 고지속 경계 episode다. 정서 명명은 슬픔/두려움이지만 내부 동역학은 우울한 침잠보다 날카로운 경계와 대비 쪽에 가깝다.",
+    "ignition": "초기 dormant가 매우 짧고 tick 2부터 바로 경계/날카로움과 공세적 긴장이 올라온다. 즉 사건을 듣자마자 느린 반추보다 즉각적인 위협 탐지로 들어갔다.",
+    "persistence": "tick 6 이후 종료까지 persistence가 유지되고 alarm 평균이 높으며 persistence_ratio가 0.9802로 매우 높다. 피로는 상대적으로 낮아 무너져 꺼지는 패턴이 아니라 계속 예민하게 붙들고 있는 상태다.",
+    "resolution": "termination은 stable_convergence지만 진정 해소가 아니라 경계 상태의 안정화다. 마지막까지 공세적 긴장과 높은 alarm이 남아 있어 안심으로 수렴한 것이 아니라 '계속 대비해야 한다'는 형태로 굳어졌다."
+  },
+  "action_tendency": "위험을 확인하고 대비책을 모으려는 쪽으로 간다. 혼자 위축되기보다 먼저 해고된 동료들과 접촉해 정보와 정서적 동맹을 확보하려는 사회적 접근 행동으로 이어질 가능성이 높다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "조직에 의해 교체될 수 있다는 위협감, 임박한 해고 예측, 슬픔보다 강한 경계와 대비 성향",
+    "avoid": "단순한 서운함이나 잔잔한 불안으로 순화하는 것, 이미 안정되었다고 왜곡하는 것",
+    "tone_hint": "건조하고 직설적으로, 위협-경계-대비 구조를 분명히 드러내는 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "persistence_ratio=0.9802",
+    "peak_alarm_tick=34",
+    "tick=34 | active_nodes=252 | dominant_signal=공세적 긴장 | combined=(drive=0.3438, brake=0.2469, alarm=0.5677, fatigue=0.2035)",
+    "회사가 나를 기계부품처럼 가차없이 교체한다는 걸 느껴서 너무 슬퍼졌어.",
+    "먼저 해고당한 동료들처럼 나도 조만간 회사에서 잘릴까봐 두려워.",
+    "먼저 당한 동료들을 만나서 식사나 하면서 이야기 나누려고."
+  ],
+  "confidence": 0.94
+}

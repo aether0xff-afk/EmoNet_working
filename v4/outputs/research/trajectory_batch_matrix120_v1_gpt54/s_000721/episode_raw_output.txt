@@ -1,0 +1,39 @@
+{
+  "episode_label": "결핍 기반 사회적 경계와 체면 방어",
+  "stimulus_reading": "직접 자극은 '매일 같은 옷을 입는 내가 이상해 보일까'라는 사회적 노출 불안이다. 그 불안은 단순한 패션 고민이 아니라, 생활비를 제하고 나면 양말도 못 살 정도의 경제적 결핍이 친구 관계에서 어떻게 평가될지에 대한 위협 감지로 읽혔다.",
+  "appraisal": {
+    "primary_appraisal": "타인에게 초라하게 보일 수 있다는 사회적 평가 위협이 핵심으로 처리됐다.",
+    "secondary_appraisal": "동시에 '좋은 모습을 보여주고 싶다'는 접근 욕구와, 친구들이 내면을 봐주길 바라는 방어적 재해석이 함께 붙었다.",
+    "target": "mixed",
+    "control_state": "low",
+    "social_orientation": "mixed"
+  },
+  "trajectory": {
+    "overall_pattern": "고각성 상태가 빠르게 점화된 뒤 오래 지속되는 경계형 episode다. 위로성 문장들이 들어가도 진정으로 꺼지지 않고, 사회적 긴장과 체면 관리 욕구가 계속 유지됐다.",
+    "ignition": "초기 dormant는 거의 없고 tick 2부터 활성 노드가 급증하며 공세적 긴장이 붙는다. 이는 표면 질문이 가벼워 보여도 내부에서는 즉시 평가 위협으로 번역됐다는 뜻이다.",
+    "persistence": "tick 5 이후 50틱 동안 경계/날카로움이 지배하고 persistence_ratio가 0.9636으로 매우 높다. 친구들이 내면을 볼 것이라는 문장도 불안을 해소하기보다 자기 방어적 재구성으로 작동해 긴장을 지속시킨다.",
+    "resolution": "명시적 해소 없이 안정 수렴했다. 마지막은 안심이 아니라, 불안을 유지한 채 '좋은 모습을 보이려는 노력'으로 정렬된 상태다."
+  },
+  "action_tendency": "타인의 시선을 계속 의식하며 외형 결핍을 최소화해 보이려 하고, 인정받을 만한 '좋은 모습'을 과잉 관리하려는 성향으로 간다. 즉 회피만도 아니고 공격만도 아니며, 경계 속에서 체면을 방어하고 관계에서 탈락하지 않으려는 사회적 자기관리 쪽이다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "경제적 결핍이 사회적 평가 위협으로 번역되며, 위로를 받아도 긴장이 꺼지지 않는 결을 남겨야 한다.",
+    "avoid": "단순한 패션 고민, 소박한 걱정, 혹은 이미 친구들의 이해를 믿는 안정 상태로 순화하면 왜곡이다.",
+    "tone_hint": "담백하고 직설적으로, 불안과 방어가 동시에 돌아가는 상태로 기술"
+  },
+  "evidence": [
+    "나도 다른 친구들처럼 꾸미고 싶은데 생활비 빼고 나면 양말 살 돈도 남질 않아.",
+    "정말 그랬으면 좋겠어. 나는 친구들에게 좋은 모습을 보여주려고 노력하고 있어.",
+    "dominant_global_signal=공세적 긴장",
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "peak_alarm_tick=53",
+    "persistence_ratio=0.9636"
+  ],
+  "confidence": 0.92
+}

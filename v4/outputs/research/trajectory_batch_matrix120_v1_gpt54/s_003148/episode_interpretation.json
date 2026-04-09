@@ -1,0 +1,38 @@
+{
+  "episode_label": "정당화된 맞대응 뒤 경계성 긴장",
+  "stimulus_reading": "직접 자극은 박 과장의 모욕적 언사였지만, 내부 episode를 더 강하게 끈 것은 그 직후 사용자가 불만을 표출한 뒤 생긴 대인관계 후폭풍 예측이다. 즉 1차 자극은 모욕, 2차 자극은 '내일 회사에서 눈치 보일 것'이라는 사회적 평가 위험이다.",
+  "appraisal": {
+    "primary_appraisal": "자신은 부당한 대우에 정당하게 대응했다는 자기정당화가 유지되지만, 조직 내 위계와 관계 손상 가능성을 동시에 경계하는 상태로 처리되었다.",
+    "secondary_appraisal": "분노 그 자체보다 이후의 회사 내 시선, 불편함, 긴장 지속 가능성이 더 크게 평가되었다. 그래서 순수한 폭발형 분노가 아니라 방어적이면서도 물러서지 않는 공세적 긴장으로 수렴했다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 점화는 빠르고, 이후 거의 전 구간에서 경계/날카로움이 지속된 장기 persistence 패턴이다. 감정이 한번 올라온 뒤 쉽게 꺼지지 않고, 자기정당화와 사회적 경계가 함께 붙어 유지된다.",
+    "ignition": "tick 2-4에서 활성 노드와 edge가 급증하며 즉각적인 방어 반응이 점화되었다. 이는 모욕에 대한 반발과 대면 후 긴장 형성이 빠르게 결합된 것으로 보인다.",
+    "persistence": "tick 5-53의 긴 persistence에서 alarm이 계속 우세하고 peak_alarm이 44에 늦게 나타난 점은, 사건 직후보다 시간이 지나며 '내일 회사' 같은 후속 상황 시뮬레이션이 긴장을 더 키웠다는 뜻이다. 접근 신호도 남아 있어 완전 위축이 아니라 버티며 대비하는 상태다.",
+    "resolution": "종결 이유는 stable_convergence지만, 이는 편안한 해소가 아니라 공세적 긴장이 안정된 채 굳어진 것이다. 마지막도 alarm 우세라 감정이 해소됐다기보다 '당당히 있자'는 방침으로 긴장을 구조화한 상태다."
+  },
+  "action_tendency": "사과하거나 철회하기보다 자신의 대응을 정당한 것으로 유지하면서, 내일 대면 상황에서 체면과 입장을 방어하려는 성향이 강하다. 즉 후퇴보다는 경계 속 버티기, 필요시 재주장 가능성이 높다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "억울함에 대한 자기정당화, 관계 후폭풍에 대한 경계, 그리고 물러서지 않으려는 방어적 공세를 함께 남겨야 한다.",
+    "avoid": "단순히 '화가 났지만 잘 정리됐다'거나 '상처받았으니 위로가 필요하다' 정도로 순화하면 왜곡이다. 또한 이를 순수 분노로만 환원하는 것도 부정확하다.",
+    "tone_hint": "단호하고 건조하게, 내부적으로 아직 긴장이 풀리지 않았음을 숨기지 않는 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "persistence_ratio=0.9630",
+    "peak_alarm_tick=44",
+    "맞아. 그런데 박 과장한테 나도 불만을 토로하니까 내일 회사에 가서 눈치가 보일 것 같아.",
+    "나는 모욕적인 언사에 대해서 정당하게 불만을 토로한 것이니 눈치 보지 말고 당당하게 있어야겠어."
+  ],
+  "confidence": 0.94
+}

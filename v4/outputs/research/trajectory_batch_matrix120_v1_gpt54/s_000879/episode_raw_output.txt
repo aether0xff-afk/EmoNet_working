@@ -1,0 +1,38 @@
+{
+  "episode_label": "억울함 기반의 대면-시정 에피소드",
+  "stimulus_reading": "자극은 '거짓말을 했다'는 비난과 그 결과로 동료들에게 배제당했다는 사회적 손상이다. 네트워크는 이를 단순 슬픔보다 부당한 낙인과 관계 위협으로 읽고, 사실 바로잡기를 향한 접근적 긴장 상태로 처리했다.",
+  "appraisal": {
+    "primary_appraisal": "부당한 비난으로 인해 사회적 지위와 관계가 손상되었으며, 이를 시정해야 한다는 해석이 핵심이다.",
+    "secondary_appraisal": "상황은 위협적이지만 완전한 무력감은 아니고, 직접 만나 해명하면 개입 가능하다는 평가가 함께 작동한다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "고각성 상태가 짧게 점화된 뒤 오래 지속되는 패턴이며, 회피보다 대면·정정 쪽으로 정렬된 지속 긴장이다.",
+    "ignition": "초기 dormant 뒤 tick 2-4에서 빠르게 활성화되며, 단순 침잠이 아니라 경계와 접근 추동이 동시에 올라간다. 즉 상처를 받았지만 바로 '가서 말해야겠다'는 방향이 붙는다.",
+    "persistence": "tick 5 이후 종료까지 공세적 긴장이 유지되고 persistence_ratio가 0.9844로 매우 높다. alarm과 drive가 함께 높게 유지되어 억울함이 쉽게 가라앉지 않고, 내부적으로 계속 반박/시정 시나리오를 돌리는 상태다.",
+    "resolution": "실질적 해소 없이 max_ticks로 끝났고, 마지막도 공세적 긴장 우세다. 따라서 정서가 풀린 것이 아니라 '직접 만나 부인하고 바로잡아야 한다'는 행동 준비 상태로 수렴했다."
+  },
+  "action_tendency": "상대에게 직접 접근해 사실을 부인·해명하고 관계 배제를 멈추게 하려는 행동 성향이 강하다. 수동적 위축보다 적극적 정정, 항변, 대면 설명으로 이어질 가능성이 높다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "억울함, 사회적 배제에 대한 위협감, 그리고 이를 바로잡으려는 공세적 접근성을 남겨야 한다.",
+    "avoid": "단순 슬픔이나 위로가 필요한 상처로만 축소하거나, 이미 진정된 상태처럼 순화하면 안 된다.",
+    "tone_hint": "차갑고 진단적으로, 대면 시정 의지가 붙은 고각성 억울함으로 기술"
+  },
+  "evidence": [
+    "\"내가 거짓말을 했다면서 동무들이 나를 따돌리기 시작했어. 매우 억울해.\"",
+    "\"동무들을 만나 거짓말을 한 적이 없다고 말해야겠어.\"",
+    "\"trajectory_pattern=high_arousal_persistence\"",
+    "\"dominant_global_signal=공세적 긴장\"",
+    "\"phase_sequence=dormant -> ignition -> persistence\"",
+    "\"persistence_ratio=0.9844\""
+  ],
+  "confidence": 0.93
+}

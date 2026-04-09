@@ -1,0 +1,55 @@
+[SAMPLE]
+id=s_001242
+
+[INPUT_TEXT]
+어머니가 너무 공부하는 것에 시시콜콜 간섭하셔. [SEP] 어머니가 공부에 간섭하셔서 기분이 언짢으시군요. [SEP] 어머니가 너무 간섭하니까 내 공부 방식이 잘못된 것 같아서 오히려 하기 싫어져. [SEP] 이런 상황에서 할 수 있는 게 어떤 것이 있을까요? [SEP] 솔직하게 말씀드려야겠어. 그래도 시도는 해봐야지. [SEP] 어머니와의 대화로 현재 상황이 잘 해결되길 바라요.
+
+[GLOBAL_TRACE]
+- ticks_run=87
+- termination_reason=stable_convergence
+- dominant_branch_len=83
+- active_tick_count=84
+- persistence_ratio=0.9655
+- saturation_ratio=0.8580
+- dominant_global_signal=공세적 긴장
+- signal_means=(drive=0.5661, brake=0.2543, alarm=0.5818, fatigue=0.2100)
+- node_mix=(inh=0.4328, exc=0.4652, mod=0.1020)
+
+[TRAJECTORY]
+- trajectory_pattern=high_arousal_persistence
+- phase_count=4
+- phase_sequence=dormant -> ignition -> escalation -> persistence
+- peak_alarm_tick=69
+- peak_fatigue_tick=4
+- peak_conflict_tick=0
+
+[PHASE_SEGMENTS]
+- dormant | tick 0-2 | duration=3 | active_nodes=0.00 | edges=0.00 | dominant_signal=추동/접근 | signal_conflict=1.0000
+- ignition | tick 3-5 | duration=3 | active_nodes=5.33 | edges=54.00 | dominant_signal=완충/억제 | signal_conflict=0.9408
+- escalation | tick 6-7 | duration=2 | active_nodes=128.00 | edges=955.50 | dominant_signal=경계/날카로움 | signal_conflict=0.9829
+- persistence | tick 8-86 | duration=79 | active_nodes=238.44 | edges=2649.11 | dominant_signal=경계/날카로움 | signal_conflict=0.9478
+
+[KEY_TICKS]
+- tick=0 | active_nodes=0 | edges_fired=0 | dominant_signal=거의 무색 | combined=(drive=0.0000, brake=0.0000, alarm=0.0000, fatigue=0.0000) | mix=(inh=0.0000, exc=0.0000, mod=0.0000)
+- tick=3 | active_nodes=1 | edges_fired=12 | dominant_signal=완충/억제 | combined=(drive=0.1468, brake=0.3182, alarm=0.1734, fatigue=0.2387) | mix=(inh=1.0000, exc=0.0000, mod=0.0000)
+- tick=4 | active_nodes=1 | edges_fired=12 | dominant_signal=완충/억제 | combined=(drive=0.1498, brake=0.3211, alarm=0.1764, fatigue=0.2417) | mix=(inh=1.0000, exc=0.0000, mod=0.0000)
+- tick=6 | active_nodes=64 | edges_fired=528 | dominant_signal=공세적 긴장 | combined=(drive=0.3113, brake=0.2284, alarm=0.3256, fatigue=0.1975) | mix=(inh=0.2812, exc=0.5781, mod=0.1406)
+- tick=8 | active_nodes=251 | edges_fired=1712 | dominant_signal=공세적 긴장 | combined=(drive=0.3095, brake=0.2700, alarm=0.3348, fatigue=0.2201) | mix=(inh=0.4462, exc=0.4542, mod=0.0996)
+- tick=69 | active_nodes=230 | edges_fired=2757 | dominant_signal=공세적 긴장 | combined=(drive=0.5698, brake=0.2528, alarm=0.5863, fatigue=0.2086) | mix=(inh=0.4261, exc=0.4739, mod=0.1000)
+- tick=86 | active_nodes=231 | edges_fired=2770 | dominant_signal=공세적 긴장 | combined=(drive=0.5686, brake=0.2562, alarm=0.5805, fatigue=0.2112) | mix=(inh=0.4286, exc=0.4675, mod=0.1039)
+
+[TOP_ACTIVE_NODES]
+- node=176 | type=excitatory | bias=추동/접근 | activity_ticks=81 | k_mean=5224.4806 | stim=(drive=0.8550, brake=0.0085, alarm=0.9402, fatigue=0.0099)
+- node=94 | type=modulatory | bias=공세적 긴장 | activity_ticks=81 | k_mean=4730.0184 | stim=(drive=0.4924, brake=0.1973, alarm=0.6217, fatigue=0.1825)
+- node=157 | type=excitatory | bias=공세적 긴장 | activity_ticks=78 | k_mean=4823.2793 | stim=(drive=0.7554, brake=0.0094, alarm=0.9392, fatigue=0.0085)
+- node=221 | type=modulatory | bias=공세적 긴장 | activity_ticks=81 | k_mean=4508.7932 | stim=(drive=0.5682, brake=0.1640, alarm=0.6707, fatigue=0.1514)
+- node=226 | type=excitatory | bias=추동/접근 | activity_ticks=80 | k_mean=4559.5735 | stim=(drive=0.8756, brake=0.0070, alarm=0.9464, fatigue=0.0070)
+- node=104 | type=inhibitory | bias=수축/둔화 | activity_ticks=81 | k_mean=4484.5223 | stim=(drive=0.4109, brake=0.3196, alarm=0.4456, fatigue=0.3201)
+- node=110 | type=inhibitory | bias=완충/억제 | activity_ticks=80 | k_mean=4462.7963 | stim=(drive=0.3603, brake=0.3105, alarm=0.3932, fatigue=0.3046)
+- node=173 | type=modulatory | bias=추동/접근 | activity_ticks=81 | k_mean=4397.8325 | stim=(drive=0.5352, brake=0.1476, alarm=0.6630, fatigue=0.1445)
+
+[IMPORTANT]
+- 감정은 입력 자극 자체가 아니라, 이 자극이 네트워크 안에서 어떻게 점화되고 지속되고 충돌하고 수렴하는지의 episode로 해석한다.
+- 단일 high-arousal 상태를 자동으로 분노로 단정하지 않는다.
+- 접근 신호가 크고 alarm이 지배적이지 않다면 기대/호감/들뜸 같은 positive arousal 가능성을 검토한다.
+- 활성화가 거의 없으면 강한 감정을 꾸며내지 말고 미점화, 보류, anticipatory state 가능성을 명시한다.

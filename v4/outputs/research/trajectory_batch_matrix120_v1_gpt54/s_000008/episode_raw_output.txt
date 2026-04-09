@@ -1,0 +1,40 @@
+{
+  "episode_label": "재정 위협에 대한 장기 경계성 좌절",
+  "stimulus_reading": "자극은 단순한 '힘들다' 표명이 아니라, 고정 수입 부재와 노후 대비 실패가 결합된 지속적 생존 불안이다. 네트워크는 이를 일시적 낙담보다 해결 경로가 불명확한 구조적 위협으로 읽었다.",
+  "appraisal": {
+    "primary_appraisal": "현재 삶의 안정 기반이 무너져 있고 앞으로도 악화될 수 있다는 위협 평가가 핵심이다.",
+    "secondary_appraisal": "무력감과 막막함이 동반되지만 완전한 붕괴보다는 경계 상태를 오래 유지하며 해결 실마리를 찾지 못하는 쪽에 가깝다.",
+    "target": "situation",
+    "control_state": "low",
+    "social_orientation": "mixed"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 미점화 이후 빠르게 경계성 고각성으로 올라가고, 이후 거의 전 구간에서 높은 지속성을 보이며 안정적으로 굳어진 episode다. 폭발적 분노보다는 위협-긴장-막막함이 장기 유지되는 패턴이다.",
+    "ignition": "tick 3-5에서 활성 노드와 엣지가 급증하며 자극이 즉시 위협으로 점화됐다. 이때 지배 신호가 '경계/날카로움'과 '공세적 긴장'으로 잡혀 단순 슬픔보다 압박성 경계가 먼저 형성됐다.",
+    "persistence": "tick 6 이후 93틱 동안 persistence phase가 유지되고 persistence_ratio가 0.9697로 매우 높다. alarm 평균이 0.5707이고 peak_alarm_tick이 83으로 뒤늦게 더 올라가, 시간이 지나도 정서가 가라앉기보다 위협 해석이 재점화·고착된 상태다.",
+    "resolution": "termination_reason은 stable_convergence지만 해소가 아니라 경계 상태의 안정화다. 마지막 tick 98에서도 dominant_signal이 '공세적 긴장'이고 alarm이 0.5714여서, 결론은 진정이 아니라 '걱정이 굳어버린 수렴'이다."
+  },
+  "action_tendency": "즉각적 공격보다 문제를 어떻게든 통제하려는 압박, 해결책 탐색, 도움 요청 가능성 탐색으로 기울지만, 체감 통제감이 낮아 행동은 쉽게 주저하거나 막막함으로 끊길 수 있다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "재정적 위협이 단순한 우울 호소가 아니라 장기 경계와 무력감이 결합된 상태라는 점",
+    "avoid": "그냥 위로가 필요하거나 '고민이 많겠다' 수준의 약한 정서로 축소하는 것",
+    "tone_hint": "건조하고 진단적으로, 위협-막막함-지속성의 결을 숨기지 않는 톤"
+  },
+  "evidence": [
+    "\"dominant_global_signal=공세적 긴장\"",
+    "\"signal_means=(drive=0.2440, brake=0.2386, alarm=0.5707, fatigue=0.1968)\"",
+    "\"phase_sequence=dormant -> ignition -> persistence\"",
+    "\"persistence_ratio=0.9697\"",
+    "\"peak_alarm_tick=83\"",
+    "\"tick=98 | active_nodes=191 | edges_fired=1322 | dominant_signal=공세적 긴장 | combined=(drive=0.2439, brake=0.2380, alarm=0.5714, fatigue=0.1953)\"",
+    "\"고정적인 수입도 없고 노후준비도 안 되어 있어.\"",
+    "\"어떻게 해야 할지 모르겠어요.\""
+  ],
+  "confidence": 0.94
+}

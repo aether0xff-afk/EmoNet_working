@@ -1,0 +1,39 @@
+{
+  "episode_label": "부당전가에 대한 공세적 항의 준비",
+  "stimulus_reading": "핵심 자극은 신입 사원의 실수가 사용자 책임으로 전가되었다는 인식이다. 네트워크는 이를 단순 불쾌감이 아니라 규범 위반과 부당한 비난으로 읽고, 방어를 넘어 직접 따져 묻고 정정하려는 episode로 처리했다.",
+  "appraisal": {
+    "primary_appraisal": "타인이 부당하게 책임을 전가했고, 내가 unfair하게 공격받았다는 해석이 중심이다.",
+    "secondary_appraisal": "상황은 위협적이지만 완전히 무력한 것은 아니며, 대화를 통해 시정 가능하다는 제한적 통제감이 붙어 있다.",
+    "target": "other",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "고각성 상태가 빠르게 점화된 뒤 오래 유지되는 지속형 episode다. 단발성 짜증이 아니라 경계와 공세성이 결합된 채 안정 수렴했다.",
+    "ignition": "초기 dormant 이후 tick 2-4에서 활성 노드와 edge가 급증하며 즉시 날카로운 경계 상태로 들어갔다. 자극 해석이 모호하게 흔들리기보다 빠르게 '부당함에 대한 대응 모드'로 올라탄 패턴이다.",
+    "persistence": "tick 5-64의 긴 persistence 구간 동안 공세적 긴장이 유지됐고, persistence_ratio 0.9692로 거의 전 구간이 지속 활성화였다. alarm 평균이 0.5761로 높고 peak_alarm이 tick 62에 나타나 후반까지 가라앉지 않았으며, 접근/추동 성분도 계속 살아 있어 단순 위축이 아니라 항의 준비 상태가 고정됐다.",
+    "resolution": "termination_reason은 stable_convergence지만 진정 해소가 아니라 같은 해석 프레임으로 수렴한 것이다. 마지막은 '억울함을 들고 직접 말하겠다'는 방향으로 정리된 상태다."
+  },
+  "action_tendency": "상사에게 책임 귀속의 부당함을 설명하고 정정 요구를 시도하는 쪽으로 간다. 감정 배출보다 사실관계 확인, 항의, 경계적 대면 행동으로 이어질 가능성이 높다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "억울함, 부당성 인식, 경계가 풀리지 않은 공세적 긴장, 그리고 대면 의지가 함께 있다는 점",
+    "avoid": "단순한 서운함이나 차분한 문제해결 모드로 순화하는 것, 이미 진정됐다고 왜곡하는 것",
+    "tone_hint": "차갑고 명료하게, 부당함을 정확히 짚는 톤"
+  },
+  "evidence": [
+    "\"신입 사원의 실수인데 왜 내 책임으로 돌리는 거지? 난 정말 이해할 수가 없어.\"",
+    "\"아무래도 직장 상사와 대화를 해 봐야겠어.\"",
+    "\"dominant_global_signal=공세적 긴장\"",
+    "\"trajectory_pattern=high_arousal_persistence\"",
+    "\"phase_sequence=dormant -> ignition -> persistence\"",
+    "\"persistence_ratio=0.9692\"",
+    "\"peak_alarm_tick=62\""
+  ],
+  "confidence": 0.93
+}

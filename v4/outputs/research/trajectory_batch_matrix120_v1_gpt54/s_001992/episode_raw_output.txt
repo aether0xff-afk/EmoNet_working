@@ -1,0 +1,40 @@
+{
+  "episode_label": "자기비난이 섞인 경계적 배신 충격",
+  "stimulus_reading": "핵심 자극은 남편의 청력 문제를 십 년 동안 모르고 있었고, 동시에 남편이 그 사실을 숨겨왔다는 뒤늦은 인지다. 이 사건은 단순한 슬픔보다 관계 신뢰의 누락과 자기 역할 실패를 함께 건드리며 처리되었다.",
+  "appraisal": {
+    "primary_appraisal": "가까운 관계에서 중요한 정보가 장기간 비공개였다는 점이 위협과 배신 가능성으로 읽혔고, 자신은 그동안 핵심 사실도 알아채지 못한 사람으로 평가되었다.",
+    "secondary_appraisal": "상처를 수습하는 방향은 단절보다 통제 회복 쪽으로 잡혔으며, 이후에는 비밀을 없애고 상호 공개를 강제해야 한다는 규칙화 충동이 붙었다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 무반응 구간이 매우 짧고, 곧바로 경계/날카로움으로 점화된 뒤 거의 전 구간에서 높은 지속성을 보인 장기 경계 episode다. 슬픔이나 무기력으로 가라앉기보다 경계와 공세적 긴장이 계속 유지된다.",
+    "ignition": "tick 2부터 활성 노드와 엣지가 급증하며 점화되었고, 지배 신호가 곧바로 공세적 긴장과 경계/날카로움으로 이동했다. 즉 충격을 받은 뒤 멍해진 상태보다 즉시 '무슨 일이 있었나, 왜 숨겼나, 내가 어떻게 몰랐나'로 날이 선 해석이 붙었다.",
+    "persistence": "persistence_ratio 0.9765, dominant_branch_len 83으로 거의 끝까지 같은 정서적 처리축이 유지되었다. alarm 평균 0.5614, peak_alarm_tick 64, dominant_global_signal 공세적 긴장이 보여주듯 자괴감 표면 아래에서 경계심과 문제 추궁 성향이 오래 지속되었다.",
+    "resolution": "termination_reason은 stable_convergence지만 진정한 해소라기보다 '앞으로는 다 털어놓자'는 규칙화된 방어적 결론으로 수렴했다. 감정이 풀린 것이 아니라 통제 회복 프레임으로 고정된 채 안정화된 것이다."
+  },
+  "action_tendency": "관계를 끊기보다 상대에게 설명과 공개를 요구하고, 관계 내 정보 비대칭을 줄이는 규칙을 세우려는 방향이다. 동시에 자기 쪽으로는 오래 못 알아챈 책임을 강하게 떠안는 자기비난이 동반된다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "단순한 슬픔이나 미안함이 아니라, 배신감-경계심-자기비난이 함께 묶인 상태라는 점을 남겨야 한다.",
+    "avoid": "따뜻한 위로나 관계 회복 희망만 앞세워 내부 상태를 순화하면 안 된다. 실제 처리축은 안정된 공감이 아니라 오래 지속된 경계와 통제 회복 욕구다.",
+    "tone_hint": "건조하고 진단적으로, 관계 신뢰 훼손과 자기책임 과잉을 함께 짚는 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "signal_means=(drive=0.2628, brake=0.2375, alarm=0.5614, fatigue=0.1908)",
+    "trajectory_pattern=mixed / phase_sequence=dormant -> ignition -> persistence",
+    "persistence_ratio=0.9765",
+    "peak_alarm_tick=64",
+    "persistence | tick 5-84 | duration=80 | dominant_signal=경계/날카로움",
+    "남편이 여태 숨기고 있었다는 사실도 원망스러운데 십 년 동안 그걸 몰랐다는 게 너무 미안해.",
+    "앞으로는 이런 일이 없도록 남편과 서로의 비밀을 다 털어놔야겠어."
+  ],
+  "confidence": 0.93
+}

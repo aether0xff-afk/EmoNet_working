@@ -1,0 +1,38 @@
+{
+  "episode_label": "성과위협에 묶인 예기불안",
+  "stimulus_reading": "자극은 단순히 시험이 있다는 사실이 아니라, 내일 치르는 모의고사가 자신의 노력의 성과를 판정하는 사건으로 읽힌 점이다. 특히 '반드시 잘 나와야 한다'는 압박이 붙으면서 미래 결과 실패 가능성이 위협으로 증폭되었다.",
+  "appraisal": {
+    "primary_appraisal": "다가오는 시험 결과가 자신의 노력과 가치 판단을 좌우하는 고중요도 평가 사건으로 해석되었고, 준비했어도 원하는 점수가 안 나올 수 있다는 가능성이 위협으로 점화되었다.",
+    "secondary_appraisal": "완전한 무기력보다는 성과를 반드시 확보해야 한다는 추진 성향이 함께 있어, 회피보다 경계 속 통제 시도가 유지되는 상태다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 미점화 뒤 빠르게 경계성 각성이 붙고, 짧은 상승 이후 거의 전 구간 지속되는 장기 예기불안 패턴이다. 단발 감정 분출이 아니라 시험 전까지 붙잡고 늘어지는 긴장 episode에 가깝다.",
+    "ignition": "tick 2-4에서 활성 노드가 급증하며 dormant에서 ignition으로 전환되었고, 지배 신호가 곧바로 '경계/날카로움'과 '공세적 긴장'으로 형성되었다. 이는 사건을 호기심이나 기대보다 위협-대비 과제로 읽었다는 뜻이다.",
+    "persistence": "tick 6-74의 긴 persistence 구간에서 alarm이 계속 우세했고, persistence_ratio 0.9733으로 거의 풀리지 않았다. 접근 추동도 남아 있어 완전한 붕괴보다 '잘해야 한다'는 압박이 불안을 계속 먹이며 유지하는 구조다.",
+    "resolution": "termination_reason은 stable_convergence지만 진정 수렴이 아니라 긴장이 안정적으로 고착된 수렴이다. 마지막도 alarm이 0.5714 수준으로 높아, 해소보다 긴장 상태의 고정에 가깝다."
+  },
+  "action_tendency": "지금 상태는 도망보다 결과를 통제하려는 과잉 대비, 점수 결과 예측 반복, 준비 점검, 안절부절, reassurance 탐색으로 기울 가능성이 높다. 즉 행동은 접근을 동반하지만 정서는 방어적이다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "불안이 단순 긴장이나 가벼운 걱정이 아니라 성과평가 위협에 묶인 지속적 경계 상태라는 점, 그리고 '반드시 잘 나와야 한다'는 압박이 불안을 유지한다는 점을 남겨야 한다.",
+    "avoid": "그냥 응원받으면 풀릴 시험 전 떨림, 혹은 순수한 동기부여로 미화하면 왜곡이다. stable_convergence를 안정 회복으로 번역하는 것도 틀리다.",
+    "tone_hint": "건조하고 진단적이며, 완곡한 위로보다 내부 처리의 경직성을 직접 드러내는 톤"
+  },
+  "evidence": [
+    "내일이 구월 모의고사를 치르는 날이거든. 그동안 열심히 공부했는데 공부한 만큼 점수가 잘 나오지 않을까봐 너무 불안해.",
+    "응. 이번에는 반드시 잘 나와야 해.",
+    "dominant_global_signal=공세적 긴장",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "persistence_ratio=0.9733",
+    "tick=54 | dominant_signal=공세적 긴장 | combined=(drive=0.2499, brake=0.2292, alarm=0.5759, fatigue=0.1840)"
+  ],
+  "confidence": 0.96
+}

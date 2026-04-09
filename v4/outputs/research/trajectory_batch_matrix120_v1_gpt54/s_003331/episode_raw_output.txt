@@ -1,0 +1,39 @@
+{
+  "episode_label": "질병 악화 기반의 공세적 불안 고착",
+  "stimulus_reading": "자극은 약을 먹어도 병이 낫지 않고 오히려 심해진다는 인식과, 그로 인해 일상 기능이 무너지고 죽음 가능성까지 떠올린 점이다. 표면상 도움 요청과 자기 다짐이 섞여 있지만, 내부 처리는 건강 위협이 통제 불가능하게 증폭되는 생존 경계 episode로 읽힌다.",
+  "appraisal": {
+    "primary_appraisal": "상황을 단순한 불편이 아니라 악화 중인 위협, 생존과 기능 상실로 이어질 수 있는 위험으로 해석했다.",
+    "secondary_appraisal": "완전한 무기력 붕괴보다는 위협을 붙잡고 계속 대비하려는 경계-추동이 함께 작동했다. 즉, 겁먹고 멈추기보다 불안을 놓지 못한 채 해결 실마리를 강박적으로 찾는 쪽이다.",
+    "target": "mixed",
+    "control_state": "low",
+    "social_orientation": "mixed"
+  },
+  "trajectory": {
+    "overall_pattern": "고각성 상태가 짧게 점화된 뒤 빠르게 커지고, 이후 해소되지 않은 채 장시간 지속된 패턴이다. 일시적 공포 반응이 아니라 지속 경계가 네트워크 기본 상태로 굳어진 episode다.",
+    "ignition": "초기에는 거의 무색이었으나 tick 2부터 바로 경계/날카로움이 우세해지며 점화됐다. 이는 입력이 즉시 위협 판정으로 들어갔음을 뜻한다.",
+    "persistence": "escalation 이후 persistence 구간이 30틱으로 매우 길고, alarm과 drive가 함께 유지되며 공세적 긴장이 지배했다. 불안이 꺼지지 않았고, 오히려 해결 시도/대비 성향이 결합된 채 계속 활성화됐다.",
+    "resolution": "termination은 stable_convergence지만 정서적 안도 수렴이 아니다. 마지막까지 peak alarm이 늦게 찍히고 공세적 긴장이 유지되어, 상태는 진정이 아니라 불안의 안정 고착으로 끝났다."
+  },
+  "action_tendency": "증상과 위험 신호를 계속 확인하고, 기능 상실·죽음 가능성을 상정하며, 해결책이나 통제감을 확보하려는 방향으로 간다. 겉으로는 조언 수용이나 다짐을 말할 수 있지만 실제 성향은 안심보다 경계 유지, 반복 점검, 생존 대비에 가깝다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "병의 악화를 실질적 위협으로 읽고 있으며, 두려움이 단순 우울이 아니라 고각성 경계 상태로 오래 붙들려 있다는 점",
+    "avoid": "희망적 문장이나 자기 다짐이 나왔다고 이미 안정되었다고 해석하는 것, 단순한 '걱정'이나 '마음이 불편함' 수준으로 축소하는 것",
+    "tone_hint": "건조하고 직설적으로, 위협 평가와 지속 경계를 명확히 드러내는 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "persistence_ratio=0.9474",
+    "peak_alarm_tick=36",
+    "약을 아무리 먹어도 병이 나을 생각을 안 하고 심해지기만 하네.",
+    "지금 하는 일도 제대로 할 수 없어 이러다 아무도 모르게 죽으면 어떡하나 두려워."
+  ],
+  "confidence": 0.96
+}

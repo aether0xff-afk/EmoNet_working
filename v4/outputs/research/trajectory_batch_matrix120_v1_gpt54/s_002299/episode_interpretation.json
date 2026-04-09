@@ -1,0 +1,38 @@
+{
+  "episode_label": "상실 위기 속 만회 압박",
+  "stimulus_reading": "자극은 단순한 슬픔 표현보다, 병으로 인해 자신이 설계한 가족 미래 계획과 경제적 역할이 무너졌다는 인식이다. 특히 치료비로 자녀를 위해 모아둔 돈이 소진된다는 점이 자기 삶의 서사 붕괴와 책임 위협으로 읽혔다.",
+  "appraisal": {
+    "primary_appraisal": "병이 개인 건강 문제를 넘어 가장으로서의 계획, 책임, 미래 통제력을 훼손한 중대한 손실 사건으로 평가되었다.",
+    "secondary_appraisal": "무너진 계획을 그대로 두기보다 빨리 회복해 다시 돈을 모아야 한다는 만회 과제가 즉시 붙으면서, 슬픔이 곧바로 긴장성 목표추동과 결합되었다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "전형적인 진정형 슬픔이 아니라, 점화 후 오래 지속되는 고각성 경계 상태 위에 상실감이 얹힌 패턴이다. 감정이 가라앉기보다 가족 역할 회복 압박 때문에 지속적으로 재점화된다.",
+    "ignition": "초기 dormant 이후 tick 2-4에서 활성 노드와 엣지가 급증하며 빠르게 점화되었다. 이는 자극이 약한 서운함 수준이 아니라 즉각적인 위기-책임 해석을 불러왔음을 시사한다.",
+    "persistence": "tick 5-62의 긴 persistence 구간 동안 지배 신호가 계속 경계/날카로움, 공세적 긴장으로 유지되었다. alarm 평균이 높고 persistence_ratio도 매우 높아, 슬픔이 숙연하게 흐르기보다 계속 긴장 상태로 붙잡혀 있었다.",
+    "resolution": "종결은 해소가 아니라 stable_convergence로 수렴한 고착형 안정이다. 즉 감정이 풀린 것이 아니라, '위기이니 버티고 만회해야 한다'는 내부 모드로 굳어진 상태다."
+  },
+  "action_tendency": "정서적으로는 울고 상실을 느끼지만, 행동 성향은 애도보다 회복·수습·만회 쪽으로 기울어 있다. 쉬거나 감정을 소화하기보다 병을 빨리 낫게 하고 경제적 손실을 복구하려는 압박성 대응으로 갈 가능성이 높다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "단순한 슬픔이 아니라 계획 붕괴, 책임 위협, 만회 압박이 결합된 날선 긴장감을 반드시 유지해야 한다.",
+    "avoid": "그냥 자녀를 사랑해서 슬픈 상태, 혹은 차분한 희망 회복 서사로 순화하면 안 된다. 실제 내부 처리는 상실 뒤 즉시 자기책임과 회복 압박으로 경직된 상태다.",
+    "tone_hint": "공감 위로체보다 구조를 짚는 건조하고 직설적인 진단 톤"
+  },
+  "evidence": [
+    "\"내가 그린 인생의 그림이 병 때문에 망가졌어.\"",
+    "\"아직 아이들이 어리니까 빨리 병을 낫게 해서 돈을 모아야겠어.\"",
+    "\"trajectory_pattern=high_arousal_persistence\"",
+    "\"dominant_global_signal=공세적 긴장\"",
+    "\"phase_sequence=dormant -> ignition -> persistence\"",
+    "\"persistence_ratio=0.9683\""
+  ],
+  "confidence": 0.94
+}

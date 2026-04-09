@@ -1,0 +1,40 @@
+{
+  "episode_label": "노화 해석에 묶인 피로성 경계",
+  "stimulus_reading": "자극은 단순한 '나이 듦' 진술이 아니라, 이전과 달리 오후 피로와 아침 기상 곤란이 반복되면서 자기 몸 상태를 하강 신호로 읽은 것이다. 네트워크는 이를 슬픔이나 체념보다도 신체 이상/기능 저하를 감시하는 경계 상태로 처리했다.",
+  "appraisal": {
+    "primary_appraisal": "몸의 변화가 일시적 컨디션 문제가 아니라 지속적 저하나 노화의 징후일 수 있다는 위협 평가가 중심이다.",
+    "secondary_appraisal": "완전한 붕괴감보다는 상태를 계속 스캔하고 해석하려는 자기 관찰이 붙어 있으며, 통제감은 낮지만 완전히 포기한 상태는 아니다.",
+    "target": "self",
+    "control_state": "low",
+    "social_orientation": "withdraw"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 점화는 빠르고, 이후 급격히 커진 뒤 거의 전 구간에서 높은 지속성을 보인다. 즉 순간 감정 표출이 아니라, 한번 걸리면 오래 붙잡히는 피로-경계 episode다.",
+    "ignition": "tick 2-4에서 곧바로 '경계/날카로움'으로 점화됐고, 초반 dominant_signal도 '공세적 긴장'이라 입력이 들어오자마자 몸 상태를 문제 신호로 읽었다.",
+    "persistence": "tick 7 이후 127까지 persistence가 길게 이어지고 alarm과 fatigue가 함께 높다. peak_alarm은 중반(67), peak_fatigue는 마지막(127)이라 시간이 갈수록 단순 긴장보다 지친 경계로 굳어졌다.",
+    "resolution": "해결로 수렴하지 못하고 max_ticks 종료까지 '피로성 경계'가 유지됐다. 마지막 상태는 안정이나 수용이 아니라, 피곤함을 계속 경계 대상으로 붙들고 있는 미해소 상태다."
+  },
+  "action_tendency": "활동적으로 문제를 해결하기보다 몸 상태를 예민하게 모니터링하고, 무리하지 않으려 하며, 자기 기능 저하 해석을 반복하는 방향으로 간다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "medium",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "피곤함 자체보다 '이게 나이 탓인가, 몸이 예전 같지 않다'는 자기 저하 해석과 장기 지속되는 경계감을 남겨야 한다.",
+    "avoid": "단순 위로나 공감으로 '힘드시겠어요' 수준으로 축소하면 안 된다. 우울, 분노, 체념으로 섣불리 바꾸는 것도 왜곡이다.",
+    "tone_hint": "담담하지만 날것의 진단 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=피로성 경계",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "persistence_ratio=0.9844",
+    "peak_alarm_tick=67",
+    "peak_fatigue_tick=127",
+    "종결 사유가 termination_reason=max_ticks로, 해소 전에 지속 상태로 끝남",
+    "입력 내용: '감기도 잘 안 걸렸었는데 오후만 되면 너무 피곤하고 아침에도 잘 못 일어나겠어.'",
+    "입력 내용: '이제 나이가 들었나 봐.'"
+  ],
+  "confidence": 0.94
+}

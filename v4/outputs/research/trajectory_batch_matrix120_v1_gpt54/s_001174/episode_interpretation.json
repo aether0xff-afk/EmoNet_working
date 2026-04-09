@@ -1,0 +1,38 @@
+{
+  "episode_label": "실패 자극의 공세적 재도전 긴장",
+  "stimulus_reading": "자극은 단순한 낙담 표현이 아니라, '이번엔 정말 자신이 있었는데 또 면접에서 떨어졌다'는 반복 실패와 기대 붕괴다. 네트워크는 이를 순수한 좌절로 닫지 않고, 실패 원인 탐색과 다음 시도 준비가 결합된 고각성 경계 상태로 처리했다.",
+  "appraisal": {
+    "primary_appraisal": "예상했던 성공이 다시 무산되면서 위협과 결함 신호가 크게 점화되었다. 핵심 평가는 '내가 기대한 성과를 또 놓쳤고, 원인을 찾아 수정하지 않으면 같은 실패가 반복된다'이다.",
+    "secondary_appraisal": "동시에 통제 가능성이 완전히 붕괴되지는 않았고, 문제를 찾아 고치면 다음엔 바꿀 수 있다는 수행 지향 해석이 붙었다. 그래서 무기력 침잠보다 경계적 재정비와 추진이 유지되었다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "전형적인 고각성 지속형 episode다. 점화가 빠르고, 한 번 올라간 뒤 식지 않고 경계/날카로움과 공세적 긴장이 장시간 유지된다.",
+    "ignition": "tick 2부터 활성화가 급상승하며 초기 해석은 슬픔보다 경계와 긴장 쪽으로 붙었다. 실패 사실이 즉시 자기 평가와 다음 대응 계산을 자극한 것으로 보인다.",
+    "persistence": "tick 6-60의 긴 persistence 구간에서 alarm 우세가 계속 높고 persistence_ratio도 매우 높다. 이는 감정이 해소되기보다 '문제 규명-수정-재도전' 루프 안에서 계속 재활성화되고 있음을 뜻한다.",
+    "resolution": "마지막도 진정이나 수용으로 내려오지 않고 stable_convergence로 고정된다. 즉, 감정이 풀린 것이 아니라 '긴장된 채로 다음 행동 계획에 묶여 안정화'된 상태다."
+  },
+  "action_tendency": "원인 분석, 자기 수정, 준비 강화, 다음 기회에 대한 재도전으로 간다. 다만 차분한 학습 모드라기보다 실패 재발을 막으려는 압박형 노력 성향이 강하다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "실망 자체보다 '또 떨어졌다'는 반복 실패의 위협감, 그리고 그걸 바로 수정 과제로 전환하는 공세적 긴장을 남겨야 한다.",
+    "avoid": "단순한 희망, 담담한 반성, 건강한 동기부여로 순화하면 왜곡이다. 실제 내부 처리는 불안 성분이 섞인 압박형 재도전이다.",
+    "tone_hint": "건조하고 진단적으로, 날카로운 긴장과 수행 압박을 숨기지 않는 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "persistence_ratio=0.9672",
+    "peak_alarm_tick=54",
+    "문제점이 무엇이었는지 생각해보고 고쳐야지. 다음 번엔 꼭 붙을 수 있도록 더 노력 해야겠어."
+  ],
+  "confidence": 0.93
+}

@@ -1,0 +1,40 @@
+{
+  "episode_label": "존재 공허의 경계성 고착",
+  "stimulus_reading": "자극은 단순한 우울 호소가 아니라, 삶의 재미·목표·존재 이유가 비어 있다는 자기 진술이 연속으로 들어오면서 네트워크가 이를 해결 가능한 고민보다 위협적 공백으로 읽은 것이다. 이후 '남들도 그렇게 사니까 나도 그래야겠다'는 비교 기반 규범 동조가 붙으면서 공허가 해소되기보다 압박성 과제로 재부호화되었다.",
+  "appraisal": {
+    "primary_appraisal": "내 삶의 방향과 존재 이유가 비어 있으며, 나는 또래 기준에도 못 미친다는 결핍·위협 평가",
+    "secondary_appraisal": "해결책은 내적 욕구 발견이 아니라 사회적 평균을 따라가야 한다는 강제적 보정으로 해석됨",
+    "target": "mixed",
+    "control_state": "low",
+    "social_orientation": "withdraw"
+  },
+  "trajectory": {
+    "overall_pattern": "초기에는 억제적으로 받아들이다가 매우 짧은 점화 뒤 곧바로 고각성 경계 상태로 치솟고, 이후 거의 끝까지 풀리지 않은 채 지속되는 고착 패턴이다. 정서가 정리되거나 소거되지 않고 경계성 긴장이 장시간 유지된다.",
+    "ignition": "tick 5-7에서 완충/억제가 먼저 걸려 즉시 표현보다는 눌러 담는 처리로 시작했지만, 억제가 안정화로 이어지지 못하고 바로 다음 구간에서 급격한 활성 폭증이 발생했다.",
+    "persistence": "tick 9-127의 대부분을 공세적 긴장·경계/날카로움이 점유했고, persistence_ratio 0.9609, dominant_branch_len 123으로 보아 한 번 점화된 해석이 거의 수정 없이 반복 유지되었다. alarm과 drive가 함께 높아 무기력한 둔마보다는 불편한 각성과 압박이 계속 증폭된 상태다.",
+    "resolution": "실질적 해소 없이 max_ticks로 종료되었고, 마지막까지 peak_alarm이 후반부에 형성되어 수렴은 안정이 아니라 긴장 유지 쪽이다. 표면 문장 끝의 '나도 그래야겠어'는 수용이 아니라 자기 압박형 임시 봉합에 가깝다."
+  },
+  "action_tendency": "내적 의미 탐색보다는 타인 기준에 자신을 맞추려는 강박적 비교, 자기부정, 억지 목표 설정으로 기울 가능성이 높다. 행동으로는 적극적 활력보다 불안 섞인 자기 교정, 사회적 평균을 따라야 한다는 압박, 또는 지쳐서 후퇴하는 양방향이 공존하지만 기본 방향은 위축적이다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "공허감이 단순 슬픔이 아니라 존재 이유 상실과 비교 압박이 결합된 고각성 경계 상태라는 점",
+    "avoid": "이를 '목표를 찾는 중인 자연스러운 고민'이나 잔잔한 우울 정도로 순화하는 것",
+    "tone_hint": "차갑고 명료하게, 고착과 압박을 그대로 지적하는 톤"
+  },
+  "evidence": [
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "dominant_global_signal=공세적 긴장",
+    "peak_alarm_tick=123",
+    "persistence_ratio=0.9609",
+    "사는 게 재미없어. 또래 애들처럼 하고 싶은 것도 없고 잘할 수 있는 것도 없어.",
+    "나는 왜 태어났을까? 왜 사는 건지 이유를 모르겠어.",
+    "다들 원하는 직업도 갖고 연애도 하고 소소한 재미로 살겠지? 나도 그래야겠어."
+  ],
+  "confidence": 0.94
+}

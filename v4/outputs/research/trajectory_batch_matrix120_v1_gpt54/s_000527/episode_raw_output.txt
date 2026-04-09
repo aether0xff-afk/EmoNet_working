@@ -1,0 +1,38 @@
+{
+  "episode_label": "미점화된 승진 불안 예고",
+  "stimulus_reading": "자극 표면은 내일 발표되는 승진 심사와 그에 따른 생계·가족 보상 기대다. 그러나 네트워크 내부에서는 이 자극이 강한 감정 episode로 실제 점화되지 않고, 걱정 내용을 언어적으로만 제시한 뒤 처리 보류 상태에 머문 것으로 읽힌다.",
+  "appraisal": {
+    "primary_appraisal": "중요한 결과를 앞둔 평가 상황으로 읽혔지만, 내부적으로 위협·희망·압박 중 어느 한쪽도 활성 우세를 만들지 못한 미분화 예기 상태다.",
+    "secondary_appraisal": "승진은 월급 인상과 아들에게 장난감을 사주고 싶은 역할 책임과 연결되어 있으나, 그 의미 부여가 내부 alarm이나 drive를 실제로 끌어올리지는 못했다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "mixed"
+  },
+  "trajectory": {
+    "overall_pattern": "표면 서사는 불안과 초조를 말하지만, 실제 trajectory는 전 구간 dormant로 유지된 미점화 패턴이다.",
+    "ignition": "점화 구간이 사실상 없다. 시작 tick부터 active_nodes, alarm, drive가 모두 0으로 기록되어 자극이 내부 네트워크를 거의 건드리지 못했다.",
+    "persistence": "지속이나 증폭도 없다. phase가 하나뿐이고 persistence_ratio와 saturation_ratio가 모두 0이라 걱정이 반복 증폭된 episode가 아니라 처리 미발생 또는 보류로 보는 편이 맞다.",
+    "resolution": "마지막도 안정 수렴이라기보다 처음부터 끝까지 무색 상태가 유지된 채 종료되었다. 즉 해소된 감정이라기보다 끝내 본격 생성되지 않은 상태다."
+  },
+  "action_tendency": "즉각적 행동 성향은 강하지 않다. 바깥말로는 초조와 몰입 저하를 말하지만, 내부 처리 기준으로는 적극 대처·회피·방어 어느 쪽도 형성되지 않은 채 판단을 유예하고 결과를 기다리는 쪽에 가깝다.",
+  "rawness": {
+    "valence": "mixed",
+    "arousal": "low",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "표면 불안 진술과 내부 미활성화 사이의 괴리를 반드시 남겨야 한다. '중요하지만 아직 네트워크에서 감정 episode로 불붙지 않았다'는 결을 유지한다.",
+    "avoid": "실제 trace가 0인데 강한 불안, 공황, 절망으로 과장하면 안 된다. 반대로 상담식 위로로 의미를 덮어도 안 된다.",
+    "tone_hint": "건조하고 진단적으로, 표면 감정과 내부 처리의 불일치를 직접 지적"
+  },
+  "evidence": [
+    "입력 진술: \"이번 승진 심사를 통과할 수 있을지 모르겠어.\"",
+    "입력 진술: \"바로 내일이야. 일도 손에 안 잡히고 제정신이 아니야.\"",
+    "의미 부여 진술: \"이번에 승진한다면 아들이 갖고 싶었던 로봇 장난감을 사줄 수 있을 텐데.\"",
+    "GLOBAL_TRACE: \"dominant_global_signal=거의 무색\", \"signal_means=(drive=0.0000, brake=0.0000, alarm=0.0000, fatigue=0.0000)\"",
+    "TRAJECTORY: \"phase_sequence=dormant\", \"peak_alarm_tick=0\"",
+    "PHASE_SEGMENTS: \"dormant | tick 0-7 | duration=8 | active_nodes=0.00 | edges=0.00\""
+  ],
+  "confidence": 0.95
+}

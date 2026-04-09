@@ -1,0 +1,40 @@
+{
+  "episode_label": "침해 망상성 경계-보복 고착",
+  "stimulus_reading": "자극은 단순한 서운함이 아니라, 주변 혈육이 자신을 사람으로 대하지 않고 재산을 노리는 대상으로 취급한다는 해석이다. 특히 존중의 상실과 경제적 침탈 위협이 결합된 대인 자극으로 읽혔다.",
+  "appraisal": {
+    "primary_appraisal": "타인이 자신을 공경하지 않고 취약성을 이용해 재산을 빼앗으려 한다는 적대적·착취적 상황 평가가 핵심이다.",
+    "secondary_appraisal": "자신이 방어하지 않으면 손해를 입는다는 판단과 함께, 재산 통제를 끝까지 쥐고 버티겠다는 반격적 보존 의도가 붙어 있다.",
+    "target": "other",
+    "control_state": "mixed",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 미점화 뒤 짧은 점화와 급상승을 거쳐, 고경계 상태가 거의 끝까지 풀리지 않고 지속되는 장기 고착 패턴이다. 단발성 분출보다 의심과 방어가 구조화된 episode에 가깝다.",
+    "ignition": "tick 2-4에서 경계/날카로움이 빠르게 올라오고, 잠깐 억제 신호가 끼어들지만 곧 공세적 긴장으로 전환된다. 즉, 처음에는 다소 조절이 시도되나 위협 해석이 더 빨리 우세해진다.",
+    "persistence": "tick 7 이후 121틱 동안 경계/날카로움이 지속되고 persistence_ratio가 0.9844로 매우 높다. alarm 평균도 높고 peak_alarm이 후반부 tick 117에서 나타나, 시간이 지나도 누그러지기보다 의심이 유지·재점화되는 양상이다.",
+    "resolution": "실질적 해소 없이 max_ticks로 종료되며, 마지막도 공세적 긴장 우세 상태다. 수렴은 안정이 아니라 '계속 안 믿고 움켜쥔다'는 방어적 고정으로 끝난다."
+  },
+  "action_tendency": "주변인을 차단·의심하고, 자원 통제를 강화하며, 양보 대신 보복적 withholding(안 주기, 끝까지 쥐기)으로 간다. 관계 회복보다 착취 차단과 심리적 역공이 우선되는 상태다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "불신, 모욕감, 착취 위협, 재산 통제 집착이 결합된 공격적 방어의 결을 남겨야 한다.",
+    "avoid": "단순한 서운함, 일반적 분노, 막연한 불안으로 순화하면 왜곡이다. 특히 장기 지속된 경계 고착과 보복적 통제 욕구를 빼면 안 된다.",
+    "tone_hint": "차갑고 분석적으로, 적대 해석과 방어 고착을 직설적으로 기술"
+  },
+  "evidence": [
+    "주변인들에 대한 불신이 매우 뿌리깊어. 다들 유산만 노리고 있지.",
+    "정신이 멀쩡할 때는 어른 대접하더니 정신이 온전치 못하다고 면전에서 돈 많은 송장 취급해.",
+    "내가 어디 한 푼도 지들한테 주나 보라지. 이승 갈때도 모조리 싸들고 갈 테다.",
+    "dominant_global_signal=공세적 긴장",
+    "persistence_ratio=0.9844",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "peak_alarm_tick=117",
+    "persistence | tick 7-127 | duration=121 | dominant_signal=경계/날카로움"
+  ],
+  "confidence": 0.95
+}

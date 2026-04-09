@@ -1,0 +1,37 @@
+{
+  "episode_label": "위협 경계 속 관계 재평가",
+  "stimulus_reading": "자극은 단순히 '무서웠다'는 표면 감정이 아니라, 평소 다정하던 남자 친구가 술을 마신 뒤 난폭해졌다는 급격한 행동 변이였다. 네트워크는 이를 일시적 불쾌감보다 대인관계 내부의 안전성 붕괴 신호로 읽고, 놀람·공포·실망을 묶은 경계 episode로 처리했다.",
+  "appraisal": {
+    "primary_appraisal": "가까운 타인이 예측 불가능하고 잠재적으로 위해적이라는 해석이 핵심이다. 그래서 반응은 단순 슬픔보다 위협 감지와 경계 강화에 가깝다.",
+    "secondary_appraisal": "동시에 '원래는 다정한 사람'이라는 정보가 남아 있어 즉각 단절보다 관계를 다시 평가하고 통제 가능한 해법을 찾으려는 보조 해석이 붙는다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "mixed"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 미점화 뒤 빠르게 경계가 점화되고, 이후 거의 전 구간에서 높은 지속성을 가진 긴장 상태로 고착됐다. 급발화 후 꺼지는 패턴이 아니라 위협 평가가 오래 유지되는 persistence형이다.",
+    "ignition": "tick 2-4에서 활성 노드와 edge가 급증하며 '경계/날카로움'이 전면화됐다. 입력을 듣는 순간 사건을 모호한 불쾌감이 아니라 즉시 안전 문제로 태깅한 것이다.",
+    "persistence": "tick 5-82의 긴 persistence 구간에서 alarm과 drive가 함께 높게 유지됐다. 이는 얼어붙기보다는 계속 신경이 곤두선 채 상황을 붙들고 판단·대응하려는 상태이며, peak_alarm_tick=69까지 뒤늦게 재증폭된 점은 사건의 의미가 반복적으로 재평가되었음을 시사한다.",
+    "resolution": "종결은 진정이나 해소가 아니라 stable_convergence 형태의 긴장 고정이다. 마지막도 alarm 0.6158, drive 0.5999로 남아 있어 정서적으로 봉합된 것이 아니라 '대화/조치가 필요하다'는 방향으로 수렴했다."
+  },
+  "action_tendency": "즉시 친밀 접근보다 안전 확인, 경계 유지, 상대 행동의 원인과 재발 가능성 점검, 그리고 관계 규칙을 재설정하는 쪽으로 간다. 회피만도 아니고 공격만도 아니며, 경계심을 유지한 채 대면적 해결을 시도하는 성향이다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "놀람과 무서움뿐 아니라 '가까운 사람에게서 위협을 감지해 신뢰가 흔들린 상태'라는 결을 유지해야 한다.",
+    "avoid": "단순한 서운함, 일시적 갈등, 가벼운 실망으로 순화하면 안 된다. 또한 high arousal을 곧바로 분노로 오독하지도 말아야 한다.",
+    "tone_hint": "차갑고 진단적으로, 안전성과 관계 재평가를 중심에 둔 톤"
+  },
+  "evidence": [
+    "입력 진술에서 \"남자 친구가 술이 취하니까 난폭해져. 너무 놀라고 무서웠어.\"라고 되어 있어 자극이 직접적인 위협 감지로 들어왔다.",
+    "\"평소에는 다정하고 온순한데 술을 먹고 난폭한 모습을 보니까 정말 실망했어.\"라는 문장은 공포만이 아니라 기존 인물상 붕괴와 관계 재평가가 함께 일어났음을 보여준다.",
+    "GLOBAL_TRACE에서 dominant_global_signal이 \"공세적 긴장\"이고 signal_means가 drive=0.5770, alarm=0.6152로 높아, 단순 위축보다 경계 속 대응 준비가 우세했다.",
+    "TRAJECTORY에서 phase_sequence가 \"dormant -> ignition -> persistence\", persistence_ratio=0.9759로 나타나 일시 반응이 아니라 오래 지속되는 경계 episode였음을 뒷받침한다.",
+    "KEY_TICKS에서 peak_alarm_tick=69, tick=82의 combined=(drive=0.5999, brake=0.2326, alarm=0.6158, fatigue=0.2052)로 종료 시점까지 긴장이 낮아지지 않았다."
+  ],
+  "confidence": 0.93
+}

@@ -1,0 +1,38 @@
+{
+  "episode_label": "따뜻한 접근성 들뜸",
+  "stimulus_reading": "자극은 결혼 20주년을 앞두고 남편 선물을 고르는 상황과, 그 시간을 긍정적으로 회상하는 대화였다. 네트워크는 이를 단순한 정보가 아니라 관계 유지와 기념 행위를 향한 적극적 탐색 과제로 읽었다.",
+  "appraisal": {
+    "primary_appraisal": "가까운 관계를 확인하고 기념할 가치가 있는 상황으로 평가되었고, 준비 행위 자체가 즐거운 접근 과제로 처리되었다.",
+    "secondary_appraisal": "정서 강도는 꽤 높지만 위협 반응보다는 중요한 의미가 있는 사건을 앞둔 각성으로 보이며, 약한 긴장감은 선물 선택의 중요도와 관계 의미에서 온 것으로 해석된다.",
+    "target": "mixed",
+    "control_state": "high",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 미점화 후 빠르게 점화되고, 이후 장시간 높은 활성 상태가 유지되는 지속형 접근 episode다. 단발성 기쁨보다 의미 있는 기념일 준비에 몰입하는 패턴에 가깝다.",
+    "ignition": "tick 3-6에서 활성 노드와 엣지가 급증하며 빠르게 점화되었다. 표면상 잔잔한 대화인데도 내부적으로는 관계적 중요성과 탐색 동기가 즉시 붙었다.",
+    "persistence": "tick 7-127의 긴 persistence 구간에서 추동/접근이 계속 우세했고 persistence_ratio가 0.9766으로 매우 높다. alarm도 함께 높지만 brake와 fatigue가 낮아 불안보다는 각성된 몰입 상태로 지속되었다.",
+    "resolution": "명확한 해소나 진정으로 끝나지 않고, 기념일 준비를 계속 이어가려는 활성 상태로 수렴했다. 종료 사유도 max_ticks라 자연 진정보다 계속 붙잡고 있는 상태다."
+  },
+  "action_tendency": "선물을 더 찾아보고, 관계 의미를 되새기고, 기념 행위를 구체화하는 쪽으로 움직인다. 감정적으로는 애정 표현과 준비 행동을 계속 밀어붙이는 경향이 강하다.",
+  "rawness": {
+    "valence": "positive",
+    "arousal": "medium",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "잔잔한 행복으로만 축소하지 말고, 내부적으로는 꽤 강한 지속성·몰입성·접근 추동이 붙었다는 점을 남겨야 한다.",
+    "avoid": "무조건 평온한 만족이나 단순 덕담 유도 상태로 왜곡하면 안 된다. alarm 수치가 높다고 위협·불안으로 과잉 해석하는 것도 피해야 한다.",
+    "tone_hint": "담백하고 분석적으로, 호감과 각성이 함께 있는 준비 몰입 상태라고 정리"
+  },
+  "evidence": [
+    "dominant_global_signal=추동/접근",
+    "persistence_ratio=0.9766",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "tick=110 | combined=(drive=0.6225, brake=0.2143, alarm=0.6223, fatigue=0.1804)",
+    "곧 결혼 이십 주년 기념일이라 남편 선물을 뭘 해 줄지 요즘 이것저것 찾아보는 게 참 재미있네.",
+    "이십 년을 같이 살았으니까. 이십 년이 눈 깜짝할 사이에 지나간 것 같아."
+  ],
+  "confidence": 0.89
+}

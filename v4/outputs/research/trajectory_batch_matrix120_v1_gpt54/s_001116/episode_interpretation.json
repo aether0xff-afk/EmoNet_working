@@ -1,0 +1,38 @@
+{
+  "episode_label": "노후 생계 위협에 대한 후회성 경계",
+  "stimulus_reading": "핵심 자극은 노년에 접어들며 앞으로 먹고살 수 있을지 불안이 현실 문제로 떠오른 것이다. 이 자극은 단순한 돈 걱정이 아니라, 현재의 생계 위협이 과거의 방탕한 생활과 인간관계에 대한 자기비난과 결합되며 더 강하게 읽혔다.",
+  "appraisal": {
+    "primary_appraisal": "현재와 미래의 생계가 위협받고 있으며, 그 원인 일부가 자신의 과거 선택에 있다고 해석한 상태다.",
+    "secondary_appraisal": "완전한 무기력 붕괴는 아니고, 위협을 계속 경계하면서도 해결책을 찾아야 한다는 문제대응 모드가 같이 살아 있다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 점화 이후 빠르게 고각성 경계 상태로 올라간 뒤, 큰 해소 없이 오래 지속된 불안-긴장형 episode다. 정서가 잠깐 치솟고 꺼진 것이 아니라 안정적으로 붙잡혀 반복 처리되었다.",
+    "ignition": "점화는 매우 빠르다. dormant가 2틱뿐이고 곧바로 ignition으로 넘어가며 active_nodes와 edges가 급증해, 자극이 즉시 위협성 사안으로 분류되었음을 보여준다.",
+    "persistence": "이후 대부분 구간이 persistence로 채워졌고 persistence_ratio=0.9780, dominant_branch_len=89로 거의 전 구간을 점유했다. alarm 평균이 높고 dominant_global_signal이 공세적 긴장이라, 감정은 슬픔처럼 가라앉기보다 경계와 압박을 유지하며 지속됐다.",
+    "resolution": "종결은 해소가 아니라 stable_convergence다. 즉 해결되어 편안해진 것이 아니라, 걱정과 후회를 한 덩어리 위협으로 고정한 채 더 이상 큰 변화 없이 수렴한 상태다."
+  },
+  "action_tendency": "자기 탓을 곁들인 현실 점검, 손실 방어, 생계 대책 탐색으로 향한다. 다만 접근적 해결 시도는 존재해도 기반 정서는 안도나 희망이 아니라 '계속 대비해야 한다'는 경계라서, 행동은 적극적이라기보다 압박 기반의 방어적 정비 성향에 가깝다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "노후 생계 위협, 자기책임 해석, 후회, 그리고 해소되지 않은 고각성 경계의 결을 그대로 남겨야 한다.",
+    "avoid": "단순한 '걱정이 좀 있다' 수준으로 축소하거나, 상담식 위로 때문에 희망적 문제해결 정서로 과장하면 안 된다.",
+    "tone_hint": "담담하지만 날것의 압박을 숨기지 않는 진단적 톤"
+  },
+  "evidence": [
+    "\"머리 허연 노년이 되니 앞으로 먹고살 일이 걱정이네.\"",
+    "\"내가 이렇게 경제적 어려움을 겪으리라고는 생각을 못 했어. 지난날의 방탕한 생활과 인간관계가 후회돼.\"",
+    "\"trajectory_pattern=high_arousal_persistence\"",
+    "\"dominant_global_signal=공세적 긴장\"",
+    "\"persistence_ratio=0.9780\"",
+    "\"phase_sequence=dormant -> ignition -> persistence\""
+  ],
+  "confidence": 0.92
+}

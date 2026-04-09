@@ -1,0 +1,39 @@
+{
+  "episode_label": "공개적 배제에 대한 공세적 당혹-분노",
+  "stimulus_reading": "자극은 단순히 커피를 못 받은 사건이 아니라, 대표가 공개적인 장면에서 화자만 제외했다는 사회적 배제 신호로 읽혔다. 내부에서는 이 사건이 실수 가능성보다 노골적 차별과 체면 손상으로 우선 평가되었다.",
+  "appraisal": {
+    "primary_appraisal": "타인이 공개적으로 자신을 낮추고 배제했다는 위협/모욕 해석이 핵심이다.",
+    "secondary_appraisal": "주변 시선까지 의식되면서 사회적 평가 손상과 대응 불능감이 함께 붙었다. 그래서 분노와 당혹이 결합됐지만, 순수한 공격 충동보다는 날카로운 경계와 혼란이 같이 유지됐다.",
+    "target": "other",
+    "control_state": "mixed",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "짧게 점화된 뒤 오래 지속되는 고각성 방어 에피소드다. 고각성은 쉽게 꺼지지 않았고, 마지막까지 경계/날카로움과 공세적 긴장이 유지됐다.",
+    "ignition": "초기에는 거의 무색 상태였다가 tick 2부터 활성 노드와 edge가 급증하며 빠르게 점화됐다. 이때 drive도 있지만 alarm이 더 크게 붙어, 단순 불쾌가 아니라 위협성 있는 사회적 사건으로 해석된 흔적이 보인다.",
+    "persistence": "tick 5 이후 50틱 동안 persistence 구간이 이어졌고, persistence_ratio 0.9636으로 거의 흔들림 없이 유지됐다. alarm 평균이 높고 마지막 tick에서 peak_alarm에 도달해, 시간이 지나며 가라앉기보다 경계 해석이 누적된 상태다.",
+    "resolution": "종결 이유는 해소가 아니라 stable_convergence다. 즉 정리되거나 풀린 게 아니라, '대표의 행동은 말이 안 되는 차별이고 나는 화가 나지만 어떻게 할지 모르겠다'는 방어적 고각성 프레임으로 수렴했다."
+  },
+  "action_tendency": "즉각 화를 표출하거나 따지려는 충동은 있으나, 실제 행동 선택은 보류된 상태다. 따라서 행동 성향은 항의/문제제기 쪽으로 기울지만, 현재는 사회적 위험 계산 때문에 직접 행동보다 경계, 반추, 정당화 탐색으로 흐른다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "공개적 배제, 차별로 읽힌 모욕감, 높은 경계 상태, 그리고 화는 큰데 대응 경로는 불명확한 혼란을 그대로 남겨야 한다.",
+    "avoid": "단순 서운함, 예민함, 오해 가능성 정도로 축소하면 왜곡이다. 이미 내부 처리는 실수보다 노골적 차별/모욕 쪽에 강하게 기울어 있다.",
+    "tone_hint": "차갑고 명료하게, 방어적 긴장과 분노의 지속을 숨기지 않는 진단 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "peak_alarm_tick=54",
+    "persistence_ratio=0.9636",
+    "대표란 사람이 그렇게 공개적으로 차별 대우를 한다는 게 말이 안 되잖아. 다들 어떻게 생각했겠어.",
+    "너무 화가 나는데 뭘 어떻게 해야 할지 모르겠어."
+  ],
+  "confidence": 0.95
+}

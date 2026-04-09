@@ -1,0 +1,40 @@
+{
+  "episode_label": "긴장 섞인 성취추동",
+  "stimulus_reading": "자극은 '시험 점수가 잘 나와서 만족한다'는 성취 확인과, 그 성과를 다음 시험에도 재현하고 싶다는 미래지향적 목표 전환이다. 내부에서는 단순한 안도나 포만감보다 '좋은 결과를 유지해야 한다'는 과제화된 자극으로 읽혔다.",
+  "appraisal": {
+    "primary_appraisal": "현재 성취는 긍정적으로 평가되지만, 곧바로 다음 성과를 확보해야 하는 목표 압력으로 재해석되었다. 만족 자체보다 성과 유지와 재현 가능성이 핵심 평가축이다.",
+    "secondary_appraisal": "통제 가능성은 완전히 낮지 않다. 열심히 공부하면 다시 잘 볼 수 있다는 행위 경로가 잡혀 있어 접근 동기가 강하지만, 동시에 실패 가능성을 경계하는 긴장도 같이 붙어 있다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "전반 패턴은 긍정적 성취 자극이 즉시 고각성의 추진 상태로 전환되고, 이후 긴 시간 동안 식지 않고 유지되는 지속형 episode다. 편안한 만족이 아니라 목표추동과 경계가 같이 유지되는 수행 모드에 가깝다.",
+    "ignition": "초기 점화는 매우 짧지만 날카롭다. dormant 이후 곧바로 ignition에서 '경계/날카로움'과 '공세적 긴장'이 올라오며, 좋은 결과가 단순 보상으로 소비되지 않고 즉시 다음 과제 대비 신호로 변환되었다.",
+    "persistence": "persistence 구간이 123틱으로 매우 길고 persistence_ratio가 0.9844라서, 상태는 거의 끝까지 유지된다. drive와 alarm이 함께 높게 유지되어 들뜬 기대만도 아니고, 불안만도 아닌 '긴장된 추진'이 반복적으로 순환한다.",
+    "resolution": "명확한 해소 단계 없이 max_ticks로 종료되었다. 마지막도 여전히 '추동/접근'이 우세해 정서가 수습되어 가라앉았다기보다, 목표 준비 모드가 열린 채로 유지된 상태에서 끊긴 것이다."
+  },
+  "action_tendency": "성과를 발판으로 다음 목표를 세우고, 공부 계획을 강화하며, 기준을 유지·재현하려는 행동 성향으로 간다. 다만 이 추진은 편안한 자신감이 아니라 약한 경계가 계속 붙은 자기관리·성과추격 쪽이다.",
+  "rawness": {
+    "valence": "positive",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "만족은 있으나 정서는 곧바로 다음 성과 확보를 향한 고각성 추동으로 전환되었다는 점, 접근성과 경계가 동시에 지속된다는 점",
+    "avoid": "이를 단순한 '기쁨', '뿌듯함', '평온한 만족'으로 순화하는 것. 반대로 high arousal만 보고 불안이나 분노로 오독하는 것도 피해야 한다.",
+    "tone_hint": "담백하고 분석적으로, 성취 뒤에 붙은 긴장과 추진을 숨기지 않는 톤"
+  },
+  "evidence": [
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "dominant_global_signal=추동/접근",
+    "signal_means=(drive=0.5639, brake=0.2686, alarm=0.5628, fatigue=0.2093)",
+    "ignition | tick 2-4 | duration=3 | dominant_signal=경계/날카로움 | signal_conflict=0.9927",
+    "persistence | tick 5-127 | duration=123 | dominant_signal=추동/접근 | signal_conflict=0.9914",
+    "peak_alarm_tick=99",
+    "termination_reason=max_ticks"
+  ],
+  "confidence": 0.92
+}

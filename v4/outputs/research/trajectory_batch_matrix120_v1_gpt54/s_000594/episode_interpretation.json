@@ -1,0 +1,38 @@
+{
+  "episode_label": "들뜬 애착적 통제욕",
+  "stimulus_reading": "표면상 자극은 딸과의 좋은 관계에 대한 감사와 결혼 상상이다. 그러나 네트워크는 이를 단순한 따뜻함보다, 소중한 대상을 잃고 싶지 않아 향후 배우자 선택까지 개입하고 싶은 애착 기반 접근 충동으로 읽었다.",
+  "appraisal": {
+    "primary_appraisal": "매우 가치 있는 관계 대상을 곧 떠나보낼 수 있다는 예기적 상실이 점화되었고, 그 상실을 줄이기 위해 내가 관여하고 통제해야 한다는 해석이 핵심이다.",
+    "secondary_appraisal": "정서는 긍정 정동만이 아니라 아쉬움과 경계가 섞여 있다. alarm이 낮지 않은데도 dominant signal이 계속 접근으로 유지되어, 불안으로 물러서기보다 더 붙잡고 개입하려는 방향으로 처리됐다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "짧게 점화된 뒤 오래 지속되는 고각성 접근 패턴이다. 감정이 금방 지나가는 감사가 아니라, 관계 가치와 미래 개입 욕구가 계속 증폭되는 episode로 수렴했다.",
+    "ignition": "tick 2-4에서 활성 노드와 엣지가 급증하며 빠르게 점화됐다. 초기부터 drive와 alarm이 함께 올라, 따뜻함만이 아니라 '좋아서 더 붙들고 싶다'는 긴장 섞인 접근으로 시작했다.",
+    "persistence": "tick 5-51의 긴 persistence 구간에서 dominant signal이 계속 추동/접근으로 유지됐다. persistence_ratio 0.9615, dominant_branch_len 50은 이 상태가 쉽게 식지 않았음을 뜻하고, peak_alarm이 마지막 tick 51에 찍힌 것은 시간이 갈수록 상실 가능성과 개입 욕구가 함께 남았다는 뜻이다.",
+    "resolution": "종료 이유는 stable_convergence지만 정서 해소라기보다 방향 고정에 가깝다. 마지막 상태는 편안한 감사보다, 호의적이지만 소유적 결이 남은 접근 의지로 굳어진 상태다."
+  },
+  "action_tendency": "관계를 더 붙들고 싶어 하고, 미래 선택 과정에 개입하려 하며, 좋은 짝을 '내 기준으로' 확인·선별하려는 행동 성향으로 간다.",
+  "rawness": {
+    "valence": "mixed",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "감사와 애정 안에 예기적 상실, 아쉬움, 개입 욕구, 통제 성향이 같이 있다는 점",
+    "avoid": "그냥 훈훈한 부녀애나 순수한 감사로만 순화하는 것",
+    "tone_hint": "다정함을 인정하되 소유적이고 개입적인 내부 결을 분명히 드러내는 톤"
+  },
+  "evidence": [
+    "trajectory_pattern=high_arousal_persistence",
+    "dominant_global_signal=추동/접근",
+    "persistence_ratio=0.9615",
+    "peak_alarm_tick=51",
+    "이렇게 좋은 딸을 어찌 결혼시킬까 벌써부터 아쉽다니까.",
+    "사윗감은 꼭 내가 골라주고 싶어."
+  ],
+  "confidence": 0.9
+}

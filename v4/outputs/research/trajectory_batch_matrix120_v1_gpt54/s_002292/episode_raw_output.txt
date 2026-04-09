@@ -1,0 +1,41 @@
+{
+  "episode_label": "피로성 경계 속 회피적 중단 검토",
+  "stimulus_reading": "자극의 핵심은 단순한 '괴로움' 표현이 아니라, 신체 이상(이명·돌발성 난청)이 학습 지속 가능성을 직접 흔들고 있다는 판단이다. 즐거움 상실과 신체 무리 인식이 결합되며, 현재 공부를 계속해야 하는지 자체가 문제로 재구성되었다.",
+  "appraisal": {
+    "primary_appraisal": "상황이 견딜 만한 불편이 아니라 지속 시 손상이 커질 수 있는 위협으로 읽혔다. 그래서 정서 코어는 우울한 체념보다 경계와 부담 점검에 가깝다.",
+    "secondary_appraisal": "배우는 내용의 무의미감이 붙으면서, 노력 대비 보상이 낮고 계속 밀어붙일 명분도 약하다는 해석이 추가되었다. 즉 '아프지만 버텨야 하나'가 아니라 '이 상태로 계속하는 게 맞나'로 이동했다.",
+    "target": "mixed",
+    "control_state": "low",
+    "social_orientation": "withdraw"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 미점화 뒤 빠르게 경계 반응이 붙고, 짧은 급상승 후 장시간 풀리지 않는 피로성 경계로 고착된 패턴이다. 폭발적 분노나 단기 슬픔이 아니라, 위협 감시와 소모가 길게 유지되는 episode다.",
+    "ignition": "tick 3부터 활성 노드가 급증하며 '공세적 긴장'이 점화됐다. 입력의 신체 손상성과 공부 지속 여부가 즉시 위험-판단 회로를 건드린 것으로 보인다.",
+    "persistence": "tick 7 이후 121틱 동안 '경계/날카로움'이 지속되고, 후반부에는 '피로성 경계'가 우세하다. persistence_ratio 0.9766과 dominant_branch_len 125는 이 상태가 쉽게 해소되지 않고 내부적으로 반복 점검됐음을 시사한다.",
+    "resolution": "명확한 해소 없이 종료됐다. 마지막도 alarm 0.5754, fatigue 0.2996 수준의 피로성 경계로 남아 있어, 결론은 안정보다 '쉬거나 중단해야 한다'는 쪽으로 수렴했지만 정서적으로는 덜어진 상태가 아니다."
+  },
+  "action_tendency": "지금 상태는 적극 해결보다 부담원에서 물러나 휴식·중단·거리두기를 택하려는 성향으로 간다. 동시에 완전한 포기 결심보다는 '계속해도 되나'를 반복 점검하는 신중한 회피가 강하다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "medium",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "신체 이상이 학습 의욕 저하의 부차적 핑계가 아니라, 지속 자체를 위협으로 바꿔 놓았다는 결을 유지해야 한다.",
+    "avoid": "단순한 '힘들지만 휴식이 필요함' 수준으로 순화하면 안 된다. 내부 처리는 이미 흥미 저하 + 손상 우려 + 지속 회의가 결합된 경계 상태다.",
+    "tone_hint": "차갑고 명료하게, 과도한 위로나 낙관 없이 진단적으로"
+  },
+  "evidence": [
+    "dominant_global_signal=피로성 경계",
+    "termination_reason=max_ticks",
+    "persistence_ratio=0.9766",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "peak_alarm_tick=104",
+    "peak_fatigue_tick=125",
+    "tick=127 | dominant_signal=피로성 경계 | combined=(drive=0.2542, brake=0.2499, alarm=0.5754, fatigue=0.2996)",
+    "이명도 심하고 돌발성 난청 때문에 괴로운데 지금 배우고 있는 내용도 재미없고 힘들어.",
+    "이렇게 몸을 무리해가면서 계속 이 공부를 해야 하는지도 잘 모르겠어."
+  ],
+  "confidence": 0.93
+}

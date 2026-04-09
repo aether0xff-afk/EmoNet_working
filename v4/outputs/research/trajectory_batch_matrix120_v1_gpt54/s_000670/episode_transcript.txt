@@ -1,0 +1,55 @@
+[SAMPLE]
+id=s_000670
+
+[INPUT_TEXT]
+학폭위에서 내가 당했던 일을 폭력으로 인정할 수 없대. [SEP] 학폭위에서 결정한 사항 때문에 화가 나시겠어요. [SEP] 학폭위는 나한테 전혀 도움이 되지를 않네. [SEP] 학폭위는 나한테 전혀 도움이 되지를 않는군요. 이 상황을 변화시키기 위해 무엇을 할 수 있을까요? [SEP] 증거가 있으니까 경찰에 신고를 해야겠어. [SEP] 네 경찰에 신고해서 잘 해결되기를 바라요.
+
+[GLOBAL_TRACE]
+- ticks_run=58
+- termination_reason=stable_convergence
+- dominant_branch_len=55
+- active_tick_count=56
+- persistence_ratio=0.9655
+- saturation_ratio=0.8941
+- dominant_global_signal=공세적 긴장
+- signal_means=(drive=0.2765, brake=0.2329, alarm=0.5768, fatigue=0.1945)
+- node_mix=(inh=0.4487, exc=0.4516, mod=0.0997)
+
+[TRAJECTORY]
+- trajectory_pattern=high_arousal_persistence
+- phase_count=4
+- phase_sequence=dormant -> ignition -> escalation -> persistence
+- peak_alarm_tick=44
+- peak_fatigue_tick=9
+- peak_conflict_tick=0
+
+[PHASE_SEGMENTS]
+- dormant | tick 0-1 | duration=2 | active_nodes=0.00 | edges=0.00 | dominant_signal=추동/접근 | signal_conflict=1.0000
+- ignition | tick 2-4 | duration=3 | active_nodes=15.00 | edges=101.00 | dominant_signal=경계/날카로움 | signal_conflict=0.9342
+- escalation | tick 5-6 | duration=2 | active_nodes=147.00 | edges=1005.50 | dominant_signal=경계/날카로움 | signal_conflict=0.9418
+- persistence | tick 7-57 | duration=51 | active_nodes=253.65 | edges=1559.90 | dominant_signal=경계/날카로움 | signal_conflict=0.7451
+
+[KEY_TICKS]
+- tick=0 | active_nodes=0 | edges_fired=0 | dominant_signal=거의 무색 | combined=(drive=0.0000, brake=0.0000, alarm=0.0000, fatigue=0.0000) | mix=(inh=0.0000, exc=0.0000, mod=0.0000)
+- tick=2 | active_nodes=3 | edges_fired=23 | dominant_signal=경계/날카로움 | combined=(drive=0.2085, brake=0.2277, alarm=0.3288, fatigue=0.2067) | mix=(inh=0.0000, exc=0.0000, mod=1.0000)
+- tick=5 | active_nodes=91 | edges_fired=645 | dominant_signal=공세적 긴장 | combined=(drive=0.2775, brake=0.2448, alarm=0.3337, fatigue=0.2109) | mix=(inh=0.3516, exc=0.5385, mod=0.1099)
+- tick=7 | active_nodes=250 | edges_fired=1624 | dominant_signal=공세적 긴장 | combined=(drive=0.2975, brake=0.2485, alarm=0.3709, fatigue=0.2267) | mix=(inh=0.4400, exc=0.4600, mod=0.1000)
+- tick=9 | active_nodes=253 | edges_fired=1615 | dominant_signal=공세적 긴장 | combined=(drive=0.3137, brake=0.2411, alarm=0.4225, fatigue=0.2323) | mix=(inh=0.4506, exc=0.4466, mod=0.1028)
+- tick=44 | active_nodes=253 | edges_fired=1537 | dominant_signal=공세적 긴장 | combined=(drive=0.2846, brake=0.2319, alarm=0.5796, fatigue=0.1937) | mix=(inh=0.4466, exc=0.4545, mod=0.0988)
+- tick=57 | active_nodes=254 | edges_fired=1513 | dominant_signal=공세적 긴장 | combined=(drive=0.2611, brake=0.2309, alarm=0.5787, fatigue=0.1921) | mix=(inh=0.4488, exc=0.4528, mod=0.0984)
+
+[TOP_ACTIVE_NODES]
+- node=58 | type=excitatory | bias=공세적 긴장 | activity_ticks=54 | k_mean=595.7701 | stim=(drive=0.1199, brake=0.0077, alarm=0.9311, fatigue=0.0178)
+- node=66 | type=excitatory | bias=공세적 긴장 | activity_ticks=54 | k_mean=581.2780 | stim=(drive=0.1345, brake=0.0054, alarm=0.9335, fatigue=0.0177)
+- node=186 | type=excitatory | bias=추동/접근 | activity_ticks=54 | k_mean=581.0934 | stim=(drive=0.1396, brake=0.0109, alarm=0.9197, fatigue=0.0267)
+- node=208 | type=excitatory | bias=추동/접근 | activity_ticks=54 | k_mean=558.1347 | stim=(drive=0.1786, brake=0.0075, alarm=0.9280, fatigue=0.0202)
+- node=27 | type=excitatory | bias=공세적 긴장 | activity_ticks=53 | k_mean=567.3516 | stim=(drive=0.1067, brake=0.0087, alarm=0.9352, fatigue=0.0138)
+- node=198 | type=excitatory | bias=추동/접근 | activity_ticks=53 | k_mean=564.1774 | stim=(drive=0.0758, brake=0.0062, alarm=0.9282, fatigue=0.0232)
+- node=214 | type=excitatory | bias=추동/접근 | activity_ticks=53 | k_mean=557.2667 | stim=(drive=0.1335, brake=0.0078, alarm=0.9328, fatigue=0.0168)
+- node=203 | type=excitatory | bias=추동/접근 | activity_ticks=53 | k_mean=548.3120 | stim=(drive=0.1592, brake=0.0038, alarm=0.9462, fatigue=0.0142)
+
+[IMPORTANT]
+- 감정은 입력 자극 자체가 아니라, 이 자극이 네트워크 안에서 어떻게 점화되고 지속되고 충돌하고 수렴하는지의 episode로 해석한다.
+- 단일 high-arousal 상태를 자동으로 분노로 단정하지 않는다.
+- 접근 신호가 크고 alarm이 지배적이지 않다면 기대/호감/들뜸 같은 positive arousal 가능성을 검토한다.
+- 활성화가 거의 없으면 강한 감정을 꾸며내지 말고 미점화, 보류, anticipatory state 가능성을 명시한다.

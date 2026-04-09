@@ -1,0 +1,38 @@
+{
+  "episode_label": "상실 자극에 대한 공세적 결핍-대응 활성화",
+  "stimulus_reading": "핵심 자극은 말벗이던 청년의 부재로 인해 반복되던 관계 접점이 끊긴 것이다. 네트워크는 이를 단순한 슬픔보다, 삶의 낙 상실이 만든 결핍과 그 공백을 메우려는 긴장된 대응 과제로 읽었다.",
+  "appraisal": {
+    "primary_appraisal": "중요한 정서적 자원이 사라져 현재 상태가 결핍되고 위협받았다는 해석이 중심이다.",
+    "secondary_appraisal": "완전한 무기력으로 가기보다 새로운 연결을 찾아야 한다는 접근적 과제가 즉시 붙으면서, 외로움이 곧 행동 압력으로 전환됐다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "approach"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 점화 후 매우 빠르게 고각성 상태로 올라간 뒤, 진정되지 않고 장시간 경계/날카로움과 공세적 긴장이 유지된 패턴이다. 이는 단순한 애도보다는 결핍을 메우려는 지속적 사회적 탐색 압력이 붙은 episode다.",
+    "ignition": "tick 2부터 활성 노드가 급증하고 추동/접근이 먼저 살아난다. 즉 자극은 슬픔으로 얼어붙기보다 '이 공백을 어떻게든 처리해야 한다'는 방향으로 점화됐다.",
+    "persistence": "tick 6 이후 종료 직전까지 persistence가 유지되고 alarm과 drive가 함께 높다. 외로움 표면 아래에 경계와 추진이 함께 지속되어, 정서가 가라앉지 않고 해결 지향 긴장으로 증폭된 상태다.",
+    "resolution": "termination_reason은 stable_convergence지만 실제 정서 완화라기보다, 긴장된 대응 모드가 안정적으로 굳어진 수렴이다. 마지막도 공세적 긴장이 우세해 정서적 안도보다 행동 계획 쪽으로 수렴했다."
+  },
+  "action_tendency": "새로운 사회적 접점을 만들고 공백을 메우려는 쪽으로 움직인다. 다만 정서가 충분히 소화된 평온한 탐색이 아니라, 외로움과 상실을 견디기 위한 다소 절박한 접근 행동 성향이다.",
+  "rawness": {
+    "valence": "mixed",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "외로움 자체보다 관계 상실이 촉발한 결핍감, 그리고 그 결핍이 곧바로 대체 관계 탐색의 긴장으로 바뀌는 결을 남겨야 한다.",
+    "avoid": "이를 단순한 잔잔한 슬픔, 따뜻한 희망, 안정적 적응으로 순화하면 안 된다. 실제 trace는 고지속 고각성의 경계-접근 혼합 상태다.",
+    "tone_hint": "담백하고 진단적으로, 위로나 미화 없이 설명"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "persistence_ratio=0.9770",
+    "peak_alarm_tick=75",
+    "signal_means=(drive=0.5410, brake=0.2640, alarm=0.5645, fatigue=0.2105)"
+  ],
+  "confidence": 0.91
+}

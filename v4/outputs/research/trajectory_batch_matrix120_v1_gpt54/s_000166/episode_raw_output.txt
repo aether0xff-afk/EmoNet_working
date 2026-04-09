@@ -1,0 +1,40 @@
+{
+  "episode_label": "배제 위협에 대한 경계성 위축",
+  "stimulus_reading": "자극은 단순한 '친구 사귀기 실패'가 아니라, 낯선 환경에서 먼저 다가갔음에도 '동양인이라 잘 안 끼워준다'는 사회적 배제 신호로 읽혔다. 이 자극은 관계 형성 실패보다 정체성 기반 거절과 소속 위협으로 처리된 흔적이 강하다.",
+  "appraisal": {
+    "primary_appraisal": "타인 집단이 자신을 배제하고 있으며, 노력으로도 잘 바뀌지 않는 사회적 위협 상황이라는 해석이 핵심이다.",
+    "secondary_appraisal": "자기 효능감 저하와 기운 저하가 동반되지만, 완전한 무기력보다는 계속 경계하고 의미를 붙잡는 상태가 남아 있다.",
+    "target": "mixed",
+    "control_state": "low",
+    "social_orientation": "withdraw"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 점화가 빠르고 이후 높은 경계 상태가 오래 지속된, 단기 분출형이 아니라 장기 체류형 사회적 위협 episode다.",
+    "ignition": "tick 2-5에서 활성 노드와 엣지가 급증했고 dominant signal이 곧바로 '공세적 긴장'과 '경계/날카로움'으로 넘어가며, 입력이 즉시 방어적 해석을 촉발했다.",
+    "persistence": "tick 6-107의 긴 persistence 구간과 persistence_ratio 0.9815는 감정이 해소되지 않고 거의 전 구간 유지되었음을 뜻한다. alarm 평균 0.5765, peak_alarm_tick 85, dominant_global_signal '공세적 긴장'은 상처받음이 단순 슬픔에 머무르지 않고 지속적 경계와 예민함으로 굳어졌다는 증거다.",
+    "resolution": "termination_reason은 stable_convergence지만 진정이나 회복으로 수렴한 것이 아니라, 높은 alarm과 공세적 긴장이 안정적으로 고착된 상태로 끝났다."
+  },
+  "action_tendency": "다시 다가가고 싶은 동력은 일부 남아 있으나 실제 행동 성향은 관계 시도 축소, 타인 반응 과해석, 스스로 위축, 배제 가능성에 대한 선제 경계로 기울어져 있다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "배제당했다는 해석, 노력했는데도 막혔다는 무력감, 그리고 슬픔보다 경계와 예민함이 오래 남는 결을 유지해야 한다.",
+    "avoid": "단순 외로움, 일시적 서운함, 문화 적응 스트레스 정도로 순화하면 왜곡된다. 회복 직전 상태처럼 묘사하는 것도 부정확하다.",
+    "tone_hint": "공감체보다 진단체, 완곡어법보다 단정적이고 차가운 분석 톤"
+  },
+  "evidence": [
+    "동양인이라고 잘 안 끼워줘. 웃으면서 먼저 다가가려고 노력했는데.",
+    "응. 자신감 떨어지고 기운 꺾여.",
+    "dominant_global_signal=공세적 긴장",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "persistence_ratio=0.9815",
+    "signal_means=(drive=0.2537, brake=0.2258, alarm=0.5765, fatigue=0.1909)",
+    "peak_alarm_tick=85",
+    "tick=107 | dominant_signal=공세적 긴장 | combined=(drive=0.2532, brake=0.2257, alarm=0.5768, fatigue=0.1905)"
+  ],
+  "confidence": 0.91
+}

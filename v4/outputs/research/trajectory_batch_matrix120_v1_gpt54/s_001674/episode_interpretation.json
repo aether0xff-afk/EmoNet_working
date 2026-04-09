@@ -1,0 +1,38 @@
+{
+  "episode_label": "수치와 압박이 섞인 공세적 긴장",
+  "stimulus_reading": "자극은 노년기에 배우자의 치매로 인해 이혼을 원하게 된 상황 자체와, 그 결정을 주변 친구들에게도 말하지 못하는 사회적 노출 위험이다. 네트워크는 이를 단순한 슬픔보다 관계 붕괴·돌봄 부담·체면 손상 가능성이 한꺼번에 걸린 위협 상황으로 읽었다.",
+  "appraisal": {
+    "primary_appraisal": "통제하기 어려운 배우자 문제와 늦은 나이의 이혼이라는 낙인 가능성이 결합된 고위협 상황으로 해석되었다.",
+    "secondary_appraisal": "도움 요청이나 공개적 접근보다는 체면 손상과 대인 판단을 경계하면서 내부 긴장을 높이는 쪽으로 처리되었다.",
+    "target": "mixed",
+    "control_state": "low",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "초기에는 억제와 완충이 먼저 걸렸지만 곧 경계 신호가 급팽창했고, 이후 긴장이 해소되지 않은 채 장시간 지속되는 고각성 지속 패턴으로 수렴했다.",
+    "ignition": "tick 3-5에서 완충/억제가 우세한 것은 즉각 표출보다 눌러 담기와 자기검열이 먼저 작동했음을 시사한다.",
+    "persistence": "tick 6 이후 경계/날카로움이 지배하고, persistence 구간이 55틱 지속되며 alarm이 끝까지 높게 유지되어 단발성 슬픔이 아니라 계속 버티는 위협 감시 상태로 증폭되었다.",
+    "resolution": "마지막도 진정이 아니라 stable_convergence 상태의 공세적 긴장으로 끝난다. 즉 풀린 것이 아니라 긴장된 해석이 굳어졌다."
+  },
+  "action_tendency": "감정 episode는 울적함보다 방어적 결단, 관계 거리두기, 말 아끼기, 외부 평가를 피하면서도 내부적으로는 이혼 같은 강한 출구를 계속 밀어붙이는 방향으로 간다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "슬픔만이 아니라 수치, 경계, 결단 충동이 함께 있는 날선 긴장감을 남겨야 한다.",
+    "avoid": "그냥 속상함이나 외로움으로 순화하면 안 된다. 내부 처리의 핵심은 사회적 난감함을 동반한 위협 감시와 방어적 추진이다.",
+    "tone_hint": "담담하지만 직설적으로, 눌린 분노와 방어성을 숨기지 않는 톤"
+  },
+  "evidence": [
+    "늙어서 이혼하려고 하니 친구들에게도 말을 못 하겠어.",
+    "노년기가 되니 남편이 치매가 생겨서 이혼하고 싶어.",
+    "trajectory_pattern=high_arousal_persistence",
+    "dominant_global_signal=공세적 긴장",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "peak_alarm_tick=58"
+  ],
+  "confidence": 0.93
+}

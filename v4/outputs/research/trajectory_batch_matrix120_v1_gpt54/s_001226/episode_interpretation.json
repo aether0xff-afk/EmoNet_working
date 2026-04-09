@@ -1,0 +1,38 @@
+{
+  "episode_label": "반복노동에 대한 공세적 혐오-긴장",
+  "stimulus_reading": "자극은 대인 갈등 사건이 아니라, 매일 같은 업무가 누적적으로 반복된다는 구조적 단조로움이다. 입력 문장 자체의 핵심은 슬픔보다 지루함의 한계 초과이며, 네트워크는 이를 단순 피로가 아니라 경계가 선 채 유지되는 고각성 불쾌 상태로 읽었다.",
+  "appraisal": {
+    "primary_appraisal": "현재 상황을 소모적이고 역겨우며 계속 견뎌야 하는 압박적 환경으로 해석했다. 즉 '재미없다' 수준이 아니라 반복이 신체적 거부감까지 유발하는 혐오성 자극으로 평가됐다.",
+    "secondary_appraisal": "통제 가능성은 낮거나 제한적이지만, 완전히 체념한 무기력보다는 내부적으로 밀어내고 싶어 하는 접근성 긴장이 함께 유지됐다. 그래서 순수 탈진보다 '짜증-경계-거부'가 지속되는 형식에 가깝다.",
+    "target": "situation",
+    "control_state": "low",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 미점화 후 빠르게 날카로운 경계 상태로 점화되고, 짧은 상승 뒤 거의 전 구간에서 고각성 상태가 오래 지속된 episode다. 해소보다 유지가 핵심이다.",
+    "ignition": "tick 3부터 즉시 '경계/날카로움'이 우세해졌고, 짧은 시간 안에 활성 노드와 발화 엣지가 급증했다. 이는 반복 업무에 대한 불쾌 평가가 빠르게 방어적 긴장으로 조직됐다는 뜻이다.",
+    "persistence": "tick 7 이후 62틱 동안 persistence가 이어졌고, 전체 persistence_ratio도 0.9565로 매우 높다. alarm 평균이 0.5673으로 지배적이며 후반 peak_alarm_tick이 65인 점을 보면 시간이 지나며 가라앉기보다 오히려 경계성 불쾌가 굳어졌다.",
+    "resolution": "termination_reason은 stable_convergence지만 정서적 해소가 아니라 공세적 긴장 상태로의 안정 수렴이다. 마지막도 낮아진 상태가 아니라 '공세적 긴장'이 유지된 채 끝난다."
+  },
+  "action_tendency": "상황을 계속 받아들이기보다 밀어내고 싶어 하며, 반복 원천으로부터 거리를 두거나 표현 수위를 높여 불쾌를 배출하려는 성향으로 간다. 즉 조용한 우울 반응보다 '더는 못 견디겠다'는 식의 방어적 항의, 회피, 일시적 이탈 충동이 더 강하다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "지겨움이 단순 피곤함이 아니라 혐오와 긴장으로 증폭된 점, 그리고 해소되지 않고 오래 유지된 공세적 성질을 남겨야 한다.",
+    "avoid": "이를 그저 '회사 생활이 힘들어 지친 상태' 정도로 순화하면 왜곡이다. 무기력/우울로만 번역하거나 공감성 위로로 덮으면 내부 처리의 날카로움이 사라진다.",
+    "tone_hint": "건조하고 진단적으로, 불쾌의 강도와 지속성을 직접적으로 적시하는 톤"
+  },
+  "evidence": [
+    "\"trajectory_pattern=high_arousal_persistence\"",
+    "\"phase_sequence=dormant -> ignition -> escalation -> persistence\"",
+    "\"dominant_global_signal=공세적 긴장\"",
+    "\"signal_means=(drive=0.2459, brake=0.2365, alarm=0.5673, fatigue=0.1944)\"",
+    "\"peak_alarm_tick=65\"",
+    "\"그냥 매일 반복되는 일을 계속하다 보니 힘이 드네. 지겨워서 토가 나올 것만 같아.\""
+  ],
+  "confidence": 0.93
+}

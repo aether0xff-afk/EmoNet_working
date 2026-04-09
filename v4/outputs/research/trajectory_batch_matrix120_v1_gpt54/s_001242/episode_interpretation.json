@@ -1,0 +1,38 @@
+{
+  "episode_label": "방식 침해에 따른 공세적 반발",
+  "stimulus_reading": "자극은 어머니의 공부 방식에 대한 반복적이고 세세한 간섭이다. 네트워크는 이를 단순한 불쾌감이 아니라 자기 방식이 흔들리고 자율성이 침해되는 사건으로 읽었다.",
+  "appraisal": {
+    "primary_appraisal": "타인이 내 수행 방식과 기준을 침범해 자기효능감과 자율성을 깎는 상황이라는 해석이 핵심이다.",
+    "secondary_appraisal": "간섭이 단순 귀찮음에서 끝나지 않고 '내 공부 방식이 잘못된 것 같다'는 자기 의심을 유발해, 반발과 위축이 동시에 걸리는 혼합 평가가 붙어 있다.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "mixed"
+  },
+  "trajectory": {
+    "overall_pattern": "짧은 억제 후 빠르게 고각성 경계 상태로 올라가 장시간 유지되는 지속형 episode다. 일시적 서운함보다 공격적 긴장과 방어적 경계가 오래 붙잡힌 패턴이다.",
+    "ignition": "초기에는 완충/억제 우세로 바로 폭발하지 않고 눌러 담는 구간이 먼저 형성된다. 그러나 점화 직후 활성 노드와 엣지가 급증하면서 상황을 '참고 넘길 일'이 아니라 대응이 필요한 침해로 재분류한다.",
+    "persistence": "상승 이후에는 경계/날카로움과 공세적 긴장이 거의 전 구간 유지된다. persistence ratio와 saturation ratio가 높고, alarm과 drive가 함께 높아 단순 낙담보다 계속 신경이 곤두선 반발 상태가 지속된 것이다.",
+    "resolution": "마지막은 진정 해소가 아니라 stable_convergence 형태의 고정화다. 즉 감정이 풀린 것이 아니라 '솔직하게 말해야겠다, 시도는 해보겠다'는 대응 방향으로 굳어졌다고 보는 편이 맞다."
+  },
+  "action_tendency": "계속 참고 있기보다는 경계심을 유지한 채 직접 말하고 경계를 설정하려는 쪽으로 간다. 다만 자기 의심이 섞여 있어 정면 대치와 주저가 함께 존재하는, 방어적 접근 행동 성향이다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "간섭을 자율성 침해로 읽은 점, 불쾌감보다 공세적 긴장과 반발이 오래 지속된 점, 자기 의심이 동시에 붙은 혼합 상태를 남겨야 한다.",
+    "avoid": "그냥 '속상함'이나 '대화 의지'로 순화하면 왜곡이다. 이미 내부에서는 장시간 경계가 유지됐고, 해결보다 대응 준비 쪽으로 수렴했다는 점을 지워선 안 된다.",
+    "tone_hint": "차갑고 분석적으로, 과잉 위로 없이 진단적으로"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "persistence | tick 8-86 | duration=79 | dominant_signal=경계/날카로움 | signal_conflict=0.9478",
+    "signal_means=(drive=0.5661, brake=0.2543, alarm=0.5818, fatigue=0.2100)",
+    "어머니가 너무 간섭하니까 내 공부 방식이 잘못된 것 같아서 오히려 하기 싫어져."
+  ],
+  "confidence": 0.94
+}

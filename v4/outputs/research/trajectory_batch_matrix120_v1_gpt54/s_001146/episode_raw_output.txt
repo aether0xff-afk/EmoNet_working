@@ -1,0 +1,37 @@
+{
+  "episode_label": "방어적 자살사고 경계 고착",
+  "stimulus_reading": "자극의 핵심은 '안 아픈 지금 죽는 게 낫다'는 자기 소거형 판단이다. 네트워크는 이를 단순한 우울 호소가 아니라, 실행 가능성을 동반한 위협적 판단 신호로 읽고 빠르게 경계 상태로 점화했다.",
+  "appraisal": {
+    "primary_appraisal": "현재 삶의 지속보다 종료가 더 낫다는 결론이 내부에서 위험 신호로 처리되며, 자기 대상 위협이자 즉각 관리가 필요한 사태로 평가되었다.",
+    "secondary_appraisal": "표면 대화는 곧바로 '많이 우울한 기분'과 '운동'으로 순화되지만, 내부에서는 그 순화보다 원문 진술의 자해/자살 함의가 더 강하게 남아 긴장 상태가 유지되었다.",
+    "target": "self",
+    "control_state": "mixed",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 무색 상태 뒤에 급격한 점화와 짧은 증폭을 거쳐, 해소 없이 장시간 경계 상태에 고착된 패턴이다. 혼합형으로 표시되지만 실제 운영상은 고각성 방어 지속에 가깝다.",
+    "ignition": "tick 2부터 활성 노드와 엣지가 급증했고, 지배 신호가 곧바로 '경계/날카로움'과 '공세적 긴장'으로 이동했다. 이는 입력 문장의 자살사고가 내부에서 민감한 위협 판단을 즉시 촉발했음을 뜻한다.",
+    "persistence": "tick 7 이후 121틱 동안 persistence가 유지되고 persistence_ratio가 0.9844에 달한다. alarm 평균 0.6124, dominant_global_signal이 '공세적 긴장'이며 peak_alarm_tick이 120인 점에서, 시간 경과에도 진정되지 않고 오히려 후반까지 경계가 유지·증폭되었다.",
+    "resolution": "종결은 안정화가 아니라 max_ticks에 의한 강제 종료다. 마지막 시점에도 drive와 alarm이 모두 높아 내부 episode는 수습보다는 미해결 경계 상태로 남아 있다."
+  },
+  "action_tendency": "상담적 위로나 정서 공감으로 풀기보다, 위험 신호를 붙들고 통제·차단·관리 방향으로 반응하려는 성향이다. 즉 접근적 따뜻함보다 위협 대응형 개입, 상황 정리, 추가 확인 쪽으로 기울어져 있다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "자살사고가 단순 울적함으로 축소되지 않았고, 내부적으로는 고위험 자기위협 신호로 오래 붙들렸다는 점",
+    "avoid": "'그냥 우울함', '기분 전환 필요' 수준으로 순화하는 것, 후반의 운동 제안을 해소로 오판하는 것",
+    "tone_hint": "건조하고 직설적으로, 위험도와 지속성을 숨기지 않는 톤"
+  },
+  "evidence": [
+    "입력 핵심 문장: \"이제 살 만큼 살았으니 안 아픈 지금 죽는 게 낫겠다는 생각이 들어.\"",
+    "GLOBAL_TRACE에서 \"dominant_global_signal=공세적 긴장\", \"persistence_ratio=0.9844\", \"signal_means=(drive=0.5752, brake=0.2259, alarm=0.6124, fatigue=0.1826)\"로 장기 경계가 확인된다.",
+    "TRAJECTORY에서 \"phase_sequence=dormant -> ignition -> escalation -> persistence\"이며, persistence 구간이 \"tick 7-127 | duration=121 | dominant_signal=경계/날카로움\"으로 기록되어 있다.",
+    "KEY_TICKS에서 후반부인 tick 120에도 \"dominant_signal=공세적 긴장\"이고 \"combined=(drive=0.5898, brake=0.2238, alarm=0.6159, fatigue=0.1806)\"로 높은 경계가 지속된다.",
+    "대화 표면에서는 \"많이 우울한 기분이신가 봐요.\"와 \"간단한 운동이라도 하면서 분위기를 바꾸어야 할 것 같아.\"로 순화되지만, 내부 추적은 해소가 아니라 지속 경계로 남는다."
+  ],
+  "confidence": 0.95
+}

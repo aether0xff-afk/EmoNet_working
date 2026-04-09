@@ -1,0 +1,38 @@
+{
+  "episode_label": "소진 압박에 묶인 경계성 긴장",
+  "stimulus_reading": "자극은 단순한 '힘들다' 표현보다, 3일 연속 야근으로 체력이 무너지고 기존 비염 위에 감기 증세까지 겹친 누적 과부하였다. 네트워크는 이를 슬픔이나 체념보다, 계속 버텨야 하는 상황 속 신체 저하와 업무 압박이 동시에 걸린 경계성 긴장 episode로 처리했다.",
+  "appraisal": {
+    "primary_appraisal": "상황이 이미 신체 한계를 침범했고, 당장 해소되지 않으면 더 악화될 수 있다는 위협 해석이 핵심이다.",
+    "secondary_appraisal": "완전한 무기력보다 아직 버티고 대응해야 한다는 추동이 남아 있어, 피로를 호소하면서도 긴장을 유지하는 방향으로 처리됐다.",
+    "target": "situation",
+    "control_state": "mixed",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "고각성 상태가 빠르게 점화된 뒤 오래 지속되는 persistent tension 패턴이다. 피로는 초반에 확인되지만, 전체 episode를 지배한 것은 피로 자체보다 경계와 압박의 지속이다.",
+    "ignition": "초기 dormant 이후 tick 2-4에서 바로 경계/날카로움으로 점화됐다. 입력의 핵심이 단순 하소연이 아니라 '계속되는 야근 + 몸 상태 악화'로 읽히며 빠르게 위협 감지가 켜졌다.",
+    "persistence": "tick 8-36의 긴 persistence 구간에서 공세적 긴장이 유지됐고, alarm은 후반으로 갈수록 더 높아졌다. 즉 처음에만 힘든 것이 아니라, 시간이 지날수록 '이 상태가 계속된다'는 압박이 정착됐다.",
+    "resolution": "termination은 stable_convergence지만 진정이나 해소가 아니라 긴장 상태의 안정화다. 마지막도 alarm과 drive가 함께 높은 채 수렴해, 쉬어버리는 종료가 아니라 버티면서 경계하는 모드로 남았다."
+  },
+  "action_tendency": "휴식 필요를 강하게 느끼면서도 실제 행동 경향은 상황을 방어적으로 관리하고, 업무 압박에 대비하며, 추가 악화를 경계하는 쪽이다. 즉 쓰러지듯 철수하기보다 예민하게 버티고 막는 방향이 우세하다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "신체 소진과 질병 조짐 위에 업무 압박이 겹쳐 경계가 장기 지속되는 결을 남겨야 한다.",
+    "avoid": "단순 공감형 피로, 잔잔한 우울, 혹은 순한 위로 모드로 축소하면 왜곡된다. 특히 '야근이 힘들다' 수준으로만 말하면 내부 episode를 놓친다.",
+    "tone_hint": "건조하고 진단적으로, 긴장-소진의 동시 존재를 분명히 드러내는 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "peak_alarm_tick=35",
+    "벌써 삼 일째 야근인데 체력이 바닥난 거 같고 괴롭다.",
+    "근데 잇따른 야근에 체력이 떨어지니 감기 증세도 함께 오고 있어."
+  ],
+  "confidence": 0.94
+}

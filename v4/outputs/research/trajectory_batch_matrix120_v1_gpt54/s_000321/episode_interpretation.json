@@ -1,0 +1,38 @@
+{
+  "episode_label": "절망 위에 얹힌 경계성 각성",
+  "stimulus_reading": "자극은 단순한 '슬픔' 표현보다, 수술하는 의사가 되고 싶다는 핵심 미래상과 손 부상으로 그 경로가 끊길 수 있다는 위협이다. 네트워크는 이를 상실 그 자체보다도 장기 목표 붕괴와 회복 불확실성에 대한 지속 경계로 읽었다.",
+  "appraisal": {
+    "primary_appraisal": "중요한 정체성 목표가 손상되었고, 되돌리기 어렵거나 통제 불가능할 수 있다는 위협 평가가 핵심이다.",
+    "secondary_appraisal": "단순 침잠형 슬픔으로 가라앉기보다, 아직 목표 지향 잔존이 남아 있어 상실-경계-대응 탐색이 함께 붙은 혼합 episode로 처리되었다.",
+    "target": "mixed",
+    "control_state": "low",
+    "social_orientation": "mixed"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 무반응 뒤 빠르게 점화되고, 매우 짧은 시간 안에 고활성 경계 상태로 치솟은 뒤 거의 끝까지 풀리지 않고 지속된다. 따라서 일시적 슬픔보다 '계속 신경이 곤두선 절망적 위협 처리'에 가깝다.",
+    "ignition": "tick 2-5에서 활성 노드와 edge가 급증하며 dormant에서 ignition, escalation로 즉시 넘어간다. 이는 자극을 약하게 반추한 것이 아니라 위협적으로 즉시 포착했음을 뜻한다.",
+    "persistence": "persistence 구간이 122 ticks로 전체 대부분을 차지하고, persistence_ratio가 0.9844로 매우 높다. alarm 평균도 높고 peak_alarm이 후반 tick 102에 나와, 시간이 지나며 진정되기보다 경계가 유지·증폭된 패턴이다.",
+    "resolution": "실질적 해소 없이 max_ticks로 종료되었다. 마지막도 공세적 긴장이 유지되어 수렴은 수용이나 안정이 아니라 미해결 경계 상태의 고착에 가깝다."
+  },
+  "action_tendency": "주저앉는 순수 무기력보다는, 상실을 계속 붙잡고 가능 경로를 확인하거나 대안을 찾으려는 긴장된 대응 성향이 남아 있다. 다만 통제감이 낮아 탐색이 안정적 계획보다 초조한 확인·반복 사고로 흐를 위험이 크다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "꿈의 붕괴 가능성을 위협으로 크게 읽고, 슬픔보다 경계와 긴장이 오래 지속된 점을 반드시 남겨야 한다.",
+    "avoid": "그냥 '많이 속상한 상태'나 '차분히 진로 상담하면 되는 상태'로 순화하면 왜곡이다. 실제 내부 처리는 안정적 위로 수용보다 미해결 위협 지속에 가깝다.",
+    "tone_hint": "담백하고 단호하게, 불안·절망·목표상실의 결을 숨기지 않는 분석 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "signal_means=(drive=0.2526, brake=0.2183, alarm=0.5867, fatigue=0.1755)",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "persistence | tick 6-127 | duration=122 | active_nodes=184.82 | edges=1683.29 | dominant_signal=경계/날카로움",
+    "termination_reason=max_ticks",
+    "peak_alarm_tick=102"
+  ],
+  "confidence": 0.92
+}

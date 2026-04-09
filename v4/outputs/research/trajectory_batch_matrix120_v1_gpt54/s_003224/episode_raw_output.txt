@@ -1,0 +1,41 @@
+{
+  "episode_label": "재난성 상실-경계 고착",
+  "stimulus_reading": "자극의 핵심은 단순한 사고 사실이 아니라 '다리를 못 쓸 거 같다'는 장기 기능 상실 가능성과 그로 인한 가족 충격, 이후 삶의 통제력 붕괴 전망이다. 네트워크는 이를 슬픔만으로 처리하지 않고, 손실 예고에 대한 고경계·고알람 상태로 읽었다.",
+  "appraisal": {
+    "primary_appraisal": "돌이키기 어려운 신체 손상과 생활 기반 붕괴가 닥쳤다는 재난성 해석",
+    "secondary_appraisal": "가족에게 부담과 고통을 전가하게 된다는 사회적·도덕적 압박 해석",
+    "target": "mixed",
+    "control_state": "low",
+    "social_orientation": "mixed"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 점화가 매우 빠르고, 이후 진정되지 않은 채 경계/날카로움과 공세적 긴장이 길게 지속된 고각성 지속형 episode다. 슬픔 표현이 표면에 있으나 내부 처리의 중심은 비애보다 위기 경보와 대응 압박이다.",
+    "ignition": "tick 2-4에서 활성 노드와 edge가 급증하며 즉시 위기 모드로 들어갔다. 입력을 듣자마자 숙고보다 경계 반응이 먼저 켜진 형태다.",
+    "persistence": "tick 5 이후 63틱 동안 높은 활성 상태가 유지되고, peak alarm이 tick 59에 나타나 후반까지 경보가 꺼지지 않았다. persistence_ratio 0.9706, saturation_ratio 0.8268은 감정이 한 번 점화된 뒤 거의 전 구간을 점유했음을 시사한다.",
+    "resolution": "termination은 stable_convergence지만 안정된 안도 수렴이 아니라, '가족에게 솔직히 말하고 도움을 받자'는 최소한의 행동 결정 위에 고알람이 남아 있는 수렴이다. 문제 해결보다 위기 관리 방향으로 임시 정렬된 상태다."
+  },
+  "action_tendency": "혼자 감당을 포기하고 즉시 상황 공유, 도움 요청, 현실 점검, 손실 관리로 이동하려는 경향이 강하다. 동시에 내면에서는 최악 시나리오를 붙들고 있어, 행동은 도움 요청 쪽이지만 정서는 여전히 경계와 압박에 묶여 있다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "단순한 슬픔이 아니라 신체 상실 가능성, 가족 부담, 통제력 붕괴가 겹친 고경계 위기 episode라는 결",
+    "avoid": "위로 중심으로 순화해서 '많이 슬프다' 정도로 축소하거나, 이미 수용과 평온에 도달한 것처럼 왜곡하는 것",
+    "tone_hint": "담담하지만 날것의 위기감과 압박을 숨기지 않는 진단적 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "trajectory_pattern=high_arousal_persistence",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "peak_alarm_tick=59",
+    "persistence_ratio=0.9706",
+    "dominant_signal=경계/날카로움",
+    "내가 배달하다가 오토바이 사고를 당했는데 다리를 못 쓸 거 같다고 해.",
+    "좌절할 가족들을 생각하면 마음이 너무 아파서 이 상황을 어떻게 해야 할지 모르겠어.",
+    "솔직하게 지금의 상황을 얘기하고 가족들의 도움을 받아야겠어."
+  ],
+  "confidence": 0.95
+}

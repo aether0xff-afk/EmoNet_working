@@ -1,0 +1,42 @@
+{
+  "episode_label": "관계위협에 대한 경계적 긴장 고착",
+  "stimulus_reading": "핵심 자극은 단순한 말다툼 자체보다, 배우자가 자신을 떠날 수 있다는 관계 붕괴 가능성이 내부에서 위협으로 읽힌 것이다. 입력은 부부 갈등을 말하지만 네트워크는 이를 반복적 갈등과 이혼 가능성이 결합된 지속 위협 episode로 처리했다.",
+  "appraisal": {
+    "primary_appraisal": "가까운 관계의 안정성이 손상되었고, 버려지거나 대체될 수 있다는 위협이 현재화된 상황으로 해석됨.",
+    "secondary_appraisal": "상황을 그냥 체념하지는 않고 뭔가 해결해야 한다는 접근 성향이 남아 있으나, 그 접근은 안도감보다 경계와 불안을 실은 채 유지됨.",
+    "target": "mixed",
+    "control_state": "mixed",
+    "social_orientation": "mixed"
+  },
+  "trajectory": {
+    "overall_pattern": "짧게 점화된 뒤 빠르게 고활성 경계 상태로 올라가고, 해소 없이 오래 붙잡히는 고착형 trajectory다. 감정이 한 번 치솟고 끝난 것이 아니라 내부적으로 계속 씹히는 상태다.",
+    "ignition": "tick 2-4에서 거의 무활성 상태에서 곧바로 경계/날카로움으로 점화된다. 초반부터 공세적 긴장과 높은 conflict가 함께 나타나 단순 슬픔보다 위협 감지와 대처 준비가 동시에 켜진 양상이다.",
+    "persistence": "tick 6-127의 대부분 구간이 persistence이며 active_tick_count 126, persistence_ratio 0.9844로 거의 전 구간 지속된다. alarm 평균이 0.5793이고 peak_alarm이 중반 이후 tick 61에서 나타나 초기 반응이 아니라 시간이 지나며 더 굳어지는 반추형 증폭이 보인다.",
+    "resolution": "종결 이유가 max_ticks이고 마지막 tick 127에서도 dominant_signal이 공세적 긴장, alarm 0.5781 수준으로 유지된다. 즉 내부 수렴은 안정화가 아니라 긴장을 유지한 채 종료된 미해결 상태다."
+  },
+  "action_tendency": "관계를 확인하고 통제하려는 시도, 문제 해결 수단을 찾으려는 접근, 동시에 상처와 위협에 대비해 방어적으로 예민해지는 경향이 함께 간다. 대화나 상담 같은 개입을 찾을 수는 있으나 정서 바닥은 불안-경계 쪽이라 쉽게 안심하지 못한다.",
+  "rawness": {
+    "valence": "negative",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "반복 갈등이 관계 상실 위협으로 읽히며, 불안과 경계가 오래 고착된 상태라는 점",
+    "avoid": "그냥 속상함이나 단순 부부 갈등 스트레스로 축소하는 것, 혹은 상담 의지 때문에 이미 안정된 것으로 과장하는 것",
+    "tone_hint": "건조하고 진단적으로, 미해결 긴장을 숨기지 않는 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "signal_means=(drive=0.2479, brake=0.2326, alarm=0.5793, fatigue=0.1968)",
+    "termination_reason=max_ticks",
+    "persistence_ratio=0.9844",
+    "phase_sequence=dormant -> ignition -> escalation -> persistence",
+    "persistence | tick 6-127 | duration=122 | active_nodes=185.95 | edges=1691.96 | dominant_signal=경계/날카로움",
+    "peak_alarm_tick=61",
+    "tick=127 | active_nodes=191 | edges_fired=1407 | dominant_signal=공세적 긴장 | combined=(drive=0.2484, brake=0.2332, alarm=0.5781, fatigue=0.1976)",
+    "아내는 다른 사람과 재혼할 기회가 생기면 나와 이혼 할 거야.",
+    "점점 다투는 날이 많아지는 것 같아 그럴 때마다 너무 힘들어."
+  ],
+  "confidence": 0.92
+}

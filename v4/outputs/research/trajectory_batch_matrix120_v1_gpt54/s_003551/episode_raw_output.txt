@@ -1,0 +1,43 @@
+{
+  "episode_label": "좋은 상황에 대한 경계성 불안",
+  "stimulus_reading": "자극은 새 회사와 동료에 대한 높은 만족 자체다. 그러나 네트워크는 이를 단순한 안정/만족으로 처리하지 않고, '좋은 일이 생기면 곧 불안이 따라온다'는 예기적 위협 맥락으로 재해석했다.",
+  "appraisal": {
+    "primary_appraisal": "현재의 좋은 상태가 오래가지 않거나 뒤집힐 수 있다는 예기적 경계가 핵심이다. 긍정 자극이 곧바로 안전 신호로 수렴되지 않고 위협 탐지와 함께 묶였다.",
+    "secondary_appraisal": "통제 불가능성은 아주 높지 않지만, 좋은 감정을 그대로 누리기보다 미리 긴장하며 대비하려는 쪽으로 기울었다. 마지막에는 '걱정해 봤자 달라질 것 없다'는 인지적 정리로 다소 재구성한다.",
+    "target": "situation",
+    "control_state": "mixed",
+    "social_orientation": "defend"
+  },
+  "trajectory": {
+    "overall_pattern": "초기 무색 상태 뒤에 빠르게 점화되고, 이후 긴 경계 상태가 거의 끝까지 유지되는 지속형 episode다. 긍정 자극과 접근 신호가 존재하지만, 그것이 안정감으로 닫히지 않고 공세적 긴장과 함께 유지된다.",
+    "ignition": "tick 2-4에서 활성 노드와 엣지가 급증하며 빠르게 점화된다. 이때 추동/접근도 보이지만 곧바로 경계/날카로움으로 넘어가므로, '좋다'는 반응 직후 자동 경계가 붙는 구조다.",
+    "persistence": "tick 5-55의 대부분에서 공세적 긴장이 지배하고 persistence_ratio가 0.9643으로 매우 높다. alarm 평균 0.6064, drive 평균 0.5912로 접근과 불안이 함께 높은 채 오래 유지되어, 단순 회피성 불안보다 '좋은 상태를 즐기면서도 계속 경계하는' 양상이다.",
+    "resolution": "종결은 해소라기보다 stable_convergence 형태의 고착된 정리다. 즉 불안이 사라진 것이 아니라, '현재를 즐기자'는 인지적 문장으로 긴장을 관리 가능한 수준으로 묶어 둔 수렴이다."
+  },
+  "action_tendency": "좋은 상황을 완전히 이완해서 누리기보다, 계속 스캔하고 의미를 점검하며 스스로 긴장을 관리하려는 성향으로 간다. 외형상 낙관 문장을 말할 수 있지만 내부적으로는 대비, 경계, 자기통제 쪽 행동 경향이 우세하다.",
+  "rawness": {
+    "valence": "mixed",
+    "arousal": "high",
+    "softened_output_risk": "high",
+    "should_preserve_harshness": true
+  },
+  "response_guidance": {
+    "preserve": "좋은 일을 좋아하면서도 동시에 불안을 점화하는 이중 처리, 그리고 불안이 짧게 스치지 않고 오래 지속되는 경계성을 반드시 남겨야 한다.",
+    "avoid": "이를 단순한 감사, 낙관, 적응 성공으로 미화하면 안 된다. 또한 high-arousal만 보고 분노로 오독해서도 안 된다.",
+    "tone_hint": "담백하고 진단적으로, '긍정 위의 경계'라는 구조를 직접적으로 말하는 톤"
+  },
+  "evidence": [
+    "dominant_global_signal=공세적 긴장",
+    "signal_means=(drive=0.5912, brake=0.2274, alarm=0.6064, fatigue=0.1931)",
+    "trajectory_pattern=mixed",
+    "phase_sequence=dormant -> ignition -> persistence",
+    "persistence_ratio=0.9643",
+    "peak_alarm_tick=49",
+    "tick=49 | dominant_signal=공세적 긴장 | combined=(drive=0.6054, brake=0.2207, alarm=0.6162, fatigue=0.1900)",
+    "tick=55 | dominant_signal=공세적 긴장 | combined=(drive=0.6069, brake=0.2256, alarm=0.6150, fatigue=0.1922)",
+    "입력 문장: '새로 옮긴 회사는 업무도 깔끔하고 동료들도 정말 좋아서 마음에 들어.'",
+    "입력 문장: '그런데도 나는 좋은 일만 있으면 불안해하는 성격이야.'",
+    "입력 문장: '걱정해 봤자 달라질 것 없으니 현재를 즐겨야겠어.'"
+  ],
+  "confidence": 0.93
+}

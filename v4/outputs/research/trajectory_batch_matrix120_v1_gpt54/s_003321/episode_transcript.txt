@@ -1,0 +1,55 @@
+[SAMPLE]
+id=s_003321
+
+[INPUT_TEXT]
+남자 친구랑 사귄 후에 성적이 크게 떨어져서 헤어지자고 했어. 너무 후회돼. [SEP] 남자 친구와 헤어지신 게 후회되시는군요. [SEP] 내 성적이 떨어진 게 남자 친구 탓이 아닌데 상처를 줘서 너무 죄책감이 들어. [SEP] 어떠한 방법으로 해결하는 게 가장 좋을까요? [SEP] 남자 친구한테 가서 미안하다고 다시 만나자고 해야겠어. [SEP] 남자 친구와의 관계가 좋아지시길 바랄게요.
+
+[GLOBAL_TRACE]
+- ticks_run=128
+- termination_reason=max_ticks
+- dominant_branch_len=126
+- active_tick_count=126
+- persistence_ratio=0.9844
+- saturation_ratio=0.6505
+- dominant_global_signal=추동/접근
+- signal_means=(drive=0.5819, brake=0.2460, alarm=0.5792, fatigue=0.2014)
+- node_mix=(inh=0.4221, exc=0.4856, mod=0.0924)
+
+[TRAJECTORY]
+- trajectory_pattern=mixed
+- phase_count=4
+- phase_sequence=dormant -> ignition -> escalation -> persistence
+- peak_alarm_tick=65
+- peak_fatigue_tick=7
+- peak_conflict_tick=0
+
+[PHASE_SEGMENTS]
+- dormant | tick 0-1 | duration=2 | active_nodes=0.00 | edges=0.00 | dominant_signal=추동/접근 | signal_conflict=1.0000
+- ignition | tick 2-4 | duration=3 | active_nodes=23.33 | edges=276.33 | dominant_signal=추동/접근 | signal_conflict=0.9908
+- escalation | tick 5-5 | duration=1 | active_nodes=119.00 | edges=1408.00 | dominant_signal=추동/접근 | signal_conflict=0.9936
+- persistence | tick 6-127 | duration=122 | active_nodes=173.16 | edges=2068.57 | dominant_signal=추동/접근 | signal_conflict=0.9920
+
+[KEY_TICKS]
+- tick=0 | active_nodes=0 | edges_fired=0 | dominant_signal=거의 무색 | combined=(drive=0.0000, brake=0.0000, alarm=0.0000, fatigue=0.0000) | mix=(inh=0.0000, exc=0.0000, mod=0.0000)
+- tick=2 | active_nodes=5 | edges_fired=56 | dominant_signal=추동/접근 | combined=(drive=0.3139, brake=0.1333, alarm=0.3007, fatigue=0.1623) | mix=(inh=0.0000, exc=0.8000, mod=0.2000)
+- tick=5 | active_nodes=119 | edges_fired=1408 | dominant_signal=추동/접근 | combined=(drive=0.3051, brake=0.2629, alarm=0.2987, fatigue=0.2010) | mix=(inh=0.4118, exc=0.4622, mod=0.1261)
+- tick=6 | active_nodes=198 | edges_fired=2338 | dominant_signal=추동/접근 | combined=(drive=0.3158, brake=0.2726, alarm=0.3136, fatigue=0.2048) | mix=(inh=0.4040, exc=0.4747, mod=0.1212)
+- tick=7 | active_nodes=213 | edges_fired=2501 | dominant_signal=추동/접근 | combined=(drive=0.3316, brake=0.2775, alarm=0.3259, fatigue=0.2069) | mix=(inh=0.4131, exc=0.4648, mod=0.1221)
+- tick=65 | active_nodes=165 | edges_fired=1979 | dominant_signal=추동/접근 | combined=(drive=0.5900, brake=0.2411, alarm=0.5860, fatigue=0.1992) | mix=(inh=0.4182, exc=0.4970, mod=0.0848)
+- tick=127 | active_nodes=163 | edges_fired=1955 | dominant_signal=추동/접근 | combined=(drive=0.5793, brake=0.2475, alarm=0.5772, fatigue=0.2023) | mix=(inh=0.4233, exc=0.4969, mod=0.0798)
+
+[TOP_ACTIVE_NODES]
+- node=14 | type=excitatory | bias=추동/접근 | activity_ticks=124 | k_mean=183983.7092 | stim=(drive=0.9362, brake=0.0091, alarm=0.9284, fatigue=0.0038)
+- node=160 | type=excitatory | bias=공세적 긴장 | activity_ticks=121 | k_mean=158120.9598 | stim=(drive=0.7889, brake=0.0177, alarm=0.8770, fatigue=0.0024)
+- node=138 | type=excitatory | bias=추동/접근 | activity_ticks=122 | k_mean=147829.1494 | stim=(drive=0.9418, brake=0.0182, alarm=0.9159, fatigue=0.0024)
+- node=104 | type=inhibitory | bias=수축/둔화 | activity_ticks=120 | k_mean=149356.5571 | stim=(drive=0.4745, brake=0.3349, alarm=0.4647, fatigue=0.3224)
+- node=121 | type=excitatory | bias=추동/접근 | activity_ticks=121 | k_mean=136278.1563 | stim=(drive=0.9256, brake=0.0244, alarm=0.9024, fatigue=0.0036)
+- node=125 | type=excitatory | bias=공세적 긴장 | activity_ticks=124 | k_mean=131302.0960 | stim=(drive=0.9284, brake=0.0133, alarm=0.9311, fatigue=0.0048)
+- node=124 | type=excitatory | bias=공세적 긴장 | activity_ticks=123 | k_mean=132356.5527 | stim=(drive=0.9333, brake=0.0154, alarm=0.9235, fatigue=0.0027)
+- node=19 | type=excitatory | bias=공세적 긴장 | activity_ticks=123 | k_mean=129192.9312 | stim=(drive=0.7937, brake=0.0291, alarm=0.8161, fatigue=0.0047)
+
+[IMPORTANT]
+- 감정은 입력 자극 자체가 아니라, 이 자극이 네트워크 안에서 어떻게 점화되고 지속되고 충돌하고 수렴하는지의 episode로 해석한다.
+- 단일 high-arousal 상태를 자동으로 분노로 단정하지 않는다.
+- 접근 신호가 크고 alarm이 지배적이지 않다면 기대/호감/들뜸 같은 positive arousal 가능성을 검토한다.
+- 활성화가 거의 없으면 강한 감정을 꾸며내지 말고 미점화, 보류, anticipatory state 가능성을 명시한다.

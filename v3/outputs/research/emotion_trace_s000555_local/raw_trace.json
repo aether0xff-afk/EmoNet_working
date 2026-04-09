@@ -119364,5 +119364,58 @@
       "explanation": "피로와 접근 동기 저하의 결합",
       "level": "중간"
     }
+  ],
+  "trajectory_summary": {
+    "phase_count": 3,
+    "phase_sequence": [
+      "dormant",
+      "ignition",
+      "persistence"
+    ],
+    "peak_alarm_tick": 15,
+    "peak_fatigue_tick": 7,
+    "peak_conflict_tick": 0,
+    "trajectory_pattern": "high_arousal_persistence"
+  },
+  "trajectory_phases": [
+    {
+      "phase_index": 0,
+      "phase": "dormant",
+      "start_tick": 0,
+      "end_tick": 1,
+      "duration": 2,
+      "mean_active_nodes": 0.0,
+      "mean_edges_fired": 0.0,
+      "dominant_signal": "추동/접근",
+      "top_emotion": "무기력/철수",
+      "top_emotion_score": 0.30000000000000004,
+      "signal_conflict": 1.0
+    },
+    {
+      "phase_index": 1,
+      "phase": "ignition",
+      "start_tick": 2,
+      "end_tick": 4,
+      "duration": 3,
+      "mean_active_nodes": 175.33333333333334,
+      "mean_edges_fired": 866.0,
+      "dominant_signal": "경계/날카로움",
+      "top_emotion": "짜증/분노압",
+      "top_emotion_score": 0.4094130363517106,
+      "signal_conflict": 0.9411856532096863
+    },
+    {
+      "phase_index": 2,
+      "phase": "persistence",
+      "start_tick": 5,
+      "end_tick": 15,
+      "duration": 11,
+      "mean_active_nodes": 237.36363636363637,
+      "mean_edges_fired": 1113.090909090909,
+      "dominant_signal": "경계/날카로움",
+      "top_emotion": "예민함/신경과민",
+      "top_emotion_score": 0.500291214206002,
+      "signal_conflict": 0.8246681148355658
+    }
   ]
 }

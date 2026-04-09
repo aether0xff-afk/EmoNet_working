@@ -104,45 +104,260 @@ def dominant_stim_label(values: np.ndarray) -> str:
 
 
 def build_emotion_candidates(summary: dict[str, float]) -> pd.DataFrame:
-    drive = float(summary.get("drive", 0.0))
-    brake = float(summary.get("brake", 0.0))
-    alarm = float(summary.get("alarm", 0.0))
-    fatigue = float(summary.get("fatigue", 0.0))
-    persistence = float(summary.get("persistence_ratio", 0.0))
-    saturation = float(summary.get("saturation_ratio", 0.0))
-    inhibitory = float(summary.get("inhibitory_ratio", 0.0))
-    excitatory = float(summary.get("excitatory_ratio", 0.0))
-
     rows = [
         {
             "emotion": "예민함/신경과민",
-            "score": clamp01(0.55 * alarm + 0.20 * drive + 0.15 * persistence + 0.10 * saturation - 0.10 * brake),
+            "score": clamp01(
+                0.55 * float(summary.get("alarm", 0.0))
+                + 0.20 * float(summary.get("drive", 0.0))
+                + 0.15 * float(summary.get("persistence_ratio", 0.0))
+                + 0.10 * float(summary.get("saturation_ratio", 0.0))
+                - 0.10 * float(summary.get("brake", 0.0))
+            ),
             "explanation": "경계 신호와 지속 활성의 결합",
         },
         {
             "emotion": "짜증/분노압",
-            "score": clamp01(0.40 * alarm + 0.30 * drive + 0.15 * excitatory + 0.15 * (1.0 - brake)),
+            "score": clamp01(
+                0.40 * float(summary.get("alarm", 0.0))
+                + 0.30 * float(summary.get("drive", 0.0))
+                + 0.15 * float(summary.get("excitatory_ratio", 0.0))
+                + 0.15 * (1.0 - float(summary.get("brake", 0.0)))
+            ),
             "explanation": "경계 + 추동 + 낮은 완충",
         },
         {
             "emotion": "소진/탈진",
-            "score": clamp01(0.55 * fatigue + 0.15 * alarm + 0.15 * (1.0 - drive) + 0.15 * persistence),
+            "score": clamp01(
+                0.55 * float(summary.get("fatigue", 0.0))
+                + 0.15 * float(summary.get("alarm", 0.0))
+                + 0.15 * (1.0 - float(summary.get("drive", 0.0)))
+                + 0.15 * float(summary.get("persistence_ratio", 0.0))
+            ),
             "explanation": "피로 부하와 잔류 활성의 결합",
         },
         {
             "emotion": "방어적 경계",
-            "score": clamp01(0.45 * alarm + 0.25 * brake + 0.15 * inhibitory + 0.15 * persistence),
+            "score": clamp01(
+                0.45 * float(summary.get("alarm", 0.0))
+                + 0.25 * float(summary.get("brake", 0.0))
+                + 0.15 * float(summary.get("inhibitory_ratio", 0.0))
+                + 0.15 * float(summary.get("persistence_ratio", 0.0))
+            ),
             "explanation": "경계 신호 위에 억제/보호 성향이 얹힌 상태",
         },
         {
             "emotion": "무기력/철수",
-            "score": clamp01(0.45 * fatigue + 0.25 * brake + 0.20 * (1.0 - drive) + 0.10 * (1.0 - excitatory)),
+            "score": clamp01(
+                0.45 * float(summary.get("fatigue", 0.0))
+                + 0.25 * float(summary.get("brake", 0.0))
+                + 0.20 * (1.0 - float(summary.get("drive", 0.0)))
+                + 0.10 * (1.0 - float(summary.get("excitatory_ratio", 0.0)))
+            ),
             "explanation": "피로와 접근 동기 저하의 결합",
         },
     ]
     frame = pd.DataFrame(rows).sort_values(["score", "emotion"], ascending=[False, True]).reset_index(drop=True)
     frame["level"] = frame["score"].map(describe_level)
     return frame
+
+
+def build_tick_emotion_frame(tick_summary: pd.DataFrame) -> pd.DataFrame:
+    if tick_summary.empty:
+        return pd.DataFrame(
+            columns=[
+                "tick",
+                "phase",
+                "top_emotion",
+                "top_emotion_score",
+                "signal_conflict",
+                *[f"emotion_{label}" for label in EMOTION_PLOT_LABELS.values()],
+            ]
+        )
+
+    frame = tick_summary.copy()
+    persistence_curve = (
+        frame["active_nodes"].gt(0).astype(np.float32).cumsum() / np.arange(1, len(frame) + 1, dtype=np.float32)
+    )
+    saturation_curve = frame["active_nodes"].astype(np.float32) / float(max(1.0, float(frame["active_nodes"].max())))
+
+    emotion_order = list(EMOTION_PLOT_LABELS.keys())
+    emotion_column_map = {name: f"emotion_{EMOTION_PLOT_LABELS[name]}" for name in emotion_order}
+    top_labels: list[str] = []
+    top_scores: list[float] = []
+    signal_conflicts: list[float] = []
+
+    for idx, row in frame.iterrows():
+        summary = {
+            "drive": float(row["combined_drive"]),
+            "brake": float(row["combined_brake"]),
+            "alarm": float(row["combined_alarm"]),
+            "fatigue": float(row["combined_fatigue"]),
+            "persistence_ratio": float(persistence_curve[idx]),
+            "saturation_ratio": float(saturation_curve[idx]),
+            "inhibitory_ratio": float(row["inhibitory_ratio"]),
+            "excitatory_ratio": float(row["excitatory_ratio"]),
+        }
+        emotions = build_emotion_candidates(summary)
+        for emotion_name, column_name in emotion_column_map.items():
+            score = float(emotions.loc[emotions["emotion"] == emotion_name, "score"].iloc[0])
+            frame.loc[idx, column_name] = score
+        top_labels.append(str(emotions.iloc[0]["emotion"]))
+        top_scores.append(float(emotions.iloc[0]["score"]))
+        combined = np.asarray(
+            [
+                float(row["combined_drive"]),
+                float(row["combined_brake"]),
+                float(row["combined_alarm"]),
+                float(row["combined_fatigue"]),
+            ],
+            dtype=np.float32,
+        )
+        order = np.sort(combined)[::-1]
+        margin = float(order[0] - order[1]) if order.size >= 2 else float(order[0]) if order.size == 1 else 0.0
+        signal_conflicts.append(clamp01(1.0 - margin))
+
+    frame["top_emotion"] = top_labels
+    frame["top_emotion_score"] = top_scores
+    frame["signal_conflict"] = signal_conflicts
+    frame["phase"] = assign_trajectory_phases(frame)
+    return frame
+
+
+def assign_trajectory_phases(frame: pd.DataFrame) -> list[str]:
+    if frame.empty:
+        return []
+
+    active = frame["active_nodes"].astype(np.float32).to_numpy()
+    alarm = frame["combined_alarm"].astype(np.float32).to_numpy()
+    fatigue = frame["combined_fatigue"].astype(np.float32).to_numpy()
+    max_active = float(active.max()) if active.size else 0.0
+    if max_active <= 0.0:
+        return ["dormant"] * len(frame)
+
+    nonzero = np.flatnonzero(active > 0)
+    if nonzero.size == 0:
+        return ["dormant"] * len(frame)
+    first_active = int(nonzero[0])
+    last_active = int(nonzero[-1])
+    peak_active = int(np.argmax(active))
+
+    labels: list[str] = []
+    for idx in range(len(frame)):
+        if active[idx] <= 0.0:
+            labels.append("dormant")
+            continue
+        if idx <= first_active + 2:
+            labels.append("ignition")
+            continue
+        if idx <= peak_active and active[idx] < 0.85 * max_active:
+            labels.append("escalation")
+            continue
+        if fatigue[idx] >= alarm[idx] and idx >= peak_active:
+            labels.append("fatigue_shift")
+            continue
+        if idx >= last_active - 2 and active[idx] < 0.65 * max_active:
+            labels.append("decay")
+            continue
+        labels.append("persistence")
+    return labels
+
+
+def summarize_trajectory_phases(frame: pd.DataFrame) -> pd.DataFrame:
+    if frame.empty:
+        return pd.DataFrame(
+            columns=[
+                "phase_index",
+                "phase",
+                "start_tick",
+                "end_tick",
+                "duration",
+                "mean_active_nodes",
+                "mean_edges_fired",
+                "dominant_signal",
+                "top_emotion",
+                "top_emotion_score",
+                "signal_conflict",
+            ]
+        )
+
+    segments: list[dict[str, Any]] = []
+    current_phase = None
+    current_rows: list[dict[str, Any]] = []
+    phase_index = 0
+
+    for row in frame.to_dict(orient="records"):
+        phase = str(row["phase"])
+        if current_phase is None or phase == current_phase:
+            current_phase = phase
+            current_rows.append(row)
+            continue
+        segments.append(build_phase_segment(phase_index, current_phase, current_rows))
+        phase_index += 1
+        current_phase = phase
+        current_rows = [row]
+
+    if current_rows:
+        segments.append(build_phase_segment(phase_index, current_phase or "unknown", current_rows))
+    return pd.DataFrame(segments)
+
+
+def build_phase_segment(phase_index: int, phase: str, rows: list[dict[str, Any]]) -> dict[str, Any]:
+    segment = pd.DataFrame(rows)
+    combined_cols = ["combined_drive", "combined_brake", "combined_alarm", "combined_fatigue"]
+    mean_signals = segment[combined_cols].mean().to_numpy(dtype=np.float32)
+    top_idx = int(np.argmax(mean_signals)) if mean_signals.size else 0
+    dominant_signal = STIM_LABELS[STIM_KEYS[top_idx]]
+    top_emotion = segment["top_emotion"].value_counts().idxmax() if not segment.empty else "unknown"
+    top_emotion_score = float(segment.loc[segment["top_emotion"] == top_emotion, "top_emotion_score"].mean()) if not segment.empty else 0.0
+    return {
+        "phase_index": int(phase_index),
+        "phase": str(phase),
+        "start_tick": int(segment["tick"].iloc[0]),
+        "end_tick": int(segment["tick"].iloc[-1]),
+        "duration": int(len(segment)),
+        "mean_active_nodes": float(segment["active_nodes"].mean()),
+        "mean_edges_fired": float(segment["edges_fired"].mean()),
+        "dominant_signal": dominant_signal,
+        "top_emotion": str(top_emotion),
+        "top_emotion_score": top_emotion_score,
+        "signal_conflict": float(segment["signal_conflict"].mean()),
+    }
+
+
+def build_trajectory_summary(summary: dict[str, Any], phase_df: pd.DataFrame, tick_emotions: pd.DataFrame) -> dict[str, Any]:
+    if tick_emotions.empty:
+        return {
+            "phase_count": 0,
+            "phase_sequence": [],
+            "peak_alarm_tick": -1,
+            "peak_fatigue_tick": -1,
+            "peak_conflict_tick": -1,
+            "trajectory_pattern": "no_activity",
+        }
+
+    peak_alarm_tick = int(tick_emotions.loc[tick_emotions["combined_alarm"].idxmax(), "tick"])
+    peak_fatigue_tick = int(tick_emotions.loc[tick_emotions["combined_fatigue"].idxmax(), "tick"])
+    peak_conflict_tick = int(tick_emotions.loc[tick_emotions["signal_conflict"].idxmax(), "tick"])
+    phase_sequence = phase_df["phase"].astype(str).tolist() if not phase_df.empty else []
+
+    if "fatigue_shift" in phase_sequence:
+        pattern = "escalation_to_fatigue_shift"
+    elif "persistence" in phase_sequence and float(summary.get("saturation_ratio", 0.0)) >= 0.75:
+        pattern = "high_arousal_persistence"
+    elif "ignition" in phase_sequence and len(phase_sequence) <= 2:
+        pattern = "brief_spike"
+    else:
+        pattern = "mixed"
+
+    return {
+        "phase_count": int(len(phase_df)),
+        "phase_sequence": phase_sequence,
+        "peak_alarm_tick": peak_alarm_tick,
+        "peak_fatigue_tick": peak_fatigue_tick,
+        "peak_conflict_tick": peak_conflict_tick,
+        "trajectory_pattern": pattern,
+    }
 
 
 def add_model_build_args(parser: argparse.ArgumentParser) -> None:
@@ -456,6 +671,70 @@ def save_figures(output_dir: Path, tick_summary: pd.DataFrame, candidates: pd.Da
         plt.close(fig)
 
 
+def save_trajectory_figures(output_dir: Path, trajectory_ticks: pd.DataFrame, phase_df: pd.DataFrame) -> None:
+    if trajectory_ticks.empty:
+        return
+    figures_dir = output_dir / "figures"
+    figures_dir.mkdir(parents=True, exist_ok=True)
+    phase_colors = {
+        "dormant": "#dddddd",
+        "ignition": "#fee08b",
+        "escalation": "#f46d43",
+        "persistence": "#d73027",
+        "fatigue_shift": "#74add1",
+        "decay": "#abd9e9",
+    }
+
+    def add_phase_spans(ax: Any) -> None:
+        for row in phase_df.to_dict(orient="records"):
+            color = phase_colors.get(str(row["phase"]), "#cccccc")
+            ax.axvspan(float(row["start_tick"]), float(row["end_tick"]) + 0.5, color=color, alpha=0.12)
+
+    fig, ax = plt.subplots(figsize=(8.5, 4.8))
+    ax.plot(trajectory_ticks["tick"], trajectory_ticks["active_nodes"], label="active_nodes", color="#d95f02", linewidth=2)
+    ax.plot(trajectory_ticks["tick"], trajectory_ticks["edges_fired"], label="edges_fired", color="#1b9e77", linewidth=2)
+    add_phase_spans(ax)
+    ax.set_xlabel("tick")
+    ax.set_ylabel("activity")
+    ax.set_title("Trajectory Activity with Phase Segments")
+    ax.legend(frameon=False)
+    fig.tight_layout()
+    fig.savefig(figures_dir / "trajectory_activity.svg", format="svg")
+    plt.close(fig)
+
+    fig, ax = plt.subplots(figsize=(8.5, 4.8))
+    for key, color in zip(STIM_KEYS, ["#4c78a8", "#72b7b2", "#e45756", "#f58518"], strict=False):
+        ax.plot(
+            trajectory_ticks["tick"],
+            trajectory_ticks[f"combined_{key}"],
+            label=STIM_PLOT_LABELS[key],
+            color=color,
+            linewidth=2,
+        )
+    add_phase_spans(ax)
+    ax.set_xlabel("tick")
+    ax.set_ylabel("weighted signal")
+    ax.set_title("Trajectory Signal Evolution")
+    ax.legend(frameon=False)
+    fig.tight_layout()
+    fig.savefig(figures_dir / "trajectory_signals.svg", format="svg")
+    plt.close(fig)
+
+    emotion_cols = [f"emotion_{label}" for label in EMOTION_PLOT_LABELS.values()]
+    top_three = trajectory_ticks[emotion_cols].mean().sort_values(ascending=False).head(3).index.tolist()
+    fig, ax = plt.subplots(figsize=(8.5, 4.8))
+    for column, color in zip(top_three, ["#5f0f40", "#9a031e", "#fb8b24"], strict=False):
+        ax.plot(trajectory_ticks["tick"], trajectory_ticks[column], label=column.replace("emotion_", ""), color=color, linewidth=2)
+    add_phase_spans(ax)
+    ax.set_xlabel("tick")
+    ax.set_ylabel("emotion score")
+    ax.set_title("Trajectory Emotion Candidates")
+    ax.legend(frameon=False)
+    fig.tight_layout()
+    fig.savefig(figures_dir / "trajectory_emotions.svg", format="svg")
+    plt.close(fig)
+
+
 def write_report(
     output_dir: Path,
     *,
@@ -510,6 +789,46 @@ def write_report(
     report_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def write_trajectory_report(
+    output_dir: Path,
+    *,
+    text: str,
+    summary: dict[str, Any],
+    trajectory_summary: dict[str, Any],
+    phase_df: pd.DataFrame,
+) -> None:
+    report_path = output_dir / "EMOTION_TRAJECTORY_REPORT.md"
+    phase_lines = []
+    for row in phase_df.to_dict(orient="records"):
+        phase_lines.append(
+            f"- {row['phase']} (tick {int(row['start_tick'])}-{int(row['end_tick'])}, duration {int(row['duration'])}) | "
+            f"dominant_signal={row['dominant_signal']} | top_emotion={row['top_emotion']} ({float(row['top_emotion_score']):.4f})"
+        )
+
+    lines = [
+        "# Emotion Trajectory Report",
+        "",
+        "## Input",
+        "",
+        text,
+        "",
+        "## Trajectory Summary",
+        "",
+        f"- trajectory_pattern: {trajectory_summary['trajectory_pattern']}",
+        f"- phase_count: {int(trajectory_summary['phase_count'])}",
+        f"- phase_sequence: {' -> '.join(trajectory_summary['phase_sequence']) if trajectory_summary['phase_sequence'] else 'none'}",
+        f"- peak_alarm_tick: {int(trajectory_summary['peak_alarm_tick'])}",
+        f"- peak_fatigue_tick: {int(trajectory_summary['peak_fatigue_tick'])}",
+        f"- peak_conflict_tick: {int(trajectory_summary['peak_conflict_tick'])}",
+        f"- dominant_global_signal: {summary['dominant_global_signal']}",
+        "",
+        "## Phase Segments",
+        "",
+    ]
+    lines.extend(phase_lines if phase_lines else ["- no phases"])
+    report_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def main() -> None:
     args = parse_args()
     output_dir = Path(args.output_dir)
@@ -522,16 +841,23 @@ def main() -> None:
 
     node_catalog, node_trace, tick_summary = build_node_trace(model, branch_log)
     summary, candidates, top_nodes = summarize_global_evidence(node_catalog, node_trace, tick_summary, outputs)
+    trajectory_ticks = build_tick_emotion_frame(tick_summary)
+    trajectory_phases = summarize_trajectory_phases(trajectory_ticks)
+    trajectory_summary = build_trajectory_summary(summary, trajectory_phases, trajectory_ticks)
 
     raw_trace_payload = build_raw_trace_json(text=text, input_meta=input_meta, branch_log=branch_log, node_catalog=node_catalog)
     raw_trace_payload["summary"] = summary
     raw_trace_payload["top_emotions"] = candidates.head(5).to_dict(orient="records")
+    raw_trace_payload["trajectory_summary"] = trajectory_summary
+    raw_trace_payload["trajectory_phases"] = trajectory_phases.to_dict(orient="records")
 
     node_catalog.to_csv(output_dir / "node_catalog.csv", index=False, encoding="utf-8-sig")
     node_trace.to_csv(output_dir / "node_trace.csv", index=False, encoding="utf-8-sig")
     tick_summary.to_csv(output_dir / "tick_summary.csv", index=False, encoding="utf-8-sig")
     candidates.to_csv(output_dir / "emotion_candidates.csv", index=False, encoding="utf-8-sig")
     top_nodes.to_csv(output_dir / "top_nodes.csv", index=False, encoding="utf-8-sig")
+    trajectory_ticks.to_csv(output_dir / "trajectory_ticks.csv", index=False, encoding="utf-8-sig")
+    trajectory_phases.to_csv(output_dir / "trajectory_phases.csv", index=False, encoding="utf-8-sig")
     (output_dir / "raw_trace.json").write_text(
         json.dumps(to_jsonable(raw_trace_payload), ensure_ascii=False, indent=2),
         encoding="utf-8",
@@ -551,8 +877,31 @@ def main() -> None:
         ),
         encoding="utf-8",
     )
+    (output_dir / "emotion_trajectory_summary.json").write_text(
+        json.dumps(
+            to_jsonable(
+                {
+                    "input_text": text,
+                    "input_meta": input_meta,
+                    **trajectory_summary,
+                    "phase_segments": trajectory_phases.to_dict(orient="records"),
+                }
+            ),
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
     save_figures(output_dir, tick_summary, candidates)
+    save_trajectory_figures(output_dir, trajectory_ticks, trajectory_phases)
     write_report(output_dir, text=text, summary=summary, candidates=candidates, top_nodes=top_nodes)
+    write_trajectory_report(
+        output_dir,
+        text=text,
+        summary=summary,
+        trajectory_summary=trajectory_summary,
+        phase_df=trajectory_phases,
+    )
 
     print(
         json.dumps(
@@ -564,8 +913,10 @@ def main() -> None:
                 "top_emotion": candidates.iloc[0]["emotion"] if not candidates.empty else None,
                 "top_emotion_score": float(candidates.iloc[0]["score"]) if not candidates.empty else None,
                 "summary_path": str(output_dir / "emotion_trace_summary.json"),
+                "trajectory_summary_path": str(output_dir / "emotion_trajectory_summary.json"),
                 "raw_trace_path": str(output_dir / "raw_trace.json"),
                 "report_path": str(output_dir / "EMOTION_TRACE_REPORT.md"),
+                "trajectory_report_path": str(output_dir / "EMOTION_TRAJECTORY_REPORT.md"),
             },
             ensure_ascii=False,
             indent=2,

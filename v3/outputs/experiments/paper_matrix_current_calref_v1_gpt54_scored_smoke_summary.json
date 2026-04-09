@@ -1,0 +1,48 @@
+{
+  "rows": 12,
+  "ok_rows": 12,
+  "error_rows": 0,
+  "conditions": [
+    {
+      "condition": "stim_only",
+      "condition_group": "baseline",
+      "rows": 4,
+      "mean_response_length": 167.0,
+      "mean_response_retry_count": 0.0,
+      "mean_content_fit": 4.0,
+      "mean_emotional_appropriateness": 3.75,
+      "mean_style_match": 2.25,
+      "mean_naturalness": 5.0,
+      "mean_overall_quality": 4.0,
+      "mean_total": 3.8
+    },
+    {
+      "condition": "emonet_full",
+      "condition_group": "emonet",
+      "rows": 4,
+      "mean_response_length": 236.0,
+      "mean_response_retry_count": 0.0,
+      "mean_content_fit": 4.0,
+      "mean_emotional_appropriateness": 3.5,
+      "mean_style_match": 2.75,
+      "mean_naturalness": 4.25,
+      "mean_overall_quality": 3.75,
+      "mean_total": 3.65
+    },
+    {
+      "condition": "direct",
+      "condition_group": "baseline",
+      "rows": 4,
+      "mean_response_length": 204.0,
+      "mean_response_retry_count": 0.0,
+      "mean_content_fit": 3.75,
+      "mean_emotional_appropriateness": 3.5,
+      "mean_style_match": 2.25,
+      "mean_naturalness": 4.0,
+      "mean_overall_quality": 3.5,
+      "mean_total": 3.4
+    }
+  ],
+  "scored_csv": "v3\\outputs\\experiments\\paper_matrix_current_calref_v1_gpt54_scored_smoke.csv",
+  "summary_csv": "v3\\outputs\\experiments\\paper_matrix_current_calref_v1_gpt54_scored_smoke_summary.csv"
+}

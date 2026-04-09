@@ -24,14 +24,14 @@ from scripts.generate_paper_svgs import (
 )
 
 
-OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "paper" / "refresh_2026-04-08_structfix_v4"
+OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "paper" / "refresh_2026-04-09_calref_v1"
 FIG_DIR = OUTPUT_ROOT / "figures"
 TABLE_DIR = OUTPUT_ROOT / "tables"
 
-LABELED_CSV = PROJECT_ROOT / "outputs" / "llm" / "llm_subset_labeled_4000_extended40.csv"
-LEARNED_Z_CSV = PROJECT_ROOT / "outputs" / "z" / "out_z_training_learned_extended40_structfix_reuse.csv"
+LABELED_CSV = PROJECT_ROOT / "outputs" / "llm" / "llm_subset_labeled_4000_extended40_rebalanced_1800.csv"
+LEARNED_Z_CSV = PROJECT_ROOT / "outputs" / "z" / "out_z_training_learned_extended40_calref_v1.csv"
 OLD_Z_CSV = PROJECT_ROOT / "outputs" / "z" / "out_z_training_extended40.csv"
-NEW_BRANCH_CSV = PROJECT_ROOT / "outputs" / "z" / "out_z_training_extended40_structfix.csv"
+NEW_BRANCH_CSV = PROJECT_ROOT / "outputs" / "z" / "out_z_training_extended40_calref_v1.csv"
 BENCHMARK_CSV = PROJECT_ROOT.parent / "encoder-ML testing" / "out_benchmark" / "benchmark_results_20260305_180830.csv"
 CURRENT_GENERATION_TABLE_CSV = TABLE_DIR / "baseline_generation_table_current.csv"
 

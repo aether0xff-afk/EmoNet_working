@@ -4,6 +4,7 @@ import contextlib
 import json
 import tempfile
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 from pathlib import Path
 
@@ -29,7 +30,9 @@ from emonet.cli import (
     build_anti_softening_policy,
     build_grounding_policy,
     build_balanced_subset,
+    build_conditioned_generation_prompt,
     build_response_generation_prompt,
+    build_trace_profile,
     command_e2e_check,
     command_fit_z_encoder,
     command_probe_branch,
@@ -546,6 +549,52 @@ class EmoNetSmokeTests(unittest.TestCase):
         self.assertNotIn("[EXPRESSION_CUES]", prompt)
         self.assertNotIn("[STYLE_VECTOR]", prompt)
         self.assertNotIn("여분태그", prompt)
+
+    def test_build_trace_profile_and_prompt_include_raw_trace_sections(self) -> None:
+        pruned_branch_log = [
+            TickRecord(tick=0, active_nodes=[1, 2], node_states={}, edges_fired=[(1, 2)]),
+            TickRecord(tick=1, active_nodes=[2], node_states={}, edges_fired=[(2, 3), (2, 4)]),
+            TickRecord(tick=2, active_nodes=[], node_states={}, edges_fired=[]),
+        ]
+        dominant_branch = [
+            SimpleNamespace(tick=0, stim_vec=np.asarray([0.2, 0.1, 0.8, 0.2], dtype=np.float32), K=0.9),
+            SimpleNamespace(tick=1, stim_vec=np.asarray([0.1, 0.2, 0.7, 0.5], dtype=np.float32), K=1.1),
+            SimpleNamespace(tick=2, stim_vec=np.asarray([0.1, 0.3, 0.4, 0.8], dtype=np.float32), K=0.8),
+        ]
+        trace_profile = build_trace_profile(
+            pruned_branch_log=pruned_branch_log,
+            dominant_branch=dominant_branch,
+            n_neurons=8,
+            termination_reason="stable_convergence",
+            ticks_run=3,
+        )
+        profile = {
+            "style_dict": {axis: 0.5 for axis in STYLE_AXIS_NAMES},
+            "style_tags": ["직설적", "건조함", "긴장높음"],
+            "style_summary": {"warmth": 0.2, "directness": 0.7, "raw_negative_affect": 0.6},
+            "anti_softening_rules": ["불편한 정서를 임의로 순화하지 않는다."],
+            "grounding_rules": ["첫 문장에서 입력의 정서를 짚고 바로 답한다."],
+            "trace_lines": trace_profile["trace_lines"],
+        }
+        prompt, sections = build_conditioned_generation_prompt(
+            input_text="지금 너무 예민하고 피곤해.",
+            profile=profile,
+            conditioning_mode="raw_trace",
+            template_path=None,
+        )
+        hybrid_prompt, hybrid_sections = build_conditioned_generation_prompt(
+            input_text="지금 너무 예민하고 피곤해.",
+            profile=profile,
+            conditioning_mode="hybrid_trace",
+            template_path=None,
+        )
+        self.assertIn("[RAW_TRACE]", prompt)
+        self.assertIn("첫 활성 tick 0", prompt)
+        self.assertEqual(sections, "raw_trace,anti_softening_rules,grounding_rules")
+        self.assertIn("[STYLE_TAGS]", hybrid_prompt)
+        self.assertIn("[STYLE_SUMMARY]", hybrid_prompt)
+        self.assertIn("[RAW_TRACE]", hybrid_prompt)
+        self.assertEqual(hybrid_sections, "raw_trace,style_tags,style_summary,anti_softening_rules,grounding_rules")
 
     def test_build_grounding_policy_turns_grounded_for_distress_text(self) -> None:
         mode, rules = build_grounding_policy(

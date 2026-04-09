@@ -1205,6 +1205,7 @@ class EmoNet:
         self.topk_branches: list[BranchPath] = []
         self.dominant_branch: list[DominantBranchStep] = []
         self._last_delta_k = math.inf
+        self.last_termination_reason: str = "not_started"
 
         self.build_graph()
         self.reset()
@@ -1234,6 +1235,7 @@ class EmoNet:
         self.topk_branches = []
         self.dominant_branch = []
         self._last_delta_k = math.inf
+        self.last_termination_reason = "not_started"
 
     def build_graph(self) -> None:
         neurons = self.graph.build_graph()
@@ -1501,12 +1503,14 @@ class EmoNet:
         self.last_base_stim_vec = base_stim_vec.copy()
         input_text = text if isinstance(text, str) else repr(list(np.asarray(base_stim_vec, dtype=float)))
         stability_streak = 0
+        self.last_termination_reason = "max_ticks"
 
         while self.state.tick < self.config.max_ticks:
             self.run_tick(base_stim_vec, input_text)
             if self.state.tick < self.config.min_ticks_before_converged:
                 continue
             if self._last_delta_k < self.config.delta_k_eps:
+                self.last_termination_reason = "delta_k"
                 break
             if len(self.state.branch_log) >= 2:
                 if self._tick_is_stable(self.state.branch_log[-2], self.state.branch_log[-1]):
@@ -1514,6 +1518,7 @@ class EmoNet:
                 else:
                     stability_streak = 0
             if self.config.convergence_patience > 0 and stability_streak >= self.config.convergence_patience:
+                self.last_termination_reason = "stable_convergence"
                 break
 
         return base_stim_vec
@@ -1601,6 +1606,8 @@ class EmoNet:
             "dominant_branch": dominant_branch,
             "branch_tensor": branch_tensor,
             "z": z,
+            "ticks_run": int(self.state.tick),
+            "termination_reason": str(self.last_termination_reason),
         }
 
     def format_style_prompt(self, s: Sequence[float] | np.ndarray | Any) -> str:

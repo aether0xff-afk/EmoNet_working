@@ -18,6 +18,7 @@ from emonet.cli import (
     append_csv_rows,
     append_jsonl,
     build_model as build_emonet_model,
+    build_conditioned_generation_prompt,
     build_response_generation_prompt,
     ensure_model_server_ready,
     format_expression_cue_lines,
@@ -48,6 +49,16 @@ CONDITION_SPECS: dict[str, dict[str, object]] = {
     "emonet_full": {
         "group": "emonet",
         "description": "Full EmoNet prompt with tags, summary, cues, and vector.",
+        "needs_profile": True,
+    },
+    "raw_trace": {
+        "group": "trace",
+        "description": "Raw branch trace summary only.",
+        "needs_profile": True,
+    },
+    "hybrid_trace": {
+        "group": "trace",
+        "description": "Raw branch trace plus style controls.",
         "needs_profile": True,
     },
     "emonet_no_summary": {
@@ -103,6 +114,7 @@ OUTPUT_COLUMNS = [
     "dominant_branch_len",
     "style_summary_text",
     "expression_cues_text",
+    "trace_summary_text",
     "anti_softening_mode",
     "anti_softening_rules_json",
     "grounding_mode",
@@ -288,17 +300,25 @@ def build_condition_prompt(condition: str, input_text: str, profile: dict[str, o
     if condition == "stim_only":
         return build_stim_only_prompt(input_text, stim_vec), "stim_vec"
     if condition == "emonet_full":
-        return (
-            build_response_generation_prompt(
-                input_text=input_text,
-                style_dict=style_dict,
-                style_tags=style_tags,
-                style_summary=style_summary,
-                anti_softening_rules=anti_softening_rules,
-                grounding_rules=grounding_rules,
-                template_path=None,
-            ),
-            "style_tags,style_summary,anti_softening_rules,grounding_rules",
+        return build_conditioned_generation_prompt(
+            input_text=input_text,
+            profile=profile,
+            conditioning_mode="style",
+            template_path=None,
+        )
+    if condition == "raw_trace":
+        return build_conditioned_generation_prompt(
+            input_text=input_text,
+            profile=profile,
+            conditioning_mode="raw_trace",
+            template_path=None,
+        )
+    if condition == "hybrid_trace":
+        return build_conditioned_generation_prompt(
+            input_text=input_text,
+            profile=profile,
+            conditioning_mode="hybrid_trace",
+            template_path=None,
         )
     if condition == "emonet_no_summary":
         return build_variant_prompt(
@@ -506,6 +526,7 @@ def main() -> None:
                 "dominant_branch_len": None,
                 "style_summary_text": "",
                 "expression_cues_text": "",
+                "trace_summary_text": "",
                 "anti_softening_mode": "",
                 "anti_softening_rules_json": "[]",
                 "grounding_mode": "",
@@ -556,6 +577,7 @@ def main() -> None:
                     row["dominant_branch_len"] = int(profile["dominant_branch_len"])
                     row["style_summary_text"] = str(profile["style_summary_text"])
                     row["expression_cues_text"] = str(profile["expression_cues_text"])
+                    row["trace_summary_text"] = str(profile.get("trace_summary_text", ""))
                     row["anti_softening_mode"] = str(profile.get("anti_softening_mode", ""))
                     row["anti_softening_rules_json"] = json.dumps(profile.get("anti_softening_rules", []), ensure_ascii=False)
                     row["grounding_mode"] = str(profile.get("grounding_mode", ""))

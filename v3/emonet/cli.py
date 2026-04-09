@@ -1287,20 +1287,17 @@ def command_generate_response(args: argparse.Namespace) -> None:
     model_config = getattr(model, "config", None)
     decoder = LinearZtoSDecoder.load(Path(args.zs_model_path))
     profile = infer_style_profile(model=model, decoder=decoder, text=args.text, style_profile=style_profile)
-    response_text, style_prompt, response_meta = generate_response_from_style(
+    response_text, style_prompt, prompt_sections, response_meta = generate_response_from_profile(
         base_url=args.base_url,
         model_name=args.model_name,
         input_text=args.text,
-        style_dict=profile["style_dict"],
-        style_tags=profile["style_tags"],
-        style_summary=profile["style_summary"],
-        anti_softening_rules=profile["anti_softening_rules"],
-        grounding_rules=profile["grounding_rules"],
+        profile=profile,
         temperature=args.response_temperature,
         max_tokens=args.max_tokens,
         timeout_sec=args.timeout_sec,
         template_path=Path(args.prompt_template) if args.prompt_template else None,
         max_retries=args.response_max_retries,
+        conditioning_mode=args.conditioning_mode,
     )
     result = {
         "input_text": args.text,
@@ -1312,12 +1309,18 @@ def command_generate_response(args: argparse.Namespace) -> None:
         "style_summary": dict(profile["style_summary"]),
         "style_summary_text": str(profile["style_summary_text"]),
         "expression_cues_text": str(profile["expression_cues_text"]),
+        "trace_summary_text": str(profile.get("trace_summary_text", "")),
+        "trace_lines": list(profile.get("trace_lines", [])),
+        "ticks_run": int(profile.get("ticks_run", 0)),
+        "termination_reason": str(profile.get("termination_reason", "")),
         "anti_softening_mode": str(profile["anti_softening_mode"]),
         "anti_softening_rules": list(profile["anti_softening_rules"]),
         "grounding_mode": str(profile["grounding_mode"]),
         "grounding_rules": list(profile["grounding_rules"]),
         "response_retry_count": int(response_meta["retry_count"]),
         "response_validation_errors": list(response_meta["validation_errors"]),
+        "conditioning_mode": str(args.conditioning_mode),
+        "prompt_sections": prompt_sections,
         "style_prompt": style_prompt,
         "llm_response": response_text,
         "decoder_model_path": str(args.zs_model_path),
@@ -1363,20 +1366,17 @@ def command_generate_response_batch(args: argparse.Namespace) -> None:
 
         try:
             profile = infer_style_profile(model=model, decoder=decoder, text=text, style_profile=style_profile)
-            response_text, style_prompt, response_meta = generate_response_from_style(
+            response_text, style_prompt, prompt_sections, response_meta = generate_response_from_profile(
                 base_url=args.base_url,
                 model_name=args.model_name,
                 input_text=text,
-                style_dict=profile["style_dict"],
-                style_tags=profile["style_tags"],
-                style_summary=profile["style_summary"],
-                anti_softening_rules=profile["anti_softening_rules"],
-                grounding_rules=profile["grounding_rules"],
+                profile=profile,
                 temperature=args.response_temperature,
                 max_tokens=args.max_tokens,
                 timeout_sec=args.timeout_sec,
                 template_path=Path(args.prompt_template) if args.prompt_template else None,
                 max_retries=args.response_max_retries,
+                conditioning_mode=args.conditioning_mode,
             )
             row = dict(record)
             row["status"] = "ok"
@@ -1385,12 +1385,18 @@ def command_generate_response_batch(args: argparse.Namespace) -> None:
             row["style_summary_text"] = str(profile["style_summary_text"])
             row["style_summary_json"] = json.dumps(profile["style_summary"], ensure_ascii=False)
             row["expression_cues_text"] = str(profile["expression_cues_text"])
+            row["trace_summary_text"] = str(profile.get("trace_summary_text", ""))
+            row["trace_lines_json"] = json.dumps(profile.get("trace_lines", []), ensure_ascii=False)
+            row["ticks_run"] = int(profile.get("ticks_run", 0))
+            row["termination_reason"] = str(profile.get("termination_reason", ""))
             row["anti_softening_mode"] = str(profile["anti_softening_mode"])
             row["anti_softening_rules"] = json.dumps(profile["anti_softening_rules"], ensure_ascii=False)
             row["grounding_mode"] = str(profile["grounding_mode"])
             row["grounding_rules"] = json.dumps(profile["grounding_rules"], ensure_ascii=False)
             row["response_retry_count"] = int(response_meta["retry_count"])
             row["response_validation_errors"] = json.dumps(response_meta["validation_errors"], ensure_ascii=False)
+            row["conditioning_mode"] = str(args.conditioning_mode)
+            row["prompt_sections"] = prompt_sections
             row["style_prompt"] = style_prompt
             row["llm_response"] = response_text
             row["decoder_model_path"] = str(args.zs_model_path)
@@ -2495,6 +2501,147 @@ def format_style_vector_lines(style_dict: dict[str, float]) -> str:
     return "\n".join(f"{axis}={float(value):.4f}" for axis, value in style_dict.items())
 
 
+TRACE_AXIS_LABELS = (
+    "접근/밀어붙임",
+    "안정/완충",
+    "긴장/날카로움",
+    "피로/둔화",
+)
+
+
+def describe_trace_axis_level(value: float) -> str:
+    if value >= 0.75:
+        return "매우 높음"
+    if value >= 0.60:
+        return "높음"
+    if value >= 0.40:
+        return "중간"
+    if value >= 0.20:
+        return "낮음"
+    return "매우 낮음"
+
+
+def summarize_trace_stim_signature(stim_vec: Sequence[float] | np.ndarray, top_n: int = 2) -> str:
+    stim = np.asarray(stim_vec, dtype=np.float32).reshape(-1)
+    if stim.size == 0:
+        return "정서 축 정보 없음"
+    top_indices = np.argsort(-stim)[: max(1, min(top_n, stim.size))]
+    parts = [
+        f"{TRACE_AXIS_LABELS[idx]} {describe_trace_axis_level(float(stim[idx]))}"
+        for idx in top_indices
+    ]
+    return ", ".join(parts)
+
+
+def _segment_branch(branch: Sequence[Any], start: int, end: int) -> Sequence[Any]:
+    if not branch:
+        return []
+    start = max(0, min(start, len(branch)))
+    end = max(start + 1, min(end, len(branch)))
+    return branch[start:end]
+
+
+def build_trace_profile(
+    *,
+    pruned_branch_log: Sequence[Any],
+    dominant_branch: Sequence[Any],
+    n_neurons: int,
+    termination_reason: str,
+    ticks_run: int,
+) -> dict[str, object]:
+    active_records = [record for record in pruned_branch_log if getattr(record, "active_nodes", None)]
+    active_counts = np.asarray([len(record.active_nodes) for record in pruned_branch_log], dtype=np.float32)
+    edge_counts = np.asarray([len(record.edges_fired) for record in pruned_branch_log], dtype=np.float32)
+    first_active_tick = int(active_records[0].tick) if active_records else -1
+    last_active_tick = int(active_records[-1].tick) if active_records else -1
+    active_window_ticks = int(len(active_records))
+    mean_active_nodes = float(active_counts.mean()) if active_counts.size else 0.0
+    max_active_nodes = int(active_counts.max()) if active_counts.size else 0
+    mean_edges_fired = float(edge_counts.mean()) if edge_counts.size else 0.0
+    max_edges_fired = int(edge_counts.max()) if edge_counts.size else 0
+    branch_len = int(len(dominant_branch))
+
+    thirds = max(1, branch_len // 3)
+    early = _segment_branch(dominant_branch, 0, thirds)
+    middle = _segment_branch(dominant_branch, max(0, branch_len // 3), max(1, (2 * branch_len) // 3))
+    late = _segment_branch(dominant_branch, max(0, (2 * branch_len) // 3), branch_len)
+
+    def summarize_phase(name: str, steps: Sequence[Any]) -> str:
+        if not steps:
+            return f"{name}: 유효한 branch 단계가 거의 없음"
+        phase_stim = np.mean(
+            [
+                np.asarray(getattr(step, "stim_vec", np.zeros(4, dtype=np.float32)), dtype=np.float32).reshape(-1)[:4]
+                for step in steps
+            ],
+            axis=0,
+        )
+        phase_k = float(np.mean([float(getattr(step, "K", 0.0)) for step in steps]))
+        tick_start = int(getattr(steps[0], "tick", 0))
+        tick_end = int(getattr(steps[-1], "tick", tick_start))
+        return (
+            f"{name}: tick {tick_start}-{tick_end}, "
+            f"K 평균 {phase_k:.2f}, "
+            f"{summarize_trace_stim_signature(phase_stim)}"
+        )
+
+    phase_lines = [
+        summarize_phase("초기", early),
+        summarize_phase("중기", middle),
+        summarize_phase("후기", late),
+    ]
+    active_ratio = mean_active_nodes / max(1, n_neurons)
+    if active_ratio >= 0.70:
+        density_text = "활성 노드 밀도가 매우 높아 포화에 가까움"
+    elif active_ratio >= 0.40:
+        density_text = "활성 노드 밀도가 중간 이상으로 넓게 퍼짐"
+    elif active_ratio > 0.0:
+        density_text = "활성 노드 밀도가 비교적 좁아 선택적으로 움직임"
+    else:
+        density_text = "유의미한 활성 노드가 거의 없음"
+
+    if termination_reason == "max_ticks":
+        termination_text = "상한 tick에 닿을 때까지 감정 궤적이 지속됨"
+    elif termination_reason == "stable_convergence":
+        termination_text = "후반부 변화량이 안정되어 수렴 종료됨"
+    elif termination_reason == "delta_k":
+        termination_text = "활성 변화량이 작아져 조기 종료됨"
+    else:
+        termination_text = "종료 사유가 명확하지 않음"
+
+    trace_lines = [
+        f"전체 tick {ticks_run}, dominant branch 길이 {branch_len}, 종료={termination_reason}",
+        (
+            f"첫 활성 tick {first_active_tick}, 마지막 활성 tick {last_active_tick}, "
+            f"활성 구간 {active_window_ticks} tick"
+            if first_active_tick >= 0
+            else "유의미한 활성 tick이 거의 없었음"
+        ),
+        (
+            f"평균 활성 노드 {mean_active_nodes:.1f}/{n_neurons}, 최대 {max_active_nodes}, "
+            f"평균 firing edge {mean_edges_fired:.1f}, 최대 {max_edges_fired}"
+        ),
+        density_text,
+        termination_text,
+        *phase_lines,
+    ]
+    trace_summary_text = " / ".join(trace_lines[:5])
+    return {
+        "trace_lines": trace_lines,
+        "trace_summary_text": trace_summary_text,
+        "first_active_tick": first_active_tick,
+        "last_active_tick": last_active_tick,
+        "active_window_ticks": active_window_ticks,
+        "mean_active_nodes": mean_active_nodes,
+        "max_active_nodes": max_active_nodes,
+        "mean_edges_fired": mean_edges_fired,
+        "max_edges_fired": max_edges_fired,
+        "ticks_run": int(ticks_run),
+        "termination_reason": str(termination_reason),
+        "dominant_branch_len": branch_len,
+    }
+
+
 def build_response_generation_prompt(
     input_text: str,
     style_dict: dict[str, float],
@@ -2525,6 +2672,159 @@ def build_response_generation_prompt(
       )
 
 
+def build_trace_generation_prompt(
+    input_text: str,
+    trace_lines: Sequence[str],
+    anti_softening_rules: list[str] | None = None,
+    grounding_rules: list[str] | None = None,
+) -> str:
+    trace_block = "\n".join(f"- {line}" for line in trace_lines) if trace_lines else "- 유효한 trace 정보 없음"
+    anti_block = (
+        "\n".join(format_anti_softening_lines(anti_softening_rules or []))
+        if anti_softening_rules
+        else "- 입력에 없는 위로나 공손함을 자동으로 덧붙이지 않는다."
+    )
+    grounding_block = (
+        "\n".join(format_grounding_lines(grounding_rules or []))
+        if grounding_rules
+        else "- 첫 문장은 입력의 정서와 직접 연결되게 시작한다."
+    )
+    return "\n".join(
+        [
+            "[ROLE]",
+            "당신은 내부 감정 궤적을 읽고 그 결을 유지한 채 한국어로 답하는 응답 생성기다.",
+            "",
+            "[USER_INPUT]",
+            input_text.strip(),
+            "",
+            "[RAW_TRACE]",
+            trace_block,
+            "",
+            "[ANTI_SOFTENING_RULES]",
+            anti_block,
+            "",
+            "[GROUNDING_RULES]",
+            grounding_block,
+            "",
+            "[INSTRUCTIONS]",
+            "- 사용자 입력의 내용에 직접 답한다.",
+            "- RAW_TRACE를 보고 감정이 어떻게 시작되고 유지되고 수렴했는지 반영한다.",
+            "- RAW_TRACE의 숫자나 섹션 이름을 그대로 언급하지 않는다.",
+            "- 감정의 거친 결, 짜증, 예민함, 피로, 소진감이 핵심이면 그 결을 남긴다.",
+            "- 불필요하게 달래거나 과잉 해석하지 않는다.",
+            "- 한국어 평문으로만 2~5문장 이내로 답한다.",
+            "- 같은 문장이나 핵심 구절을 반복하지 않는다.",
+            "- 문장을 중간에 끊거나 조건절로 끝내지 않는다. 마지막 문장은 완결된 문장으로 끝낸다.",
+            "- bullet, markdown, JSON, 코드블록을 쓰지 않는다.",
+        ]
+    )
+
+
+def build_hybrid_trace_generation_prompt(
+    input_text: str,
+    style_dict: dict[str, float],
+    style_tags: list[str],
+    style_summary: dict[str, float],
+    trace_lines: Sequence[str],
+    anti_softening_rules: list[str] | None = None,
+    grounding_rules: list[str] | None = None,
+) -> str:
+    condensed_tags = ", ".join(style_tags[:4]) if style_tags else "(none)"
+    summary_lines = "\n".join(format_style_summary_lines(style_summary, top_n=3))
+    trace_block = "\n".join(f"- {line}" for line in trace_lines) if trace_lines else "- 유효한 trace 정보 없음"
+    anti_block = (
+        "\n".join(format_anti_softening_lines(anti_softening_rules or []))
+        if anti_softening_rules
+        else "- 입력에 없는 위로나 공손함을 자동으로 덧붙이지 않는다."
+    )
+    grounding_block = (
+        "\n".join(format_grounding_lines(grounding_rules or []))
+        if grounding_rules
+        else "- 첫 문장은 입력의 정서와 직접 연결되게 시작한다."
+    )
+    return "\n".join(
+        [
+            "[ROLE]",
+            "당신은 감정 궤적과 스타일 요약을 함께 참고해 한국어로 답하는 응답 생성기다.",
+            "",
+            "[USER_INPUT]",
+            input_text.strip(),
+            "",
+            "[RAW_TRACE]",
+            trace_block,
+            "",
+            "[STYLE_TAGS]",
+            condensed_tags,
+            "",
+            "[STYLE_SUMMARY]",
+            summary_lines if summary_lines else "(none)",
+            "",
+            "[ANTI_SOFTENING_RULES]",
+            anti_block,
+            "",
+            "[GROUNDING_RULES]",
+            grounding_block,
+            "",
+            "[INSTRUCTIONS]",
+            "- 사용자 입력의 내용에 직접 답한다.",
+            "- RAW_TRACE를 우선 참고해 감정의 흐름과 결을 잡는다.",
+            "- STYLE_TAGS와 STYLE_SUMMARY는 말투 밀도와 거리감을 미세 조정하는 데만 쓴다.",
+            "- RAW_TRACE와 STYLE 정보가 충돌하면 감정 결을 더 우선한다.",
+            "- 숫자나 섹션 이름을 그대로 언급하지 않는다.",
+            "- 한국어 평문으로만 2~5문장 이내로 답한다.",
+            "- 같은 문장이나 핵심 구절을 반복하지 않는다.",
+            "- 문장을 중간에 끊거나 조건절로 끝내지 않는다. 마지막 문장은 완결된 문장으로 끝낸다.",
+            "- bullet, markdown, JSON, 코드블록을 쓰지 않는다.",
+        ]
+    )
+
+
+def build_conditioned_generation_prompt(
+    *,
+    input_text: str,
+    profile: dict[str, object],
+    conditioning_mode: str,
+    template_path: Path | None = None,
+) -> tuple[str, str]:
+    if conditioning_mode == "style":
+        return (
+            build_response_generation_prompt(
+                input_text=input_text,
+                style_dict=dict(profile["style_dict"]),
+                style_tags=list(profile["style_tags"]),
+                style_summary=dict(profile["style_summary"]),
+                anti_softening_rules=list(profile.get("anti_softening_rules", [])),
+                grounding_rules=list(profile.get("grounding_rules", [])),
+                template_path=template_path,
+            ),
+            "style_tags,style_summary,anti_softening_rules,grounding_rules",
+        )
+    if conditioning_mode == "raw_trace":
+        return (
+            build_trace_generation_prompt(
+                input_text=input_text,
+                trace_lines=list(profile.get("trace_lines", [])),
+                anti_softening_rules=list(profile.get("anti_softening_rules", [])),
+                grounding_rules=list(profile.get("grounding_rules", [])),
+            ),
+            "raw_trace,anti_softening_rules,grounding_rules",
+        )
+    if conditioning_mode == "hybrid_trace":
+        return (
+            build_hybrid_trace_generation_prompt(
+                input_text=input_text,
+                style_dict=dict(profile["style_dict"]),
+                style_tags=list(profile["style_tags"]),
+                style_summary=dict(profile["style_summary"]),
+                trace_lines=list(profile.get("trace_lines", [])),
+                anti_softening_rules=list(profile.get("anti_softening_rules", [])),
+                grounding_rules=list(profile.get("grounding_rules", [])),
+            ),
+            "raw_trace,style_tags,style_summary,anti_softening_rules,grounding_rules",
+        )
+    raise ValueError(f"unsupported conditioning_mode: {conditioning_mode}")
+
+
 def infer_style_profile(
     model: EmoNet,
     decoder: LinearZtoSDecoder,
@@ -2550,6 +2850,13 @@ def infer_style_profile(
         style_summary=style_summary,
         anti_softening_mode=anti_softening_mode,
     )
+    trace_profile = build_trace_profile(
+        pruned_branch_log=list(outputs.get("pruned_branch_log", [])),
+        dominant_branch=list(outputs.get("dominant_branch", [])),
+        n_neurons=int(getattr(model.config, "n_neurons", 256)),
+        termination_reason=str(outputs.get("termination_reason", "unknown")),
+        ticks_run=int(outputs.get("ticks_run", 0)),
+    )
     return {
         "stim_vec": stim_vec,
         "dominant_branch_len": len(outputs["dominant_branch"]),
@@ -2564,6 +2871,11 @@ def infer_style_profile(
         "anti_softening_rules": anti_softening_rules,
         "grounding_mode": grounding_mode,
         "grounding_rules": grounding_rules,
+        "trace_lines": list(trace_profile["trace_lines"]),
+        "trace_summary_text": str(trace_profile["trace_summary_text"]),
+        "trace_profile": trace_profile,
+        "ticks_run": int(trace_profile["ticks_run"]),
+        "termination_reason": str(trace_profile["termination_reason"]),
     }
 
 
@@ -2609,9 +2921,46 @@ def generate_response_from_style(
     return response, prompt, response_meta
 
 
+def generate_response_from_profile(
+    *,
+    base_url: str,
+    model_name: str,
+    input_text: str,
+    profile: dict[str, object],
+    temperature: float,
+    max_tokens: int,
+    timeout_sec: int,
+    template_path: Path | None = None,
+    max_retries: int = 2,
+    conditioning_mode: str = "style",
+) -> tuple[str, str, str, dict[str, object]]:
+    prompt, prompt_sections = build_conditioned_generation_prompt(
+        input_text=input_text,
+        profile=profile,
+        conditioning_mode=conditioning_mode,
+        template_path=template_path,
+    )
+    response, _raw_output, response_meta = request_plain_text_response(
+        base_url=base_url,
+        model_name=model_name,
+        prompt=prompt,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        timeout_sec=timeout_sec,
+        max_retries=max_retries,
+        validator=validate_plain_response_text,
+        retry_instruction=(
+            "직전 응답은 반복, 미완성 문장, bullet/JSON, 혹은 부자연스러운 출력 때문에 거부되었다. "
+            "같은 문장이나 핵심 구절을 반복하지 말고, 마지막 문장은 완결된 한국어 평문으로 끝내라."
+        ),
+        system_prompt="Return a plain Korean response only. Do not return JSON.",
+    )
+    return response, prompt, prompt_sections, response_meta
+
+
 def serialize_generation_log(record: dict[str, object]) -> dict[str, object]:
     payload = dict(record)
-    for key in ("stim_vec", "z", "s_pred", "style_tags", "anti_softening_rules", "grounding_rules"):
+    for key in ("stim_vec", "z", "s_pred", "style_tags", "anti_softening_rules", "grounding_rules", "trace_lines"):
         if key in payload:
             payload[key] = json.dumps(payload[key], ensure_ascii=False)
     if "style_summary" in payload and isinstance(payload["style_summary"], dict):
@@ -3815,6 +4164,11 @@ def build_parser() -> argparse.ArgumentParser:
         add_common_options(subparser)
         subparser.add_argument("--zs-model-path", required=True)
         subparser.add_argument("--style-profile", choices=sorted(STYLE_AXIS_PROFILES), default=DEFAULT_STYLE_PROFILE)
+        subparser.add_argument(
+            "--conditioning-mode",
+            choices=["style", "raw_trace", "hybrid_trace"],
+            default="style",
+        )
         subparser.add_argument("--base-url", default="http://127.0.0.1:11434/v1")
         subparser.add_argument("--model-name", default="gpt-oss:20b")
         subparser.add_argument("--response-temperature", type=float, default=0.5)

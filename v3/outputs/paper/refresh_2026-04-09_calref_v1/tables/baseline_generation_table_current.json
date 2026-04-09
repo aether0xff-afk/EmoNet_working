@@ -1,0 +1,48 @@
+{
+  "rows": 357,
+  "ok_rows": 357,
+  "error_rows": 0,
+  "conditions": [
+    {
+      "condition": "stim_only",
+      "condition_group": "baseline",
+      "rows": 120,
+      "mean_response_length": 207.542,
+      "mean_response_retry_count": 0.0,
+      "mean_content_fit": 3.9083,
+      "mean_emotional_appropriateness": 3.6833,
+      "mean_style_match": 2.2083,
+      "mean_naturalness": 4.575,
+      "mean_overall_quality": 3.5917,
+      "mean_total": 3.5933
+    },
+    {
+      "condition": "direct",
+      "condition_group": "baseline",
+      "rows": 119,
+      "mean_response_length": 203.16,
+      "mean_response_retry_count": 0.017,
+      "mean_content_fit": 3.958,
+      "mean_emotional_appropriateness": 3.5126,
+      "mean_style_match": 2.1933,
+      "mean_naturalness": 4.3697,
+      "mean_overall_quality": 3.5042,
+      "mean_total": 3.5076
+    },
+    {
+      "condition": "emonet_full",
+      "condition_group": "emonet",
+      "rows": 118,
+      "mean_response_length": 196.246,
+      "mean_response_retry_count": 0.119,
+      "mean_content_fit": 3.8305,
+      "mean_emotional_appropriateness": 3.6271,
+      "mean_style_match": 2.3559,
+      "mean_naturalness": 3.8475,
+      "mean_overall_quality": 3.3814,
+      "mean_total": 3.4085
+    }
+  ],
+  "scored_csv": "v3\\outputs\\experiments\\paper_matrix_current_calref_v1_gpt54_scored.csv",
+  "summary_csv": "v3\\outputs\\paper\\refresh_2026-04-09_calref_v1\\tables\\baseline_generation_table_current.csv"
+}

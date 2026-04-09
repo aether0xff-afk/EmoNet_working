@@ -29,6 +29,7 @@ from .core import (
     EmoNet,
     EmoNetConfig,
     LinearZtoSDecoder,
+    StimEncoder,
     StimEncoderConfig,
     ZSDecoderConfig,
 )
@@ -2788,11 +2789,11 @@ def build_appraisal_profile(
         min(1.0, 0.40 * norepinephrine + 0.25 * (1.0 - dopamine) + 0.20 * (1.0 - serotonin)),
     )
     exhaustion = max(
-        hint_fraction(text, FATIGUE_HINTS),
+        hint_fraction(text, StimEncoder.FATIGUE_HINTS),
         min(1.0, 0.65 * melatonin + 0.15 * active_window_ratio),
     )
     threat = max(
-        hint_fraction(text, THREAT_HINTS.union(ALERT_HINTS)),
+        hint_fraction(text, StimEncoder.THREAT_HINTS.union(StimEncoder.ALERT_HINTS)),
         min(1.0, 0.60 * norepinephrine + 0.15 * control_loss + 0.10 * raw_negative),
     )
 

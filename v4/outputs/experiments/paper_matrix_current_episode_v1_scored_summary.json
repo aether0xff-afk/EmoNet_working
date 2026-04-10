@@ -1,0 +1,113 @@
+{
+  "rows": 955,
+  "ok_rows": 935,
+  "error_rows": 20,
+  "conditions": [
+    {
+      "condition": "stim_only",
+      "condition_group": "baseline",
+      "rows": 118,
+      "mean_response_length": 210.568,
+      "mean_response_retry_count": 0.0,
+      "mean_content_fit": 3.9237,
+      "mean_emotional_appropriateness": 3.6186,
+      "mean_style_match": 2.2288,
+      "mean_naturalness": 4.5508,
+      "mean_overall_quality": 3.4746,
+      "mean_total": 3.5593
+    },
+    {
+      "condition": "direct",
+      "condition_group": "baseline",
+      "rows": 119,
+      "mean_response_length": 223.084,
+      "mean_response_retry_count": 0.0,
+      "mean_content_fit": 3.8992,
+      "mean_emotional_appropriateness": 3.5798,
+      "mean_style_match": 2.1345,
+      "mean_naturalness": 4.3697,
+      "mean_overall_quality": 3.4706,
+      "mean_total": 3.4908
+    },
+    {
+      "condition": "raw_trace",
+      "condition_group": "trace",
+      "rows": 118,
+      "mean_response_length": 192.314,
+      "mean_response_retry_count": 0.025,
+      "mean_content_fit": 3.7881,
+      "mean_emotional_appropriateness": 3.4492,
+      "mean_style_match": 1.8729,
+      "mean_naturalness": 4.1102,
+      "mean_overall_quality": 3.2542,
+      "mean_total": 3.2949
+    },
+    {
+      "condition": "hybrid_trace",
+      "condition_group": "trace",
+      "rows": 116,
+      "mean_response_length": 215.224,
+      "mean_response_retry_count": 0.052,
+      "mean_content_fit": 3.6897,
+      "mean_emotional_appropriateness": 3.5259,
+      "mean_style_match": 2.1897,
+      "mean_naturalness": 3.8103,
+      "mean_overall_quality": 3.1724,
+      "mean_total": 3.2776
+    },
+    {
+      "condition": "emonet_full",
+      "condition_group": "emonet",
+      "rows": 114,
+      "mean_response_length": 327.175,
+      "mean_response_retry_count": 0.14,
+      "mean_content_fit": 3.6316,
+      "mean_emotional_appropriateness": 3.4211,
+      "mean_style_match": 2.3158,
+      "mean_naturalness": 3.614,
+      "mean_overall_quality": 3.1579,
+      "mean_total": 3.2281
+    },
+    {
+      "condition": "appraisal_trace",
+      "condition_group": "trace",
+      "rows": 116,
+      "mean_response_length": 193.284,
+      "mean_response_retry_count": 0.0,
+      "mean_content_fit": 3.8017,
+      "mean_emotional_appropriateness": 3.1897,
+      "mean_style_match": 1.931,
+      "mean_naturalness": 3.9569,
+      "mean_overall_quality": 3.1379,
+      "mean_total": 3.2034
+    },
+    {
+      "condition": "episode_trace",
+      "condition_group": "episode",
+      "rows": 117,
+      "mean_response_length": 235.171,
+      "mean_response_retry_count": 0.051,
+      "mean_content_fit": 3.4359,
+      "mean_emotional_appropriateness": 2.3504,
+      "mean_style_match": 1.5726,
+      "mean_naturalness": 3.3504,
+      "mean_overall_quality": 2.4103,
+      "mean_total": 2.6239
+    },
+    {
+      "condition": "hybrid_episode",
+      "condition_group": "episode",
+      "rows": 117,
+      "mean_response_length": 374.521,
+      "mean_response_retry_count": 0.111,
+      "mean_content_fit": 3.265,
+      "mean_emotional_appropriateness": 2.4444,
+      "mean_style_match": 1.6923,
+      "mean_naturalness": 2.8974,
+      "mean_overall_quality": 2.3248,
+      "mean_total": 2.5248
+    }
+  ],
+  "scored_csv": "v4\\outputs\\experiments\\paper_matrix_current_episode_v1_scored.csv",
+  "summary_csv": "v4\\outputs\\experiments\\paper_matrix_current_episode_v1_scored_summary.csv"
+}

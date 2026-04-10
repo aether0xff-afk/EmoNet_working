@@ -1022,6 +1022,9 @@ class ExperimentToolTests(unittest.TestCase):
         prompt, sections = module.build_condition_prompt("episode_trace", "예시 입력", profile)
         self.assertIn("[EPISODE_TRACE]", prompt)
         self.assertIn("공세적 경계-분노 혼란", prompt)
+        self.assertIn("surface_keep: 배제감과 날카로움", prompt)
+        self.assertNotIn("appraisal_state:", prompt)
+        self.assertNotIn("trajectory_overall:", prompt)
         self.assertNotIn("[STYLE_TAGS]", prompt)
         self.assertEqual(sections, "episode_trace,anti_softening_rules,grounding_rules")
 
@@ -1029,6 +1032,8 @@ class ExperimentToolTests(unittest.TestCase):
         self.assertIn("[EPISODE_TRACE]", prompt)
         self.assertIn("[STYLE_TAGS]", prompt)
         self.assertIn("[STYLE_SUMMARY]", prompt)
+        self.assertIn("surface_keep: 배제감과 날카로움", prompt)
+        self.assertNotIn("trajectory_persistence:", prompt)
         self.assertEqual(sections, "episode_trace,style_tags,style_summary,anti_softening_rules,grounding_rules")
 
     def test_experiment_matrix_records_response_retry_metadata(self) -> None:

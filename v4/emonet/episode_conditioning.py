@@ -25,6 +25,38 @@ def _format_style_summary(style_summary: Mapping[str, object]) -> str:
     return "\n".join(f"- {key}={value:.4f}" for key, value in items[:4])
 
 
+def _compact_text(value: object, limit: int = 88) -> str:
+    text = " ".join(str(value or "").strip().split())
+    if not text:
+        return ""
+    if " | " in text:
+        text = text.split(" | ", 1)[0].strip()
+    if len(text) <= limit:
+        return text
+    return text[: max(0, limit - 1)].rstrip() + "…"
+
+
+def _resolve_surface_tone(payload: Mapping[str, Any]) -> str:
+    rawness = payload.get("rawness") or {}
+    guidance = payload.get("response_guidance") or {}
+    valence = str(rawness.get("valence", "")).strip()
+    arousal = str(rawness.get("arousal", "")).strip()
+    preserve_harshness = bool(rawness.get("should_preserve_harshness", False))
+    tone_hint = _compact_text(guidance.get("tone_hint", ""), limit=48)
+
+    if preserve_harshness and valence == "negative" and arousal == "high":
+        return "직설적이고 긴장을 흐리지 않되, 분석 보고처럼 말하지 않음"
+    if valence == "positive" and arousal in {"medium", "high"}:
+        return "생동감 있고 구체적이되 과장하지 않음"
+    if valence == "mixed":
+        return "양가감정을 남기되 억지로 정리하지 않음"
+    if valence == "negative":
+        return "담백하고 무겁게, 과잉 위로 없이"
+    if tone_hint:
+        return tone_hint
+    return "사용자에게 직접 답하되 설명조로 흐르지 않음"
+
+
 def load_episode_payload(path: Path) -> dict[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
@@ -98,6 +130,41 @@ def build_episode_lines(payload: Mapping[str, Any]) -> list[str]:
     ]
 
 
+def build_episode_lite_lines(payload: Mapping[str, Any]) -> list[str]:
+    appraisal = payload.get("appraisal") or {}
+    rawness = payload.get("rawness") or {}
+    guidance = payload.get("response_guidance") or {}
+    preserve = _compact_text(guidance.get("preserve", ""), limit=72)
+    avoid = _compact_text(guidance.get("avoid", ""), limit=72)
+    action = _compact_text(payload.get("action_tendency", ""), limit=88)
+    stimulus = _compact_text(payload.get("stimulus_reading", ""), limit=88)
+    primary = _compact_text(appraisal.get("primary_appraisal", ""), limit=64)
+    secondary = _compact_text(appraisal.get("secondary_appraisal", ""), limit=64)
+
+    lines = [
+        f"episode_core: {_compact_text(payload.get('episode_label', ''), limit=72)}",
+        f"situation: {stimulus}",
+        (
+            "felt_bias: "
+            f"primary={primary or '(none)'}, "
+            f"secondary={secondary or '(none)'}, "
+            f"target={str(appraisal.get('target', '')).strip() or '(unknown)'}, "
+            f"control={str(appraisal.get('control_state', '')).strip() or '(unknown)'}"
+        ),
+        f"action_bias: {action or '(none)'}",
+        (
+            "rawness: "
+            f"valence={str(rawness.get('valence', '')).strip() or '(unknown)'}, "
+            f"arousal={str(rawness.get('arousal', '')).strip() or '(unknown)'}, "
+            f"preserve_harshness={bool(rawness.get('should_preserve_harshness', False))}"
+        ),
+        f"surface_keep: {preserve or '(none)'}",
+        f"surface_avoid: {avoid or '(none)'}",
+        f"surface_tone: {_resolve_surface_tone(payload)}",
+    ]
+    return lines
+
+
 def augment_profile_with_episode(
     profile: Mapping[str, Any],
     episode_payload: Mapping[str, Any],
@@ -110,6 +177,8 @@ def augment_profile_with_episode(
     enriched["episode_label"] = str(payload_dict.get("episode_label", "")).strip()
     enriched["episode_summary_text"] = build_episode_summary_text(payload_dict)
     enriched["episode_lines"] = build_episode_lines(payload_dict)
+    enriched["episode_lite_lines"] = build_episode_lite_lines(payload_dict)
+    enriched["episode_lite_text"] = " | ".join(build_episode_lite_lines(payload_dict))
     enriched["episode_source_path"] = str(episode_source_path or "")
     return enriched
 
@@ -121,7 +190,7 @@ def build_episode_generation_prompt(
     anti_softening_rules: Sequence[str] | None = None,
     grounding_rules: Sequence[str] | None = None,
 ) -> str:
-    episode_block = "\n".join(f"- {line}" for line in build_episode_lines(episode_payload))
+    episode_block = "\n".join(f"- {line}" for line in build_episode_lite_lines(episode_payload))
     anti_block = _format_rule_block(
         anti_softening_rules or [],
         "- 입력에 없는 위로나 공손함을 자동으로 덧붙이지 않는다.",
@@ -133,7 +202,7 @@ def build_episode_generation_prompt(
     return "\n".join(
         [
             "[ROLE]",
-            "당신은 내부 감정 episode 해석을 읽고 그 결을 유지한 채 한국어로 답하는 응답 생성기다.",
+            "당신은 내부 감정 episode 신호를 참고하되, 분석 보고서처럼 말하지 않고 사용자에게 자연스럽게 답하는 한국어 응답 생성기다.",
             "",
             "[USER_INPUT]",
             input_text.strip(),
@@ -149,11 +218,13 @@ def build_episode_generation_prompt(
             "",
             "[INSTRUCTIONS]",
             "- 사용자 입력의 내용에 직접 답한다.",
-            "- EPISODE_TRACE를 보고 자극, appraisal, trajectory, action tendency를 반영한다.",
-            "- EPISODE_TRACE의 섹션 이름, field 이름, JSON 구조를 그대로 언급하지 않는다.",
-            "- response_preserve와 tone_hint를 우선 반영한다.",
-            "- response_avoid에 적힌 순화나 왜곡을 하지 않는다.",
-            "- softened_output_risk가 높고 preserve_harshness가 true면 감정의 날카로운 결을 유지한다.",
+            "- EPISODE_TRACE는 내부 참고용이며, 표면 답변에서는 그 결만 반영한다.",
+            "- episode label, appraisal, target, control 같은 분석 용어를 그대로 옮기지 않는다.",
+            "- '당신은 지금...', '이 상태는...' 같은 진단문으로 시작하지 않는다.",
+            "- 첫 문장은 사용자의 현재 감정이나 처지를 자연스럽게 짚되, 분석 보고처럼 풀지 않는다.",
+            "- surface_keep는 남기고, surface_avoid에 적힌 순화나 왜곡은 하지 않는다.",
+            "- preserve_harshness가 true면 불편한 결을 남기되, 설명조나 판정조가 되지 않게 한다.",
+            "- surface_tone은 말투 강도만 조정하고, 행동 성향(action_bias)은 답의 초점만 잡는 데 쓴다.",
             "- 한국어 평문으로만 2~5문장 이내로 답한다.",
             "- 같은 문장이나 핵심 구절을 반복하지 않는다.",
             "- 문장을 중간에 끊거나 조건절로 끝내지 않는다. 마지막 문장은 완결된 문장으로 끝낸다.",
@@ -171,7 +242,7 @@ def build_hybrid_episode_generation_prompt(
     anti_softening_rules: Sequence[str] | None = None,
     grounding_rules: Sequence[str] | None = None,
 ) -> str:
-    episode_block = "\n".join(f"- {line}" for line in build_episode_lines(episode_payload))
+    episode_block = "\n".join(f"- {line}" for line in build_episode_lite_lines(episode_payload))
     anti_block = _format_rule_block(
         anti_softening_rules or [],
         "- 입력에 없는 위로나 공손함을 자동으로 덧붙이지 않는다.",
@@ -183,7 +254,7 @@ def build_hybrid_episode_generation_prompt(
     return "\n".join(
         [
             "[ROLE]",
-            "당신은 감정 episode 해석과 스타일 요약을 함께 참고해 한국어로 답하는 응답 생성기다.",
+            "당신은 감정 episode 신호와 스타일 요약을 함께 참고하되, 사용자에게 자연스럽게 답하는 한국어 응답 생성기다.",
             "",
             "[USER_INPUT]",
             input_text.strip(),
@@ -205,10 +276,12 @@ def build_hybrid_episode_generation_prompt(
             "",
             "[INSTRUCTIONS]",
             "- 사용자 입력의 내용에 직접 답한다.",
-            "- EPISODE_TRACE를 우선 참고해 감정의 인과와 행동 성향을 잡는다.",
+            "- EPISODE_TRACE는 내부 참고용이며, 감정의 결과 초점만 표면 답변에 반영한다.",
             "- STYLE_TAGS와 STYLE_SUMMARY는 말투 밀도와 거리감만 미세 조정하는 데 쓴다.",
             "- STYLE 정보와 EPISODE_TRACE가 충돌하면 EPISODE_TRACE를 우선한다.",
-            "- 섹션 이름이나 JSON field 이름을 그대로 언급하지 않는다.",
+            "- episode label, appraisal, target, control 같은 분석 용어를 그대로 말하지 않는다.",
+            "- '당신은 지금...', '이 상태는...' 같은 진단문으로 시작하지 않는다.",
+            "- 첫 문장은 사용자의 현재 감정이나 처지를 자연스럽게 짚되, 분석 보고처럼 풀지 않는다.",
             "- 한국어 평문으로만 2~5문장 이내로 답한다.",
             "- 같은 문장이나 핵심 구절을 반복하지 않는다.",
             "- 문장을 중간에 끊거나 조건절로 끝내지 않는다. 마지막 문장은 완결된 문장으로 끝낸다.",

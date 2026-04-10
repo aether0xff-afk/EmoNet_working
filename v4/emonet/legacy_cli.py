@@ -1333,7 +1333,9 @@ def command_generate_response(args: argparse.Namespace) -> None:
         "appraisal_tendency": str(profile.get("appraisal_tendency", "")),
         "episode_label": str(profile.get("episode_label", "")),
         "episode_summary_text": str(profile.get("episode_summary_text", "")),
+        "episode_lite_text": str(profile.get("episode_lite_text", "")),
         "episode_lines": list(profile.get("episode_lines", [])),
+        "episode_lite_lines": list(profile.get("episode_lite_lines", [])),
         "episode_source_path": episode_source_path,
         "ticks_run": int(profile.get("ticks_run", 0)),
         "termination_reason": str(profile.get("termination_reason", "")),
@@ -1431,7 +1433,9 @@ def command_generate_response_batch(args: argparse.Namespace) -> None:
             row["appraisal_tendency"] = str(profile.get("appraisal_tendency", ""))
             row["episode_label"] = str(profile.get("episode_label", ""))
             row["episode_summary_text"] = str(profile.get("episode_summary_text", ""))
+            row["episode_lite_text"] = str(profile.get("episode_lite_text", ""))
             row["episode_lines_json"] = json.dumps(profile.get("episode_lines", []), ensure_ascii=False)
+            row["episode_lite_lines_json"] = json.dumps(profile.get("episode_lite_lines", []), ensure_ascii=False)
             row["episode_source_path"] = episode_source_path
             row["ticks_run"] = int(profile.get("ticks_run", 0))
             row["termination_reason"] = str(profile.get("termination_reason", ""))
@@ -1473,7 +1477,9 @@ def command_generate_response_batch(args: argparse.Namespace) -> None:
                      "grounding_rules": list(profile["grounding_rules"]),
                      "episode_label": str(profile.get("episode_label", "")),
                      "episode_summary_text": str(profile.get("episode_summary_text", "")),
+                     "episode_lite_text": str(profile.get("episode_lite_text", "")),
                      "episode_lines": list(profile.get("episode_lines", [])),
+                     "episode_lite_lines": list(profile.get("episode_lite_lines", [])),
                      "episode_source_path": episode_source_path,
                      "response_retry_count": int(response_meta["retry_count"]),
                      "response_validation_errors": list(response_meta["validation_errors"]),

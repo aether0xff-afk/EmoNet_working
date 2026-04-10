@@ -137,6 +137,7 @@ OUTPUT_COLUMNS = [
     "trace_summary_text",
     "appraisal_summary_text",
     "episode_summary_text",
+    "episode_lite_text",
     "episode_label",
     "episode_source_path",
     "anti_softening_mode",
@@ -591,6 +592,7 @@ def main() -> None:
                 "trace_summary_text": "",
                 "appraisal_summary_text": "",
                 "episode_summary_text": "",
+                "episode_lite_text": "",
                 "episode_label": "",
                 "episode_source_path": "",
                 "anti_softening_mode": "",
@@ -646,6 +648,7 @@ def main() -> None:
                     row["trace_summary_text"] = str(profile.get("trace_summary_text", ""))
                     row["appraisal_summary_text"] = str(profile.get("appraisal_summary_text", ""))
                     row["episode_summary_text"] = str(profile.get("episode_summary_text", ""))
+                    row["episode_lite_text"] = str(profile.get("episode_lite_text", ""))
                     row["episode_label"] = str(profile.get("episode_label", ""))
                     row["episode_source_path"] = str(profile.get("episode_source_path", ""))
                     row["anti_softening_mode"] = str(profile.get("anti_softening_mode", ""))
@@ -674,12 +677,14 @@ def main() -> None:
                             "trace_summary_text": str(profile.get("trace_summary_text", "")),
                             "appraisal_summary_text": str(profile.get("appraisal_summary_text", "")),
                             "episode_summary_text": str(profile.get("episode_summary_text", "")),
+                            "episode_lite_text": str(profile.get("episode_lite_text", "")),
                             "episode_label": str(profile.get("episode_label", "")),
                             "anti_softening_mode": str(profile.get("anti_softening_mode", "")),
                             "anti_softening_rules": list(profile.get("anti_softening_rules", [])),
                             "grounding_mode": str(profile.get("grounding_mode", "")),
                             "grounding_rules": list(profile.get("grounding_rules", [])),
                             "episode_lines": list(profile.get("episode_lines", [])),
+                            "episode_lite_lines": list(profile.get("episode_lite_lines", [])),
                             "episode_source_path": str(profile.get("episode_source_path", "")),
                             "response_retry_count": int(response_meta["retry_count"]),
                             "response_validation_errors": list(response_meta["validation_errors"]),

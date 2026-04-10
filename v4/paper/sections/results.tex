@@ -1,0 +1,39 @@
+\section{주요 결과}
+
+\subsection{Branch collapse는 크게 완화되었다}
+
+가장 먼저 확인할 수 있는 결과는 dominant branch의 trivial collapse가 구조적으로 줄었다는 점이다. Table~\ref{tab:branch-recovery}는 structural recovery 전후의 branch length 분포를 요약한다.
+
+\input{tables/branch_recovery}
+
+평균 branch 길이는 1.0539에서 70.4684로 늘었고, 길이 1 branch 비율은 0.9734에서 0.0948로 감소했다. 이는 branch-based intermediate representation이 더 이상 거의 항상 1-step에서 끝나지 않는다는 뜻이다. 다만 상위 tail은 여전히 ceiling에 붙어 있으며, after setting에서도 $p90 = p95 = \max = 126$이다. 즉 collapse는 크게 줄었지만 upper-tail saturation은 아직 남아 있다.
+
+\subsection{Reference configuration은 calibration으로 뒷받침된다}
+
+현재 reference configuration은 임의 초기값이 아니라 calibration experiment를 통해 선택되었다. 결합 검증 기준에서 \texttt{no\_activity\_ratio = 0.05}, \texttt{len1\_ratio = 0.05}, \texttt{hit\_max\_ticks\_ratio = 0.25}, \texttt{mean\_first\_active\_tick = 2.40}, \texttt{mean\_branch\_len = 79.78}이 확인되었다. 이 결과는 현재 설정이 dead sample 감소, branch collapse 완화, 과도한 persistence 억제를 동시에 고려한 선택이라는 점을 보여준다.
+
+\subsection{Style target bias는 여전히 강하다}
+
+style supervision은 consistency 측면에서는 정리되어 있지만, 분포 자체는 지나치게 safe하고 cooperative하다. keep-valid subset 평균에서 softness는 0.9276, calmness는 0.9132, cooperativeness는 0.9202, positivity는 0.9051이다. 반면 hostility와 resentment는 각각 0.0003, despair는 0.0044, volatility는 0.0022에 불과하다. 이는 내부 affect signal이 어느 정도 회복되어도, supervision target 자체가 최종 surface를 다시 순화시키는 강한 편향으로 작동할 수 있음을 시사한다.
+
+\subsection{Predictor는 아직 text baseline을 넘지 못한다}
+
+Table~\ref{tab:predictor-comparison}은 predictor 성능을 비교한다.
+
+\input{tables/predictor_comparison}
+
+text tf-idf ridge는 mean MAE 0.114628로 가장 낮고, structfix learned z64 ridge는 0.117328로 baseline보다도 소폭 나쁘다. 이는 branch dynamics recovery가 곧바로 better $z \rightarrow s$ prediction으로 이어지지 않았음을 의미한다. 현재 병목은 dynamics 자체라기보다, trajectory 정보를 latent와 style path로 압축하는 과정에 남아 있을 가능성이 높다.
+
+\subsection{Generation에서는 richer trace가 naive \texttt{emonet\_full}보다 낫지만 최고는 아니다}
+
+최신 GPT-5.4 judge summary 기준 generation 결과는 Table~\ref{tab:generation-comparison}과 같다.
+
+\input{tables/generation_comparison}
+
+\texttt{episode\_trace}는 mean total 3.4673으로 \texttt{emonet\_full}의 3.2478보다 높다. \texttt{raw\_trace} 역시 3.3717로 naive \texttt{emonet\_full}보다 낫다. 이는 raw trajectory나 episode-conditioned path가 naive end-to-end path보다 유의미한 정보를 전달하고 있음을 시사한다. 그러나 최고 점수는 여전히 \texttt{stim\_only}의 3.5404이며, \texttt{direct}도 3.5115로 더 높다.
+
+따라서 현재 결과를 가장 정직하게 해석하면 다음과 같다. internal trace quality improvement는 분명 존재하지만, 그것이 아직 final generation superiority로 안정적으로 번역되지는 않는다. 특히 \texttt{emonet\_full}은 style match가 2.2920으로 비교적 높지만 naturalness는 3.7345로 낮다. 즉 richer internal signal이 오히려 무거운 surface conditioning을 통해 자연스러움을 깎는 부작용을 내고 있을 가능성이 있다.
+
+\subsection{Trajectory interpretation은 reportability를 높인다}
+
+현재 raw trajectory에서 heuristic top-emotion readout만 쓰면 긍정적 고각성이나 suspended anticipation을 적절히 설명하지 못하는 사례가 남아 있다. GPT-5.4 기반 episode interpretation은 이 trajectory를 ``하나의 라벨''이 아니라 자극, appraisal, 지속성, action tendency를 포함한 episode로 요약한다. 현재 단계에서 이것을 ground-truth emotion recovery라고 주장할 수는 없지만, trajectory의 semantic reportability를 높였다는 해석은 충분히 방어 가능하다.

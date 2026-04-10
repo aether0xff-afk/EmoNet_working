@@ -1,0 +1,49 @@
+\section{실험 설정}
+
+\subsection{현재 기준 산출물}
+
+현재 논문 초안은 2026-04-09 refresh bundle과 2026-04-10 episode comparison summary를 기준으로 작성한다. 핵심 숫자는 다음과 같다.
+
+\begin{itemize}
+  \item Full export rows: 51,628
+  \item Branch mean length: 70.4684
+  \item Branch len1 ratio: 0.0948
+  \item Parsed style rows: 3,971
+  \item Keep-valid rows: 1,717
+  \item Rebalanced supervised rows: 1,800
+  \item Encoder head validation MAE: 0.10273
+  \item Decoder validation MAE: 0.117898
+\end{itemize}
+
+\subsection{평가 관점}
+
+이번 원고의 핵심 평가는 세 층으로 나뉜다.
+
+\begin{enumerate}
+  \item \textbf{구조적 회복}: branch collapse가 완화되었는지, calibration이 reference configuration을 정당화하는지 본다.
+  \item \textbf{표현력}: raw trajectory가 heuristic emotion label보다 더 풍부한 affect episode를 담는지 본다.
+  \item \textbf{종단 품질}: 내부 trajectory 개선이 실제 generation score 향상으로 번역되는지 본다.
+\end{enumerate}
+
+\subsection{비교 조건}
+
+현재 generation 비교 조건은 다음 네 묶음으로 정리할 수 있다.
+
+\begin{itemize}
+  \item Baseline: \texttt{stim\_only}, \texttt{direct}
+  \item Trace-conditioned: \texttt{raw\_trace}, \texttt{hybrid\_trace}, \texttt{appraisal\_trace}
+  \item Episode-conditioned: \texttt{episode\_trace}, \texttt{hybrid\_episode}
+  \item Full path: \texttt{emonet\_full}
+\end{itemize}
+
+이들 비교는 ``내부 상태가 더 풍부해질수록 최종 응답도 좋아지는가''를 직접 확인하기 위한 것이다.
+
+\subsection{이 원고의 평가 원칙}
+
+현재 단계에서 중요한 원칙은 과장하지 않는 것이다. 본문은 다음 세 가지를 함께 보여준다.
+
+\begin{itemize}
+  \item branch collapse recovery는 강하게 주장할 수 있다.
+  \item trajectory interpretation richness는 조심스럽게 주장할 수 있다.
+  \item end-to-end superiority는 아직 주장하면 안 된다.
+\end{itemize}

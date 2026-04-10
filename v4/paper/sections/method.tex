@@ -1,0 +1,26 @@
+\section{시스템 개요}
+
+\EmoNet{}의 active pipeline은 다음과 같이 요약된다.
+
+\begin{equation}
+x \rightarrow E_{\mathrm{aff}}(x) \rightarrow v_{\mathrm{stim}}
+\rightarrow \mathcal{N}_{\mathrm{cad}} \rightarrow H_{\mathrm{traj}}
+\rightarrow z \rightarrow s \rightarrow G_{\mathrm{prompt}} \rightarrow y
+\end{equation}
+
+여기서 $x$는 입력 텍스트, $v_{\mathrm{stim}}$은 4차원 affective stimulus, $\mathcal{N}_{\mathrm{cad}}$는 clustered neuro-affective dynamics core, $H_{\mathrm{traj}}$는 tick 단위 trajectory memory, $z$는 dominant branch 기반 잠재표현, $s$는 스타일 회귀 결과, $y$는 최종 응답이다.
+
+\paragraph{Affective stimulus encoding.}
+입력 텍스트는 dopamine, serotonin, norepinephrine, melatonin의 4축 stimulus로 투영된다. 이 단계는 응답의 감정 톤을 직접 출력하지 않고, 후속 동역학을 구동하는 저차원 제어 신호를 만드는 역할을 한다.
+
+\paragraph{Clustered affective dynamics.}
+중심 코어는 256개 노드로 구성된 clustered dynamics network이며, stimulus에 따라 활성화, 억제, persistence를 시간축으로 전개한다. 각 rollout은 tick별 활성 노드와 firing edge를 trajectory로 기록한다.
+
+\paragraph{Branch extraction and latent compression.}
+trajectory에서 dominant branch를 추출하고, 이를 잠재표현 $z$로 압축한다. 본래 이 단계의 가장 큰 문제는 branch가 거의 항상 길이 1에서 끝나는 collapse 현상이었고, 이번 cycle의 상당수 실험은 이 문제를 줄이는 데 집중되었다.
+
+\paragraph{Style regression and response realization.}
+잠재표현 $z$는 40차원 스타일 표현 $s$로 회귀된다. 최종 generation 단계에서 LLM은 감정 상태를 계산하는 주체라기보다, \EmoNet{}이 제공한 stimulus, trajectory summary, style signal을 언어 표면으로 번역하는 주체로 동작한다.
+
+\paragraph{Trajectory interpretation.}
+최근 active line의 중요한 변경은 heuristic top-emotion readout 대신 raw trajectory를 GPT-5.4가 episode 단위로 해석하도록 경로를 바꿨다는 점이다. 이 해석은 stimulus label 하나를 복원하려는 시도보다, stimulus, appraisal, trajectory pattern, action tendency를 함께 읽어 ``emotion episode''를 설명하는 쪽에 가깝다.

@@ -9,6 +9,7 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 FIG_DIR = ROOT / "outputs" / "paper" / "figures"
+BENCHMARK_CSV = ROOT / "data" / "benchmark" / "benchmark_results_20260305_180830.csv"
 
 STYLE_AXES = (
     "verbosity",
@@ -326,7 +327,7 @@ def load_json(path: Path) -> dict:
 
 
 def make_encoder_chart() -> None:
-    df = pd.read_csv(ROOT.parent / "encoder-ML testing" / "out_benchmark" / "benchmark_results_20260305_180830.csv")
+    df = pd.read_csv(BENCHMARK_CSV)
     df = df[df["status"] == "ok"].copy()
     df["MAE(mean)"] = df["MAE(mean)"].astype(float)
     df = df.sort_values("MAE(mean)").head(6)

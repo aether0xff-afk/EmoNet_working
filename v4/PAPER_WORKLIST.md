@@ -2,6 +2,7 @@
 
 ## 현재 canonical 문서
 
+- `RESEARCH_SUMMARY_2026-04-10.md`: branch/trajectory/episode/generation 결과를 한 번에 보는 연구 요약
 - `PAPER_DRAFT_ko.md`: 현재 단일 초안
 - `README.md`: active/archived 구조와 현재 파이프라인 설명
 - `PAPER_METRICS_AND_PARAMETER_RATIONALE_2026-04-10.md`: 논문용 지표와 파라미터 변경 근거 기준

@@ -1,0 +1,21 @@
+\begin{table}[t]
+\centering
+\caption{Latest episode-v2 generation summary scored by GPT-5.4 judge.}
+\label{tab:generation-comparison}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lrrrrrr}
+\toprule
+Condition & Content fit & Emotional approp. & Style match & Naturalness & Overall quality & Mean total \\
+\midrule
+stim\_only & 3.9123 & 3.6228 & 2.2544 & 4.4561 & 3.4561 & 3.5404 \\
+direct & 3.9292 & 3.5841 & 2.1947 & 4.4159 & 3.4336 & 3.5115 \\
+episode\_trace & 4.0531 & 3.5664 & 2.1327 & 4.1947 & 3.3894 & 3.4673 \\
+raw\_trace & 3.9558 & 3.5133 & 1.9381 & 4.1770 & 3.2743 & 3.3717 \\
+hybrid\_trace & 3.6964 & 3.5000 & 2.1964 & 3.9732 & 3.2679 & 3.3268 \\
+emonet\_full & 3.6814 & 3.3805 & 2.2920 & 3.7345 & 3.1504 & 3.2478 \\
+appraisal\_trace & 3.8091 & 3.3364 & 1.9727 & 3.8727 & 3.1818 & 3.2345 \\
+hybrid\_episode & 3.6937 & 3.4054 & 2.3333 & 3.5045 & 3.0721 & 3.2018 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

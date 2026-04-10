@@ -4,8 +4,11 @@
 
 ## Active 문서
 
+- `RESEARCH_SUMMARY_2026-04-10.md`
 - `PAPER_DRAFT_ko.md`
 - `PAPER_WORKLIST.md`
+- `paper/PAPER.md`
+- `paper/README.md`
 
 ## Active 코드
 
@@ -14,6 +17,8 @@
 - `emonet/legacy_cli.py`: 기존 대형 CLI 구현
 - `emonet/llm_api.py`: OpenAI-compatible API 호출 분리 모듈
 - `emonet/episode_conditioning.py`: episode JSON 기반 conditioning 모듈
+- `emonet/chat_service.py`: Streamlit chat app용 runtime/generation service
+- `streamlit_app.py`: ChatGPT 스타일 Streamlit GUI 엔트리
 
 ## Active 연구 스크립트
 
@@ -28,11 +33,23 @@
 
 - `artifacts/dominant_branch_encoder_extended40_calref_v1.pt`
 - `artifacts/z_to_s_decoder_extended40_calref_v1.npz`
+- `data/benchmark/benchmark_results_20260305_180830.csv`
 - `outputs/z/out_z_training_extended40_calref_v1.csv`
 - `outputs/z/out_z_training_learned_extended40_calref_v1.csv`
+- `outputs/branch_calibration/reference_calibration_rdp_v1`
 - `outputs/research/trajectory_batch_v1`
 - `outputs/research/trajectory_batch_v1_gpt54`
+- `outputs/research/trajectory_batch_matrix120_v1`
+- `outputs/research/trajectory_batch_matrix120_v1_gpt54`
+- `outputs/research/summary_2026-04-10`
 - `outputs/paper/refresh_2026-04-09_calref_v1`
+
+## Paper Workspace
+
+- `paper/PAPER.md`: 현재 paper용 markdown 기준 문서
+- `paper/sections/*.tex`: LaTeX section source
+- `paper/tables/*.tex`: LaTeX table source
+- `paper/build/main.pdf`: 현재 빌드된 PDF
 
 ## Active 파이프라인
 
@@ -40,6 +57,18 @@
 2. 로컬에서 `interpret_emotion_trajectory.py`로 GPT-5.4 episode 해석
 3. `episode_trace` 또는 `hybrid_episode` conditioning으로 generation 비교
 4. judge scoring과 paper refresh
+
+## Streamlit App
+
+```powershell
+cd .\v4
+pip install -r requirements.txt
+streamlit run .\streamlit_app.py
+```
+
+- 기본 LLM endpoint는 `http://127.0.0.1:11434/v1`와 `gpt-oss:20b`다.
+- `episode_trace`, `hybrid_episode` 모드는 sidebar에서 episode JSON을 업로드해야 한다.
+- 기본 runtime 경로는 `v4/artifacts`, `v4/data/benchmark`, `v4/outputs/z` 기준으로 잡힌다.
 
 ## Archive
 
@@ -50,4 +79,5 @@
 ## 메모
 
 - `emonet/legacy_cli.py`는 아직 크다. 현재는 facade + extracted module 방식으로 public surface만 정리한 상태다.
+- stimulus encoder 기본 학습 데이터는 루트 공유 폴더가 아니라 현재 `v4`의 `outputs/z/*.csv`와 `data/benchmark/*.csv`를 기준으로 잡는다.
 - 다음 정리 대상은 generation command group을 `legacy_cli.py`에서 별도 모듈로 완전히 떼어내는 것이다.

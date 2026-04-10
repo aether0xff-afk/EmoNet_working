@@ -43,8 +43,8 @@
 
 출처:
 
-- [combined_validation.json](/C:/Users/esl01/OneDrive/문서/GitHub/EmoNet_working/v3/outputs/branch_calibration/reference_calibration_rdp_v1/combined_validation.json)
-- [calibrated_reference_config.json](/C:/Users/esl01/OneDrive/문서/GitHub/EmoNet_working/v3/outputs/branch_calibration/reference_calibration_rdp_v1/calibrated_reference_config.json)
+- [combined_validation.json](/C:/Users/esl01/OneDrive/문서/GitHub/EmoNet_working/v4/outputs/branch_calibration/reference_calibration_rdp_v1/combined_validation.json)
+- [calibrated_reference_config.json](/C:/Users/esl01/OneDrive/문서/GitHub/EmoNet_working/v4/outputs/branch_calibration/reference_calibration_rdp_v1/calibrated_reference_config.json)
 
 핵심 수치:
 

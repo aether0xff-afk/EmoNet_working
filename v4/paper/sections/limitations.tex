@@ -1,0 +1,18 @@
+\section{한계와 다음 단계}
+
+현재 \EmoNet{} 원고는 분명한 한계를 함께 가져가야 한다.
+
+\paragraph{첫째, 최고 성능 모델이 아니다.}
+현재 generation 결과에서 최고 점수는 \texttt{stim\_only}다. 따라서 이 논문은 ``best model paper''가 아니라 ``diagnostic systems paper''로 쓰는 편이 맞다.
+
+\paragraph{둘째, style target bias가 여전히 매우 강하다.}
+현재 supervision target은 calm, soft, cooperative surface에 치우쳐 있어 raw affect를 충분히 유지하기 어렵다. felt state와 response style을 분리하는 데이터 설계가 필요하다.
+
+\paragraph{셋째, learned latent는 predictor superiority를 확보하지 못했다.}
+$z \rightarrow s$ 경로는 아직 text baseline보다 강하지 않다. 이후 단계에서는 branch extractor나 dynamics보다도 latent compression과 decoder 구조를 먼저 다시 볼 필요가 있다.
+
+\paragraph{넷째, saturation tail이 남아 있다.}
+branch collapse는 완화되었지만 ceiling-near persistence는 아직 완전히 사라지지 않았다. 이는 later-phase differentiation을 평평하게 만들 수 있다.
+
+\paragraph{다섯째, paper artifact source를 단일화할 필요가 있다.}
+현재 refresh bundle과 episode-v2 summary가 서로 다른 generation slice를 보고 있기 때문에, 최종 투고 전에는 단일 run 기준으로 표와 그림을 다시 맞춰야 한다.

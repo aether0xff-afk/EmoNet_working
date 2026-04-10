@@ -1,0 +1,7 @@
+\section{서론}
+
+대규모 언어모델 기반 응답 생성은 문장 자연성과 의미 보존 측면에서 빠르게 향상되었지만, 감정이 내부에서 어떻게 형성되고 어떤 경로를 거쳐 최종 말투로 번역되는지는 여전히 설명하기 어렵다. 많은 접근은 감정 라벨이나 속성 토큰을 직접 prompt에 주입하는 방식에 머무르기 때문에, 실패가 입력 인코더, 내부 동역학, 잠재표현, 스타일 회귀, 또는 최종 surface realization 중 어디에서 발생했는지 분리해 보기 어렵다.
+
+\EmoNet{}은 이 문제를 단계별 파이프라인으로 재구성한다. 입력 텍스트는 4차원 affective stimulus로 변환되고, clustered neuro-affective dynamics core는 이 자극을 시간축으로 전개하면서 branch와 trajectory를 생성한다. 이후 지배적인 branch 요약은 잠재표현 $z$로 압축되고, 다시 스타일 벡터 $s$로 회귀되며, 최종 LLM은 이 상태를 자연어 표면으로 실현한다.
+
+이 논문의 핵심 질문은 두 가지다. 첫째, branch-based intermediate representation이 실제로 trivial collapse에서 벗어났는가. 둘째, richer internal trajectory가 실제 generation quality 개선으로 이어지는가. 현재 결과는 첫 질문에는 비교적 긍정적으로 답하지만, 둘째 질문에는 아직 제한적인 답만을 제공한다. 이 점이 오히려 중요하다. \EmoNet{}의 현재 강점은 모든 평가에서 최고 점수를 내는 것이 아니라, 내부 구조 개선과 최종 출력 사이의 간극을 정량적으로 드러냈다는 데 있다.

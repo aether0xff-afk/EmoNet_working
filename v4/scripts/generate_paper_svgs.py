@@ -9,6 +9,7 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 FIG_DIR = ROOT / "outputs" / "paper" / "figures"
+BENCHMARK_CSV = ROOT / "data" / "benchmark" / "benchmark_results_20260305_180830.csv"
 
 STYLE_AXES = (
     "verbosity",
@@ -114,8 +115,12 @@ def bar_chart_vertical(
     reference: float | None = None,
     reference_label: str | None = None,
     value_format: str = "{:.3f}",
+    tick_label_format: str = "{:.3f}",
     width: int = 980,
     height: int = 560,
+    show_value_labels: bool = True,
+    show_category_labels: bool = True,
+    y_max: float | None = None,
 ) -> None:
     body: list[str] = []
     add_title(body, title, subtitle)
@@ -123,7 +128,10 @@ def bar_chart_vertical(
     plot_w = right - left
     plot_h = bottom - top
     max_value = max(values + ([reference] if reference is not None else []))
-    max_value *= 1.15
+    if y_max is None:
+        max_value *= 1.15
+    else:
+        max_value = float(y_max)
     if max_value <= 0:
         max_value = 1.0
 
@@ -131,7 +139,9 @@ def bar_chart_vertical(
         y = top + plot_h * step / 5
         value = max_value * (1 - step / 5)
         body.append(f'<line class="grid" x1="{left}" y1="{y:.2f}" x2="{right}" y2="{y:.2f}"/>')
-        body.append(f'<text class="axis" x="{left - 8}" y="{y + 4:.2f}" text-anchor="end">{value:.3f}</text>')
+        body.append(
+            f'<text class="axis" x="{left - 8}" y="{y + 4:.2f}" text-anchor="end">{tick_label_format.format(value)}</text>'
+        )
 
     draw_axes_frame(body, left, top, right, bottom)
 
@@ -144,14 +154,20 @@ def bar_chart_vertical(
     n = len(values)
     gap = 18
     slot = plot_w / max(1, n)
-    bar_w = min(56, slot - gap)
+    bar_w = max(1.0, min(56, slot - gap))
     for idx, (label, value, color) in enumerate(zip(labels, values, colors, strict=True)):
         x = left + slot * idx + (slot - bar_w) / 2
         h = (value / max_value) * plot_h
         y = bottom - h
         body.append(f'<rect x="{x:.2f}" y="{y:.2f}" width="{bar_w:.2f}" height="{h:.2f}" rx="6" fill="{color}"/>')
-        body.append(f'<text class="value" x="{x + bar_w/2:.2f}" y="{y - 8:.2f}" text-anchor="middle">{value_format.format(value)}</text>')
-        body.append(f'<text class="label" x="{x + bar_w/2:.2f}" y="{bottom + 20:.2f}" text-anchor="middle">{escape(label)}</text>')
+        if show_value_labels:
+            body.append(
+                f'<text class="value" x="{x + bar_w/2:.2f}" y="{y - 8:.2f}" text-anchor="middle">{value_format.format(value)}</text>'
+            )
+        if show_category_labels:
+            body.append(
+                f'<text class="label" x="{x + bar_w/2:.2f}" y="{bottom + 20:.2f}" text-anchor="middle">{escape(label)}</text>'
+            )
 
     body.append(f'<text class="axis" x="{left - 58}" y="{top - 16}" text-anchor="start">{escape(y_label)}</text>')
     if note:
@@ -326,7 +342,7 @@ def load_json(path: Path) -> dict:
 
 
 def make_encoder_chart() -> None:
-    df = pd.read_csv(ROOT.parent / "encoder-ML testing" / "out_benchmark" / "benchmark_results_20260305_180830.csv")
+    df = pd.read_csv(BENCHMARK_CSV)
     df = df[df["status"] == "ok"].copy()
     df["MAE(mean)"] = df["MAE(mean)"].astype(float)
     df = df.sort_values("MAE(mean)").head(6)

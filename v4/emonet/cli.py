@@ -4,6 +4,7 @@ from __future__ import annotations
 # Keep the large legacy implementation isolated while exposing extracted modules here.
 
 from .legacy_cli import *  # noqa: F401,F403
+from .legacy_cli import _init_parallel_model, _require_parallel_model  # noqa: F401
 from .legacy_cli import main as _legacy_main
 from .llm_api import (  # noqa: F401
     call_openai_compatible_chat,

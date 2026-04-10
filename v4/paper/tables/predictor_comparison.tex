@@ -1,0 +1,16 @@
+\begin{table}[t]
+\centering
+\caption{Predictor mean MAE 비교. 낮을수록 좋다.}
+\label{tab:predictor-comparison}
+\begin{tabular}{lrr}
+\toprule
+Predictor & Mean MAE & Gain vs baseline \\
+\midrule
+Mean baseline & 0.117288 & 0.000000 \\
+Stim-only ridge & 0.116513 & 0.000775 \\
+Text tf-idf ridge & 0.114628 & 0.002660 \\
+Legacy z64 ridge & 0.116846 & 0.000442 \\
+Structfix learned z64 ridge & 0.117328 & -0.000040 \\
+\bottomrule
+\end{tabular}
+\end{table}

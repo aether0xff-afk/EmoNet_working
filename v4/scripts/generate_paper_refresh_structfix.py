@@ -27,13 +27,13 @@ from scripts.generate_paper_svgs import (
 OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "paper" / "refresh_2026-04-09_calref_v1"
 FIG_DIR = OUTPUT_ROOT / "figures"
 TABLE_DIR = OUTPUT_ROOT / "tables"
+BENCHMARK_CSV = PROJECT_ROOT / "data" / "benchmark" / "benchmark_results_20260305_180830.csv"
 
 LABELED_CSV = PROJECT_ROOT / "outputs" / "llm" / "llm_subset_labeled_4000_extended40_rebalanced_1800.csv"
 LEARNED_Z_CSV = PROJECT_ROOT / "outputs" / "z" / "out_z_training_learned_extended40_calref_v1.csv"
 OLD_Z_CSV = PROJECT_ROOT / "outputs" / "z" / "out_z_training_extended40.csv"
 OLD_Z_ARCHIVE_CSV = PROJECT_ROOT / "archive" / "data" / "out_z_training_extended40.csv"
 NEW_BRANCH_CSV = PROJECT_ROOT / "outputs" / "z" / "out_z_training_extended40_calref_v1.csv"
-BENCHMARK_CSV = PROJECT_ROOT.parent / "encoder-ML testing" / "out_benchmark" / "benchmark_results_20260305_180830.csv"
 CURRENT_GENERATION_TABLE_CSV = TABLE_DIR / "baseline_generation_table_current.csv"
 
 SEEDS = [7, 13, 21, 42, 84]
@@ -129,6 +129,35 @@ def summarize_branch_lengths(values: pd.Series) -> dict[str, float | int]:
     }
 
 
+def summarize_branch_length_bins(values: pd.Series) -> tuple[list[str], list[float], list[str]]:
+    bins = [
+        ("1", 1, 1),
+        ("2-10", 2, 10),
+        ("11-20", 11, 20),
+        ("21-40", 21, 40),
+        ("41-60", 41, 60),
+        ("61-80", 61, 80),
+        ("81-100", 81, 100),
+        ("101-120", 101, 120),
+        ("121-126", 121, 126),
+    ]
+    total = float(len(values))
+    labels: list[str] = []
+    percentages: list[float] = []
+    colors: list[str] = []
+    for label, lower, upper in bins:
+        mask = (values >= lower) & (values <= upper)
+        labels.append(label)
+        percentages.append(float(mask.mean()) * 100.0 if total else 0.0)
+        if label == "1":
+            colors.append("#2563eb")
+        elif label == "121-126":
+            colors.append("#1d4ed8")
+        else:
+            colors.append("#93c5fd")
+    return labels, percentages, colors
+
+
 def build_encoder_chart() -> None:
     df = pd.read_csv(BENCHMARK_CSV)
     df = df[df["status"] == "ok"].copy()
@@ -153,22 +182,21 @@ def build_branch_figures(old_df: pd.Series, new_df: pd.Series) -> dict[str, Any]
     before = summarize_branch_lengths(old_df)
     after = summarize_branch_lengths(new_df)
 
-    counts = new_df.value_counts().sort_index()
-    labels = [str(int(idx)) for idx in counts.index.tolist()]
-    total = float(counts.sum())
-    values = [(count / total) * 100.0 for count in counts.tolist()]
+    labels, values, colors = summarize_branch_length_bins(new_df)
     bar_chart_vertical(
         path=FIG_DIR / "dominant_branch_length_distribution_structfix.svg",
         title="Dominant Branch Length Distribution",
-        subtitle="Structfix export, 51,628 samples",
+        subtitle="Structfix export, binned percentages across dominant-branch ranges",
         labels=labels,
         values=values,
-        colors=["#2563eb" if label == "1" else "#93c5fd" for label in labels],
+        colors=colors,
         y_label="sample percentage (%)",
-        note="Length-1 collapse is largely removed in the structfix export.",
+        note="Bins are used because 123 distinct branch lengths make per-length bars unreadable. Collapse is reduced, but the 121-126 tail remains large.",
         value_format="{:.2f}",
+        tick_label_format="{:.0f}",
         width=1100,
         height=560,
+        y_max=25.0,
     )
 
     group_labels = ["before", "after"]

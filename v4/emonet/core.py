@@ -28,6 +28,8 @@ except ImportError:
     torch = None
     nn = None
 
+from .paths import default_benchmark_csv, default_stim_dataset_csv, project_root
+
 
 TORCH_AVAILABLE = torch is not None
 SKLEARN_AVAILABLE = TfidfVectorizer is not None
@@ -276,27 +278,13 @@ class EmoNetConfig:
 
 
 def _project_root() -> Path:
-    return Path(__file__).resolve().parents[1]
-
-
-def _workspace_root() -> Path:
-    return _project_root().parent
+    return project_root()
 
 
 @dataclass(slots=True)
 class StimEncoderConfig:
-    dataset_csv: Path = field(
-        default_factory=lambda: _workspace_root()
-        / "encoder-ML testing"
-        / "out_benchmark"
-        / "dataset_for_regression.csv"
-    )
-    benchmark_csv: Path = field(
-        default_factory=lambda: _workspace_root()
-        / "encoder-ML testing"
-        / "out_benchmark"
-        / "benchmark_results_20260305_180830.csv"
-    )
+    dataset_csv: Path = field(default_factory=default_stim_dataset_csv)
+    benchmark_csv: Path = field(default_factory=default_benchmark_csv)
     model_cache_path: Path = field(
         default_factory=lambda: _project_root() / "artifacts" / "ridge_stim_encoder.joblib"
     )
@@ -615,7 +603,7 @@ class StimEncoder:
 
         self._choose_vector_setup()
         df = self._load_dataset()
-        targets = self._build_proxy_targets(df["text"].astype(str).tolist(), df["y"].astype(float).to_numpy())
+        targets = self._resolve_training_targets(df)
 
         self.pipeline = self._build_pipeline()
         self.pipeline.fit(df["text"].astype(str).to_numpy(), targets)
@@ -706,14 +694,29 @@ class StimEncoder:
 
         dataset_csv = self.config.dataset_csv
         if not dataset_csv.exists():
-            raise FileNotFoundError(f"dataset_for_regression.csv not found: {dataset_csv}")
+            raise FileNotFoundError(f"stimulus training dataset not found: {dataset_csv}")
         df = pd.read_csv(dataset_csv)
-        for column in ("text", "y"):
-            if column not in df.columns:
-                raise ValueError(f"'{column}' column not found in {dataset_csv}")
+        if "text" not in df.columns:
+            raise ValueError(f"'text' column not found in {dataset_csv}")
+        stim_columns = ("dopamine", "serotonin", "norepinephrine", "melatonin")
+        has_proxy_target = "y" in df.columns
+        has_stim_targets = all(column in df.columns for column in stim_columns)
+        if not has_proxy_target and not has_stim_targets:
+            columns = ", ".join(stim_columns)
+            raise ValueError(
+                f"dataset must contain 'y' or direct stim columns ({columns}) in {dataset_csv}"
+            )
         if self.config.max_samples is not None and self.config.max_samples > 0 and len(df) > self.config.max_samples:
             df = df.sample(n=self.config.max_samples, random_state=self.config.random_state).reset_index(drop=True)
         return df
+
+    @classmethod
+    def _resolve_training_targets(cls, df) -> np.ndarray:
+        stim_columns = ("dopamine", "serotonin", "norepinephrine", "melatonin")
+        if all(column in df.columns for column in stim_columns):
+            stim_targets = df.loc[:, stim_columns].astype(float).to_numpy(dtype=np.float32, copy=True)
+            return np.clip(stim_targets, 0.0, 1.0).astype(np.float32, copy=False)
+        return cls._build_proxy_targets(df["text"].astype(str).tolist(), df["y"].astype(float).to_numpy())
 
     @classmethod
     def _make_vectorizer(cls, kind: str) -> TfidfVectorizer:

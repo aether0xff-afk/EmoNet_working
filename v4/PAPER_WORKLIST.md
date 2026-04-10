@@ -4,6 +4,7 @@
 
 - `PAPER_DRAFT_ko.md`: 현재 단일 초안
 - `README.md`: active/archived 구조와 현재 파이프라인 설명
+- `PAPER_METRICS_AND_PARAMETER_RATIONALE_2026-04-10.md`: 논문용 지표와 파라미터 변경 근거 기준
 
 ## 이미 정리된 것
 
@@ -13,6 +14,7 @@
 - raw trajectory batch 분석 완료
 - GPT-5.4 episode interpretation 경로 구축 완료
 - `episode_trace`, `hybrid_episode` conditioning이 generation path에 연결됨
+- `episode_trace v2`가 `mean_total=3.4673`으로 naive `emonet_full=3.2478`을 넘김
 
 ## 지금 논문에서 바로 쓸 수 있는 사실
 

@@ -1,0 +1,113 @@
+{
+  "rows": 956,
+  "ok_rows": 899,
+  "error_rows": 57,
+  "conditions": [
+    {
+      "condition": "stim_only",
+      "condition_group": "baseline",
+      "rows": 114,
+      "mean_response_length": 208.482,
+      "mean_response_retry_count": 0.0,
+      "mean_content_fit": 3.9123,
+      "mean_emotional_appropriateness": 3.6228,
+      "mean_style_match": 2.2544,
+      "mean_naturalness": 4.4561,
+      "mean_overall_quality": 3.4561,
+      "mean_total": 3.5404
+    },
+    {
+      "condition": "direct",
+      "condition_group": "baseline",
+      "rows": 113,
+      "mean_response_length": 204.779,
+      "mean_response_retry_count": 0.0,
+      "mean_content_fit": 3.9292,
+      "mean_emotional_appropriateness": 3.5841,
+      "mean_style_match": 2.1947,
+      "mean_naturalness": 4.4159,
+      "mean_overall_quality": 3.4336,
+      "mean_total": 3.5115
+    },
+    {
+      "condition": "episode_trace",
+      "condition_group": "episode",
+      "rows": 113,
+      "mean_response_length": 190.54,
+      "mean_response_retry_count": 0.027,
+      "mean_content_fit": 4.0531,
+      "mean_emotional_appropriateness": 3.5664,
+      "mean_style_match": 2.1327,
+      "mean_naturalness": 4.1947,
+      "mean_overall_quality": 3.3894,
+      "mean_total": 3.4673
+    },
+    {
+      "condition": "raw_trace",
+      "condition_group": "trace",
+      "rows": 113,
+      "mean_response_length": 180.15,
+      "mean_response_retry_count": 0.027,
+      "mean_content_fit": 3.9558,
+      "mean_emotional_appropriateness": 3.5133,
+      "mean_style_match": 1.9381,
+      "mean_naturalness": 4.177,
+      "mean_overall_quality": 3.2743,
+      "mean_total": 3.3717
+    },
+    {
+      "condition": "hybrid_trace",
+      "condition_group": "trace",
+      "rows": 112,
+      "mean_response_length": 242.295,
+      "mean_response_retry_count": 0.027,
+      "mean_content_fit": 3.6964,
+      "mean_emotional_appropriateness": 3.5,
+      "mean_style_match": 2.1964,
+      "mean_naturalness": 3.9732,
+      "mean_overall_quality": 3.2679,
+      "mean_total": 3.3268
+    },
+    {
+      "condition": "emonet_full",
+      "condition_group": "emonet",
+      "rows": 113,
+      "mean_response_length": 305.593,
+      "mean_response_retry_count": 0.071,
+      "mean_content_fit": 3.6814,
+      "mean_emotional_appropriateness": 3.3805,
+      "mean_style_match": 2.292,
+      "mean_naturalness": 3.7345,
+      "mean_overall_quality": 3.1504,
+      "mean_total": 3.2478
+    },
+    {
+      "condition": "appraisal_trace",
+      "condition_group": "trace",
+      "rows": 110,
+      "mean_response_length": 214.118,
+      "mean_response_retry_count": 0.055,
+      "mean_content_fit": 3.8091,
+      "mean_emotional_appropriateness": 3.3364,
+      "mean_style_match": 1.9727,
+      "mean_naturalness": 3.8727,
+      "mean_overall_quality": 3.1818,
+      "mean_total": 3.2345
+    },
+    {
+      "condition": "hybrid_episode",
+      "condition_group": "episode",
+      "rows": 111,
+      "mean_response_length": 337.55,
+      "mean_response_retry_count": 0.063,
+      "mean_content_fit": 3.6937,
+      "mean_emotional_appropriateness": 3.4054,
+      "mean_style_match": 2.3333,
+      "mean_naturalness": 3.5045,
+      "mean_overall_quality": 3.0721,
+      "mean_total": 3.2018
+    }
+  ],
+  "scored_csv": "v4\\outputs\\experiments\\paper_matrix_current_episode_v2_scored.csv",
+  "summary_csv": "v4\\outputs\\experiments\\paper_matrix_current_episode_v2_scored_summary.csv"
+}

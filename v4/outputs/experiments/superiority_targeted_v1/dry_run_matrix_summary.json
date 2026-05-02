@@ -1,0 +1,24 @@
+{
+  "path": "outputs\\experiments\\superiority_targeted_v1\\dry_run_matrix.csv",
+  "rows": 15,
+  "conditions": {
+    "episode_trace": {
+      "rows": 5,
+      "ok_rows": 0,
+      "error_rows": 5,
+      "mean_response_length": null
+    },
+    "episode_trace_v3": {
+      "rows": 5,
+      "ok_rows": 0,
+      "error_rows": 5,
+      "mean_response_length": null
+    },
+    "stim_only": {
+      "rows": 5,
+      "ok_rows": 0,
+      "error_rows": 5,
+      "mean_response_length": null
+    }
+  }
+}

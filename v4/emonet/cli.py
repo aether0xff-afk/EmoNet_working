@@ -17,6 +17,8 @@ from .episode_conditioning import (  # noqa: F401
     build_episode_generation_prompt,
     build_episode_lines,
     build_episode_summary_text,
+    build_episode_v3_generation_prompt,
+    build_episode_v3_lines,
     build_hybrid_episode_generation_prompt,
     load_episode_payload,
     resolve_episode_payload_path,

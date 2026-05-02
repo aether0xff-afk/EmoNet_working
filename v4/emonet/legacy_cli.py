@@ -36,6 +36,7 @@ from .core import (
 from .episode_conditioning import (
     augment_profile_with_episode,
     build_episode_generation_prompt,
+    build_episode_v3_generation_prompt,
     build_hybrid_episode_generation_prompt,
     load_episode_payload,
     resolve_episode_payload_path,
@@ -1296,7 +1297,7 @@ def command_generate_response(args: argparse.Namespace) -> None:
     decoder = LinearZtoSDecoder.load(Path(args.zs_model_path))
     profile = infer_style_profile(model=model, decoder=decoder, text=args.text, style_profile=style_profile)
     episode_source_path = ""
-    if args.conditioning_mode in {"episode_trace", "hybrid_episode"}:
+    if args.conditioning_mode in {"episode_trace", "episode_trace_v3", "hybrid_episode"}:
         if not args.episode_json:
             raise ValueError("--episode-json is required when conditioning-mode uses episode data")
         episode_path = Path(args.episode_json)
@@ -1395,7 +1396,7 @@ def command_generate_response_batch(args: argparse.Namespace) -> None:
         try:
             profile = infer_style_profile(model=model, decoder=decoder, text=text, style_profile=style_profile)
             episode_source_path = ""
-            if args.conditioning_mode in {"episode_trace", "hybrid_episode"}:
+            if args.conditioning_mode in {"episode_trace", "episode_trace_v3", "hybrid_episode"}:
                 if episode_dir is None:
                     raise ValueError("--episode-dir is required when conditioning-mode uses episode data")
                 episode_path = resolve_episode_payload_path(
@@ -3149,6 +3150,19 @@ def build_conditioned_generation_prompt(
             ),
             "episode_trace,anti_softening_rules,grounding_rules",
         )
+    if conditioning_mode == "episode_trace_v3":
+        episode_payload = profile.get("episode_payload")
+        if not isinstance(episode_payload, dict):
+            raise ValueError("episode_trace_v3 conditioning requires episode_payload in profile")
+        return (
+            build_episode_v3_generation_prompt(
+                input_text=input_text,
+                episode_payload=episode_payload,
+                anti_softening_rules=list(profile.get("anti_softening_rules", [])),
+                grounding_rules=list(profile.get("grounding_rules", [])),
+            ),
+            "episode_trace_v3,anti_softening_rules,grounding_rules",
+        )
     if conditioning_mode == "hybrid_episode":
         episode_payload = profile.get("episode_payload")
         if not isinstance(episode_payload, dict):
@@ -4529,7 +4543,15 @@ def build_parser() -> argparse.ArgumentParser:
         subparser.add_argument("--style-profile", choices=sorted(STYLE_AXIS_PROFILES), default=DEFAULT_STYLE_PROFILE)
         subparser.add_argument(
             "--conditioning-mode",
-            choices=["style", "raw_trace", "appraisal_trace", "hybrid_trace", "episode_trace", "hybrid_episode"],
+            choices=[
+                "style",
+                "raw_trace",
+                "appraisal_trace",
+                "hybrid_trace",
+                "episode_trace",
+                "episode_trace_v3",
+                "hybrid_episode",
+            ],
             default="style",
         )
         subparser.add_argument("--episode-json", default=None)

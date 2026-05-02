@@ -30,6 +30,7 @@ CONDITIONING_MODES = (
     "appraisal_trace",
     "hybrid_trace",
     "episode_trace",
+    "episode_trace_v3",
     "hybrid_episode",
 )
 DEFAULT_MODEL_CACHE_PATH = project_root() / "artifacts" / "ridge_stim_encoder.joblib"
@@ -290,7 +291,7 @@ def generate_chat_turn(
         text=user_text,
         style_profile=generation_config.style_profile,
     )
-    if generation_config.conditioning_mode in {"episode_trace", "hybrid_episode"}:
+    if generation_config.conditioning_mode in {"episode_trace", "episode_trace_v3", "hybrid_episode"}:
         if not isinstance(episode_payload, Mapping):
             raise ValueError("episode payload is required for episode-based conditioning")
         profile = augment_profile_with_episode(profile, dict(episode_payload))

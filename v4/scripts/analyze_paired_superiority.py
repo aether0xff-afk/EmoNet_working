@@ -31,6 +31,15 @@ def parse_condition_list(raw: str) -> list[str]:
     return conditions
 
 
+def parse_score_keys(raw: str | None) -> list[str]:
+    if not raw:
+        return list(SCORE_KEYS)
+    keys = [token.strip() for token in str(raw).replace(";", ",").split(",") if token.strip()]
+    if not keys:
+        raise ValueError("at least one score key is required")
+    return keys
+
+
 def bootstrap_mean_ci(values: np.ndarray, seed: int, n_bootstrap: int) -> tuple[float, float]:
     if values.size == 0:
         return float("nan"), float("nan")
@@ -52,11 +61,14 @@ def sign_test_two_sided(wins: int, losses: int) -> float:
     return float(min(1.0, 2.0 * prob))
 
 
-def add_mean_total(df: pd.DataFrame) -> pd.DataFrame:
+def add_mean_total(df: pd.DataFrame, score_keys: list[str]) -> pd.DataFrame:
     scored = df.copy()
-    for key in SCORE_KEYS:
+    missing = [key for key in score_keys if key not in scored.columns]
+    if missing:
+        raise ValueError(f"score columns not found: {', '.join(missing)}")
+    for key in score_keys:
         scored[key] = pd.to_numeric(scored[key], errors="coerce")
-    scored["mean_total"] = scored[SCORE_KEYS].mean(axis=1)
+    scored["mean_total"] = scored[score_keys].mean(axis=1)
     return scored
 
 
@@ -102,8 +114,25 @@ def build_pair_rows(
     baseline: str,
     condition: str,
     record_id_column: str,
+    score_keys: list[str],
 ) -> pd.DataFrame:
-    metric_columns = SCORE_KEYS + ["mean_total", "status", "text", "llm_response"]
+    optional_columns = [
+        column
+        for column in [
+            "status",
+            "text",
+            "llm_response",
+            "episode_label",
+            "valence",
+            "arousal",
+            "target",
+            "control_state",
+            "social_orientation",
+            "action_tendency",
+        ]
+        if column in scored_df.columns
+    ]
+    metric_columns = score_keys + ["mean_total", *optional_columns]
     base = scored_df[scored_df["condition"].astype(str) == baseline][[record_id_column, *metric_columns]].set_index(
         record_id_column
     )
@@ -114,6 +143,23 @@ def build_pair_rows(
     joined = joined.dropna(subset=[f"mean_total_{baseline}", f"mean_total_{condition}"]).copy()
     joined["delta_mean_total"] = joined[f"mean_total_{condition}"] - joined[f"mean_total_{baseline}"]
     joined = joined.reset_index().rename(columns={record_id_column: "record_id"})
+    for column in [
+        "text",
+        "llm_response",
+        "episode_label",
+        "valence",
+        "arousal",
+        "target",
+        "control_state",
+        "social_orientation",
+        "action_tendency",
+    ]:
+        condition_column = f"{column}_{condition}"
+        baseline_column = f"{column}_{baseline}"
+        if condition_column in joined.columns:
+            joined[column] = joined[condition_column]
+        elif baseline_column in joined.columns:
+            joined[column] = joined[baseline_column]
     joined.insert(1, "condition", condition)
     joined.insert(2, "baseline", baseline)
     return joined
@@ -147,7 +193,18 @@ def merge_episode(pair_rows: pd.DataFrame, episode_df: pd.DataFrame | None) -> p
         ]
         if column in episode_df.columns
     ]
-    return pair_rows.merge(episode_df[keep_columns], left_on="record_id", right_on="sample_id", how="left")
+    merged = pair_rows.merge(episode_df[keep_columns], left_on="record_id", right_on="sample_id", how="left")
+    for column in keep_columns:
+        if column == "sample_id":
+            continue
+        left = f"{column}_x"
+        right = f"{column}_y"
+        if left in merged.columns:
+            merged[column] = merged[left].fillna(merged[right] if right in merged.columns else "")
+            merged = merged.drop(columns=[left])
+        if right in merged.columns:
+            merged = merged.drop(columns=[right])
+    return merged
 
 
 def summarize_subsets(pair_rows: pd.DataFrame, group_columns: list[str]) -> pd.DataFrame:
@@ -188,7 +245,11 @@ def summarize_subsets(pair_rows: pd.DataFrame, group_columns: list[str]) -> pd.D
 def format_markdown_table(df: pd.DataFrame, columns: list[str]) -> str:
     if df.empty:
         return "(no rows)"
-    shown = df[columns].copy()
+    shown = df.copy()
+    for column in columns:
+        if column not in shown.columns:
+            shown[column] = ""
+    shown = shown[columns].copy()
     lines = [
         "| " + " | ".join(columns) + " |",
         "| " + " | ".join(["---"] * len(columns)) + " |",
@@ -314,14 +375,16 @@ def main() -> None:
     parser.add_argument("--record-id-column", default="record_id")
     parser.add_argument("--bootstrap", type=int, default=10000)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--score-keys", default=",".join(SCORE_KEYS))
     args = parser.parse_args()
 
     scored_csv = Path(args.scored_csv)
     output_dir = Path(args.output_dir)
     episode_summary_csv = Path(args.episode_summary_csv) if args.episode_summary_csv else None
     conditions = parse_condition_list(args.conditions)
+    score_keys = parse_score_keys(args.score_keys)
 
-    scored_df = add_mean_total(pd.read_csv(scored_csv))
+    scored_df = add_mean_total(pd.read_csv(scored_csv), score_keys)
     episode_df = load_episode_summary(episode_summary_csv)
 
     baseline_df = scored_df[scored_df["condition"].astype(str) == args.baseline].set_index(args.record_id_column)
@@ -330,7 +393,7 @@ def main() -> None:
 
     summary_rows: list[dict[str, object]] = []
     pair_frames: list[pd.DataFrame] = []
-    metrics = ["mean_total", *SCORE_KEYS]
+    metrics = ["mean_total", *score_keys]
     for condition in conditions:
         condition_df = scored_df[scored_df["condition"].astype(str) == condition].set_index(args.record_id_column)
         if condition_df.empty:
@@ -354,6 +417,7 @@ def main() -> None:
                     baseline=args.baseline,
                     condition=condition,
                     record_id_column=args.record_id_column,
+                    score_keys=score_keys,
                 ),
                 episode_df,
             )
@@ -387,6 +451,7 @@ def main() -> None:
         "episode_summary_csv": str(episode_summary_csv) if episode_summary_csv else "",
         "baseline": args.baseline,
         "conditions": conditions,
+        "score_keys": score_keys,
         "overall_csv": str(overall_path),
         "subsets_csv": str(subsets_path),
         "examples_csv": str(examples_path),

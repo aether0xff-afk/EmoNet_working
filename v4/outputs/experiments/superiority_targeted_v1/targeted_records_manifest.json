@@ -1,0 +1,31 @@
+{
+  "episode_summary_csv": "outputs\\research\\trajectory_batch_matrix120_v1_gpt54\\episode_summary.csv",
+  "scored_csv": "outputs\\experiments\\paper_matrix_current_episode_v2_scored.csv",
+  "paired_examples_csv": "outputs\\experiments\\paired_superiority_episode_v2\\paired_examples.csv",
+  "output_csv": "outputs\\experiments\\superiority_targeted_v1\\targeted_records.csv",
+  "rows": 80,
+  "target_size": 80,
+  "seed": 42,
+  "bucket_counts": {
+    "balanced_filler": 22,
+    "social_mixed": 20,
+    "guilt_self_blame": 15,
+    "target_other": 12,
+    "strong_failure_cases": 11
+  },
+  "columns": [
+    "record_id",
+    "text",
+    "selection_bucket",
+    "selection_reason",
+    "episode_label",
+    "valence",
+    "arousal",
+    "target",
+    "control_state",
+    "social_orientation",
+    "preserve",
+    "avoid",
+    "action_tendency"
+  ]
+}

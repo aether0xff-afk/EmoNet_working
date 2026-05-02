@@ -1,0 +1,21 @@
+{
+  "output_csv": "outputs\\experiments\\superiority_targeted_v1\\targeted_matrix_dry5.csv",
+  "rows": 15,
+  "conditions": {
+    "episode_trace": {
+      "rows": 5,
+      "ok_rows": 5,
+      "error_rows": 0
+    },
+    "episode_trace_v3": {
+      "rows": 5,
+      "ok_rows": 5,
+      "error_rows": 0
+    },
+    "stim_only": {
+      "rows": 5,
+      "ok_rows": 5,
+      "error_rows": 0
+    }
+  }
+}

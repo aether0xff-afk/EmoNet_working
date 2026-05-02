@@ -1,0 +1,21 @@
+{
+  "output_csv": "outputs\\experiments\\superiority_targeted_v1\\targeted_matrix.csv",
+  "rows": 235,
+  "conditions": {
+    "episode_trace": {
+      "rows": 77,
+      "ok_rows": 77,
+      "error_rows": 0
+    },
+    "episode_trace_v3": {
+      "rows": 80,
+      "ok_rows": 80,
+      "error_rows": 0
+    },
+    "stim_only": {
+      "rows": 78,
+      "ok_rows": 78,
+      "error_rows": 0
+    }
+  }
+}

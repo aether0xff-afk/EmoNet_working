@@ -1036,6 +1036,18 @@ class ExperimentToolTests(unittest.TestCase):
         self.assertNotIn("trajectory_persistence:", prompt)
         self.assertEqual(sections, "episode_trace,style_tags,style_summary,anti_softening_rules,grounding_rules")
 
+        prompt, sections = module.build_condition_prompt("episode_trace_v3", "예시 입력", profile)
+        self.assertIn("[INTERNAL_RESPONSE_PRIORITIES]", prompt)
+        self.assertIn("keep_in_surface: 배제감과 날카로움", prompt)
+        self.assertIn("avoid_in_surface: 가벼운 서운함으로 축소", prompt)
+        self.assertNotIn("episode_label:", prompt)
+        self.assertNotIn("appraisal_state:", prompt)
+        self.assertNotIn("trajectory_persistence:", prompt)
+        self.assertEqual(sections, "episode_trace_v3,anti_softening_rules,grounding_rules")
+
+        with self.assertRaisesRegex(ValueError, "episode_trace_v3 conditioning requires episode_payload"):
+            module.build_condition_prompt("episode_trace_v3", "예시 입력", {key: value for key, value in profile.items() if key != "episode_payload"})
+
     def test_experiment_matrix_records_response_retry_metadata(self) -> None:
         module = load_module("experiment_matrix_retry_module", "scripts/experiment_matrix.py")
         with tempfile.TemporaryDirectory() as temp_dir_name:
@@ -1440,6 +1452,144 @@ class ExperimentToolTests(unittest.TestCase):
             self.assertEqual(answer_key["conditions"], ["direct", "emonet_full"])
             self.assertEqual(len(answer_key["rows"]), 2)
             self.assertTrue(instructions_md.exists())
+
+    def test_build_targeted_superiority_set_outputs_required_columns(self) -> None:
+        module = load_module("build_targeted_superiority_set_module", "scripts/build_targeted_superiority_set.py")
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            episode_csv = temp_dir / "episode_summary.csv"
+            scored_csv = temp_dir / "scored.csv"
+            paired_csv = temp_dir / "paired.csv"
+            output_csv = temp_dir / "targeted.csv"
+            manifest_json = temp_dir / "manifest.json"
+
+            rows = []
+            for idx in range(10):
+                rows.append(
+                    {
+                        "sample_id": f"s_{idx}",
+                        "episode_label": "죄책감 기반 만회" if idx == 5 else "배제 위협",
+                        "valence": "negative",
+                        "arousal": "high",
+                        "target": "other" if idx < 4 else "mixed",
+                        "control_state": "low",
+                        "social_orientation": "mixed" if idx in {4, 5, 6} else "defend",
+                        "preserve": "날카로움",
+                        "avoid": "일반 위로",
+                        "action_tendency": "사과와 만회" if idx == 5 else "방어",
+                    }
+                )
+            pd.DataFrame(rows).to_csv(episode_csv, index=False, encoding="utf-8-sig")
+            pd.DataFrame([{"record_id": f"s_{idx}", "text": f"입력 {idx}"} for idx in range(10)]).to_csv(
+                scored_csv, index=False, encoding="utf-8-sig"
+            )
+            pd.DataFrame(
+                [
+                    {"condition": "episode_trace", "record_id": "s_9", "delta_mean_total": -2.0},
+                    {"condition": "episode_trace", "record_id": "s_8", "delta_mean_total": -1.5},
+                ]
+            ).to_csv(paired_csv, index=False, encoding="utf-8-sig")
+
+            manifest = module.build_targeted_set(
+                episode_summary_csv=episode_csv,
+                scored_csv=scored_csv,
+                paired_examples_csv=paired_csv,
+                output_csv=output_csv,
+                manifest_json=manifest_json,
+                target_size=8,
+                seed=7,
+            )
+
+            self.assertTrue(output_csv.exists())
+            self.assertTrue(manifest_json.exists())
+            saved = pd.read_csv(output_csv)
+            self.assertGreaterEqual(len(saved), 8)
+            self.assertIn("record_id", saved.columns)
+            self.assertIn("selection_bucket", saved.columns)
+            self.assertIn("preserve", saved.columns)
+            self.assertEqual(manifest["rows"], len(saved))
+
+    def test_superiority_judge_normalization_and_prompt(self) -> None:
+        module = load_module("score_superiority_judge_module", "scripts/score_superiority_judge.py")
+        row = {
+            "text": "대표가 나만 빼고 커피를 돌려서 화가 나.",
+            "condition": "episode_trace_v3",
+            "llm_response": "그건 그냥 서운한 정도가 아니라 대놓고 배제당한 느낌이라 화가 날 만해.",
+            "episode_label": "배제 자극에 의해 유지되는 방어적 분노",
+            "valence": "negative",
+            "arousal": "high",
+            "target": "other",
+            "control_state": "low",
+            "social_orientation": "defend",
+            "preserve": "억울함과 날카로운 경계",
+            "avoid": "가벼운 서운함으로 축소",
+            "action_tendency": "문제제기 충동",
+        }
+        prompt = module.build_judge_prompt(row)
+        self.assertIn("appraisal_fidelity", prompt)
+        self.assertIn("raw_affect_preservation", prompt)
+        self.assertIn("anti_softening", prompt)
+        payload = module.normalize_scores(
+            {
+                "scores": {
+                    "appraisal_fidelity": 4,
+                    "raw_affect_preservation": 5,
+                    "anti_softening": 4,
+                    "action_tendency_fit": 3,
+                    "emotional_specificity": 5,
+                    "naturalness": 4,
+                    "overall_preference": 4,
+                }
+            }
+        )
+        self.assertEqual(payload["raw_affect_preservation"], 5)
+        compact = module.normalize_compact_scores("4,5,4,3,5,4,4")
+        self.assertEqual(compact["overall_preference"], 4)
+
+    def test_paired_superiority_accepts_custom_score_keys(self) -> None:
+        module = load_module("paired_superiority_custom_keys_module", "scripts/analyze_paired_superiority.py")
+        with tempfile.TemporaryDirectory() as temp_dir_name:
+            temp_dir = Path(temp_dir_name)
+            scored_csv = temp_dir / "superiority_scored.csv"
+            output_dir = temp_dir / "paired"
+            pd.DataFrame(
+                [
+                    {"record_id": "r1", "condition": "stim_only", "appraisal_fidelity": 2, "raw_affect_preservation": 2, "anti_softening": 2, "action_tendency_fit": 2, "emotional_specificity": 2},
+                    {"record_id": "r1", "condition": "episode_trace_v3", "appraisal_fidelity": 4, "raw_affect_preservation": 4, "anti_softening": 4, "action_tendency_fit": 4, "emotional_specificity": 4},
+                    {"record_id": "r2", "condition": "stim_only", "appraisal_fidelity": 3, "raw_affect_preservation": 3, "anti_softening": 3, "action_tendency_fit": 3, "emotional_specificity": 3},
+                    {"record_id": "r2", "condition": "episode_trace_v3", "appraisal_fidelity": 2, "raw_affect_preservation": 2, "anti_softening": 2, "action_tendency_fit": 2, "emotional_specificity": 2},
+                ]
+            ).to_csv(scored_csv, index=False, encoding="utf-8-sig")
+
+            import sys
+
+            original_argv = sys.argv[:]
+            try:
+                sys.argv = [
+                    "analyze_paired_superiority.py",
+                    "--scored-csv",
+                    str(scored_csv),
+                    "--episode-summary-csv",
+                    "",
+                    "--baseline",
+                    "stim_only",
+                    "--conditions",
+                    "episode_trace_v3",
+                    "--output-dir",
+                    str(output_dir),
+                    "--bootstrap",
+                    "100",
+                    "--score-keys",
+                    "appraisal_fidelity,raw_affect_preservation,anti_softening,action_tendency_fit,emotional_specificity",
+                ]
+                module.main()
+            finally:
+                sys.argv = original_argv
+
+            overall = pd.read_csv(output_dir / "paired_overall.csv")
+            mean_row = overall[overall["metric"] == "mean_total"].iloc[0]
+            self.assertEqual(int(mean_row["paired_n"]), 2)
+            self.assertAlmostEqual(float(mean_row["delta_mean"]), 0.5)
 
 
 if __name__ == "__main__":

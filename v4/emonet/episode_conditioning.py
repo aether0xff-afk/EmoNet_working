@@ -165,6 +165,33 @@ def build_episode_lite_lines(payload: Mapping[str, Any]) -> list[str]:
     return lines
 
 
+def build_episode_v3_lines(payload: Mapping[str, Any]) -> list[str]:
+    appraisal = payload.get("appraisal") or {}
+    rawness = payload.get("rawness") or {}
+    guidance = payload.get("response_guidance") or {}
+    preserve = _compact_text(guidance.get("preserve", ""), limit=88)
+    avoid = _compact_text(guidance.get("avoid", ""), limit=88)
+    action = _compact_text(payload.get("action_tendency", ""), limit=110)
+    stimulus = _compact_text(payload.get("stimulus_reading", ""), limit=110)
+    primary = _compact_text(appraisal.get("primary_appraisal", ""), limit=80)
+    secondary = _compact_text(appraisal.get("secondary_appraisal", ""), limit=80)
+    tone = _resolve_surface_tone(payload)
+    return [
+        f"felt_cause: {stimulus or primary or '(none)'}",
+        f"felt_pressure: {secondary or primary or '(none)'}",
+        f"keep_in_surface: {preserve or '(none)'}",
+        f"avoid_in_surface: {avoid or '(none)'}",
+        f"likely_next_move: {action or '(none)'}",
+        (
+            "raw_intensity: "
+            f"valence={str(rawness.get('valence', '')).strip() or '(unknown)'}, "
+            f"arousal={str(rawness.get('arousal', '')).strip() or '(unknown)'}, "
+            f"keep_rough_edge={bool(rawness.get('should_preserve_harshness', False))}"
+        ),
+        f"surface_tone: {tone}",
+    ]
+
+
 def augment_profile_with_episode(
     profile: Mapping[str, Any],
     episode_payload: Mapping[str, Any],
@@ -226,6 +253,56 @@ def build_episode_generation_prompt(
             "- preserve_harshness가 true면 불편한 결을 남기되, 설명조나 판정조가 되지 않게 한다.",
             "- surface_tone은 말투 강도만 조정하고, 행동 성향(action_bias)은 답의 초점만 잡는 데 쓴다.",
             "- 한국어 평문으로만 2~5문장 이내로 답한다.",
+            "- 같은 문장이나 핵심 구절을 반복하지 않는다.",
+            "- 문장을 중간에 끊거나 조건절로 끝내지 않는다. 마지막 문장은 완결된 문장으로 끝낸다.",
+            "- bullet, markdown, JSON, 코드블록을 쓰지 않는다.",
+        ]
+    )
+
+
+def build_episode_v3_generation_prompt(
+    *,
+    input_text: str,
+    episode_payload: Mapping[str, Any],
+    anti_softening_rules: Sequence[str] | None = None,
+    grounding_rules: Sequence[str] | None = None,
+) -> str:
+    episode_block = "\n".join(f"- {line}" for line in build_episode_v3_lines(episode_payload))
+    anti_block = _format_rule_block(
+        anti_softening_rules or [],
+        "- 입력 정서와 충돌하는 일반 위로, 자동 공손함, 과잉 진정 표현을 붙이지 않는다.",
+    )
+    grounding_block = _format_rule_block(
+        grounding_rules or [],
+        "- 첫 문장은 사용자가 왜 그렇게 느끼는지의 원인을 바로 짚는다.",
+    )
+    return "\n".join(
+        [
+            "[ROLE]",
+            "당신은 내부 정서 신호를 참고해 한국어로 답하되, 사용자에게는 자연스러운 평문만 보여주는 응답 생성기다.",
+            "",
+            "[USER_INPUT]",
+            input_text.strip(),
+            "",
+            "[INTERNAL_RESPONSE_PRIORITIES]",
+            episode_block if episode_block else "- 내부 우선순위 없음",
+            "",
+            "[ANTI_SOFTENING_RULES]",
+            anti_block,
+            "- '괜찮아요', '차분히 해보세요', '마음을 가라앉히세요' 같은 말은 입력의 결을 흐릴 때 쓰지 않는다.",
+            "- 불쾌함, 억울함, 날카로움, 양가감정이 핵심이면 그것을 가벼운 서운함이나 일반 걱정으로 낮추지 않는다.",
+            "",
+            "[GROUNDING_RULES]",
+            grounding_block,
+            "- 첫 문장은 조언보다 정서의 원인을 먼저 붙잡는다.",
+            "",
+            "[INSTRUCTIONS]",
+            "- 사용자 입력의 내용에 직접 답한다.",
+            "- INTERNAL_RESPONSE_PRIORITIES는 내부 참고용이며, 표면 답변에 항목명이나 분석 용어를 쓰지 않는다.",
+            "- episode, label, appraisal, target, control, arousal, valence 같은 단어를 답변에 쓰지 않는다.",
+            "- keep_in_surface는 남기고, avoid_in_surface에 해당하는 순화나 왜곡은 피한다.",
+            "- likely_next_move는 조언을 강요하지 않고 답의 초점과 방향을 잡는 데만 쓴다.",
+            "- 한국어 평문으로만 2~4문장 이내로 답한다.",
             "- 같은 문장이나 핵심 구절을 반복하지 않는다.",
             "- 문장을 중간에 끊거나 조건절로 끝내지 않는다. 마지막 문장은 완결된 문장으로 끝낸다.",
             "- bullet, markdown, JSON, 코드블록을 쓰지 않는다.",

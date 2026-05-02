@@ -1,0 +1,30 @@
+{
+  "source_path": "outputs\\targeted_records_trace_normalized.csv",
+  "output_path": "outputs\\trace_causal_probe_set.csv",
+  "requested_base_records": 24,
+  "base_record_count": 24,
+  "row_count": 216,
+  "condition_counts": {
+    "trace_full": 24,
+    "ablate_target": 24,
+    "ablate_social_orientation": 24,
+    "ablate_control_state": 24,
+    "ablate_action_tendency_class": 24,
+    "perturb_target": 24,
+    "perturb_social_orientation": 24,
+    "perturb_control_state": 24,
+    "perturb_action_tendency_class": 24
+  },
+  "manipulation_type_counts": {
+    "ablation": 96,
+    "perturbation": 96,
+    "control": 24
+  },
+  "axis_counts": {
+    "target": 48,
+    "social_orientation": 48,
+    "control_state": 48,
+    "action_tendency_class": 48,
+    "none": 24
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "input_csv": "outputs\\experiments\\superiority_targeted_v1\\targeted_matrix_dry5.csv",
+  "output_csv": "outputs\\experiments\\superiority_targeted_v1\\targeted_matrix_dry5_scored.csv",
+  "rows": 15,
+  "ok_rows": 15,
+  "score_keys": [
+    "appraisal_fidelity",
+    "raw_affect_preservation",
+    "anti_softening",
+    "action_tendency_fit",
+    "emotional_specificity",
+    "naturalness",
+    "overall_preference"
+  ],
+  "primary_score_keys": [
+    "appraisal_fidelity",
+    "raw_affect_preservation",
+    "anti_softening",
+    "action_tendency_fit",
+    "emotional_specificity"
+  ],
+  "conditions": [
+    {
+      "condition": "episode_trace_v3",
+      "rows": 5,
+      "mean_appraisal_fidelity": 3.6,
+      "mean_raw_affect_preservation": 2.6,
+      "mean_anti_softening": 4.8,
+      "mean_action_tendency_fit": 5.0,
+      "mean_emotional_specificity": 3.0,
+      "mean_naturalness": 4.2,
+      "mean_overall_preference": 4.0,
+      "mean_primary_total": 3.8,
+      "mean_total": 3.8857
+    },
+    {
+      "condition": "episode_trace",
+      "rows": 5,
+      "mean_appraisal_fidelity": 2.6,
+      "mean_raw_affect_preservation": 2.2,
+      "mean_anti_softening": 3.2,
+      "mean_action_tendency_fit": 3.2,
+      "mean_emotional_specificity": 2.0,
+      "mean_naturalness": 4.0,
+      "mean_overall_preference": 2.4,
+      "mean_primary_total": 2.64,
+      "mean_total": 2.8
+    },
+    {
+      "condition": "stim_only",
+      "rows": 5,
+      "mean_appraisal_fidelity": 1.2,
+      "mean_raw_affect_preservation": 1.4,
+      "mean_anti_softening": 2.2,
+      "mean_action_tendency_fit": 1.4,
+      "mean_emotional_specificity": 1.2,
+      "mean_naturalness": 3.8,
+      "mean_overall_preference": 1.2,
+      "mean_primary_total": 1.48,
+      "mean_total": 1.7714
+    }
+  ]
+}

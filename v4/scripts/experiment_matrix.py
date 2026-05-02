@@ -75,6 +75,12 @@ CONDITION_SPECS: dict[str, dict[str, object]] = {
         "needs_profile": True,
         "needs_episode": True,
     },
+    "episode_trace_v3": {
+        "group": "episode",
+        "description": "Episode prompt optimized for appraisal fidelity and anti-softening.",
+        "needs_profile": True,
+        "needs_episode": True,
+    },
     "hybrid_episode": {
         "group": "episode",
         "description": "Emotion episode plus style controls.",
@@ -357,6 +363,13 @@ def build_condition_prompt(condition: str, input_text: str, profile: dict[str, o
             input_text=input_text,
             profile=profile,
             conditioning_mode="episode_trace",
+            template_path=None,
+        )
+    if condition == "episode_trace_v3":
+        return build_conditioned_generation_prompt(
+            input_text=input_text,
+            profile=profile,
+            conditioning_mode="episode_trace_v3",
             template_path=None,
         )
     if condition == "hybrid_episode":

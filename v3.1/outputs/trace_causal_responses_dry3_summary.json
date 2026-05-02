@@ -1,0 +1,8 @@
+{
+  "input": "outputs\\trace_causal_probe_set.csv",
+  "output": "outputs\\trace_causal_responses_dry3.csv",
+  "rows": 27,
+  "ok_rows": 27,
+  "error_rows": 0,
+  "base_record_count": 3
+}

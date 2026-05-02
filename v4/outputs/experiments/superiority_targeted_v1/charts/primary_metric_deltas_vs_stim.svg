@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-label="Primary metric deltas for episode_trace_v3 minus stim_only">
+  <rect width="960" height="540" fill="#ffffff"/>
+  <text x="48" y="42" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#171717">Primary Metric Deltas</text>
+  <text x="48" y="68" font-family="Arial, sans-serif" font-size="13" fill="#525252">episode_trace_v3 minus stim_only; higher is better</text>
+
+  <line x1="250" y1="420" x2="880" y2="420" stroke="#262626" stroke-width="1.2"/>
+  <line x1="250" y1="90" x2="250" y2="420" stroke="#262626" stroke-width="1.2"/>
+  <g font-family="Arial, sans-serif" font-size="12" fill="#525252">
+    <line x1="250" y1="420" x2="250" y2="90" stroke="#d4d4d4"/>
+    <line x1="376" y1="420" x2="376" y2="90" stroke="#e5e5e5"/>
+    <line x1="502" y1="420" x2="502" y2="90" stroke="#e5e5e5"/>
+    <line x1="628" y1="420" x2="628" y2="90" stroke="#e5e5e5"/>
+    <line x1="754" y1="420" x2="754" y2="90" stroke="#e5e5e5"/>
+    <line x1="880" y1="420" x2="880" y2="90" stroke="#e5e5e5"/>
+    <text x="246" y="446" text-anchor="middle">0.0</text>
+    <text x="376" y="446" text-anchor="middle">0.5</text>
+    <text x="502" y="446" text-anchor="middle">1.0</text>
+    <text x="628" y="446" text-anchor="middle">1.5</text>
+    <text x="754" y="446" text-anchor="middle">2.0</text>
+    <text x="880" y="446" text-anchor="middle">2.5</text>
+  </g>
+
+  <g font-family="Arial, sans-serif" font-size="14" fill="#262626">
+    <text x="232" y="125" text-anchor="end">appraisal_fidelity</text>
+    <rect x="250" y="102" width="491" height="34" fill="#4c78a8"/>
+    <text x="752" y="125">+1.95</text>
+
+    <text x="232" y="185" text-anchor="end">raw_affect_preservation</text>
+    <rect x="250" y="162" width="378" height="34" fill="#f58518"/>
+    <text x="639" y="185">+1.50</text>
+
+    <text x="232" y="245" text-anchor="end">anti_softening</text>
+    <rect x="250" y="222" width="543" height="34" fill="#e45756"/>
+    <text x="804" y="245">+2.15</text>
+
+    <text x="232" y="305" text-anchor="end">action_tendency_fit</text>
+    <rect x="250" y="282" width="433" height="34" fill="#72b7b2"/>
+    <text x="694" y="305">+1.72</text>
+
+    <text x="232" y="365" text-anchor="end">emotional_specificity</text>
+    <rect x="250" y="342" width="462" height="34" fill="#54a24b"/>
+    <text x="723" y="365">+1.83</text>
+  </g>
+</svg>

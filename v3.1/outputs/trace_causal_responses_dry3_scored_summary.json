@@ -1,0 +1,108 @@
+{
+  "rows": 27,
+  "ok_rows": 9,
+  "error_rows": 18,
+  "condition_means": {
+    "ablate_action_tendency_class": {
+      "appraisal_fidelity": 5.0,
+      "target_direction_fit": 5.0,
+      "social_orientation_fit": 5.0,
+      "control_state_fit": 5.0,
+      "action_tendency_fit": 1.0,
+      "raw_affect_preservation": 5.0,
+      "naturalness": 5.0,
+      "manipulation_success": 1.0,
+      "n": 1
+    },
+    "ablate_target": {
+      "appraisal_fidelity": 5.0,
+      "target_direction_fit": 1.0,
+      "social_orientation_fit": 5.0,
+      "control_state_fit": 4.0,
+      "action_tendency_fit": 5.0,
+      "raw_affect_preservation": 5.0,
+      "naturalness": 5.0,
+      "manipulation_success": 1.0,
+      "n": 1
+    },
+    "perturb_action_tendency_class": {
+      "appraisal_fidelity": 2.0,
+      "target_direction_fit": 3.0,
+      "social_orientation_fit": 1.0,
+      "control_state_fit": 2.0,
+      "action_tendency_fit": 1.0,
+      "raw_affect_preservation": 1.0,
+      "naturalness": 5.0,
+      "manipulation_success": 1.0,
+      "n": 1
+    },
+    "perturb_control_state": {
+      "appraisal_fidelity": 4.0,
+      "target_direction_fit": 4.0,
+      "social_orientation_fit": 4.0,
+      "control_state_fit": 1.0,
+      "action_tendency_fit": 4.0,
+      "raw_affect_preservation": 4.0,
+      "naturalness": 5.0,
+      "manipulation_success": 1.0,
+      "n": 1
+    },
+    "perturb_social_orientation": {
+      "appraisal_fidelity": 3.5,
+      "target_direction_fit": 4.5,
+      "social_orientation_fit": 3.0,
+      "control_state_fit": 2.5,
+      "action_tendency_fit": 4.0,
+      "raw_affect_preservation": 4.5,
+      "naturalness": 5.0,
+      "manipulation_success": 3.0,
+      "n": 2
+    },
+    "perturb_target": {
+      "appraisal_fidelity": 5.0,
+      "target_direction_fit": 5.0,
+      "social_orientation_fit": 5.0,
+      "control_state_fit": 5.0,
+      "action_tendency_fit": 5.0,
+      "raw_affect_preservation": 5.0,
+      "naturalness": 5.0,
+      "manipulation_success": 5.0,
+      "n": 1
+    },
+    "trace_full": {
+      "appraisal_fidelity": 5.0,
+      "target_direction_fit": 5.0,
+      "social_orientation_fit": 5.0,
+      "control_state_fit": 5.0,
+      "action_tendency_fit": 5.0,
+      "raw_affect_preservation": 5.0,
+      "naturalness": 5.0,
+      "manipulation_success": 5.0,
+      "n": 2
+    }
+  },
+  "ablation_delta_full_minus_ablation_by_axis": {
+    "target": {
+      "n": 1,
+      "mean_delta": 4.0,
+      "positive_count": 1
+    }
+  },
+  "perturbation_success_by_axis": {
+    "control_state": {
+      "n": 1,
+      "mean_manipulation_success": 1.0,
+      "success_ge_4_count": 0
+    },
+    "social_orientation": {
+      "n": 1,
+      "mean_manipulation_success": 5.0,
+      "success_ge_4_count": 1
+    },
+    "target": {
+      "n": 1,
+      "mean_manipulation_success": 5.0,
+      "success_ge_4_count": 1
+    }
+  }
+}

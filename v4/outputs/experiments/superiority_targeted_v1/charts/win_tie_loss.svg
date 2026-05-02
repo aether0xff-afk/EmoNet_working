@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-label="Paired win tie loss counts">
+  <rect width="960" height="540" fill="#ffffff"/>
+  <text x="48" y="42" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#171717">Paired Win / Tie / Loss</text>
+  <text x="48" y="68" font-family="Arial, sans-serif" font-size="13" fill="#525252">Counts by paired comparison</text>
+
+  <g font-family="Arial, sans-serif" font-size="13" fill="#262626">
+    <rect x="650" y="34" width="14" height="14" fill="#54a24b"/>
+    <text x="670" y="46">Win</text>
+    <rect x="720" y="34" width="14" height="14" fill="#bdbdbd"/>
+    <text x="740" y="46">Tie</text>
+    <rect x="790" y="34" width="14" height="14" fill="#e45756"/>
+    <text x="810" y="46">Loss</text>
+  </g>
+
+  <line x1="170" y1="420" x2="880" y2="420" stroke="#262626" stroke-width="1.2"/>
+  <line x1="170" y1="100" x2="170" y2="420" stroke="#262626" stroke-width="1.2"/>
+  <g font-family="Arial, sans-serif" font-size="12" fill="#525252">
+    <line x1="170" y1="420" x2="170" y2="100" stroke="#d4d4d4"/>
+    <line x1="347.5" y1="420" x2="347.5" y2="100" stroke="#e5e5e5"/>
+    <line x1="525" y1="420" x2="525" y2="100" stroke="#e5e5e5"/>
+    <line x1="702.5" y1="420" x2="702.5" y2="100" stroke="#e5e5e5"/>
+    <line x1="880" y1="420" x2="880" y2="100" stroke="#e5e5e5"/>
+    <text x="170" y="446" text-anchor="middle">0</text>
+    <text x="347.5" y="446" text-anchor="middle">20</text>
+    <text x="525" y="446" text-anchor="middle">40</text>
+    <text x="702.5" y="446" text-anchor="middle">60</text>
+    <text x="880" y="446" text-anchor="middle">80</text>
+  </g>
+
+  <g font-family="Arial, sans-serif" font-size="14" fill="#262626">
+    <text x="150" y="153" text-anchor="end">v3 vs stim_only</text>
+    <rect x="170" y="126" width="621.25" height="42" fill="#54a24b"/>
+    <rect x="791.25" y="126" width="26.625" height="42" fill="#bdbdbd"/>
+    <rect x="817.875" y="126" width="44.375" height="42" fill="#e45756"/>
+    <text x="480" y="153" text-anchor="middle" fill="#ffffff">70</text>
+    <text x="805" y="153" text-anchor="middle">3</text>
+    <text x="840" y="153" text-anchor="middle" fill="#ffffff">5</text>
+
+    <text x="150" y="253" text-anchor="end">trace vs stim_only</text>
+    <rect x="170" y="226" width="612.375" height="42" fill="#54a24b"/>
+    <rect x="782.375" y="226" width="53.25" height="42" fill="#bdbdbd"/>
+    <rect x="835.625" y="226" width="17.75" height="42" fill="#e45756"/>
+    <text x="476" y="253" text-anchor="middle" fill="#ffffff">69</text>
+    <text x="809" y="253" text-anchor="middle">6</text>
+    <text x="845" y="253" text-anchor="middle" fill="#ffffff">2</text>
+
+    <text x="150" y="353" text-anchor="end">v3 vs trace</text>
+    <rect x="170" y="326" width="363.875" height="42" fill="#54a24b"/>
+    <rect x="533.875" y="326" width="53.25" height="42" fill="#bdbdbd"/>
+    <rect x="587.125" y="326" width="266.25" height="42" fill="#e45756"/>
+    <text x="352" y="353" text-anchor="middle" fill="#ffffff">41</text>
+    <text x="560" y="353" text-anchor="middle">6</text>
+    <text x="720" y="353" text-anchor="middle" fill="#ffffff">30</text>
+  </g>
+</svg>

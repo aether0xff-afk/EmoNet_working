@@ -1,0 +1,37 @@
+{
+  "scored_csv": "outputs\\experiments\\superiority_targeted_v1\\targeted_matrix_dry5_scored.csv",
+  "episode_summary_csv": "C:\\Users\\remote\\Documents\\GitHub\\EmoNet_working\\v4\\outputs\\research\\trajectory_batch_matrix120_v1_gpt54\\episode_summary.csv",
+  "baseline": "episode_trace",
+  "conditions": [
+    "episode_trace_v3"
+  ],
+  "score_keys": [
+    "appraisal_fidelity",
+    "raw_affect_preservation",
+    "anti_softening",
+    "action_tendency_fit",
+    "emotional_specificity"
+  ],
+  "overall_csv": "outputs\\experiments\\superiority_targeted_v1\\paired_dry5_vs_episode\\paired_overall.csv",
+  "subsets_csv": "outputs\\experiments\\superiority_targeted_v1\\paired_dry5_vs_episode\\paired_subsets.csv",
+  "examples_csv": "outputs\\experiments\\superiority_targeted_v1\\paired_dry5_vs_episode\\paired_examples.csv",
+  "report_md": "outputs\\experiments\\superiority_targeted_v1\\paired_dry5_vs_episode\\PAIRED_SUPERIORITY_REPORT.md",
+  "main_results": [
+    {
+      "condition": "episode_trace_v3",
+      "baseline": "episode_trace",
+      "metric": "mean_total",
+      "paired_n": 5,
+      "delta_mean": 1.16,
+      "delta_median": 1.2,
+      "wins": 4,
+      "ties": 1,
+      "losses": 0,
+      "win_rate": 0.8,
+      "non_tie_win_rate": 1.0,
+      "bootstrap_ci_low": 0.4,
+      "bootstrap_ci_high": 2.04,
+      "sign_test_p": 0.125
+    }
+  ]
+}

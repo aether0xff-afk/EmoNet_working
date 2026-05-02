@@ -1,0 +1,34 @@
+{
+  "input_path": "..\\v4\\outputs\\experiments\\superiority_targeted_v1\\targeted_records.csv",
+  "output_path": "outputs\\targeted_records_trace_normalized.csv",
+  "record_count": 80,
+  "action_tendency_class_counts": {
+    "defend": 26,
+    "confront": 17,
+    "plan": 11,
+    "seek_support": 7,
+    "repair": 7,
+    "approach": 4,
+    "withdraw": 4,
+    "other_action": 3,
+    "inhibit": 1
+  },
+  "episode_family_counts": {
+    "other_blame_boundary": 56,
+    "threat_anxiety": 8,
+    "other_episode": 7,
+    "self_blame_guilt": 6,
+    "repair_gratitude": 2,
+    "planning_control": 1
+  },
+  "appraisal_family_counts": {
+    "approach_or_repair": 23,
+    "mixed_appraisal": 23,
+    "low_control_distress": 17,
+    "other_directed_defense": 8,
+    "situation_focused_coping": 5,
+    "self_directed_evaluation": 3,
+    "withdrawal_or_protection": 1
+  },
+  "trace_emotion_signature_unique": 56
+}

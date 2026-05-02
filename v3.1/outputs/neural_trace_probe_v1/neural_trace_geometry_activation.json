@@ -1,0 +1,166 @@
+{
+  "summary_csv": "outputs\\neural_trace_probe_v1\\neural_trace_summary.csv",
+  "trace_dir": "outputs\\neural_trace_probe_v1\\traces_npz",
+  "feature_kind": "activation_meanmax",
+  "n": 24,
+  "feature_dim": 512,
+  "branch_health": {
+    "n": 24,
+    "mean_dominant_branch_len": 10.5,
+    "len1_count": 12,
+    "len1_ratio": 0.5,
+    "mean_activation_density": 0.451151
+  },
+  "value_counts": {
+    "valence": {
+      "negative": 20,
+      "mixed": 4
+    },
+    "arousal": {
+      "high": 23,
+      "medium": 1
+    },
+    "target": {
+      "other": 12,
+      "mixed": 9,
+      "situation": 3
+    },
+    "control_state": {
+      "mixed": 18,
+      "low": 6
+    },
+    "social_orientation": {
+      "mixed": 12,
+      "defend": 8,
+      "approach": 4
+    },
+    "action_tendency_class": {
+      "defend": 8,
+      "confront": 5,
+      "seek_support": 5,
+      "plan": 4,
+      "approach": 1,
+      "inhibit": 1
+    },
+    "episode_family": {
+      "other_blame_boundary": 21,
+      "threat_anxiety": 2,
+      "other_episode": 1
+    },
+    "appraisal_family": {
+      "other_directed_defense": 8,
+      "mixed_appraisal": 6,
+      "low_control_distress": 5,
+      "approach_or_repair": 4,
+      "situation_focused_coping": 1
+    }
+  },
+  "nearest_neighbor": {
+    "valence": {
+      "n": 24,
+      "nearest_neighbor_consistency": 0.75,
+      "majority_baseline": 0.833333,
+      "lift": -0.083333
+    },
+    "arousal": {
+      "n": 24,
+      "nearest_neighbor_consistency": 0.958333,
+      "majority_baseline": 0.958333,
+      "lift": 0.0
+    },
+    "target": {
+      "n": 24,
+      "nearest_neighbor_consistency": 0.458333,
+      "majority_baseline": 0.5,
+      "lift": -0.041667
+    },
+    "control_state": {
+      "n": 24,
+      "nearest_neighbor_consistency": 0.708333,
+      "majority_baseline": 0.75,
+      "lift": -0.041667
+    },
+    "social_orientation": {
+      "n": 24,
+      "nearest_neighbor_consistency": 0.333333,
+      "majority_baseline": 0.5,
+      "lift": -0.166667
+    },
+    "action_tendency_class": {
+      "n": 24,
+      "nearest_neighbor_consistency": 0.25,
+      "majority_baseline": 0.333333,
+      "lift": -0.083333
+    },
+    "episode_family": {
+      "n": 24,
+      "nearest_neighbor_consistency": 0.875,
+      "majority_baseline": 0.875,
+      "lift": 0.0
+    },
+    "appraisal_family": {
+      "n": 24,
+      "nearest_neighbor_consistency": 0.333333,
+      "majority_baseline": 0.333333,
+      "lift": 0.0
+    }
+  },
+  "group_distances": {
+    "valence": {
+      "intra_pairs": 196,
+      "inter_pairs": 80,
+      "mean_intra_distance": 0.930129,
+      "mean_inter_distance": 0.590545,
+      "separation": -0.339585
+    },
+    "arousal": {
+      "intra_pairs": 253,
+      "inter_pairs": 23,
+      "mean_intra_distance": 0.861093,
+      "mean_inter_distance": 0.508361,
+      "separation": -0.352732
+    },
+    "target": {
+      "intra_pairs": 105,
+      "inter_pairs": 171,
+      "mean_intra_distance": 0.917529,
+      "mean_inter_distance": 0.778996,
+      "separation": -0.138533
+    },
+    "control_state": {
+      "intra_pairs": 168,
+      "inter_pairs": 108,
+      "mean_intra_distance": 0.770096,
+      "mean_inter_distance": 0.927527,
+      "separation": 0.157431
+    },
+    "social_orientation": {
+      "intra_pairs": 100,
+      "inter_pairs": 176,
+      "mean_intra_distance": 0.863023,
+      "mean_inter_distance": 0.813902,
+      "separation": -0.049121
+    },
+    "action_tendency_class": {
+      "intra_pairs": 54,
+      "inter_pairs": 222,
+      "mean_intra_distance": 0.81494,
+      "mean_inter_distance": 0.835776,
+      "separation": 0.020836
+    },
+    "episode_family": {
+      "intra_pairs": 211,
+      "inter_pairs": 65,
+      "mean_intra_distance": 0.921668,
+      "mean_inter_distance": 0.539645,
+      "separation": -0.382023
+    },
+    "appraisal_family": {
+      "intra_pairs": 59,
+      "inter_pairs": 217,
+      "mean_intra_distance": 0.943055,
+      "mean_inter_distance": 0.801423,
+      "separation": -0.141632
+    }
+  }
+}

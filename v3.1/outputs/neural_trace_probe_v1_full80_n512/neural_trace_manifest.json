@@ -1,0 +1,15 @@
+{
+  "input": "outputs\\targeted_records_trace_normalized.csv",
+  "output_dir": "outputs\\neural_trace_probe_v1_full80_n512",
+  "trace_dir": "outputs\\neural_trace_probe_v1_full80_n512\\traces_npz",
+  "summary_csv": "outputs\\neural_trace_probe_v1_full80_n512\\neural_trace_summary.csv",
+  "requested_rows": 80,
+  "ok_rows": 80,
+  "error_rows": 0,
+  "n_neurons": 512,
+  "seed": 42,
+  "z_encoder_mode": "stat",
+  "stim_source": "auto",
+  "sklearn_available": false,
+  "errors": []
+}

@@ -249,7 +249,7 @@ def score_rows(args: argparse.Namespace) -> list[dict[str, str]]:
                             model_name=args.model_name,
                             prompt=build_compact_judge_prompt(row),
                             temperature=0.0,
-                            max_tokens=96,
+                            max_tokens=300,
                             timeout_sec=args.timeout_sec,
                         )
                         mode = "compact"

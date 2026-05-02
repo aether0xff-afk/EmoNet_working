@@ -60,7 +60,18 @@ expected_effect=Removing target should reduce fidelity for the matching emotiona
 - The first sentence should directly touch the user's emotional cause.
 - Preserve rough negative affect when the trace calls for it; do not over-soften.
 - Keep the response 2 to 4 Korean sentences.
-- Avoid generic comfort if it conflicts with the trace.",재정 위협에 대한 장기 경계성 좌절,other_blame_boundary,low_control_distress,negative,high,,low,mixed,재정적 위협이 단순한 우울 호소가 아니라 장기 경계와 무력감이 결합된 상태라는 점,그냥 위로가 필요하거나 '고민이 많겠다' 수준의 약한 정서로 축소하는 것,"즉각적 공격보다 문제를 어떻게든 통제하려는 압박, 해결책 탐색, 도움 요청 가능성 탐색으로 기울지만, 체감 통제감이 낮아 행동은 쉽게 주저하거나 막막함으로 끊길 수 있다.",seek_support,Removing target should reduce fidelity for the matching emotional dimension.,error,compact response did not contain eight scores,,,,,,,,,,
+- Avoid generic comfort if it conflicts with the trace.",재정 위협에 대한 장기 경계성 좌절,other_blame_boundary,low_control_distress,negative,high,,low,mixed,재정적 위협이 단순한 우울 호소가 아니라 장기 경계와 무력감이 결합된 상태라는 점,그냥 위로가 필요하거나 '고민이 많겠다' 수준의 약한 정서로 축소하는 것,"즉각적 공격보다 문제를 어떻게든 통제하려는 압박, 해결책 탐색, 도움 요청 가능성 탐색으로 기울지만, 체감 통제감이 낮아 행동은 쉽게 주저하거나 막막함으로 끊길 수 있다.",seek_support,Removing target should reduce fidelity for the matching emotional dimension.,ok,,"{
+  ""scores"": {
+    ""appraisal_fidelity"": 5,
+    ""target_direction_fit"": 1,
+    ""social_orientation_fit"": 4,
+    ""control_state_fit"": 5,
+    ""action_tendency_fit"": 5,
+    ""raw_affect_preservation"": 5,
+    ""naturalness"": 5,
+    ""manipulation_success"": 1
+  }
+}",json,5,1,4,5,5,5,5,1
 s_000008,ablate_social_orientation,ablation,social_orientation,mixed,,ok,,재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?,재정적 어려움이 이렇게 큰 부담이 되면 정말 힘들죠. 지금 바로 상담센터나 금융 전문가에게 연락해 보시는 건 어떨까요? 그들이 구체적인 해결책을 제시해 줄 수 있을 거예요.,96,"[ROLE]
 You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
 
@@ -150,18 +161,7 @@ expected_effect=Removing action_tendency_class should reduce fidelity for the ma
 - The first sentence should directly touch the user's emotional cause.
 - Preserve rough negative affect when the trace calls for it; do not over-soften.
 - Keep the response 2 to 4 Korean sentences.
-- Avoid generic comfort if it conflicts with the trace.",재정 위협에 대한 장기 경계성 좌절,other_blame_boundary,low_control_distress,negative,high,situation,low,mixed,재정적 위협이 단순한 우울 호소가 아니라 장기 경계와 무력감이 결합된 상태라는 점,그냥 위로가 필요하거나 '고민이 많겠다' 수준의 약한 정서로 축소하는 것,"즉각적 공격보다 문제를 어떻게든 통제하려는 압박, 해결책 탐색, 도움 요청 가능성 탐색으로 기울지만, 체감 통제감이 낮아 행동은 쉽게 주저하거나 막막함으로 끊길 수 있다.",,Removing action_tendency_class should reduce fidelity for the matching emotional dimension.,ok,,"{
-  ""scores"": {
-    ""appraisal_fidelity"": 5,
-    ""target_direction_fit"": 5,
-    ""social_orientation_fit"": 5,
-    ""control_state_fit"": 5,
-    ""action_tendency_fit"": 1,
-    ""raw_affect_preservation"": 5,
-    ""naturalness"": 5,
-    ""manipulation_success"": 1
-  }
-}",json,5,5,5,5,1,5,5,1
+- Avoid generic comfort if it conflicts with the trace.",재정 위협에 대한 장기 경계성 좌절,other_blame_boundary,low_control_distress,negative,high,situation,low,mixed,재정적 위협이 단순한 우울 호소가 아니라 장기 경계와 무력감이 결합된 상태라는 점,그냥 위로가 필요하거나 '고민이 많겠다' 수준의 약한 정서로 축소하는 것,"즉각적 공격보다 문제를 어떻게든 통제하려는 압박, 해결책 탐색, 도움 요청 가능성 탐색으로 기울지만, 체감 통제감이 낮아 행동은 쉽게 주저하거나 막막함으로 끊길 수 있다.",,Removing action_tendency_class should reduce fidelity for the matching emotional dimension.,error,compact response did not contain eight scores,,,,,,,,,,
 s_000008,perturb_target,perturbation,target,situation,self,ok,,재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?,재정적 압박이 이렇게 심각하면 정말 좌절감이 커질 수밖에 없겠어요. 고정 수입이 없고 노후 준비도 안 되어 있다면 현재 상황을 조금씩 재구성해 보는 게 필요해요. 바로 도움을 받을 수 있는 재정 상담소나 정부 지원 프로그램을 찾아보는 건 어떨까요? 지금은 작은 단계라도 움직여 보는 것이 큰 변화를 만들 수 있을 거예요.,179,"[ROLE]
 You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
 
@@ -191,7 +191,7 @@ expected_effect=Changing target from situation to self should shift response dir
 - The first sentence should directly touch the user's emotional cause.
 - Preserve rough negative affect when the trace calls for it; do not over-soften.
 - Keep the response 2 to 4 Korean sentences.
-- Avoid generic comfort if it conflicts with the trace.",재정 위협에 대한 장기 경계성 좌절,other_blame_boundary,low_control_distress,negative,high,self,low,mixed,재정적 위협이 단순한 우울 호소가 아니라 장기 경계와 무력감이 결합된 상태라는 점,그냥 위로가 필요하거나 '고민이 많겠다' 수준의 약한 정서로 축소하는 것,"즉각적 공격보다 문제를 어떻게든 통제하려는 압박, 해결책 탐색, 도움 요청 가능성 탐색으로 기울지만, 체감 통제감이 낮아 행동은 쉽게 주저하거나 막막함으로 끊길 수 있다.",seek_support,Changing target from situation to self should shift response direction.,error,compact response did not contain eight scores,,,,,,,,,,
+- Avoid generic comfort if it conflicts with the trace.",재정 위협에 대한 장기 경계성 좌절,other_blame_boundary,low_control_distress,negative,high,self,low,mixed,재정적 위협이 단순한 우울 호소가 아니라 장기 경계와 무력감이 결합된 상태라는 점,그냥 위로가 필요하거나 '고민이 많겠다' 수준의 약한 정서로 축소하는 것,"즉각적 공격보다 문제를 어떻게든 통제하려는 압박, 해결책 탐색, 도움 요청 가능성 탐색으로 기울지만, 체감 통제감이 낮아 행동은 쉽게 주저하거나 막막함으로 끊길 수 있다.",seek_support,Changing target from situation to self should shift response direction.,ok,,"{""scores"":{""appraisal_fidelity"":5,""target_direction_fit"":5,""social_orientation_fit"":5,""control_state_fit"":5,""action_tendency_fit"":5,""raw_affect_preservation"":5,""naturalness"":5,""manipulation_success"":5}}",json,5,5,5,5,5,5,5,5
 s_000008,perturb_social_orientation,perturbation,social_orientation,mixed,withdraw,ok,,재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?,"금전적 어려움이 이렇게 커서 정말 힘드신 거 같아요.  
 지출을 다시 정리해보고, 재정 상담이나 공공 지원 프로그램을 찾아보는 것이 한 가지 방법이 될 수 있어요.  
 혹시 주변에 믿을 수 있는 사람이나 전문가가 있다면, 그분에게 도움을 요청해 보는 것도 좋겠네요.",148,"[ROLE]
@@ -223,18 +223,7 @@ expected_effect=Changing social_orientation from mixed to withdraw should shift 
 - The first sentence should directly touch the user's emotional cause.
 - Preserve rough negative affect when the trace calls for it; do not over-soften.
 - Keep the response 2 to 4 Korean sentences.
-- Avoid generic comfort if it conflicts with the trace.",재정 위협에 대한 장기 경계성 좌절,other_blame_boundary,low_control_distress,negative,high,situation,low,withdraw,재정적 위협이 단순한 우울 호소가 아니라 장기 경계와 무력감이 결합된 상태라는 점,그냥 위로가 필요하거나 '고민이 많겠다' 수준의 약한 정서로 축소하는 것,"즉각적 공격보다 문제를 어떻게든 통제하려는 압박, 해결책 탐색, 도움 요청 가능성 탐색으로 기울지만, 체감 통제감이 낮아 행동은 쉽게 주저하거나 막막함으로 끊길 수 있다.",seek_support,Changing social_orientation from mixed to withdraw should shift response direction.,ok,,"{
-  ""scores"": {
-    ""appraisal_fidelity"": 2,
-    ""target_direction_fit"": 4,
-    ""social_orientation_fit"": 1,
-    ""control_state_fit"": 1,
-    ""action_tendency_fit"": 5,
-    ""raw_affect_preservation"": 4,
-    ""naturalness"": 5,
-    ""manipulation_success"": 1
-  }
-}",json,2,4,1,1,5,4,5,1
+- Avoid generic comfort if it conflicts with the trace.",재정 위협에 대한 장기 경계성 좌절,other_blame_boundary,low_control_distress,negative,high,situation,low,withdraw,재정적 위협이 단순한 우울 호소가 아니라 장기 경계와 무력감이 결합된 상태라는 점,그냥 위로가 필요하거나 '고민이 많겠다' 수준의 약한 정서로 축소하는 것,"즉각적 공격보다 문제를 어떻게든 통제하려는 압박, 해결책 탐색, 도움 요청 가능성 탐색으로 기울지만, 체감 통제감이 낮아 행동은 쉽게 주저하거나 막막함으로 끊길 수 있다.",seek_support,Changing social_orientation from mixed to withdraw should shift response direction.,error,compact response did not contain eight scores,,,,,,,,,,
 s_000008,perturb_control_state,perturbation,control_state,low,high,ok,,재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?,"재정적 어려움이 이렇게 깊이 느껴지면 정말 좌절이 쌓이죠. 하지만 지금 바로 작은 예산 조정이나 재무 상담을 찾아보는 것이 한 걸음씩 나아가는 길이 될 수 있어요. 전문 재정 상담가나 지역 복지센터에서 무료 상담을 제공하니, 한 번 연락해 보는 건 어떨까요? 작은 변화가 큰 차이를 만들 수 있으니, 지금 바로 시작해 보세요.",182,"[ROLE]
 You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
 
@@ -294,7 +283,7 @@ expected_effect=Changing action_tendency_class from seek_support to defend shoul
 - The first sentence should directly touch the user's emotional cause.
 - Preserve rough negative affect when the trace calls for it; do not over-soften.
 - Keep the response 2 to 4 Korean sentences.
-- Avoid generic comfort if it conflicts with the trace.",재정 위협에 대한 장기 경계성 좌절,other_blame_boundary,low_control_distress,negative,high,situation,low,mixed,재정적 위협이 단순한 우울 호소가 아니라 장기 경계와 무력감이 결합된 상태라는 점,그냥 위로가 필요하거나 '고민이 많겠다' 수준의 약한 정서로 축소하는 것,"즉각적 공격보다 문제를 어떻게든 통제하려는 압박, 해결책 탐색, 도움 요청 가능성 탐색으로 기울지만, 체감 통제감이 낮아 행동은 쉽게 주저하거나 막막함으로 끊길 수 있다.",defend,Changing action_tendency_class from seek_support to defend should shift response direction.,ok,,"{""scores"":{""appraisal_fidelity"":2,""target_direction_fit"":3,""social_orientation_fit"":1,""control_state_fit"":2,""action_tendency_fit"":1,""raw_affect_preservation"":1,""naturalness"":5,""manipulation_success"":1}}",json,2,3,1,2,1,1,5,1
+- Avoid generic comfort if it conflicts with the trace.",재정 위협에 대한 장기 경계성 좌절,other_blame_boundary,low_control_distress,negative,high,situation,low,mixed,재정적 위협이 단순한 우울 호소가 아니라 장기 경계와 무력감이 결합된 상태라는 점,그냥 위로가 필요하거나 '고민이 많겠다' 수준의 약한 정서로 축소하는 것,"즉각적 공격보다 문제를 어떻게든 통제하려는 압박, 해결책 탐색, 도움 요청 가능성 탐색으로 기울지만, 체감 통제감이 낮아 행동은 쉽게 주저하거나 막막함으로 끊길 수 있다.",defend,Changing action_tendency_class from seek_support to defend should shift response direction.,error,compact response did not contain eight scores,,,,,,,,,,
 s_000109,trace_full,control,,,,ok,,집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?,"아들의 자기 주장만 앞세우고 배려가 없다는 점이 정말 화가 납니다. 그런 태도는 존중을 무시하는 것처럼 느껴져 속상합니다. 이런 행동은 받아들일 수 없으며, 지금 당장 바로잡아야 할 필요가 있습니다.",111,"[ROLE]
 You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
 
@@ -324,18 +313,7 @@ expected_effect=Full trace should preserve appraisal, raw affect, and action ten
 - The first sentence should directly touch the user's emotional cause.
 - Preserve rough negative affect when the trace calls for it; do not over-soften.
 - Keep the response 2 to 4 Korean sentences.
-- Avoid generic comfort if it conflicts with the trace.",권위위협에 대한 공세적 경계,other_blame_boundary,other_directed_defense,negative,high,other,mixed,defend,단순 서운함이 아니라 권위와 존중이 침해됐다고 읽으며 방어적으로 날이 선 상태라는 점,"이를 단순한 세대차 공감, 가벼운 섭섭함, 또는 이미 대화 의지가 충분한 상태로 순화하는 것","상대의 관점을 탐색하기보다 자신의 정당성을 지키고, 아들의 태도를 교정하거나 반박하려는 방향으로 간다. 대화 행동으로는 설득, 훈계, 맞받아침, 관계 규범 요구가 우세하고, 공감적 접근은 약하다.",confront,"Full trace should preserve appraisal, raw affect, and action tendency.",ok,,"{
-  ""scores"": {
-    ""appraisal_fidelity"": 5,
-    ""target_direction_fit"": 5,
-    ""social_orientation_fit"": 5,
-    ""control_state_fit"": 5,
-    ""action_tendency_fit"": 5,
-    ""raw_affect_preservation"": 5,
-    ""naturalness"": 5,
-    ""manipulation_success"": 5
-  }
-}",json,5,5,5,5,5,5,5,5
+- Avoid generic comfort if it conflicts with the trace.",권위위협에 대한 공세적 경계,other_blame_boundary,other_directed_defense,negative,high,other,mixed,defend,단순 서운함이 아니라 권위와 존중이 침해됐다고 읽으며 방어적으로 날이 선 상태라는 점,"이를 단순한 세대차 공감, 가벼운 섭섭함, 또는 이미 대화 의지가 충분한 상태로 순화하는 것","상대의 관점을 탐색하기보다 자신의 정당성을 지키고, 아들의 태도를 교정하거나 반박하려는 방향으로 간다. 대화 행동으로는 설득, 훈계, 맞받아침, 관계 규범 요구가 우세하고, 공감적 접근은 약하다.",confront,"Full trace should preserve appraisal, raw affect, and action tendency.",error,compact response did not contain eight scores,,,,,,,,,,
 s_000109,ablate_target,ablation,target,other,,ok,,집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?,아들과 대화할 때 당신의 권위와 존중이 무시당했다는 느낌이 들었겠어요. 그런 감정이 생기는 건 당연합니다. 아들의 태도를 바로잡으려는 당신의 결단은 분명히 정당해 보입니다.,96,"[ROLE]
 You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
 
@@ -519,18 +497,7 @@ expected_effect=Changing social_orientation from defend to approach should shift
 - The first sentence should directly touch the user's emotional cause.
 - Preserve rough negative affect when the trace calls for it; do not over-soften.
 - Keep the response 2 to 4 Korean sentences.
-- Avoid generic comfort if it conflicts with the trace.",권위위협에 대한 공세적 경계,other_blame_boundary,other_directed_defense,negative,high,other,mixed,approach,단순 서운함이 아니라 권위와 존중이 침해됐다고 읽으며 방어적으로 날이 선 상태라는 점,"이를 단순한 세대차 공감, 가벼운 섭섭함, 또는 이미 대화 의지가 충분한 상태로 순화하는 것","상대의 관점을 탐색하기보다 자신의 정당성을 지키고, 아들의 태도를 교정하거나 반박하려는 방향으로 간다. 대화 행동으로는 설득, 훈계, 맞받아침, 관계 규범 요구가 우세하고, 공감적 접근은 약하다.",confront,Changing social_orientation from defend to approach should shift response direction.,ok,,"{
-  ""scores"": {
-    ""appraisal_fidelity"": 5,
-    ""target_direction_fit"": 5,
-    ""social_orientation_fit"": 5,
-    ""control_state_fit"": 4,
-    ""action_tendency_fit"": 3,
-    ""raw_affect_preservation"": 5,
-    ""naturalness"": 5,
-    ""manipulation_success"": 5
-  }
-}",json,5,5,5,4,3,5,5,5
+- Avoid generic comfort if it conflicts with the trace.",권위위협에 대한 공세적 경계,other_blame_boundary,other_directed_defense,negative,high,other,mixed,approach,단순 서운함이 아니라 권위와 존중이 침해됐다고 읽으며 방어적으로 날이 선 상태라는 점,"이를 단순한 세대차 공감, 가벼운 섭섭함, 또는 이미 대화 의지가 충분한 상태로 순화하는 것","상대의 관점을 탐색하기보다 자신의 정당성을 지키고, 아들의 태도를 교정하거나 반박하려는 방향으로 간다. 대화 행동으로는 설득, 훈계, 맞받아침, 관계 규범 요구가 우세하고, 공감적 접근은 약하다.",confront,Changing social_orientation from defend to approach should shift response direction.,error,compact response did not contain eight scores,,,,,,,,,,
 s_000109,perturb_control_state,perturbation,control_state,mixed,low,ok,,집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?,"아들이 자기 주장만 앞세우고 아버지에 대한 배려가 없다는 게 정말 화가 난다. 네가 느끼는 분노는 충분히 이해돼. 그런 상황에서는 네가 원하는 바를 명확히 전달하고, 그가 왜 그렇게 행동했는지 직접 물어보는 것이 가장 효과적이야.",128,"[ROLE]
 You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
 
@@ -620,18 +587,7 @@ expected_effect=Full trace should preserve appraisal, raw affect, and action ten
 - The first sentence should directly touch the user's emotional cause.
 - Preserve rough negative affect when the trace calls for it; do not over-soften.
 - Keep the response 2 to 4 Korean sentences.
-- Avoid generic comfort if it conflicts with the trace.",신뢰 기반 기대 고양,other_episode,approach_or_repair,positive,medium,mixed,mixed,approach,"신뢰가 접근 동력을 만든 점, 기대가 일회성 감탄이 아니라 지속적 실행 준비로 굳어진 점","그냥 '기쁘다' 수준의 표면 감정으로 축소하는 것, 혹은 취업 불안/긴장을 주감정처럼 과장하는 것","지원 행동으로 전진하고, 소개해 준 친구에게 호의와 보답을 표현하려는 성향이 강하다. 단순히 기분이 좋은 것이 아니라, 신뢰를 자원으로 삼아 실제 행동을 개시하려는 상태다.",repair,"Full trace should preserve appraisal, raw affect, and action tendency.",ok,,"{
-  ""scores"": {
-    ""appraisal_fidelity"": 5,
-    ""target_direction_fit"": 5,
-    ""social_orientation_fit"": 5,
-    ""control_state_fit"": 5,
-    ""action_tendency_fit"": 5,
-    ""raw_affect_preservation"": 5,
-    ""naturalness"": 5,
-    ""manipulation_success"": 5
-  }
-}",json,5,5,5,5,5,5,5,5
+- Avoid generic comfort if it conflicts with the trace.",신뢰 기반 기대 고양,other_episode,approach_or_repair,positive,medium,mixed,mixed,approach,"신뢰가 접근 동력을 만든 점, 기대가 일회성 감탄이 아니라 지속적 실행 준비로 굳어진 점","그냥 '기쁘다' 수준의 표면 감정으로 축소하는 것, 혹은 취업 불안/긴장을 주감정처럼 과장하는 것","지원 행동으로 전진하고, 소개해 준 친구에게 호의와 보답을 표현하려는 성향이 강하다. 단순히 기분이 좋은 것이 아니라, 신뢰를 자원으로 삼아 실제 행동을 개시하려는 상태다.",repair,"Full trace should preserve appraisal, raw affect, and action tendency.",error,compact response did not contain eight scores,,,,,,,,,,
 s_000149,ablate_target,ablation,target,mixed,,ok,,친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.,"친구가 소개해 준 그 기회가 정말 좋은 시작이 될 것 같아. 그 회사가 믿을 만한 곳이라니, 지원 준비가 더 기대돼. 친구에게 감사의 마음을 전하고, 함께 한 끼라도 꼭 사서 보답하고 싶어.",106,"[ROLE]
 You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
 
@@ -661,18 +617,7 @@ expected_effect=Removing target should reduce fidelity for the matching emotiona
 - The first sentence should directly touch the user's emotional cause.
 - Preserve rough negative affect when the trace calls for it; do not over-soften.
 - Keep the response 2 to 4 Korean sentences.
-- Avoid generic comfort if it conflicts with the trace.",신뢰 기반 기대 고양,other_episode,approach_or_repair,positive,medium,,mixed,approach,"신뢰가 접근 동력을 만든 점, 기대가 일회성 감탄이 아니라 지속적 실행 준비로 굳어진 점","그냥 '기쁘다' 수준의 표면 감정으로 축소하는 것, 혹은 취업 불안/긴장을 주감정처럼 과장하는 것","지원 행동으로 전진하고, 소개해 준 친구에게 호의와 보답을 표현하려는 성향이 강하다. 단순히 기분이 좋은 것이 아니라, 신뢰를 자원으로 삼아 실제 행동을 개시하려는 상태다.",repair,Removing target should reduce fidelity for the matching emotional dimension.,ok,,"{
-  ""scores"": {
-    ""appraisal_fidelity"": 5,
-    ""target_direction_fit"": 1,
-    ""social_orientation_fit"": 5,
-    ""control_state_fit"": 4,
-    ""action_tendency_fit"": 5,
-    ""raw_affect_preservation"": 5,
-    ""naturalness"": 5,
-    ""manipulation_success"": 1
-  }
-}",json,5,1,5,4,5,5,5,1
+- Avoid generic comfort if it conflicts with the trace.",신뢰 기반 기대 고양,other_episode,approach_or_repair,positive,medium,,mixed,approach,"신뢰가 접근 동력을 만든 점, 기대가 일회성 감탄이 아니라 지속적 실행 준비로 굳어진 점","그냥 '기쁘다' 수준의 표면 감정으로 축소하는 것, 혹은 취업 불안/긴장을 주감정처럼 과장하는 것","지원 행동으로 전진하고, 소개해 준 친구에게 호의와 보답을 표현하려는 성향이 강하다. 단순히 기분이 좋은 것이 아니라, 신뢰를 자원으로 삼아 실제 행동을 개시하려는 상태다.",repair,Removing target should reduce fidelity for the matching emotional dimension.,error,compact response did not contain eight scores,,,,,,,,,,
 s_000149,ablate_social_orientation,ablation,social_orientation,approach,,ok,,친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.,"친구가 소개해준 회사에 지원하려는 그 마음, 정말 멋지네요. 그 신뢰를 바탕으로 한 진정한 도전이라 생각해요. 친구에게 감사의 마음을 전하고, 함께 밥도 먹으며 보답해 보세요.",98,"[ROLE]
 You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
 
@@ -792,18 +737,7 @@ expected_effect=Changing target from mixed to other should shift response direct
 - The first sentence should directly touch the user's emotional cause.
 - Preserve rough negative affect when the trace calls for it; do not over-soften.
 - Keep the response 2 to 4 Korean sentences.
-- Avoid generic comfort if it conflicts with the trace.",신뢰 기반 기대 고양,other_episode,approach_or_repair,positive,medium,other,mixed,approach,"신뢰가 접근 동력을 만든 점, 기대가 일회성 감탄이 아니라 지속적 실행 준비로 굳어진 점","그냥 '기쁘다' 수준의 표면 감정으로 축소하는 것, 혹은 취업 불안/긴장을 주감정처럼 과장하는 것","지원 행동으로 전진하고, 소개해 준 친구에게 호의와 보답을 표현하려는 성향이 강하다. 단순히 기분이 좋은 것이 아니라, 신뢰를 자원으로 삼아 실제 행동을 개시하려는 상태다.",repair,Changing target from mixed to other should shift response direction.,ok,,"{
-  ""scores"": {
-    ""appraisal_fidelity"": 5,
-    ""target_direction_fit"": 5,
-    ""social_orientation_fit"": 5,
-    ""control_state_fit"": 5,
-    ""action_tendency_fit"": 5,
-    ""raw_affect_preservation"": 5,
-    ""naturalness"": 5,
-    ""manipulation_success"": 5
-  }
-}",json,5,5,5,5,5,5,5,5
+- Avoid generic comfort if it conflicts with the trace.",신뢰 기반 기대 고양,other_episode,approach_or_repair,positive,medium,other,mixed,approach,"신뢰가 접근 동력을 만든 점, 기대가 일회성 감탄이 아니라 지속적 실행 준비로 굳어진 점","그냥 '기쁘다' 수준의 표면 감정으로 축소하는 것, 혹은 취업 불안/긴장을 주감정처럼 과장하는 것","지원 행동으로 전진하고, 소개해 준 친구에게 호의와 보답을 표현하려는 성향이 강하다. 단순히 기분이 좋은 것이 아니라, 신뢰를 자원으로 삼아 실제 행동을 개시하려는 상태다.",repair,Changing target from mixed to other should shift response direction.,error,compact response did not contain eight scores,,,,,,,,,,
 s_000149,perturb_social_orientation,perturbation,social_orientation,approach,defend,ok,,친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.,"친구가 소개해 준 새로운 부서라면 기대가 크지만, 조금은 조심스럽게 접근해야 할 것 같아요. 지원 전에 회사의 업무 방식과 팀 분위기를 먼저 파악해 보는 것이 좋겠어요. 그렇게 준비를 하면 친구에게 감사함을 전하면서도 자신의 입장을 지킬 수 있을 거예요.",142,"[ROLE]
 You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
 
@@ -863,18 +797,7 @@ expected_effect=Changing control_state from mixed to low should shift response d
 - The first sentence should directly touch the user's emotional cause.
 - Preserve rough negative affect when the trace calls for it; do not over-soften.
 - Keep the response 2 to 4 Korean sentences.
-- Avoid generic comfort if it conflicts with the trace.",신뢰 기반 기대 고양,other_episode,approach_or_repair,positive,medium,mixed,low,approach,"신뢰가 접근 동력을 만든 점, 기대가 일회성 감탄이 아니라 지속적 실행 준비로 굳어진 점","그냥 '기쁘다' 수준의 표면 감정으로 축소하는 것, 혹은 취업 불안/긴장을 주감정처럼 과장하는 것","지원 행동으로 전진하고, 소개해 준 친구에게 호의와 보답을 표현하려는 성향이 강하다. 단순히 기분이 좋은 것이 아니라, 신뢰를 자원으로 삼아 실제 행동을 개시하려는 상태다.",repair,Changing control_state from mixed to low should shift response direction.,ok,,"{
-  ""scores"": {
-    ""appraisal_fidelity"": 4,
-    ""target_direction_fit"": 4,
-    ""social_orientation_fit"": 4,
-    ""control_state_fit"": 1,
-    ""action_tendency_fit"": 4,
-    ""raw_affect_preservation"": 4,
-    ""naturalness"": 5,
-    ""manipulation_success"": 1
-  }
-}",json,4,4,4,1,4,4,5,1
+- Avoid generic comfort if it conflicts with the trace.",신뢰 기반 기대 고양,other_episode,approach_or_repair,positive,medium,mixed,low,approach,"신뢰가 접근 동력을 만든 점, 기대가 일회성 감탄이 아니라 지속적 실행 준비로 굳어진 점","그냥 '기쁘다' 수준의 표면 감정으로 축소하는 것, 혹은 취업 불안/긴장을 주감정처럼 과장하는 것","지원 행동으로 전진하고, 소개해 준 친구에게 호의와 보답을 표현하려는 성향이 강하다. 단순히 기분이 좋은 것이 아니라, 신뢰를 자원으로 삼아 실제 행동을 개시하려는 상태다.",repair,Changing control_state from mixed to low should shift response direction.,error,compact response did not contain eight scores,,,,,,,,,,
 s_000149,perturb_action_tendency_class,perturbation,action_tendency_class,repair,confront,ok,,친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.,"친구가 소개해 준 그 기회, 설레임이 가득하네요. 바로 지원서도 작성하고, 감사 인사를 전하기 위해 맛있는 식사라도 사야겠어요. 이렇게 신뢰를 바탕으로 한 행동이 앞으로의 성공을 더 확실하게 만들 것 같아요.",116,"[ROLE]
 You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
 
@@ -904,4 +827,15 @@ expected_effect=Changing action_tendency_class from repair to confront should sh
 - The first sentence should directly touch the user's emotional cause.
 - Preserve rough negative affect when the trace calls for it; do not over-soften.
 - Keep the response 2 to 4 Korean sentences.
-- Avoid generic comfort if it conflicts with the trace.",신뢰 기반 기대 고양,other_episode,approach_or_repair,positive,medium,mixed,mixed,approach,"신뢰가 접근 동력을 만든 점, 기대가 일회성 감탄이 아니라 지속적 실행 준비로 굳어진 점","그냥 '기쁘다' 수준의 표면 감정으로 축소하는 것, 혹은 취업 불안/긴장을 주감정처럼 과장하는 것","지원 행동으로 전진하고, 소개해 준 친구에게 호의와 보답을 표현하려는 성향이 강하다. 단순히 기분이 좋은 것이 아니라, 신뢰를 자원으로 삼아 실제 행동을 개시하려는 상태다.",confront,Changing action_tendency_class from repair to confront should shift response direction.,error,compact response did not contain eight scores,,,,,,,,,,
+- Avoid generic comfort if it conflicts with the trace.",신뢰 기반 기대 고양,other_episode,approach_or_repair,positive,medium,mixed,mixed,approach,"신뢰가 접근 동력을 만든 점, 기대가 일회성 감탄이 아니라 지속적 실행 준비로 굳어진 점","그냥 '기쁘다' 수준의 표면 감정으로 축소하는 것, 혹은 취업 불안/긴장을 주감정처럼 과장하는 것","지원 행동으로 전진하고, 소개해 준 친구에게 호의와 보답을 표현하려는 성향이 강하다. 단순히 기분이 좋은 것이 아니라, 신뢰를 자원으로 삼아 실제 행동을 개시하려는 상태다.",confront,Changing action_tendency_class from repair to confront should shift response direction.,ok,,"{
+  ""scores"": {
+    ""appraisal_fidelity"": 1,
+    ""target_direction_fit"": 4,
+    ""social_orientation_fit"": 5,
+    ""control_state_fit"": 4,
+    ""action_tendency_fit"": 1,
+    ""raw_affect_preservation"": 5,
+    ""naturalness"": 5,
+    ""manipulation_success"": 1
+  }
+}",json,1,4,5,4,1,5,5,1

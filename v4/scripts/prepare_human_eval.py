@@ -105,6 +105,19 @@ def main() -> None:
                     "condition_group": candidate["condition_group"],
                 }
             )
+        output_row.update(
+            {
+                "winner": "",
+                "confidence": "",
+                "reason": "",
+                "appraisal_fidelity": "",
+                "raw_affect_preservation": "",
+                "anti_softening": "",
+                "action_tendency_fit": "",
+                "emotional_specificity": "",
+                "naturalness": "",
+            }
+        )
 
         grouped_rows.append(output_row)
         answer_key["rows"].append(row_key)

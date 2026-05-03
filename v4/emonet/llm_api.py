@@ -33,6 +33,33 @@ def call_openai_compatible_chat(
     response_format: dict[str, Any] | None = None,
     reasoning_effort: str | None = None,
 ) -> str:
+    text, _usage = call_openai_compatible_chat_with_usage(
+        base_url=base_url,
+        model_name=model_name,
+        prompt=prompt,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        timeout_sec=timeout_sec,
+        system_prompt=system_prompt,
+        api_key=api_key,
+        response_format=response_format,
+        reasoning_effort=reasoning_effort,
+    )
+    return text
+
+
+def call_openai_compatible_chat_with_usage(
+    base_url: str,
+    model_name: str,
+    prompt: str,
+    temperature: float,
+    max_tokens: int,
+    timeout_sec: int,
+    system_prompt: str = "Return JSON only.",
+    api_key: str | None = None,
+    response_format: dict[str, Any] | None = None,
+    reasoning_effort: str | None = None,
+) -> tuple[str, dict[str, int]]:
     url = base_url.rstrip("/") + "/chat/completions"
     is_openai_api = bool(api_key and "api.openai.com" in str(base_url).lower())
     payload: dict[str, Any] = {
@@ -83,13 +110,113 @@ def call_openai_compatible_chat(
                 text_chunks.append(item["text"])
         content = "".join(text_chunks)
     if isinstance(content, str) and content.strip():
-        return content.strip()
+        return content.strip(), _normalize_openai_usage(payload.get("usage") or {})
 
     for field_name in ("reasoning", "reasoning_content", "refusal"):
         fallback = message.get(field_name)
         if isinstance(fallback, str) and fallback.strip():
-            return fallback.strip()
+            return fallback.strip(), _normalize_openai_usage(payload.get("usage") or {})
     raise ValueError("chat response did not contain text content")
+
+
+def _normalize_openai_usage(usage: dict[str, Any]) -> dict[str, int]:
+    input_tokens = int(usage.get("prompt_tokens") or usage.get("input_tokens") or 0)
+    output_tokens = int(usage.get("completion_tokens") or usage.get("output_tokens") or 0)
+    return {"input_tokens": input_tokens, "output_tokens": output_tokens}
+
+
+def call_anthropic_messages_with_usage(
+    base_url: str,
+    model_name: str,
+    prompt: str,
+    temperature: float,
+    max_tokens: int,
+    timeout_sec: int,
+    system_prompt: str = "Return JSON only.",
+    api_key: str | None = None,
+    reasoning_effort: str | None = None,
+) -> tuple[str, dict[str, int]]:
+    if not api_key:
+        raise ValueError("Anthropic provider requires ANTHROPIC_API_KEY or sidebar API key")
+    url = (base_url or "https://api.anthropic.com").rstrip("/") + "/v1/messages"
+    payload: dict[str, Any] = {
+        "model": model_name,
+        "max_tokens": int(max_tokens),
+        "temperature": float(temperature),
+        "system": system_prompt,
+        "messages": [{"role": "user", "content": prompt}],
+    }
+    if reasoning_effort:
+        payload["thinking"] = {"type": "enabled", "budget_tokens": max(1024, min(int(max_tokens) // 2, 8192))}
+
+    data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    headers = {
+        "Content-Type": "application/json",
+        "x-api-key": api_key,
+        "anthropic-version": "2023-06-01",
+    }
+    request = urllib.request.Request(url, data=data, headers=headers, method="POST")
+    try:
+        with urllib.request.urlopen(request, timeout=timeout_sec) as response:
+            response_payload = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"Anthropic messages failed ({exc.code}): {body[:800]}") from exc
+    except urllib.error.URLError as exc:
+        raise ConnectionError(f"could not reach Anthropic endpoint: {exc}") from exc
+
+    chunks: list[str] = []
+    for item in response_payload.get("content") or []:
+        if isinstance(item, dict) and item.get("type") == "text" and isinstance(item.get("text"), str):
+            chunks.append(item["text"])
+    text = "".join(chunks).strip()
+    if not text:
+        raise ValueError("Anthropic response did not contain text content")
+    usage = response_payload.get("usage") or {}
+    return text, {
+        "input_tokens": int(usage.get("input_tokens") or 0),
+        "output_tokens": int(usage.get("output_tokens") or 0),
+    }
+
+
+def call_chat_with_usage(
+    provider: str,
+    base_url: str,
+    model_name: str,
+    prompt: str,
+    temperature: float,
+    max_tokens: int,
+    timeout_sec: int,
+    system_prompt: str,
+    api_key: str | None = None,
+    response_format: dict[str, Any] | None = None,
+    reasoning_effort: str | None = None,
+) -> tuple[str, dict[str, int]]:
+    normalized_provider = str(provider or "openai_compatible").strip().lower()
+    if normalized_provider == "anthropic":
+        return call_anthropic_messages_with_usage(
+            base_url=base_url,
+            model_name=model_name,
+            prompt=prompt,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            timeout_sec=timeout_sec,
+            system_prompt=system_prompt,
+            api_key=api_key,
+            reasoning_effort=reasoning_effort,
+        )
+    return call_openai_compatible_chat_with_usage(
+        base_url=base_url,
+        model_name=model_name,
+        prompt=prompt,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        timeout_sec=timeout_sec,
+        system_prompt=system_prompt,
+        api_key=api_key,
+        response_format=response_format,
+        reasoning_effort=reasoning_effort,
+    )
 
 
 def request_json_response(
@@ -105,6 +232,7 @@ def request_json_response(
     api_key: str | None = None,
     response_format: dict[str, Any] | None = None,
     reasoning_effort: str | None = None,
+    provider: str = "openai_compatible",
 ) -> tuple[object, str]:
     last_raw = ""
     last_error = ""
@@ -118,7 +246,8 @@ def request_json_response(
                     or "직전 응답은 JSON 형식이 아니었다. 설명 없이 JSON object 하나만 다시 출력하라."
                 )
             )
-        raw = call_openai_compatible_chat(
+        raw, _usage = call_chat_with_usage(
+            provider=provider,
             base_url=base_url,
             model_name=model_name,
             prompt=prompt + retry_suffix,
@@ -127,6 +256,7 @@ def request_json_response(
             timeout_sec=timeout_sec,
             api_key=api_key,
             response_format=response_format,
+            system_prompt="Return JSON only.",
             reasoning_effort=reasoning_effort,
         )
         last_raw = raw
@@ -156,6 +286,7 @@ def request_plain_text_response(
     system_prompt: str = "Return a plain Korean response only. Do not return JSON.",
     api_key: str | None = None,
     reasoning_effort: str | None = None,
+    provider: str = "openai_compatible",
 ) -> tuple[str, str, dict[str, object]]:
     last_raw = ""
     validation_errors: list[str] = []
@@ -171,7 +302,8 @@ def request_plain_text_response(
                 )
                 + f"\n- 직전 문제: {retry_reason}"
             )
-        raw = call_openai_compatible_chat(
+        raw, usage = call_chat_with_usage(
+            provider=provider,
             base_url=base_url,
             model_name=model_name,
             prompt=prompt + retry_suffix,
@@ -192,6 +324,8 @@ def request_plain_text_response(
                     "attempt_count": int(attempt + 1),
                     "retry_count": int(attempt),
                     "validation_errors": list(validation_errors),
+                    "usage": usage,
+                    "provider": str(provider or "openai_compatible"),
                 },
             )
         except Exception as exc:

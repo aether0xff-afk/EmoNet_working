@@ -25,6 +25,9 @@ LABEL_AXES = [
     "appraisal_family",
 ]
 
+TEMPORAL_BINS = 4
+TRANSITION_BINS = 256
+
 
 def read_csv(path: Path) -> list[dict[str, str]]:
     with path.open("r", encoding="utf-8-sig", newline="") as f:
@@ -42,6 +45,69 @@ def to_float(row: dict[str, str], key: str) -> float:
         return 0.0
 
 
+def _safe_mean_max(matrix: np.ndarray, width: int) -> np.ndarray:
+    if matrix.size == 0:
+        return np.zeros((width * 2,), dtype=np.float32)
+    return np.concatenate([matrix.mean(axis=0), matrix.max(axis=0)]).astype(np.float32)
+
+
+def _temporal_pool(matrix: np.ndarray, bins: int = TEMPORAL_BINS) -> np.ndarray:
+    if matrix.size == 0:
+        return np.zeros((0,), dtype=np.float32)
+    chunks = np.array_split(matrix, bins, axis=0)
+    pooled: list[np.ndarray] = []
+    for chunk in chunks:
+        if chunk.size == 0:
+            pooled.append(np.zeros((matrix.shape[1] * 2,), dtype=np.float32))
+        else:
+            pooled.append(_safe_mean_max(chunk, matrix.shape[1]))
+    return np.concatenate(pooled).astype(np.float32)
+
+
+def _active_count_stats(active_counts: np.ndarray) -> np.ndarray:
+    values = np.asarray(active_counts, dtype=np.float32).reshape(-1)
+    if values.size == 0:
+        return np.zeros((8,), dtype=np.float32)
+    diffs = np.diff(values) if values.size > 1 else np.zeros((1,), dtype=np.float32)
+    return np.asarray(
+        [
+            values.mean(),
+            values.std(),
+            values.min(),
+            values.max(),
+            values[-1] - values[0],
+            diffs.mean(),
+            diffs.std(),
+            float(values.argmax()) / max(1, values.size - 1),
+        ],
+        dtype=np.float32,
+    )
+
+
+def _route_histogram(route_ids: np.ndarray, n_neurons: int) -> np.ndarray:
+    route = np.asarray(route_ids, dtype=np.int64).reshape(-1)
+    valid = route[(route >= 0) & (route < n_neurons)]
+    hist = np.zeros((n_neurons,), dtype=np.float32)
+    if valid.size:
+        counts = np.bincount(valid, minlength=n_neurons).astype(np.float32)
+        hist[: counts.size] = counts[:n_neurons]
+        hist /= max(1.0, float(valid.size))
+    return hist
+
+
+def _transition_hash(route_ids: np.ndarray, bins: int = TRANSITION_BINS) -> np.ndarray:
+    route = np.asarray(route_ids, dtype=np.int64).reshape(-1)
+    route = route[route >= 0]
+    hist = np.zeros((bins,), dtype=np.float32)
+    if route.size < 2:
+        return hist
+    for left, right in zip(route[:-1], route[1:]):
+        bucket = int((left * 1315423911 + right * 2654435761) % bins)
+        hist[bucket] += 1.0
+    hist /= max(1.0, float(route.size - 1))
+    return hist
+
+
 def load_trace_features(summary_rows: list[dict[str, str]], trace_dir: Path, feature_kind: str) -> tuple[list[dict[str, str]], np.ndarray]:
     kept_rows: list[dict[str, str]] = []
     features: list[np.ndarray] = []
@@ -55,16 +121,40 @@ def load_trace_features(summary_rows: list[dict[str, str]], trace_dir: Path, fea
                 feature = np.asarray(payload["z"], dtype=np.float32).reshape(-1)
             elif feature_kind == "activation_meanmax":
                 activation = np.asarray(payload["activation"], dtype=np.float32)
-                if activation.size == 0:
-                    feature = np.zeros((512,), dtype=np.float32)
-                else:
-                    feature = np.concatenate([activation.mean(axis=0), activation.max(axis=0)]).astype(np.float32)
+                width = int(activation.shape[1]) if activation.ndim == 2 else 0
+                feature = _safe_mean_max(activation, width)
+            elif feature_kind == "activation_temporal":
+                activation = np.asarray(payload["activation"], dtype=np.float32)
+                feature = _temporal_pool(activation)
             elif feature_kind == "branch_mean":
                 branch = np.asarray(payload["branch_tensor"], dtype=np.float32)
-                if branch.size == 0:
-                    feature = np.zeros((6,), dtype=np.float32)
-                else:
-                    feature = np.concatenate([branch.mean(axis=0), branch.max(axis=0)]).astype(np.float32)
+                width = int(branch.shape[1]) if branch.ndim == 2 else 0
+                feature = _safe_mean_max(branch, width)
+            elif feature_kind == "branch_temporal":
+                branch = np.asarray(payload["branch_tensor"], dtype=np.float32)
+                feature = _temporal_pool(branch)
+            elif feature_kind == "route_histogram":
+                activation = np.asarray(payload["activation"], dtype=np.float32)
+                n_neurons = int(activation.shape[1]) if activation.ndim == 2 else 0
+                feature = _route_histogram(payload["dominant_branch_ids"], n_neurons)
+            elif feature_kind == "transition_hash":
+                feature = _transition_hash(payload["dominant_branch_ids"])
+            elif feature_kind == "active_stats":
+                feature = _active_count_stats(payload["active_counts"])
+            elif feature_kind == "branch_plus_temporal":
+                branch = np.asarray(payload["branch_tensor"], dtype=np.float32)
+                branch_width = int(branch.shape[1]) if branch.ndim == 2 else 0
+                activation = np.asarray(payload["activation"], dtype=np.float32)
+                n_neurons = int(activation.shape[1]) if activation.ndim == 2 else 0
+                feature = np.concatenate(
+                    [
+                        _safe_mean_max(branch, branch_width),
+                        _temporal_pool(branch),
+                        _active_count_stats(payload["active_counts"]),
+                        _route_histogram(payload["dominant_branch_ids"], n_neurons),
+                        _transition_hash(payload["dominant_branch_ids"]),
+                    ]
+                ).astype(np.float32)
             else:
                 raise ValueError(f"unknown feature kind: {feature_kind}")
         if feature.size == 0 or not np.all(np.isfinite(feature)):
@@ -211,7 +301,21 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--summary-csv", type=Path, default=Path("outputs/neural_trace_probe_v1/neural_trace_summary.csv"))
     parser.add_argument("--trace-dir", type=Path, default=Path("outputs/neural_trace_probe_v1/traces_npz"))
-    parser.add_argument("--feature-kind", choices=["z", "activation_meanmax", "branch_mean"], default="z")
+    parser.add_argument(
+        "--feature-kind",
+        choices=[
+            "z",
+            "activation_meanmax",
+            "activation_temporal",
+            "branch_mean",
+            "branch_temporal",
+            "route_histogram",
+            "transition_hash",
+            "active_stats",
+            "branch_plus_temporal",
+        ],
+        default="z",
+    )
     parser.add_argument("--output", type=Path, default=Path("outputs/neural_trace_probe_v1/neural_trace_geometry_z.json"))
     parser.add_argument("--limit", type=int, default=None)
     return parser.parse_args()

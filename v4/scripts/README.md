@@ -12,6 +12,18 @@
   - response generation matrix including `episode_trace` and `hybrid_episode`
 - `score_experiment_matrix.py`
   - judge scoring
+- `build_targeted_superiority_set.py`
+  - build the 80-row episode-sensitive targeted set
+- `generate_episode_v3_targeted.py`
+  - generate targeted responses with `episode_trace_v3`
+- `score_superiority_judge.py`
+  - score targeted episode-fidelity dimensions
+- `analyze_paired_superiority.py`
+  - paired bootstrap, win/tie/loss, and sign-test analysis
+- `prepare_human_eval.py`
+  - prepare blinded human A/B CSVs and answer keys
+- `analyze_human_eval_results.py`
+  - unblind filled human A/B results and compute win/tie/loss statistics
 - `generate_paper_refresh_structfix.py`
   - refresh current paper figures/tables
 
@@ -22,7 +34,6 @@
 - `calibrate_reference_config.py`
 - `analyze_branch_traces.py`
 - `debug_judge_chat_response.py`
-- `prepare_human_eval.py`
 
 ## Historical helpers
 

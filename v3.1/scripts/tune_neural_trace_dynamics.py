@@ -41,7 +41,7 @@ BASE_PARAMS = {
 }
 
 
-def grid_configs() -> list[dict[str, Any]]:
+def fine_grid_configs() -> list[dict[str, Any]]:
     thresholds = [0.60, 0.63, 0.66]
     input_clips = [1.60, 1.90, 2.20]
     inhibitions = [0.08, 0.12]
@@ -72,6 +72,72 @@ def grid_configs() -> list[dict[str, Any]]:
     return configs
 
 
+def conservative_grid_configs() -> list[dict[str, Any]]:
+    grid = [
+        {
+            "name": "thr0.70_clip1.2_inh0.16_high_fatigue",
+            "k_threshold_base": 0.70,
+            "input_signal_clip": 1.20,
+            "inhibitory_suppression_gain": 0.16,
+            "fatigue_gain": 0.22,
+            "fatigue_threshold_gain": 0.12,
+            "fatigue_k_leak": 0.05,
+        },
+        {
+            "name": "thr0.70_clip1.4_inh0.16_high_fatigue",
+            "k_threshold_base": 0.70,
+            "input_signal_clip": 1.40,
+            "inhibitory_suppression_gain": 0.16,
+            "fatigue_gain": 0.22,
+            "fatigue_threshold_gain": 0.12,
+            "fatigue_k_leak": 0.05,
+        },
+        {
+            "name": "thr0.74_clip1.2_inh0.20_high_fatigue",
+            "k_threshold_base": 0.74,
+            "input_signal_clip": 1.20,
+            "inhibitory_suppression_gain": 0.20,
+            "fatigue_gain": 0.24,
+            "fatigue_threshold_gain": 0.14,
+            "fatigue_k_leak": 0.06,
+        },
+        {
+            "name": "thr0.74_clip1.4_inh0.20_high_fatigue",
+            "k_threshold_base": 0.74,
+            "input_signal_clip": 1.40,
+            "inhibitory_suppression_gain": 0.20,
+            "fatigue_gain": 0.24,
+            "fatigue_threshold_gain": 0.14,
+            "fatigue_k_leak": 0.06,
+        },
+    ]
+    configs: list[dict[str, Any]] = []
+    for item in grid:
+        params = dict(BASE_PARAMS)
+        threshold = float(item["k_threshold_base"])
+        params.update(
+            {
+                "k_threshold_base": threshold,
+                "k_remem_base": threshold + 0.18,
+                "input_signal_clip": item["input_signal_clip"],
+                "inhibitory_suppression_gain": item["inhibitory_suppression_gain"],
+                "fatigue_gain": item["fatigue_gain"],
+                "fatigue_threshold_gain": item["fatigue_threshold_gain"],
+                "fatigue_k_leak": item["fatigue_k_leak"],
+            }
+        )
+        configs.append({"name": str(item["name"]), "params": params})
+    return configs
+
+
+def grid_configs(mode: str = "fine") -> list[dict[str, Any]]:
+    if mode == "fine":
+        return fine_grid_configs()
+    if mode == "conservative":
+        return conservative_grid_configs()
+    raise ValueError(f"unknown grid mode: {mode}")
+
+
 def write_csv(path: Path, rows: list[dict[str, Any]], fieldnames: list[str]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8-sig", newline="") as f:
@@ -98,12 +164,12 @@ def export_args(args: argparse.Namespace, config: dict[str, Any], out_dir: Path)
     )
 
 
-def geometry_args(out_dir: Path) -> SimpleNamespace:
+def geometry_args(out_dir: Path, feature_kind: str) -> SimpleNamespace:
     return SimpleNamespace(
         summary_csv=out_dir / "neural_trace_summary.csv",
         trace_dir=out_dir / "traces_npz",
-        feature_kind="branch_mean",
-        output=out_dir / "neural_trace_geometry_branch.json",
+        feature_kind=feature_kind,
+        output=out_dir / f"neural_trace_geometry_{feature_kind}.json",
         limit=None,
     )
 
@@ -120,7 +186,7 @@ def density_penalty(density: float, low: float = 0.55, high: float = 0.80) -> fl
     return density - high
 
 
-def score_candidate(report: dict[str, Any]) -> dict[str, Any]:
+def score_feature_report(report: dict[str, Any]) -> dict[str, float]:
     branch = report["branch_health"]
     nn = report["nearest_neighbor"]
     gd = report["group_distances"]
@@ -132,45 +198,60 @@ def score_candidate(report: dict[str, Any]) -> dict[str, Any]:
     sep = mean(separations)
     lift = mean(lifts)
 
-    # Prefer no collapse first, then controlled density, then separation.
+    return {
+        "mean_branch_len": branch_len,
+        "len1_ratio": len1,
+        "mean_activation_density": density,
+        "tracked_lift_mean": lift,
+        "tracked_separation_mean": sep,
+        **{f"{axis}_lift": float(nn[axis]["lift"]) for axis in TRACKED_AXES},
+        **{f"{axis}_separation": float(gd[axis]["separation"]) for axis in TRACKED_AXES},
+    }
+
+
+def score_candidate(branch_mean_report: dict[str, Any], branch_temporal_report: dict[str, Any]) -> dict[str, Any]:
+    mean_score = score_feature_report(branch_mean_report)
+    temporal_score = score_feature_report(branch_temporal_report)
+    len1 = mean_score["len1_ratio"]
+    density = mean_score["mean_activation_density"]
+    branch_len = mean_score["mean_branch_len"]
+    combined_lift = 0.7 * mean_score["tracked_lift_mean"] + 0.3 * temporal_score["tracked_lift_mean"]
+    combined_sep = 0.7 * mean_score["tracked_separation_mean"] + 0.3 * temporal_score["tracked_separation_mean"]
+
+    # Prefer low collapse, controlled density, and stable branch geometry.
+    # Over-activation is now penalized strongly because the first no-collapse
+    # candidate reached density ~0.95 and weakened several emotion axes.
     objective = (
-        3.0 * sep
-        + 1.0 * lift
+        3.0 * combined_sep
+        + 1.0 * combined_lift
         + 0.01 * min(branch_len, 40.0)
         - 4.0 * len1
-        - 2.0 * density_penalty(density)
+        - 4.0 * density_penalty(density)
     )
     return {
         "mean_branch_len": round(branch_len, 6),
         "len1_ratio": round(len1, 6),
         "mean_activation_density": round(density, 6),
-        "tracked_lift_mean": round(lift, 6),
-        "tracked_separation_mean": round(sep, 6),
+        "tracked_lift_mean": round(mean_score["tracked_lift_mean"], 6),
+        "tracked_separation_mean": round(mean_score["tracked_separation_mean"], 6),
+        "branch_temporal_lift_mean": round(temporal_score["tracked_lift_mean"], 6),
+        "branch_temporal_separation_mean": round(temporal_score["tracked_separation_mean"], 6),
+        "combined_lift_mean": round(combined_lift, 6),
+        "combined_separation_mean": round(combined_sep, 6),
         "objective": round(objective, 6),
-        **{f"{axis}_lift": float(nn[axis]["lift"]) for axis in TRACKED_AXES},
-        **{f"{axis}_separation": float(gd[axis]["separation"]) for axis in TRACKED_AXES},
+        **{f"{axis}_lift": round(mean_score[f"{axis}_lift"], 6) for axis in TRACKED_AXES},
+        **{f"{axis}_separation": round(mean_score[f"{axis}_separation"], 6) for axis in TRACKED_AXES},
     }
 
 
 def run(args: argparse.Namespace) -> dict[str, Any]:
     args.output_dir.mkdir(parents=True, exist_ok=True)
     rows: list[dict[str, Any]] = []
-    configs = grid_configs()
-    for idx, config in enumerate(configs, start=1):
-        print(f"fine-sweep: {idx}/{len(configs)} {config['name']}")
-        out_dir = args.output_dir / config["name"]
-        manifest = exporter.run(export_args(args, config, out_dir))
-        report = geometry.run(geometry_args(out_dir))
-        row = {
-            "config": config["name"],
-            "ok_rows": manifest["ok_rows"],
-            "error_rows": manifest["error_rows"],
-            **score_candidate(report),
-            "params_json": json.dumps(config["params"], ensure_ascii=False, sort_keys=True),
-        }
-        rows.append(row)
-
-    rows.sort(key=lambda row: float(row["objective"]), reverse=True)
+    configs = grid_configs(args.grid_mode)
+    if args.start_index and args.start_index > 1:
+        configs = configs[args.start_index - 1 :]
+    if args.max_configs and args.max_configs > 0:
+        configs = configs[: args.max_configs]
     fieldnames = [
         "config",
         "ok_rows",
@@ -181,11 +262,42 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "mean_activation_density",
         "tracked_lift_mean",
         "tracked_separation_mean",
+        "branch_temporal_lift_mean",
+        "branch_temporal_separation_mean",
+        "combined_lift_mean",
+        "combined_separation_mean",
         *[f"{axis}_lift" for axis in TRACKED_AXES],
         *[f"{axis}_separation" for axis in TRACKED_AXES],
         "params_json",
     ]
     summary_csv = args.output_dir / "fine_dynamics_sweep_summary.csv"
+    for idx, config in enumerate(configs, start=1):
+        print(f"fine-sweep: {idx}/{len(configs)} {config['name']}")
+        out_dir = args.output_dir / config["name"]
+        manifest_path = out_dir / "neural_trace_manifest.json"
+        branch_mean_path = out_dir / "neural_trace_geometry_branch_mean.json"
+        branch_temporal_path = out_dir / "neural_trace_geometry_branch_temporal.json"
+        if args.resume and manifest_path.exists() and branch_mean_path.exists() and branch_temporal_path.exists():
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            branch_mean_report = json.loads(branch_mean_path.read_text(encoding="utf-8"))
+            branch_temporal_report = json.loads(branch_temporal_path.read_text(encoding="utf-8"))
+            print(f"fine-sweep: reusing {config['name']}")
+        else:
+            manifest = exporter.run(export_args(args, config, out_dir))
+            branch_mean_report = geometry.run(geometry_args(out_dir, "branch_mean"))
+            branch_temporal_report = geometry.run(geometry_args(out_dir, "branch_temporal"))
+        row = {
+            "config": config["name"],
+            "ok_rows": manifest["ok_rows"],
+            "error_rows": manifest["error_rows"],
+            **score_candidate(branch_mean_report, branch_temporal_report),
+            "params_json": json.dumps(config["params"], ensure_ascii=False, sort_keys=True),
+        }
+        rows.append(row)
+        rows.sort(key=lambda item: float(item["objective"]), reverse=True)
+        write_csv(summary_csv, rows, fieldnames)
+
+    rows.sort(key=lambda row: float(row["objective"]), reverse=True)
     write_csv(summary_csv, rows, fieldnames)
     payload = {
         "output_dir": str(args.output_dir),
@@ -215,6 +327,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-ticks", type=int, default=64)
     parser.add_argument("--min-ticks-before-converged", type=int, default=6)
     parser.add_argument("--convergence-patience", type=int, default=4)
+    parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--grid-mode", choices=["fine", "conservative"], default="fine")
+    parser.add_argument("--start-index", type=int, default=1)
+    parser.add_argument("--max-configs", type=int, default=None)
     return parser.parse_args()
 
 

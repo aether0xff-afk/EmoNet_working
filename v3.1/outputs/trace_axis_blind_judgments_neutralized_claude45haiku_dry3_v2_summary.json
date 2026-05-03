@@ -1,0 +1,94 @@
+{
+  "rows": 36,
+  "ok_rows": 36,
+  "error_rows": 0,
+  "overall": {
+    "n": 36,
+    "winner_counts": {
+      "A": 13,
+      "TIE": 13,
+      "B": 10
+    },
+    "success_count": 31,
+    "success_rate": 0.861111,
+    "tie_rate": 0.361111
+  },
+  "by_question_type": {
+    "ablation_axis_original": {
+      "n": 12,
+      "winner_counts": {
+        "A": 6,
+        "B": 6
+      },
+      "success_count": 12,
+      "success_rate": 1.0,
+      "tie_rate": 0.0
+    },
+    "null_same_response": {
+      "n": 12,
+      "winner_counts": {
+        "TIE": 12
+      },
+      "success_count": 12,
+      "success_rate": 1.0,
+      "tie_rate": 1.0
+    },
+    "perturbation_axis_shift": {
+      "n": 12,
+      "winner_counts": {
+        "A": 7,
+        "B": 4,
+        "TIE": 1
+      },
+      "success_count": 7,
+      "success_rate": 0.583333,
+      "tie_rate": 0.083333
+    }
+  },
+  "by_axis": {
+    "action_tendency_class": {
+      "n": 9,
+      "winner_counts": {
+        "TIE": 4,
+        "B": 3,
+        "A": 2
+      },
+      "success_count": 8,
+      "success_rate": 0.888889,
+      "tie_rate": 0.444444
+    },
+    "control_state": {
+      "n": 9,
+      "winner_counts": {
+        "B": 3,
+        "A": 3,
+        "TIE": 3
+      },
+      "success_count": 8,
+      "success_rate": 0.888889,
+      "tie_rate": 0.333333
+    },
+    "social_orientation": {
+      "n": 9,
+      "winner_counts": {
+        "A": 4,
+        "TIE": 3,
+        "B": 2
+      },
+      "success_count": 8,
+      "success_rate": 0.888889,
+      "tie_rate": 0.333333
+    },
+    "target": {
+      "n": 9,
+      "winner_counts": {
+        "A": 4,
+        "TIE": 3,
+        "B": 2
+      },
+      "success_count": 7,
+      "success_rate": 0.777778,
+      "tie_rate": 0.333333
+    }
+  }
+}

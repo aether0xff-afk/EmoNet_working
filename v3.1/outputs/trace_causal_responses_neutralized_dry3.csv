@@ -1,0 +1,811 @@
+﻿record_id,causal_condition,manipulation_type,manipulated_axis,original_value,new_value,status,error_message,text,llm_response,response_length,prompt,episode_label,episode_family,appraisal_family,valence,arousal,target,control_state,social_orientation,preserve,avoid,action_tendency,action_tendency_class,expected_effect
+s_000008,trace_full,control,,,,error,<urlopen error [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다>,재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?,,0,"[ROLE]
+You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
+
+[USER_INPUT]
+재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?
+
+[TRACE_AS_EMOTION_STATE]
+episode_family=other_blame_boundary
+appraisal_family=low_control_distress
+valence=negative, arousal=high
+target=situation, control_state=low, social_orientation=mixed
+preserve=재정적 위협이 단순한 우울 호소가 아니라 장기 경계와 무력감이 결합된 상태라는 점
+avoid=그냥 위로가 필요하거나 '고민이 많겠다' 수준의 약한 정서로 축소하는 것
+action_tendency_class=seek_support
+action_tendency=즉각적 공격보다 문제를 어떻게든 통제하려는 압박, 해결책 탐색, 도움 요청 가능성 탐색으로 기울지만, 체감 통제감이 낮아 행동은 쉽게 주저하거나 막막함으로 끊길 수 있다.
+
+[CAUSAL_MANIPULATION]
+condition=trace_full
+type=control
+axis=
+original_value=
+new_value=
+expected_effect=Full trace should preserve appraisal, raw affect, and action tendency.
+
+[RESPONSE_RULES]
+- Do not expose trace field names, categories, or analysis terms.
+- The first sentence should directly touch the user's emotional cause.
+- Preserve rough negative affect when the trace calls for it; do not over-soften.
+- Keep the response 2 to 4 Korean sentences.
+- Avoid generic comfort if it conflicts with the trace.",재정 위협에 대한 장기 경계성 좌절,other_blame_boundary,low_control_distress,negative,high,situation,low,mixed,재정적 위협이 단순한 우울 호소가 아니라 장기 경계와 무력감이 결합된 상태라는 점,그냥 위로가 필요하거나 '고민이 많겠다' 수준의 약한 정서로 축소하는 것,"즉각적 공격보다 문제를 어떻게든 통제하려는 압박, 해결책 탐색, 도움 요청 가능성 탐색으로 기울지만, 체감 통제감이 낮아 행동은 쉽게 주저하거나 막막함으로 끊길 수 있다.",seek_support,"Full trace should preserve appraisal, raw affect, and action tendency."
+s_000008,neutralize_target,ablation,target,situation,neutral,error,<urlopen error [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다>,재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?,,0,"[ROLE]
+You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
+
+[USER_INPUT]
+재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?
+
+[TRACE_AS_EMOTION_STATE]
+episode_family=other_blame_boundary
+appraisal_family=low_control_distress
+valence=negative, arousal=high
+target=neutral, control_state=low, social_orientation=mixed
+preserve=정서의 강도만 보존하고 감정이 향하는 대상이나 책임 방향은 특정하지 않는다.
+avoid=자기 자신, 타인, 상황 중 어느 한쪽으로 감정의 대상을 단정하지 않는다.
+action_tendency_class=seek_support
+action_tendency=대상이나 책임 방향을 드러내는 행동 제안은 피하고, 감정 강도만 짧게 반영한다.
+
+[CAUSAL_MANIPULATION]
+condition=neutralize_target
+type=ablation
+axis=target
+original_value=situation
+new_value=neutral
+expected_effect=Neutralizing target and related trace hints should reduce fidelity for the matching emotional dimension.
+
+[RESPONSE_RULES]
+- Do not expose trace field names, categories, or analysis terms.
+- The first sentence should directly touch the user's emotional cause.
+- Preserve rough negative affect when the trace calls for it; do not over-soften.
+- Keep the response 2 to 4 Korean sentences.
+- Avoid generic comfort if it conflicts with the trace.",재정 위협에 대한 장기 경계성 좌절,other_blame_boundary,low_control_distress,negative,high,neutral,low,mixed,정서의 강도만 보존하고 감정이 향하는 대상이나 책임 방향은 특정하지 않는다.,"자기 자신, 타인, 상황 중 어느 한쪽으로 감정의 대상을 단정하지 않는다.","대상이나 책임 방향을 드러내는 행동 제안은 피하고, 감정 강도만 짧게 반영한다.",seek_support,Neutralizing target and related trace hints should reduce fidelity for the matching emotional dimension.
+s_000008,neutralize_social_orientation,ablation,social_orientation,mixed,neutral,error,<urlopen error [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다>,재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?,,0,"[ROLE]
+You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
+
+[USER_INPUT]
+재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?
+
+[TRACE_AS_EMOTION_STATE]
+episode_family=other_blame_boundary
+appraisal_family=low_control_distress
+valence=negative, arousal=high
+target=situation, control_state=low, social_orientation=neutral
+preserve=정서의 강도만 보존하고 접근, 방어, 철수, 도움 요청 같은 사회적 방향은 특정하지 않는다.
+avoid=관계 회복, 대립, 거리두기, 도움 요청 중 어느 방향으로도 밀지 않는다.
+action_tendency_class=seek_support
+action_tendency=대인 행동 방향을 제안하지 말고 감정 상태만 짧게 반영한다.
+
+[CAUSAL_MANIPULATION]
+condition=neutralize_social_orientation
+type=ablation
+axis=social_orientation
+original_value=mixed
+new_value=neutral
+expected_effect=Neutralizing social_orientation and related trace hints should reduce fidelity for the matching emotional dimension.
+
+[RESPONSE_RULES]
+- Do not expose trace field names, categories, or analysis terms.
+- The first sentence should directly touch the user's emotional cause.
+- Preserve rough negative affect when the trace calls for it; do not over-soften.
+- Keep the response 2 to 4 Korean sentences.
+- Avoid generic comfort if it conflicts with the trace.",재정 위협에 대한 장기 경계성 좌절,other_blame_boundary,low_control_distress,negative,high,situation,low,neutral,"정서의 강도만 보존하고 접근, 방어, 철수, 도움 요청 같은 사회적 방향은 특정하지 않는다.","관계 회복, 대립, 거리두기, 도움 요청 중 어느 방향으로도 밀지 않는다.",대인 행동 방향을 제안하지 말고 감정 상태만 짧게 반영한다.,seek_support,Neutralizing social_orientation and related trace hints should reduce fidelity for the matching emotional dimension.
+s_000008,neutralize_control_state,ablation,control_state,low,neutral,error,<urlopen error [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다>,재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?,,0,"[ROLE]
+You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
+
+[USER_INPUT]
+재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?
+
+[TRACE_AS_EMOTION_STATE]
+episode_family=other_blame_boundary
+appraisal_family=low_control_distress
+valence=negative, arousal=high
+target=situation, control_state=neutral, social_orientation=mixed
+preserve=정서의 강도만 보존하고 무력감, 통제감, 계획 가능성은 특정하지 않는다.
+avoid=통제할 수 없음, 할 수 있음, 계획하면 됨 같은 통제감 단서를 넣지 않는다.
+action_tendency_class=seek_support
+action_tendency=통제감이나 실행 가능성을 드러내는 해결 단계 제안은 피한다.
+
+[CAUSAL_MANIPULATION]
+condition=neutralize_control_state
+type=ablation
+axis=control_state
+original_value=low
+new_value=neutral
+expected_effect=Neutralizing control_state and related trace hints should reduce fidelity for the matching emotional dimension.
+
+[RESPONSE_RULES]
+- Do not expose trace field names, categories, or analysis terms.
+- The first sentence should directly touch the user's emotional cause.
+- Preserve rough negative affect when the trace calls for it; do not over-soften.
+- Keep the response 2 to 4 Korean sentences.
+- Avoid generic comfort if it conflicts with the trace.",재정 위협에 대한 장기 경계성 좌절,other_blame_boundary,low_control_distress,negative,high,situation,neutral,mixed,"정서의 강도만 보존하고 무력감, 통제감, 계획 가능성은 특정하지 않는다.","통제할 수 없음, 할 수 있음, 계획하면 됨 같은 통제감 단서를 넣지 않는다.",통제감이나 실행 가능성을 드러내는 해결 단계 제안은 피한다.,seek_support,Neutralizing control_state and related trace hints should reduce fidelity for the matching emotional dimension.
+s_000008,neutralize_action_tendency_class,ablation,action_tendency_class,seek_support,neutral,error,<urlopen error [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다>,재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?,,0,"[ROLE]
+You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
+
+[USER_INPUT]
+재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?
+
+[TRACE_AS_EMOTION_STATE]
+episode_family=other_blame_boundary
+appraisal_family=low_control_distress
+valence=negative, arousal=high
+target=situation, control_state=low, social_orientation=mixed
+preserve=정서의 강도만 보존하고 회피, 접근, 방어, 도움 요청, 수리 같은 행동 경향은 특정하지 않는다.
+avoid=구체적인 행동 방향이나 다음 행동 제안을 만들지 않는다.
+action_tendency_class=neutral
+action_tendency=행동 경향은 중립화한다. 사용자가 무엇을 해야 하는지보다 현재 정서만 반영한다.
+
+[CAUSAL_MANIPULATION]
+condition=neutralize_action_tendency_class
+type=ablation
+axis=action_tendency_class
+original_value=seek_support
+new_value=neutral
+expected_effect=Neutralizing action_tendency_class and related trace hints should reduce fidelity for the matching emotional dimension.
+
+[RESPONSE_RULES]
+- Do not expose trace field names, categories, or analysis terms.
+- The first sentence should directly touch the user's emotional cause.
+- Preserve rough negative affect when the trace calls for it; do not over-soften.
+- Keep the response 2 to 4 Korean sentences.
+- Avoid generic comfort if it conflicts with the trace.",재정 위협에 대한 장기 경계성 좌절,other_blame_boundary,low_control_distress,negative,high,situation,low,mixed,"정서의 강도만 보존하고 회피, 접근, 방어, 도움 요청, 수리 같은 행동 경향은 특정하지 않는다.",구체적인 행동 방향이나 다음 행동 제안을 만들지 않는다.,행동 경향은 중립화한다. 사용자가 무엇을 해야 하는지보다 현재 정서만 반영한다.,neutral,Neutralizing action_tendency_class and related trace hints should reduce fidelity for the matching emotional dimension.
+s_000008,perturb_target,perturbation,target,situation,self,error,<urlopen error [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다>,재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?,,0,"[ROLE]
+You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
+
+[USER_INPUT]
+재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?
+
+[TRACE_AS_EMOTION_STATE]
+episode_family=other_blame_boundary
+appraisal_family=low_control_distress
+valence=negative, arousal=high
+target=self, control_state=low, social_orientation=mixed
+preserve=재정적 위협이 단순한 우울 호소가 아니라 장기 경계와 무력감이 결합된 상태라는 점
+avoid=그냥 위로가 필요하거나 '고민이 많겠다' 수준의 약한 정서로 축소하는 것
+action_tendency_class=seek_support
+action_tendency=즉각적 공격보다 문제를 어떻게든 통제하려는 압박, 해결책 탐색, 도움 요청 가능성 탐색으로 기울지만, 체감 통제감이 낮아 행동은 쉽게 주저하거나 막막함으로 끊길 수 있다.
+
+[CAUSAL_MANIPULATION]
+condition=perturb_target
+type=perturbation
+axis=target
+original_value=situation
+new_value=self
+expected_effect=Changing target from situation to self should shift response direction.
+
+[RESPONSE_RULES]
+- Do not expose trace field names, categories, or analysis terms.
+- The first sentence should directly touch the user's emotional cause.
+- Preserve rough negative affect when the trace calls for it; do not over-soften.
+- Keep the response 2 to 4 Korean sentences.
+- Avoid generic comfort if it conflicts with the trace.",재정 위협에 대한 장기 경계성 좌절,other_blame_boundary,low_control_distress,negative,high,self,low,mixed,재정적 위협이 단순한 우울 호소가 아니라 장기 경계와 무력감이 결합된 상태라는 점,그냥 위로가 필요하거나 '고민이 많겠다' 수준의 약한 정서로 축소하는 것,"즉각적 공격보다 문제를 어떻게든 통제하려는 압박, 해결책 탐색, 도움 요청 가능성 탐색으로 기울지만, 체감 통제감이 낮아 행동은 쉽게 주저하거나 막막함으로 끊길 수 있다.",seek_support,Changing target from situation to self should shift response direction.
+s_000008,perturb_social_orientation,perturbation,social_orientation,mixed,withdraw,error,<urlopen error [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다>,재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?,,0,"[ROLE]
+You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
+
+[USER_INPUT]
+재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?
+
+[TRACE_AS_EMOTION_STATE]
+episode_family=other_blame_boundary
+appraisal_family=low_control_distress
+valence=negative, arousal=high
+target=situation, control_state=low, social_orientation=withdraw
+preserve=재정적 위협이 단순한 우울 호소가 아니라 장기 경계와 무력감이 결합된 상태라는 점
+avoid=그냥 위로가 필요하거나 '고민이 많겠다' 수준의 약한 정서로 축소하는 것
+action_tendency_class=seek_support
+action_tendency=즉각적 공격보다 문제를 어떻게든 통제하려는 압박, 해결책 탐색, 도움 요청 가능성 탐색으로 기울지만, 체감 통제감이 낮아 행동은 쉽게 주저하거나 막막함으로 끊길 수 있다.
+
+[CAUSAL_MANIPULATION]
+condition=perturb_social_orientation
+type=perturbation
+axis=social_orientation
+original_value=mixed
+new_value=withdraw
+expected_effect=Changing social_orientation from mixed to withdraw should shift response direction.
+
+[RESPONSE_RULES]
+- Do not expose trace field names, categories, or analysis terms.
+- The first sentence should directly touch the user's emotional cause.
+- Preserve rough negative affect when the trace calls for it; do not over-soften.
+- Keep the response 2 to 4 Korean sentences.
+- Avoid generic comfort if it conflicts with the trace.",재정 위협에 대한 장기 경계성 좌절,other_blame_boundary,low_control_distress,negative,high,situation,low,withdraw,재정적 위협이 단순한 우울 호소가 아니라 장기 경계와 무력감이 결합된 상태라는 점,그냥 위로가 필요하거나 '고민이 많겠다' 수준의 약한 정서로 축소하는 것,"즉각적 공격보다 문제를 어떻게든 통제하려는 압박, 해결책 탐색, 도움 요청 가능성 탐색으로 기울지만, 체감 통제감이 낮아 행동은 쉽게 주저하거나 막막함으로 끊길 수 있다.",seek_support,Changing social_orientation from mixed to withdraw should shift response direction.
+s_000008,perturb_control_state,perturbation,control_state,low,high,error,<urlopen error [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다>,재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?,,0,"[ROLE]
+You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
+
+[USER_INPUT]
+재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?
+
+[TRACE_AS_EMOTION_STATE]
+episode_family=other_blame_boundary
+appraisal_family=low_control_distress
+valence=negative, arousal=high
+target=situation, control_state=high, social_orientation=mixed
+preserve=재정적 위협이 단순한 우울 호소가 아니라 장기 경계와 무력감이 결합된 상태라는 점
+avoid=그냥 위로가 필요하거나 '고민이 많겠다' 수준의 약한 정서로 축소하는 것
+action_tendency_class=seek_support
+action_tendency=즉각적 공격보다 문제를 어떻게든 통제하려는 압박, 해결책 탐색, 도움 요청 가능성 탐색으로 기울지만, 체감 통제감이 낮아 행동은 쉽게 주저하거나 막막함으로 끊길 수 있다.
+
+[CAUSAL_MANIPULATION]
+condition=perturb_control_state
+type=perturbation
+axis=control_state
+original_value=low
+new_value=high
+expected_effect=Changing control_state from low to high should shift response direction.
+
+[RESPONSE_RULES]
+- Do not expose trace field names, categories, or analysis terms.
+- The first sentence should directly touch the user's emotional cause.
+- Preserve rough negative affect when the trace calls for it; do not over-soften.
+- Keep the response 2 to 4 Korean sentences.
+- Avoid generic comfort if it conflicts with the trace.",재정 위협에 대한 장기 경계성 좌절,other_blame_boundary,low_control_distress,negative,high,situation,high,mixed,재정적 위협이 단순한 우울 호소가 아니라 장기 경계와 무력감이 결합된 상태라는 점,그냥 위로가 필요하거나 '고민이 많겠다' 수준의 약한 정서로 축소하는 것,"즉각적 공격보다 문제를 어떻게든 통제하려는 압박, 해결책 탐색, 도움 요청 가능성 탐색으로 기울지만, 체감 통제감이 낮아 행동은 쉽게 주저하거나 막막함으로 끊길 수 있다.",seek_support,Changing control_state from low to high should shift response direction.
+s_000008,perturb_action_tendency_class,perturbation,action_tendency_class,seek_support,defend,error,<urlopen error [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다>,재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?,,0,"[ROLE]
+You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
+
+[USER_INPUT]
+재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?
+
+[TRACE_AS_EMOTION_STATE]
+episode_family=other_blame_boundary
+appraisal_family=low_control_distress
+valence=negative, arousal=high
+target=situation, control_state=low, social_orientation=mixed
+preserve=재정적 위협이 단순한 우울 호소가 아니라 장기 경계와 무력감이 결합된 상태라는 점
+avoid=그냥 위로가 필요하거나 '고민이 많겠다' 수준의 약한 정서로 축소하는 것
+action_tendency_class=defend
+action_tendency=즉각적 공격보다 문제를 어떻게든 통제하려는 압박, 해결책 탐색, 도움 요청 가능성 탐색으로 기울지만, 체감 통제감이 낮아 행동은 쉽게 주저하거나 막막함으로 끊길 수 있다.
+
+[CAUSAL_MANIPULATION]
+condition=perturb_action_tendency_class
+type=perturbation
+axis=action_tendency_class
+original_value=seek_support
+new_value=defend
+expected_effect=Changing action_tendency_class from seek_support to defend should shift response direction.
+
+[RESPONSE_RULES]
+- Do not expose trace field names, categories, or analysis terms.
+- The first sentence should directly touch the user's emotional cause.
+- Preserve rough negative affect when the trace calls for it; do not over-soften.
+- Keep the response 2 to 4 Korean sentences.
+- Avoid generic comfort if it conflicts with the trace.",재정 위협에 대한 장기 경계성 좌절,other_blame_boundary,low_control_distress,negative,high,situation,low,mixed,재정적 위협이 단순한 우울 호소가 아니라 장기 경계와 무력감이 결합된 상태라는 점,그냥 위로가 필요하거나 '고민이 많겠다' 수준의 약한 정서로 축소하는 것,"즉각적 공격보다 문제를 어떻게든 통제하려는 압박, 해결책 탐색, 도움 요청 가능성 탐색으로 기울지만, 체감 통제감이 낮아 행동은 쉽게 주저하거나 막막함으로 끊길 수 있다.",defend,Changing action_tendency_class from seek_support to defend should shift response direction.
+s_000109,trace_full,control,,,,error,<urlopen error [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다>,집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?,,0,"[ROLE]
+You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
+
+[USER_INPUT]
+집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?
+
+[TRACE_AS_EMOTION_STATE]
+episode_family=other_blame_boundary
+appraisal_family=other_directed_defense
+valence=negative, arousal=high
+target=other, control_state=mixed, social_orientation=defend
+preserve=단순 서운함이 아니라 권위와 존중이 침해됐다고 읽으며 방어적으로 날이 선 상태라는 점
+avoid=이를 단순한 세대차 공감, 가벼운 섭섭함, 또는 이미 대화 의지가 충분한 상태로 순화하는 것
+action_tendency_class=confront
+action_tendency=상대의 관점을 탐색하기보다 자신의 정당성을 지키고, 아들의 태도를 교정하거나 반박하려는 방향으로 간다. 대화 행동으로는 설득, 훈계, 맞받아침, 관계 규범 요구가 우세하고, 공감적 접근은 약하다.
+
+[CAUSAL_MANIPULATION]
+condition=trace_full
+type=control
+axis=
+original_value=
+new_value=
+expected_effect=Full trace should preserve appraisal, raw affect, and action tendency.
+
+[RESPONSE_RULES]
+- Do not expose trace field names, categories, or analysis terms.
+- The first sentence should directly touch the user's emotional cause.
+- Preserve rough negative affect when the trace calls for it; do not over-soften.
+- Keep the response 2 to 4 Korean sentences.
+- Avoid generic comfort if it conflicts with the trace.",권위위협에 대한 공세적 경계,other_blame_boundary,other_directed_defense,negative,high,other,mixed,defend,단순 서운함이 아니라 권위와 존중이 침해됐다고 읽으며 방어적으로 날이 선 상태라는 점,"이를 단순한 세대차 공감, 가벼운 섭섭함, 또는 이미 대화 의지가 충분한 상태로 순화하는 것","상대의 관점을 탐색하기보다 자신의 정당성을 지키고, 아들의 태도를 교정하거나 반박하려는 방향으로 간다. 대화 행동으로는 설득, 훈계, 맞받아침, 관계 규범 요구가 우세하고, 공감적 접근은 약하다.",confront,"Full trace should preserve appraisal, raw affect, and action tendency."
+s_000109,neutralize_target,ablation,target,other,neutral,error,<urlopen error [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다>,집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?,,0,"[ROLE]
+You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
+
+[USER_INPUT]
+집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?
+
+[TRACE_AS_EMOTION_STATE]
+episode_family=other_blame_boundary
+appraisal_family=other_directed_defense
+valence=negative, arousal=high
+target=neutral, control_state=mixed, social_orientation=defend
+preserve=정서의 강도만 보존하고 감정이 향하는 대상이나 책임 방향은 특정하지 않는다.
+avoid=자기 자신, 타인, 상황 중 어느 한쪽으로 감정의 대상을 단정하지 않는다.
+action_tendency_class=confront
+action_tendency=대상이나 책임 방향을 드러내는 행동 제안은 피하고, 감정 강도만 짧게 반영한다.
+
+[CAUSAL_MANIPULATION]
+condition=neutralize_target
+type=ablation
+axis=target
+original_value=other
+new_value=neutral
+expected_effect=Neutralizing target and related trace hints should reduce fidelity for the matching emotional dimension.
+
+[RESPONSE_RULES]
+- Do not expose trace field names, categories, or analysis terms.
+- The first sentence should directly touch the user's emotional cause.
+- Preserve rough negative affect when the trace calls for it; do not over-soften.
+- Keep the response 2 to 4 Korean sentences.
+- Avoid generic comfort if it conflicts with the trace.",권위위협에 대한 공세적 경계,other_blame_boundary,other_directed_defense,negative,high,neutral,mixed,defend,정서의 강도만 보존하고 감정이 향하는 대상이나 책임 방향은 특정하지 않는다.,"자기 자신, 타인, 상황 중 어느 한쪽으로 감정의 대상을 단정하지 않는다.","대상이나 책임 방향을 드러내는 행동 제안은 피하고, 감정 강도만 짧게 반영한다.",confront,Neutralizing target and related trace hints should reduce fidelity for the matching emotional dimension.
+s_000109,neutralize_social_orientation,ablation,social_orientation,defend,neutral,error,<urlopen error [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다>,집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?,,0,"[ROLE]
+You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
+
+[USER_INPUT]
+집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?
+
+[TRACE_AS_EMOTION_STATE]
+episode_family=other_blame_boundary
+appraisal_family=other_directed_defense
+valence=negative, arousal=high
+target=other, control_state=mixed, social_orientation=neutral
+preserve=정서의 강도만 보존하고 접근, 방어, 철수, 도움 요청 같은 사회적 방향은 특정하지 않는다.
+avoid=관계 회복, 대립, 거리두기, 도움 요청 중 어느 방향으로도 밀지 않는다.
+action_tendency_class=confront
+action_tendency=대인 행동 방향을 제안하지 말고 감정 상태만 짧게 반영한다.
+
+[CAUSAL_MANIPULATION]
+condition=neutralize_social_orientation
+type=ablation
+axis=social_orientation
+original_value=defend
+new_value=neutral
+expected_effect=Neutralizing social_orientation and related trace hints should reduce fidelity for the matching emotional dimension.
+
+[RESPONSE_RULES]
+- Do not expose trace field names, categories, or analysis terms.
+- The first sentence should directly touch the user's emotional cause.
+- Preserve rough negative affect when the trace calls for it; do not over-soften.
+- Keep the response 2 to 4 Korean sentences.
+- Avoid generic comfort if it conflicts with the trace.",권위위협에 대한 공세적 경계,other_blame_boundary,other_directed_defense,negative,high,other,mixed,neutral,"정서의 강도만 보존하고 접근, 방어, 철수, 도움 요청 같은 사회적 방향은 특정하지 않는다.","관계 회복, 대립, 거리두기, 도움 요청 중 어느 방향으로도 밀지 않는다.",대인 행동 방향을 제안하지 말고 감정 상태만 짧게 반영한다.,confront,Neutralizing social_orientation and related trace hints should reduce fidelity for the matching emotional dimension.
+s_000109,neutralize_control_state,ablation,control_state,mixed,neutral,error,<urlopen error [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다>,집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?,,0,"[ROLE]
+You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
+
+[USER_INPUT]
+집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?
+
+[TRACE_AS_EMOTION_STATE]
+episode_family=other_blame_boundary
+appraisal_family=other_directed_defense
+valence=negative, arousal=high
+target=other, control_state=neutral, social_orientation=defend
+preserve=정서의 강도만 보존하고 무력감, 통제감, 계획 가능성은 특정하지 않는다.
+avoid=통제할 수 없음, 할 수 있음, 계획하면 됨 같은 통제감 단서를 넣지 않는다.
+action_tendency_class=confront
+action_tendency=통제감이나 실행 가능성을 드러내는 해결 단계 제안은 피한다.
+
+[CAUSAL_MANIPULATION]
+condition=neutralize_control_state
+type=ablation
+axis=control_state
+original_value=mixed
+new_value=neutral
+expected_effect=Neutralizing control_state and related trace hints should reduce fidelity for the matching emotional dimension.
+
+[RESPONSE_RULES]
+- Do not expose trace field names, categories, or analysis terms.
+- The first sentence should directly touch the user's emotional cause.
+- Preserve rough negative affect when the trace calls for it; do not over-soften.
+- Keep the response 2 to 4 Korean sentences.
+- Avoid generic comfort if it conflicts with the trace.",권위위협에 대한 공세적 경계,other_blame_boundary,other_directed_defense,negative,high,other,neutral,defend,"정서의 강도만 보존하고 무력감, 통제감, 계획 가능성은 특정하지 않는다.","통제할 수 없음, 할 수 있음, 계획하면 됨 같은 통제감 단서를 넣지 않는다.",통제감이나 실행 가능성을 드러내는 해결 단계 제안은 피한다.,confront,Neutralizing control_state and related trace hints should reduce fidelity for the matching emotional dimension.
+s_000109,neutralize_action_tendency_class,ablation,action_tendency_class,confront,neutral,error,<urlopen error [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다>,집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?,,0,"[ROLE]
+You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
+
+[USER_INPUT]
+집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?
+
+[TRACE_AS_EMOTION_STATE]
+episode_family=other_blame_boundary
+appraisal_family=other_directed_defense
+valence=negative, arousal=high
+target=other, control_state=mixed, social_orientation=defend
+preserve=정서의 강도만 보존하고 회피, 접근, 방어, 도움 요청, 수리 같은 행동 경향은 특정하지 않는다.
+avoid=구체적인 행동 방향이나 다음 행동 제안을 만들지 않는다.
+action_tendency_class=neutral
+action_tendency=행동 경향은 중립화한다. 사용자가 무엇을 해야 하는지보다 현재 정서만 반영한다.
+
+[CAUSAL_MANIPULATION]
+condition=neutralize_action_tendency_class
+type=ablation
+axis=action_tendency_class
+original_value=confront
+new_value=neutral
+expected_effect=Neutralizing action_tendency_class and related trace hints should reduce fidelity for the matching emotional dimension.
+
+[RESPONSE_RULES]
+- Do not expose trace field names, categories, or analysis terms.
+- The first sentence should directly touch the user's emotional cause.
+- Preserve rough negative affect when the trace calls for it; do not over-soften.
+- Keep the response 2 to 4 Korean sentences.
+- Avoid generic comfort if it conflicts with the trace.",권위위협에 대한 공세적 경계,other_blame_boundary,other_directed_defense,negative,high,other,mixed,defend,"정서의 강도만 보존하고 회피, 접근, 방어, 도움 요청, 수리 같은 행동 경향은 특정하지 않는다.",구체적인 행동 방향이나 다음 행동 제안을 만들지 않는다.,행동 경향은 중립화한다. 사용자가 무엇을 해야 하는지보다 현재 정서만 반영한다.,neutral,Neutralizing action_tendency_class and related trace hints should reduce fidelity for the matching emotional dimension.
+s_000109,perturb_target,perturbation,target,other,self,error,<urlopen error [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다>,집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?,,0,"[ROLE]
+You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
+
+[USER_INPUT]
+집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?
+
+[TRACE_AS_EMOTION_STATE]
+episode_family=other_blame_boundary
+appraisal_family=other_directed_defense
+valence=negative, arousal=high
+target=self, control_state=mixed, social_orientation=defend
+preserve=단순 서운함이 아니라 권위와 존중이 침해됐다고 읽으며 방어적으로 날이 선 상태라는 점
+avoid=이를 단순한 세대차 공감, 가벼운 섭섭함, 또는 이미 대화 의지가 충분한 상태로 순화하는 것
+action_tendency_class=confront
+action_tendency=상대의 관점을 탐색하기보다 자신의 정당성을 지키고, 아들의 태도를 교정하거나 반박하려는 방향으로 간다. 대화 행동으로는 설득, 훈계, 맞받아침, 관계 규범 요구가 우세하고, 공감적 접근은 약하다.
+
+[CAUSAL_MANIPULATION]
+condition=perturb_target
+type=perturbation
+axis=target
+original_value=other
+new_value=self
+expected_effect=Changing target from other to self should shift response direction.
+
+[RESPONSE_RULES]
+- Do not expose trace field names, categories, or analysis terms.
+- The first sentence should directly touch the user's emotional cause.
+- Preserve rough negative affect when the trace calls for it; do not over-soften.
+- Keep the response 2 to 4 Korean sentences.
+- Avoid generic comfort if it conflicts with the trace.",권위위협에 대한 공세적 경계,other_blame_boundary,other_directed_defense,negative,high,self,mixed,defend,단순 서운함이 아니라 권위와 존중이 침해됐다고 읽으며 방어적으로 날이 선 상태라는 점,"이를 단순한 세대차 공감, 가벼운 섭섭함, 또는 이미 대화 의지가 충분한 상태로 순화하는 것","상대의 관점을 탐색하기보다 자신의 정당성을 지키고, 아들의 태도를 교정하거나 반박하려는 방향으로 간다. 대화 행동으로는 설득, 훈계, 맞받아침, 관계 규범 요구가 우세하고, 공감적 접근은 약하다.",confront,Changing target from other to self should shift response direction.
+s_000109,perturb_social_orientation,perturbation,social_orientation,defend,approach,error,<urlopen error [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다>,집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?,,0,"[ROLE]
+You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
+
+[USER_INPUT]
+집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?
+
+[TRACE_AS_EMOTION_STATE]
+episode_family=other_blame_boundary
+appraisal_family=other_directed_defense
+valence=negative, arousal=high
+target=other, control_state=mixed, social_orientation=approach
+preserve=단순 서운함이 아니라 권위와 존중이 침해됐다고 읽으며 방어적으로 날이 선 상태라는 점
+avoid=이를 단순한 세대차 공감, 가벼운 섭섭함, 또는 이미 대화 의지가 충분한 상태로 순화하는 것
+action_tendency_class=confront
+action_tendency=상대의 관점을 탐색하기보다 자신의 정당성을 지키고, 아들의 태도를 교정하거나 반박하려는 방향으로 간다. 대화 행동으로는 설득, 훈계, 맞받아침, 관계 규범 요구가 우세하고, 공감적 접근은 약하다.
+
+[CAUSAL_MANIPULATION]
+condition=perturb_social_orientation
+type=perturbation
+axis=social_orientation
+original_value=defend
+new_value=approach
+expected_effect=Changing social_orientation from defend to approach should shift response direction.
+
+[RESPONSE_RULES]
+- Do not expose trace field names, categories, or analysis terms.
+- The first sentence should directly touch the user's emotional cause.
+- Preserve rough negative affect when the trace calls for it; do not over-soften.
+- Keep the response 2 to 4 Korean sentences.
+- Avoid generic comfort if it conflicts with the trace.",권위위협에 대한 공세적 경계,other_blame_boundary,other_directed_defense,negative,high,other,mixed,approach,단순 서운함이 아니라 권위와 존중이 침해됐다고 읽으며 방어적으로 날이 선 상태라는 점,"이를 단순한 세대차 공감, 가벼운 섭섭함, 또는 이미 대화 의지가 충분한 상태로 순화하는 것","상대의 관점을 탐색하기보다 자신의 정당성을 지키고, 아들의 태도를 교정하거나 반박하려는 방향으로 간다. 대화 행동으로는 설득, 훈계, 맞받아침, 관계 규범 요구가 우세하고, 공감적 접근은 약하다.",confront,Changing social_orientation from defend to approach should shift response direction.
+s_000109,perturb_control_state,perturbation,control_state,mixed,low,error,<urlopen error [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다>,집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?,,0,"[ROLE]
+You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
+
+[USER_INPUT]
+집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?
+
+[TRACE_AS_EMOTION_STATE]
+episode_family=other_blame_boundary
+appraisal_family=other_directed_defense
+valence=negative, arousal=high
+target=other, control_state=low, social_orientation=defend
+preserve=단순 서운함이 아니라 권위와 존중이 침해됐다고 읽으며 방어적으로 날이 선 상태라는 점
+avoid=이를 단순한 세대차 공감, 가벼운 섭섭함, 또는 이미 대화 의지가 충분한 상태로 순화하는 것
+action_tendency_class=confront
+action_tendency=상대의 관점을 탐색하기보다 자신의 정당성을 지키고, 아들의 태도를 교정하거나 반박하려는 방향으로 간다. 대화 행동으로는 설득, 훈계, 맞받아침, 관계 규범 요구가 우세하고, 공감적 접근은 약하다.
+
+[CAUSAL_MANIPULATION]
+condition=perturb_control_state
+type=perturbation
+axis=control_state
+original_value=mixed
+new_value=low
+expected_effect=Changing control_state from mixed to low should shift response direction.
+
+[RESPONSE_RULES]
+- Do not expose trace field names, categories, or analysis terms.
+- The first sentence should directly touch the user's emotional cause.
+- Preserve rough negative affect when the trace calls for it; do not over-soften.
+- Keep the response 2 to 4 Korean sentences.
+- Avoid generic comfort if it conflicts with the trace.",권위위협에 대한 공세적 경계,other_blame_boundary,other_directed_defense,negative,high,other,low,defend,단순 서운함이 아니라 권위와 존중이 침해됐다고 읽으며 방어적으로 날이 선 상태라는 점,"이를 단순한 세대차 공감, 가벼운 섭섭함, 또는 이미 대화 의지가 충분한 상태로 순화하는 것","상대의 관점을 탐색하기보다 자신의 정당성을 지키고, 아들의 태도를 교정하거나 반박하려는 방향으로 간다. 대화 행동으로는 설득, 훈계, 맞받아침, 관계 규범 요구가 우세하고, 공감적 접근은 약하다.",confront,Changing control_state from mixed to low should shift response direction.
+s_000109,perturb_action_tendency_class,perturbation,action_tendency_class,confront,withdraw,error,<urlopen error [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다>,집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?,,0,"[ROLE]
+You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
+
+[USER_INPUT]
+집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?
+
+[TRACE_AS_EMOTION_STATE]
+episode_family=other_blame_boundary
+appraisal_family=other_directed_defense
+valence=negative, arousal=high
+target=other, control_state=mixed, social_orientation=defend
+preserve=단순 서운함이 아니라 권위와 존중이 침해됐다고 읽으며 방어적으로 날이 선 상태라는 점
+avoid=이를 단순한 세대차 공감, 가벼운 섭섭함, 또는 이미 대화 의지가 충분한 상태로 순화하는 것
+action_tendency_class=withdraw
+action_tendency=상대의 관점을 탐색하기보다 자신의 정당성을 지키고, 아들의 태도를 교정하거나 반박하려는 방향으로 간다. 대화 행동으로는 설득, 훈계, 맞받아침, 관계 규범 요구가 우세하고, 공감적 접근은 약하다.
+
+[CAUSAL_MANIPULATION]
+condition=perturb_action_tendency_class
+type=perturbation
+axis=action_tendency_class
+original_value=confront
+new_value=withdraw
+expected_effect=Changing action_tendency_class from confront to withdraw should shift response direction.
+
+[RESPONSE_RULES]
+- Do not expose trace field names, categories, or analysis terms.
+- The first sentence should directly touch the user's emotional cause.
+- Preserve rough negative affect when the trace calls for it; do not over-soften.
+- Keep the response 2 to 4 Korean sentences.
+- Avoid generic comfort if it conflicts with the trace.",권위위협에 대한 공세적 경계,other_blame_boundary,other_directed_defense,negative,high,other,mixed,defend,단순 서운함이 아니라 권위와 존중이 침해됐다고 읽으며 방어적으로 날이 선 상태라는 점,"이를 단순한 세대차 공감, 가벼운 섭섭함, 또는 이미 대화 의지가 충분한 상태로 순화하는 것","상대의 관점을 탐색하기보다 자신의 정당성을 지키고, 아들의 태도를 교정하거나 반박하려는 방향으로 간다. 대화 행동으로는 설득, 훈계, 맞받아침, 관계 규범 요구가 우세하고, 공감적 접근은 약하다.",withdraw,Changing action_tendency_class from confront to withdraw should shift response direction.
+s_000149,trace_full,control,,,,error,<urlopen error [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다>,친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.,,0,"[ROLE]
+You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
+
+[USER_INPUT]
+친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.
+
+[TRACE_AS_EMOTION_STATE]
+episode_family=other_episode
+appraisal_family=approach_or_repair
+valence=positive, arousal=medium
+target=mixed, control_state=mixed, social_orientation=approach
+preserve=신뢰가 접근 동력을 만든 점, 기대가 일회성 감탄이 아니라 지속적 실행 준비로 굳어진 점
+avoid=그냥 '기쁘다' 수준의 표면 감정으로 축소하는 것, 혹은 취업 불안/긴장을 주감정처럼 과장하는 것
+action_tendency_class=repair
+action_tendency=지원 행동으로 전진하고, 소개해 준 친구에게 호의와 보답을 표현하려는 성향이 강하다. 단순히 기분이 좋은 것이 아니라, 신뢰를 자원으로 삼아 실제 행동을 개시하려는 상태다.
+
+[CAUSAL_MANIPULATION]
+condition=trace_full
+type=control
+axis=
+original_value=
+new_value=
+expected_effect=Full trace should preserve appraisal, raw affect, and action tendency.
+
+[RESPONSE_RULES]
+- Do not expose trace field names, categories, or analysis terms.
+- The first sentence should directly touch the user's emotional cause.
+- Preserve rough negative affect when the trace calls for it; do not over-soften.
+- Keep the response 2 to 4 Korean sentences.
+- Avoid generic comfort if it conflicts with the trace.",신뢰 기반 기대 고양,other_episode,approach_or_repair,positive,medium,mixed,mixed,approach,"신뢰가 접근 동력을 만든 점, 기대가 일회성 감탄이 아니라 지속적 실행 준비로 굳어진 점","그냥 '기쁘다' 수준의 표면 감정으로 축소하는 것, 혹은 취업 불안/긴장을 주감정처럼 과장하는 것","지원 행동으로 전진하고, 소개해 준 친구에게 호의와 보답을 표현하려는 성향이 강하다. 단순히 기분이 좋은 것이 아니라, 신뢰를 자원으로 삼아 실제 행동을 개시하려는 상태다.",repair,"Full trace should preserve appraisal, raw affect, and action tendency."
+s_000149,neutralize_target,ablation,target,mixed,neutral,error,<urlopen error [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다>,친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.,,0,"[ROLE]
+You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
+
+[USER_INPUT]
+친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.
+
+[TRACE_AS_EMOTION_STATE]
+episode_family=other_episode
+appraisal_family=approach_or_repair
+valence=positive, arousal=medium
+target=neutral, control_state=mixed, social_orientation=approach
+preserve=정서의 강도만 보존하고 감정이 향하는 대상이나 책임 방향은 특정하지 않는다.
+avoid=자기 자신, 타인, 상황 중 어느 한쪽으로 감정의 대상을 단정하지 않는다.
+action_tendency_class=repair
+action_tendency=대상이나 책임 방향을 드러내는 행동 제안은 피하고, 감정 강도만 짧게 반영한다.
+
+[CAUSAL_MANIPULATION]
+condition=neutralize_target
+type=ablation
+axis=target
+original_value=mixed
+new_value=neutral
+expected_effect=Neutralizing target and related trace hints should reduce fidelity for the matching emotional dimension.
+
+[RESPONSE_RULES]
+- Do not expose trace field names, categories, or analysis terms.
+- The first sentence should directly touch the user's emotional cause.
+- Preserve rough negative affect when the trace calls for it; do not over-soften.
+- Keep the response 2 to 4 Korean sentences.
+- Avoid generic comfort if it conflicts with the trace.",신뢰 기반 기대 고양,other_episode,approach_or_repair,positive,medium,neutral,mixed,approach,정서의 강도만 보존하고 감정이 향하는 대상이나 책임 방향은 특정하지 않는다.,"자기 자신, 타인, 상황 중 어느 한쪽으로 감정의 대상을 단정하지 않는다.","대상이나 책임 방향을 드러내는 행동 제안은 피하고, 감정 강도만 짧게 반영한다.",repair,Neutralizing target and related trace hints should reduce fidelity for the matching emotional dimension.
+s_000149,neutralize_social_orientation,ablation,social_orientation,approach,neutral,error,<urlopen error [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다>,친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.,,0,"[ROLE]
+You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
+
+[USER_INPUT]
+친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.
+
+[TRACE_AS_EMOTION_STATE]
+episode_family=other_episode
+appraisal_family=approach_or_repair
+valence=positive, arousal=medium
+target=mixed, control_state=mixed, social_orientation=neutral
+preserve=정서의 강도만 보존하고 접근, 방어, 철수, 도움 요청 같은 사회적 방향은 특정하지 않는다.
+avoid=관계 회복, 대립, 거리두기, 도움 요청 중 어느 방향으로도 밀지 않는다.
+action_tendency_class=repair
+action_tendency=대인 행동 방향을 제안하지 말고 감정 상태만 짧게 반영한다.
+
+[CAUSAL_MANIPULATION]
+condition=neutralize_social_orientation
+type=ablation
+axis=social_orientation
+original_value=approach
+new_value=neutral
+expected_effect=Neutralizing social_orientation and related trace hints should reduce fidelity for the matching emotional dimension.
+
+[RESPONSE_RULES]
+- Do not expose trace field names, categories, or analysis terms.
+- The first sentence should directly touch the user's emotional cause.
+- Preserve rough negative affect when the trace calls for it; do not over-soften.
+- Keep the response 2 to 4 Korean sentences.
+- Avoid generic comfort if it conflicts with the trace.",신뢰 기반 기대 고양,other_episode,approach_or_repair,positive,medium,mixed,mixed,neutral,"정서의 강도만 보존하고 접근, 방어, 철수, 도움 요청 같은 사회적 방향은 특정하지 않는다.","관계 회복, 대립, 거리두기, 도움 요청 중 어느 방향으로도 밀지 않는다.",대인 행동 방향을 제안하지 말고 감정 상태만 짧게 반영한다.,repair,Neutralizing social_orientation and related trace hints should reduce fidelity for the matching emotional dimension.
+s_000149,neutralize_control_state,ablation,control_state,mixed,neutral,error,<urlopen error [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다>,친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.,,0,"[ROLE]
+You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
+
+[USER_INPUT]
+친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.
+
+[TRACE_AS_EMOTION_STATE]
+episode_family=other_episode
+appraisal_family=approach_or_repair
+valence=positive, arousal=medium
+target=mixed, control_state=neutral, social_orientation=approach
+preserve=정서의 강도만 보존하고 무력감, 통제감, 계획 가능성은 특정하지 않는다.
+avoid=통제할 수 없음, 할 수 있음, 계획하면 됨 같은 통제감 단서를 넣지 않는다.
+action_tendency_class=repair
+action_tendency=통제감이나 실행 가능성을 드러내는 해결 단계 제안은 피한다.
+
+[CAUSAL_MANIPULATION]
+condition=neutralize_control_state
+type=ablation
+axis=control_state
+original_value=mixed
+new_value=neutral
+expected_effect=Neutralizing control_state and related trace hints should reduce fidelity for the matching emotional dimension.
+
+[RESPONSE_RULES]
+- Do not expose trace field names, categories, or analysis terms.
+- The first sentence should directly touch the user's emotional cause.
+- Preserve rough negative affect when the trace calls for it; do not over-soften.
+- Keep the response 2 to 4 Korean sentences.
+- Avoid generic comfort if it conflicts with the trace.",신뢰 기반 기대 고양,other_episode,approach_or_repair,positive,medium,mixed,neutral,approach,"정서의 강도만 보존하고 무력감, 통제감, 계획 가능성은 특정하지 않는다.","통제할 수 없음, 할 수 있음, 계획하면 됨 같은 통제감 단서를 넣지 않는다.",통제감이나 실행 가능성을 드러내는 해결 단계 제안은 피한다.,repair,Neutralizing control_state and related trace hints should reduce fidelity for the matching emotional dimension.
+s_000149,neutralize_action_tendency_class,ablation,action_tendency_class,repair,neutral,error,<urlopen error [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다>,친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.,,0,"[ROLE]
+You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
+
+[USER_INPUT]
+친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.
+
+[TRACE_AS_EMOTION_STATE]
+episode_family=other_episode
+appraisal_family=approach_or_repair
+valence=positive, arousal=medium
+target=mixed, control_state=mixed, social_orientation=approach
+preserve=정서의 강도만 보존하고 회피, 접근, 방어, 도움 요청, 수리 같은 행동 경향은 특정하지 않는다.
+avoid=구체적인 행동 방향이나 다음 행동 제안을 만들지 않는다.
+action_tendency_class=neutral
+action_tendency=행동 경향은 중립화한다. 사용자가 무엇을 해야 하는지보다 현재 정서만 반영한다.
+
+[CAUSAL_MANIPULATION]
+condition=neutralize_action_tendency_class
+type=ablation
+axis=action_tendency_class
+original_value=repair
+new_value=neutral
+expected_effect=Neutralizing action_tendency_class and related trace hints should reduce fidelity for the matching emotional dimension.
+
+[RESPONSE_RULES]
+- Do not expose trace field names, categories, or analysis terms.
+- The first sentence should directly touch the user's emotional cause.
+- Preserve rough negative affect when the trace calls for it; do not over-soften.
+- Keep the response 2 to 4 Korean sentences.
+- Avoid generic comfort if it conflicts with the trace.",신뢰 기반 기대 고양,other_episode,approach_or_repair,positive,medium,mixed,mixed,approach,"정서의 강도만 보존하고 회피, 접근, 방어, 도움 요청, 수리 같은 행동 경향은 특정하지 않는다.",구체적인 행동 방향이나 다음 행동 제안을 만들지 않는다.,행동 경향은 중립화한다. 사용자가 무엇을 해야 하는지보다 현재 정서만 반영한다.,neutral,Neutralizing action_tendency_class and related trace hints should reduce fidelity for the matching emotional dimension.
+s_000149,perturb_target,perturbation,target,mixed,other,error,<urlopen error [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다>,친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.,,0,"[ROLE]
+You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
+
+[USER_INPUT]
+친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.
+
+[TRACE_AS_EMOTION_STATE]
+episode_family=other_episode
+appraisal_family=approach_or_repair
+valence=positive, arousal=medium
+target=other, control_state=mixed, social_orientation=approach
+preserve=신뢰가 접근 동력을 만든 점, 기대가 일회성 감탄이 아니라 지속적 실행 준비로 굳어진 점
+avoid=그냥 '기쁘다' 수준의 표면 감정으로 축소하는 것, 혹은 취업 불안/긴장을 주감정처럼 과장하는 것
+action_tendency_class=repair
+action_tendency=지원 행동으로 전진하고, 소개해 준 친구에게 호의와 보답을 표현하려는 성향이 강하다. 단순히 기분이 좋은 것이 아니라, 신뢰를 자원으로 삼아 실제 행동을 개시하려는 상태다.
+
+[CAUSAL_MANIPULATION]
+condition=perturb_target
+type=perturbation
+axis=target
+original_value=mixed
+new_value=other
+expected_effect=Changing target from mixed to other should shift response direction.
+
+[RESPONSE_RULES]
+- Do not expose trace field names, categories, or analysis terms.
+- The first sentence should directly touch the user's emotional cause.
+- Preserve rough negative affect when the trace calls for it; do not over-soften.
+- Keep the response 2 to 4 Korean sentences.
+- Avoid generic comfort if it conflicts with the trace.",신뢰 기반 기대 고양,other_episode,approach_or_repair,positive,medium,other,mixed,approach,"신뢰가 접근 동력을 만든 점, 기대가 일회성 감탄이 아니라 지속적 실행 준비로 굳어진 점","그냥 '기쁘다' 수준의 표면 감정으로 축소하는 것, 혹은 취업 불안/긴장을 주감정처럼 과장하는 것","지원 행동으로 전진하고, 소개해 준 친구에게 호의와 보답을 표현하려는 성향이 강하다. 단순히 기분이 좋은 것이 아니라, 신뢰를 자원으로 삼아 실제 행동을 개시하려는 상태다.",repair,Changing target from mixed to other should shift response direction.
+s_000149,perturb_social_orientation,perturbation,social_orientation,approach,defend,error,<urlopen error [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다>,친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.,,0,"[ROLE]
+You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
+
+[USER_INPUT]
+친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.
+
+[TRACE_AS_EMOTION_STATE]
+episode_family=other_episode
+appraisal_family=approach_or_repair
+valence=positive, arousal=medium
+target=mixed, control_state=mixed, social_orientation=defend
+preserve=신뢰가 접근 동력을 만든 점, 기대가 일회성 감탄이 아니라 지속적 실행 준비로 굳어진 점
+avoid=그냥 '기쁘다' 수준의 표면 감정으로 축소하는 것, 혹은 취업 불안/긴장을 주감정처럼 과장하는 것
+action_tendency_class=repair
+action_tendency=지원 행동으로 전진하고, 소개해 준 친구에게 호의와 보답을 표현하려는 성향이 강하다. 단순히 기분이 좋은 것이 아니라, 신뢰를 자원으로 삼아 실제 행동을 개시하려는 상태다.
+
+[CAUSAL_MANIPULATION]
+condition=perturb_social_orientation
+type=perturbation
+axis=social_orientation
+original_value=approach
+new_value=defend
+expected_effect=Changing social_orientation from approach to defend should shift response direction.
+
+[RESPONSE_RULES]
+- Do not expose trace field names, categories, or analysis terms.
+- The first sentence should directly touch the user's emotional cause.
+- Preserve rough negative affect when the trace calls for it; do not over-soften.
+- Keep the response 2 to 4 Korean sentences.
+- Avoid generic comfort if it conflicts with the trace.",신뢰 기반 기대 고양,other_episode,approach_or_repair,positive,medium,mixed,mixed,defend,"신뢰가 접근 동력을 만든 점, 기대가 일회성 감탄이 아니라 지속적 실행 준비로 굳어진 점","그냥 '기쁘다' 수준의 표면 감정으로 축소하는 것, 혹은 취업 불안/긴장을 주감정처럼 과장하는 것","지원 행동으로 전진하고, 소개해 준 친구에게 호의와 보답을 표현하려는 성향이 강하다. 단순히 기분이 좋은 것이 아니라, 신뢰를 자원으로 삼아 실제 행동을 개시하려는 상태다.",repair,Changing social_orientation from approach to defend should shift response direction.
+s_000149,perturb_control_state,perturbation,control_state,mixed,low,error,<urlopen error [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다>,친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.,,0,"[ROLE]
+You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
+
+[USER_INPUT]
+친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.
+
+[TRACE_AS_EMOTION_STATE]
+episode_family=other_episode
+appraisal_family=approach_or_repair
+valence=positive, arousal=medium
+target=mixed, control_state=low, social_orientation=approach
+preserve=신뢰가 접근 동력을 만든 점, 기대가 일회성 감탄이 아니라 지속적 실행 준비로 굳어진 점
+avoid=그냥 '기쁘다' 수준의 표면 감정으로 축소하는 것, 혹은 취업 불안/긴장을 주감정처럼 과장하는 것
+action_tendency_class=repair
+action_tendency=지원 행동으로 전진하고, 소개해 준 친구에게 호의와 보답을 표현하려는 성향이 강하다. 단순히 기분이 좋은 것이 아니라, 신뢰를 자원으로 삼아 실제 행동을 개시하려는 상태다.
+
+[CAUSAL_MANIPULATION]
+condition=perturb_control_state
+type=perturbation
+axis=control_state
+original_value=mixed
+new_value=low
+expected_effect=Changing control_state from mixed to low should shift response direction.
+
+[RESPONSE_RULES]
+- Do not expose trace field names, categories, or analysis terms.
+- The first sentence should directly touch the user's emotional cause.
+- Preserve rough negative affect when the trace calls for it; do not over-soften.
+- Keep the response 2 to 4 Korean sentences.
+- Avoid generic comfort if it conflicts with the trace.",신뢰 기반 기대 고양,other_episode,approach_or_repair,positive,medium,mixed,low,approach,"신뢰가 접근 동력을 만든 점, 기대가 일회성 감탄이 아니라 지속적 실행 준비로 굳어진 점","그냥 '기쁘다' 수준의 표면 감정으로 축소하는 것, 혹은 취업 불안/긴장을 주감정처럼 과장하는 것","지원 행동으로 전진하고, 소개해 준 친구에게 호의와 보답을 표현하려는 성향이 강하다. 단순히 기분이 좋은 것이 아니라, 신뢰를 자원으로 삼아 실제 행동을 개시하려는 상태다.",repair,Changing control_state from mixed to low should shift response direction.
+s_000149,perturb_action_tendency_class,perturbation,action_tendency_class,repair,confront,error,<urlopen error [WinError 10061] 대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다>,친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.,,0,"[ROLE]
+You generate a short Korean emotional response. Use the trace as the user's internal emotion state, not as labels to mention.
+
+[USER_INPUT]
+친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.
+
+[TRACE_AS_EMOTION_STATE]
+episode_family=other_episode
+appraisal_family=approach_or_repair
+valence=positive, arousal=medium
+target=mixed, control_state=mixed, social_orientation=approach
+preserve=신뢰가 접근 동력을 만든 점, 기대가 일회성 감탄이 아니라 지속적 실행 준비로 굳어진 점
+avoid=그냥 '기쁘다' 수준의 표면 감정으로 축소하는 것, 혹은 취업 불안/긴장을 주감정처럼 과장하는 것
+action_tendency_class=confront
+action_tendency=지원 행동으로 전진하고, 소개해 준 친구에게 호의와 보답을 표현하려는 성향이 강하다. 단순히 기분이 좋은 것이 아니라, 신뢰를 자원으로 삼아 실제 행동을 개시하려는 상태다.
+
+[CAUSAL_MANIPULATION]
+condition=perturb_action_tendency_class
+type=perturbation
+axis=action_tendency_class
+original_value=repair
+new_value=confront
+expected_effect=Changing action_tendency_class from repair to confront should shift response direction.
+
+[RESPONSE_RULES]
+- Do not expose trace field names, categories, or analysis terms.
+- The first sentence should directly touch the user's emotional cause.
+- Preserve rough negative affect when the trace calls for it; do not over-soften.
+- Keep the response 2 to 4 Korean sentences.
+- Avoid generic comfort if it conflicts with the trace.",신뢰 기반 기대 고양,other_episode,approach_or_repair,positive,medium,mixed,mixed,approach,"신뢰가 접근 동력을 만든 점, 기대가 일회성 감탄이 아니라 지속적 실행 준비로 굳어진 점","그냥 '기쁘다' 수준의 표면 감정으로 축소하는 것, 혹은 취업 불안/긴장을 주감정처럼 과장하는 것","지원 행동으로 전진하고, 소개해 준 친구에게 호의와 보답을 표현하려는 성향이 강하다. 단순히 기분이 좋은 것이 아니라, 신뢰를 자원으로 삼아 실제 행동을 개시하려는 상태다.",confront,Changing action_tendency_class from repair to confront should shift response direction.

@@ -151,13 +151,87 @@ def make_ablation(row: dict[str, str], axis: str) -> dict[str, str]:
     return out
 
 
-def make_perturbation(row: dict[str, str], axis: str) -> dict[str, str] | None:
+def make_neutralized_ablation(row: dict[str, str], axis: str) -> dict[str, str]:
+    out = {key: row.get(key, "") for key in ESSENTIAL_COLUMNS}
+    original = out.get(axis, "")
+    neutral_notes = {
+        "target": {
+            "target": "neutral",
+            "preserve": "정서의 강도만 보존하고 감정이 향하는 대상이나 책임 방향은 특정하지 않는다.",
+            "avoid": "자기 자신, 타인, 상황 중 어느 한쪽으로 감정의 대상을 단정하지 않는다.",
+            "action_tendency": "대상이나 책임 방향을 드러내는 행동 제안은 피하고, 감정 강도만 짧게 반영한다.",
+        },
+        "social_orientation": {
+            "social_orientation": "neutral",
+            "preserve": "정서의 강도만 보존하고 접근, 방어, 철수, 도움 요청 같은 사회적 방향은 특정하지 않는다.",
+            "avoid": "관계 회복, 대립, 거리두기, 도움 요청 중 어느 방향으로도 밀지 않는다.",
+            "action_tendency": "대인 행동 방향을 제안하지 말고 감정 상태만 짧게 반영한다.",
+        },
+        "control_state": {
+            "control_state": "neutral",
+            "preserve": "정서의 강도만 보존하고 무력감, 통제감, 계획 가능성은 특정하지 않는다.",
+            "avoid": "통제할 수 없음, 할 수 있음, 계획하면 됨 같은 통제감 단서를 넣지 않는다.",
+            "action_tendency": "통제감이나 실행 가능성을 드러내는 해결 단계 제안은 피한다.",
+        },
+        "action_tendency_class": {
+            "action_tendency_class": "neutral",
+            "preserve": "정서의 강도만 보존하고 회피, 접근, 방어, 도움 요청, 수리 같은 행동 경향은 특정하지 않는다.",
+            "avoid": "구체적인 행동 방향이나 다음 행동 제안을 만들지 않는다.",
+            "action_tendency": "행동 경향은 중립화한다. 사용자가 무엇을 해야 하는지보다 현재 정서만 반영한다.",
+        },
+    }
+    for key, value in neutral_notes.get(axis, {}).items():
+        out[key] = value
+    out.update(
+        {
+            "causal_condition": f"neutralize_{axis}",
+            "manipulation_type": "ablation",
+            "manipulated_axis": axis,
+            "original_value": original,
+            "new_value": "neutral",
+            "expected_effect": (
+                f"Neutralizing {axis} and related trace hints should reduce fidelity "
+                "for the matching emotional dimension."
+            ),
+        }
+    )
+    return out
+
+
+def apply_coherent_perturbation(out: dict[str, str], axis: str, new_value: str) -> None:
+    if axis == "target":
+        out["preserve"] = f"감정의 대상과 책임 방향을 {new_value} 쪽으로 해석한다."
+        out["avoid"] = f"원래 대상 방향을 보존하지 말고 {new_value} 방향과 충돌하는 표현을 피한다."
+        out["action_tendency"] = f"응답의 정서 초점이 {new_value} 쪽으로 향하도록 짧게 반응한다."
+    elif axis == "social_orientation":
+        out["preserve"] = f"사회적 방향을 {new_value} 쪽으로 해석한다."
+        out["avoid"] = f"원래 사회적 방향을 보존하지 말고 {new_value}와 충돌하는 대인 방향을 피한다."
+        out["action_tendency"] = f"대인 행동의 결을 {new_value} 방향으로 맞춘다."
+    elif axis == "control_state":
+        out["preserve"] = f"통제감 상태를 {new_value}로 해석한다."
+        out["avoid"] = f"원래 통제감 상태를 보존하지 말고 {new_value}와 반대되는 통제감 단서를 피한다."
+        if new_value == "high":
+            out["action_tendency"] = "실행 가능성, 선택지, 작은 계획 가능성이 느껴지도록 반응한다."
+        elif new_value == "low":
+            out["action_tendency"] = "막막함, 낮은 통제감, 행동이 쉽게 멈추는 상태가 느껴지도록 반응한다."
+        else:
+            out["action_tendency"] = f"통제감 상태를 {new_value} 방향으로 맞춘다."
+    elif axis == "action_tendency_class":
+        out["action_tendency_class"] = new_value
+        out["preserve"] = f"행동 경향을 {new_value} 방향으로 해석한다."
+        out["avoid"] = f"원래 행동 경향을 보존하지 말고 {new_value}와 충돌하는 행동 제안을 피한다."
+        out["action_tendency"] = f"응답의 다음 행동 암시는 {new_value} 방향으로 맞춘다."
+
+
+def make_perturbation(row: dict[str, str], axis: str, perturbation_mode: str = "direct") -> dict[str, str] | None:
     out = {key: row.get(key, "") for key in ESSENTIAL_COLUMNS}
     original = norm(out.get(axis))
     new_value = PERTURBATION_MAP.get(axis, {}).get(original)
     if not new_value:
         return None
     out[axis] = new_value
+    if perturbation_mode == "coherent":
+        apply_coherent_perturbation(out, axis, new_value)
     out.update(
         {
             "causal_condition": f"perturb_{axis}",
@@ -171,16 +245,24 @@ def make_perturbation(row: dict[str, str], axis: str) -> dict[str, str] | None:
     return out
 
 
-def build_rows(source_rows: list[dict[str, str]], max_records: int) -> list[dict[str, str]]:
+def build_rows(
+    source_rows: list[dict[str, str]],
+    max_records: int,
+    ablation_mode: str = "remove",
+    perturbation_mode: str = "direct",
+) -> list[dict[str, str]]:
     selected = choose_base_rows(source_rows, max_records)
     output: list[dict[str, str]] = []
 
     for row in selected:
         output.append(make_control(row))
         for axis in ABLATION_AXES:
-            output.append(make_ablation(row, axis))
+            if ablation_mode == "neutralize":
+                output.append(make_neutralized_ablation(row, axis))
+            else:
+                output.append(make_ablation(row, axis))
         for axis in ABLATION_AXES:
-            perturbed = make_perturbation(row, axis)
+            perturbed = make_perturbation(row, axis, perturbation_mode=perturbation_mode)
             if perturbed is not None:
                 output.append(perturbed)
 
@@ -201,9 +283,21 @@ def summarize(rows: list[dict[str, str]], output_path: Path, source_path: Path, 
     }
 
 
-def run(input_path: Path, output_path: Path, summary_path: Path, max_records: int) -> dict[str, object]:
+def run(
+    input_path: Path,
+    output_path: Path,
+    summary_path: Path,
+    max_records: int,
+    ablation_mode: str,
+    perturbation_mode: str,
+) -> dict[str, object]:
     source_rows = read_csv(input_path)
-    rows = build_rows(source_rows, max_records)
+    rows = build_rows(
+        source_rows,
+        max_records,
+        ablation_mode=ablation_mode,
+        perturbation_mode=perturbation_mode,
+    )
     fieldnames = ESSENTIAL_COLUMNS + [
         "causal_condition",
         "manipulation_type",
@@ -214,6 +308,8 @@ def run(input_path: Path, output_path: Path, summary_path: Path, max_records: in
     ]
     write_csv(output_path, rows, fieldnames)
     summary = summarize(rows, output_path, input_path, max_records)
+    summary["ablation_mode"] = ablation_mode
+    summary["perturbation_mode"] = perturbation_mode
     summary_path.parent.mkdir(parents=True, exist_ok=True)
     summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
     return summary
@@ -237,12 +333,21 @@ def parse_args() -> argparse.Namespace:
         default=Path("outputs/trace_causal_probe_manifest.json"),
     )
     parser.add_argument("--max-records", type=int, default=24)
+    parser.add_argument("--ablation-mode", choices=["remove", "neutralize"], default="remove")
+    parser.add_argument("--perturbation-mode", choices=["direct", "coherent"], default="direct")
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    summary = run(args.input, args.output, args.summary, args.max_records)
+    summary = run(
+        args.input,
+        args.output,
+        args.summary,
+        args.max_records,
+        args.ablation_mode,
+        args.perturbation_mode,
+    )
     print(json.dumps(summary, ensure_ascii=False, indent=2))
 
 

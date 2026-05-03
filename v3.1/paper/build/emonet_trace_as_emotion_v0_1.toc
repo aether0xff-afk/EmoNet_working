@@ -29,17 +29,17 @@
 \contentsline {subsection}{\numberline {5.4}실험 3: dynamics stabilization}{11}{subsection.5.4}%
 \contentsline {subsection}{\numberline {5.5}실험 4: adaptive late density control}{11}{subsection.5.5}%
 \contentsline {subsection}{\numberline {5.6}실험 5: causal dry run과 Claude pairwise judge}{12}{subsection.5.6}%
-\contentsline {section}{\numberline {6}논의}{13}{section.6}%
-\contentsline {subsection}{\numberline {6.1}현재 방어 가능한 주장}{13}{subsection.6.1}%
-\contentsline {subsection}{\numberline {6.2}아직 방어하면 안 되는 주장}{14}{subsection.6.2}%
-\contentsline {subsection}{\numberline {6.3}해석}{14}{subsection.6.3}%
-\contentsline {subsection}{\numberline {6.4}Trace-as-emotion 가설의 현재 위치}{14}{subsection.6.4}%
+\contentsline {section}{\numberline {6}논의}{14}{section.6}%
+\contentsline {subsection}{\numberline {6.1}현재 방어 가능한 주장}{14}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}아직 방어하면 안 되는 주장}{15}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}해석}{15}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}Trace-as-emotion 가설의 현재 위치}{15}{subsection.6.4}%
 \contentsline {subsection}{\numberline {6.5}왜 label imbalance가 큰 문제인가}{15}{subsection.6.5}%
-\contentsline {subsection}{\numberline {6.6}실제 응용과 연구 증명의 차이}{15}{subsection.6.6}%
-\contentsline {section}{\numberline {7}한계}{15}{section.7}%
-\contentsline {subsection}{\numberline {7.1}위협 요인}{15}{subsection.7.1}%
-\contentsline {section}{\numberline {8}향후 연구}{16}{section.8}%
-\contentsline {section}{\numberline {9}결론}{16}{section.9}%
-\contentsline {section}{\numberline {A}부록 A: 초심자용 용어집}{16}{appendix.A}%
-\contentsline {section}{\numberline {B}부록 B: 현재 재현 가능한 주요 명령}{17}{appendix.B}%
-\contentsline {section}{\numberline {C}부록 C: 최종 논문화 전 체크리스트}{17}{appendix.C}%
+\contentsline {subsection}{\numberline {6.6}실제 응용과 연구 증명의 차이}{16}{subsection.6.6}%
+\contentsline {section}{\numberline {7}한계}{16}{section.7}%
+\contentsline {subsection}{\numberline {7.1}위협 요인}{16}{subsection.7.1}%
+\contentsline {section}{\numberline {8}향후 연구}{17}{section.8}%
+\contentsline {section}{\numberline {9}결론}{17}{section.9}%
+\contentsline {section}{\numberline {A}부록 A: 초심자용 용어집}{17}{appendix.A}%
+\contentsline {section}{\numberline {B}부록 B: 현재 재현 가능한 주요 명령}{18}{appendix.B}%
+\contentsline {section}{\numberline {C}부록 C: 최종 논문화 전 체크리스트}{18}{appendix.C}%

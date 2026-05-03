@@ -77,6 +77,23 @@ Perturbation은 강하다. Ablation은 약하다.
 현재 ablation 설계는 trace의 causal necessity를 충분히 보여주지 못한다.
 ```
 
+추가로 좋은 답변/자연스러운 답변 편향을 줄이기 위해 axis-only blind judge를 실행했다.
+
+| Scope | n | success | success rate | tie rate |
+|---|---:|---:|---:|---:|
+| Axis-only overall | 36 | 26 | 0.722222 | 0.444444 |
+| Axis-only ablation | 12 | 4 | 0.333333 | 0.250000 |
+| Axis-only perturbation | 12 | 10 | 0.833333 | 0.083333 |
+| Null same response | 12 | 12 | 1.000000 | 1.000000 |
+
+이 재평가는 이전 causal judge 해석을 더 명확하게 만든다.
+
+```text
+응답 품질을 보지 말라고 제한해도 perturbation 성공률은 0.833333으로 유지된다.
+동일 응답 null pair는 전부 tie이므로 judge가 억지로 A/B를 고르는 편향은 작다.
+하지만 ablation은 여전히 0.333333으로 약하다.
+```
+
 ## 5. 최종 순위
 
 | Rank | Version / Setting | 이유 |

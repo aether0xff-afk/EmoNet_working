@@ -1,0 +1,41 @@
+\contentsline {section}{\numberline {1}서론}{3}{section.1}%
+\contentsline {subsection}{\numberline {1.1}사용자가 만들고자 한 것}{3}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}본 논문의 기여}{3}{subsection.1.2}%
+\contentsline {section}{\numberline {2}배경과 문제 정의}{3}{section.2}%
+\contentsline {subsection}{\numberline {2.1}감정 라벨과 감정 흐름의 차이}{3}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}핵심 용어}{4}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}검증해야 할 주장}{4}{subsection.2.3}%
+\contentsline {section}{\numberline {3}시스템 구성}{5}{section.3}%
+\contentsline {subsection}{\numberline {3.1}전체 파이프라인}{5}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}신경망 동역학}{5}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}후반부 적응형 활성 조절}{5}{subsection.3.3}%
+\contentsline {section}{\numberline {4}평가 지표}{6}{section.4}%
+\contentsline {subsection}{\numberline {4.1}동역학 지표}{6}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}표현 지표}{6}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}인과 지표}{6}{subsection.4.3}%
+\contentsline {section}{\numberline {5}실험 과정}{6}{section.5}%
+\contentsline {subsection}{\numberline {5.1}1단계: 기본 trace 추출}{6}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}2단계: feature probe}{6}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}3단계: 용량 증가 실험}{7}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}4단계: 동역학 안정화}{7}{subsection.5.4}%
+\contentsline {subsection}{\numberline {5.5}5단계: 후반부 적응형 활성 조절}{7}{subsection.5.5}%
+\contentsline {subsection}{\numberline {5.6}6단계: 인과 평가 설계}{7}{subsection.5.6}%
+\contentsline {subsection}{\numberline {5.7}7단계: 단순 정보 제거의 실패와 강한 정보 중립화}{8}{subsection.5.7}%
+\contentsline {subsection}{\numberline {5.8}8단계: 통합 확인 실험}{8}{subsection.5.8}%
+\contentsline {section}{\numberline {6}결과}{8}{section.6}%
+\contentsline {subsection}{\numberline {6.1}동역학 결과}{8}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}감정축 표현 결과}{8}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}성능 비교}{9}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}통합 인과 확인 결과}{9}{subsection.6.4}%
+\contentsline {section}{\numberline {7}논의}{9}{section.7}%
+\contentsline {subsection}{\numberline {7.1}무엇이 만들어졌는가}{9}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}잘된 점}{10}{subsection.7.2}%
+\contentsline {subsection}{\numberline {7.3}실패가 만든 개선}{10}{subsection.7.3}%
+\contentsline {subsection}{\numberline {7.4}주장 가능한 것과 아직 조심해야 할 것}{10}{subsection.7.4}%
+\contentsline {section}{\numberline {8}한계}{10}{section.8}%
+\contentsline {subsection}{\numberline {8.1}데이터 규모}{11}{subsection.8.1}%
+\contentsline {subsection}{\numberline {8.2}판정기 독립성}{11}{subsection.8.2}%
+\contentsline {subsection}{\numberline {8.3}감정축 정의}{11}{subsection.8.3}%
+\contentsline {subsection}{\numberline {8.4}응답 수준 평가의 한계}{11}{subsection.8.4}%
+\contentsline {section}{\numberline {9}향후 연구}{11}{section.9}%
+\contentsline {section}{\numberline {10}결론}{11}{section.10}%

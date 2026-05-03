@@ -1,0 +1,32 @@
+{
+  "source_path": "outputs\\targeted_records_trace_normalized.csv",
+  "output_path": "outputs\\trace_causal_probe_set_neutralized_coherent_confirm10.csv",
+  "requested_base_records": 10,
+  "base_record_count": 10,
+  "row_count": 90,
+  "condition_counts": {
+    "trace_full": 10,
+    "neutralize_target": 10,
+    "neutralize_social_orientation": 10,
+    "neutralize_control_state": 10,
+    "neutralize_action_tendency_class": 10,
+    "perturb_target": 10,
+    "perturb_social_orientation": 10,
+    "perturb_control_state": 10,
+    "perturb_action_tendency_class": 10
+  },
+  "manipulation_type_counts": {
+    "ablation": 40,
+    "perturbation": 40,
+    "control": 10
+  },
+  "axis_counts": {
+    "target": 20,
+    "social_orientation": 20,
+    "control_state": 20,
+    "action_tendency_class": 20,
+    "none": 10
+  },
+  "ablation_mode": "neutralize",
+  "perturbation_mode": "coherent"
+}

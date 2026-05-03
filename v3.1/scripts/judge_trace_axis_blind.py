@@ -119,17 +119,21 @@ def make_pair(
     response_right_condition: str,
     response_right: str,
 ) -> dict[str, str]:
-    expected_winner = "A"
     response_a_condition = response_left_condition
     response_a = response_left
     response_b_condition = response_right_condition
     response_b = response_right
     if stable_swap(pair_id):
-        expected_winner = "B"
         response_a_condition, response_b_condition = response_b_condition, response_a_condition
         response_a, response_b = response_b, response_a
     if question_type == "null_same_response":
         expected_winner = "TIE"
+    elif response_a_condition == expected_condition:
+        expected_winner = "A"
+    elif response_b_condition == expected_condition:
+        expected_winner = "B"
+    else:
+        raise ValueError(f"expected condition {expected_condition!r} is not in pair {pair_id!r}")
     return {
         "pair_id": pair_id,
         "record_id": record_id,
@@ -228,6 +232,8 @@ def build_prompt(pair: dict[str, str]) -> str:
             "Ignore which answer sounds better. Only judge the specified emotion/appraisal/action axis.",
             "If both responses express the target axis equally, choose tie.",
             "Return JSON only with keys: winner, axis_value_a, axis_value_b, evidence_a, evidence_b, rationale.",
+            "Do not put quotation marks inside JSON string values. Paraphrase evidence instead of directly quoting.",
+            "Keep evidence_a, evidence_b, and rationale short.",
             "",
             "[AXIS_TO_JUDGE]",
             f"axis={pair['axis_ko']} ({pair['manipulated_axis']})",
@@ -378,7 +384,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--summary", type=Path, default=Path("outputs/trace_axis_blind_judgments_summary.json"))
     parser.add_argument("--model", default="claude-haiku-4-5-20251001")
     parser.add_argument("--limit", type=int, default=None)
-    parser.add_argument("--max-output-tokens", type=int, default=260)
+    parser.add_argument("--max-output-tokens", type=int, default=500)
     parser.add_argument("--timeout-sec", type=int, default=90)
     parser.add_argument("--max-retries", type=int, default=1)
     parser.add_argument("--progress-every", type=int, default=10)

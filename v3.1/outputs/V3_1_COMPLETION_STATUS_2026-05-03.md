@@ -179,6 +179,23 @@ trace perturbation은 응답 방향 이동에 강한 pilot signal을 보였다.
 ablation preservation은 약하므로 현재 ablation 설계만으로 causal proof를 주장하면 안 된다.
 ```
 
+축 전용 blind/null judge 재평가:
+
+| Scope | n | success_rate | tie_rate |
+|---|---:|---:|---:|
+| Axis-only overall | 36 | 0.722222 | 0.444444 |
+| Axis-only perturbation | 12 | 0.833333 | 0.083333 |
+| Axis-only ablation | 12 | 0.333333 | 0.250000 |
+| Null same response | 12 | 1.000000 | 1.000000 |
+
+해석:
+
+```text
+좋은 답변/자연스러운 답변 판정을 금지해도 perturbation signal은 유지되었다.
+동일 응답 null pair는 모두 tie로 판정되어 강한 A/B 강제 선택 편향은 보이지 않았다.
+ablation은 여전히 약하다.
+```
+
 ### 2.7 Adaptive density control 1차 통과
 
 완료 후보. n=80 confirm까지 통과.
@@ -306,12 +323,12 @@ v3.1을 "완성"으로 볼 최소 기준:
 |---|---|
 | Representation | `branch_mean` 또는 `branch_temporal`이 baseline보다 tracked separation 개선 |
 | Dynamics | n=80 adaptive confirm에서 `len1_ratio=0.0`, density `0.55~0.80`, tracked balanced lift 양수 |
-| Causal smoke | Claude Haiku 4.5 dry3 overall `0.583333`, perturbation `0.833333`; ablation은 미완 |
+| Causal smoke | Axis-only blind judge에서 perturbation `0.833333`, null tie `1.000000`; ablation은 `0.333333`으로 미완 |
 | Reporting | representation evidence와 generation evidence를 분리해서 문서화 |
 
 ## 4. 현재 결론
 
-v3.1은 구현 준비 단계, 주요 진단 실험, dynamics 구조 수정, n=80 confirm, Claude causal judge dry3까지 끝났다. 남은 것은 ablation 설계 보강과 논문화용 정리다.
+v3.1은 구현 준비 단계, 주요 진단 실험, dynamics 구조 수정, n=80 confirm, Claude causal judge dry3, axis-only blind judge, 강한 정보 중립화 ablation까지 끝났다.
 
 현재 가장 강한 중간 결론:
 
@@ -319,5 +336,23 @@ v3.1은 구현 준비 단계, 주요 진단 실험, dynamics 구조 수정, n=80
 neural trace geometry는 z나 route id보다 branch tensor에 가장 많이 남아 있다.
 density-aware late control을 넣으면 collapse 제거와 density 제어를 동시에 만족한다.
 n=80 confirm에서 class-balanced representation metric도 tracked axes 전체에서 양수다.
-causal judge에서는 perturbation pair가 강하지만 ablation pair는 약하다.
+causal judge에서는 품질 판정을 제거한 axis-only blind 조건에서도 perturbation pair가 강하지만 ablation pair는 약하다.
+단순 ablation의 약점은 강한 정보 중립화 ablation에서 보강되어 10/12 성공률을 보였다.
+```
+
+confirm10 통합 causal run:
+
+| Scope | n | success_rate | tie_rate |
+|---|---:|---:|---:|
+| Overall | 120 | 0.916667 | 0.358333 |
+| 강한 정보 중립화 | 40 | 0.975000 | 0.025000 |
+| 방향 교란 | 40 | 0.775000 | 0.050000 |
+| 동일 응답 무효 비교 | 40 | 1.000000 | 1.000000 |
+
+최종 상태:
+
+```text
+v3.1은 논문화 가능한 완성 상태다.
+같은 생성 조건에서 perturbation과 neutralized ablation을 동시에 통과시키는 confirm10 run까지 완료했다.
+남은 것은 독립 judge/사람 평가와 full targeted set 확장이다.
 ```

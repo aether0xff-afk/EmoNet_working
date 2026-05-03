@@ -206,6 +206,11 @@ class EmoNetConfig:
     fatigue_k_leak: float = 0.08
     fire_output_log_gain: float = 0.75
     inhibitory_suppression_gain: float = 0.18
+    density_control_start_tick: int = 0
+    density_target_high: float = 1.0
+    density_soft_k_leak_gain: float = 0.0
+    density_hard_cap: float = 1.0
+    density_pruned_fatigue_gain: float = 0.0
 
     max_out_degree: int = 12
     min_out_degree: int = 1
@@ -267,12 +272,22 @@ class EmoNetConfig:
             "fatigue_k_leak",
             "fire_output_log_gain",
             "inhibitory_suppression_gain",
+            "density_soft_k_leak_gain",
+            "density_pruned_fatigue_gain",
             "activity_count_delta_eps",
             "edge_count_delta_eps",
             "activity_churn_eps",
         ):
             if getattr(self, field_name) < 0.0:
                 raise ValueError(f"{field_name} must be non-negative")
+        if self.density_control_start_tick < 0:
+            raise ValueError("density_control_start_tick must be non-negative")
+        if not 0.0 < self.density_target_high <= 1.0:
+            raise ValueError("density_target_high must be in (0, 1]")
+        if not 0.0 < self.density_hard_cap <= 1.0:
+            raise ValueError("density_hard_cap must be in (0, 1]")
+        if self.density_hard_cap < self.density_target_high:
+            raise ValueError("density_hard_cap must be >= density_target_high")
         if self.fatigue_decay > 1.0:
             raise ValueError("fatigue_decay must be in [0, 1]")
 
@@ -1383,6 +1398,51 @@ class EmoNet:
                 surviving_candidates.append(node_id)
         return surviving_candidates
 
+    def _apply_density_control(self, active_candidates: list[int]) -> list[int]:
+        if (
+            not active_candidates
+            or self.state.tick < self.config.density_control_start_tick
+            or (
+                self.config.density_soft_k_leak_gain <= 0.0
+                and self.config.density_pruned_fatigue_gain <= 0.0
+                and self.config.density_hard_cap >= 1.0
+            )
+        ):
+            return active_candidates
+
+        density = float(len(active_candidates)) / float(max(1, self.config.n_neurons))
+        surplus = max(0.0, density - self.config.density_target_high)
+        surviving_candidates = list(active_candidates)
+
+        if surplus > 0.0 and self.config.density_soft_k_leak_gain > 0.0:
+            leak = self.config.density_soft_k_leak_gain * surplus
+            softened: list[int] = []
+            for node_id in surviving_candidates:
+                neuron = self.state.neurons[node_id]
+                neuron.K = max(0.0, neuron.K - leak * (1.0 + float(neuron.fatigue)))
+                if neuron.K > neuron.k_threshold:
+                    softened.append(node_id)
+            surviving_candidates = softened
+
+        hard_cap_count = max(1, int(math.ceil(self.config.density_hard_cap * self.config.n_neurons)))
+        if len(surviving_candidates) <= hard_cap_count:
+            return surviving_candidates
+
+        ranked = sorted(
+            surviving_candidates,
+            key=lambda node_id: (
+                self.state.neurons[node_id].K - self.state.neurons[node_id].k_threshold,
+                self.state.neurons[node_id].K,
+            ),
+            reverse=True,
+        )
+        kept = set(ranked[:hard_cap_count])
+        if self.config.density_pruned_fatigue_gain > 0.0:
+            for node_id in ranked[hard_cap_count:]:
+                neuron = self.state.neurons[node_id]
+                neuron.fatigue = min(4.0, neuron.fatigue + self.config.density_pruned_fatigue_gain)
+        return [node_id for node_id in surviving_candidates if node_id in kept]
+
     @staticmethod
     def _compute_activity_churn(prev_nodes: Sequence[int], curr_nodes: Sequence[int]) -> float:
         prev_set = set(int(node_id) for node_id in prev_nodes)
@@ -1452,6 +1512,7 @@ class EmoNet:
 
         active_candidates = self._apply_lateral_inhibition(active_candidates)
         self._apply_modulatory_effects(active_candidates)
+        active_candidates = self._apply_density_control(active_candidates)
 
         final_active_nodes = [
             node_id

@@ -1283,6 +1283,7 @@ def command_predict_s(args: argparse.Namespace) -> None:
 
 def command_generate_response(args: argparse.Namespace) -> None:
     style_profile = getattr(args, "style_profile", DEFAULT_STYLE_PROFILE)
+    conditioning_mode = getattr(args, "conditioning_mode", "style")
     ensure_model_server_ready(args.base_url, args.timeout_sec)
     model = build_model(args)
     model_config = getattr(model, "config", None)
@@ -1298,7 +1299,7 @@ def command_generate_response(args: argparse.Namespace) -> None:
         timeout_sec=args.timeout_sec,
         template_path=Path(args.prompt_template) if args.prompt_template else None,
         max_retries=args.response_max_retries,
-        conditioning_mode=args.conditioning_mode,
+        conditioning_mode=conditioning_mode,
     )
     result = {
         "input_text": args.text,
@@ -1324,7 +1325,7 @@ def command_generate_response(args: argparse.Namespace) -> None:
         "grounding_rules": list(profile["grounding_rules"]),
         "response_retry_count": int(response_meta["retry_count"]),
         "response_validation_errors": list(response_meta["validation_errors"]),
-        "conditioning_mode": str(args.conditioning_mode),
+        "conditioning_mode": str(conditioning_mode),
         "prompt_sections": prompt_sections,
         "style_prompt": style_prompt,
         "llm_response": response_text,
@@ -1346,6 +1347,7 @@ def command_generate_response(args: argparse.Namespace) -> None:
 
 def command_generate_response_batch(args: argparse.Namespace) -> None:
     style_profile = getattr(args, "style_profile", DEFAULT_STYLE_PROFILE)
+    conditioning_mode = getattr(args, "conditioning_mode", "style")
     ensure_model_server_ready(args.base_url, args.timeout_sec)
     model = build_model(args)
     model_config = getattr(model, "config", None)
@@ -1381,7 +1383,7 @@ def command_generate_response_batch(args: argparse.Namespace) -> None:
                 timeout_sec=args.timeout_sec,
                 template_path=Path(args.prompt_template) if args.prompt_template else None,
                 max_retries=args.response_max_retries,
-                conditioning_mode=args.conditioning_mode,
+                conditioning_mode=conditioning_mode,
             )
             row = dict(record)
             row["status"] = "ok"
@@ -1404,7 +1406,7 @@ def command_generate_response_batch(args: argparse.Namespace) -> None:
             row["grounding_rules"] = json.dumps(profile["grounding_rules"], ensure_ascii=False)
             row["response_retry_count"] = int(response_meta["retry_count"])
             row["response_validation_errors"] = json.dumps(response_meta["validation_errors"], ensure_ascii=False)
-            row["conditioning_mode"] = str(args.conditioning_mode)
+            row["conditioning_mode"] = str(conditioning_mode)
             row["prompt_sections"] = prompt_sections
             row["style_prompt"] = style_prompt
             row["llm_response"] = response_text
@@ -3099,6 +3101,7 @@ def infer_style_profile(
     style_profile: str = DEFAULT_STYLE_PROFILE,
 ) -> dict[str, object]:
     outputs = model.forward(text)
+    model_config = getattr(model, "config", None)
     z = to_numpy_array(outputs["z"], dtype=np.float32).reshape(-1)
     s_pred = to_numpy_array(decoder.predict(z), dtype=np.float32).reshape(-1)
     style_axes = resolve_style_axes(len(s_pred), style_profile=style_profile)
@@ -3120,7 +3123,7 @@ def infer_style_profile(
     trace_profile = build_trace_profile(
         pruned_branch_log=list(outputs.get("pruned_branch_log", [])),
         dominant_branch=list(outputs.get("dominant_branch", [])),
-        n_neurons=int(getattr(model.config, "n_neurons", 256)),
+        n_neurons=int(getattr(model_config, "n_neurons", 256)),
         termination_reason=str(outputs.get("termination_reason", "unknown")),
         ticks_run=int(outputs.get("ticks_run", 0)),
     )

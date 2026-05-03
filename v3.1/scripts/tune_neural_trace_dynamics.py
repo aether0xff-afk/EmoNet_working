@@ -130,11 +130,87 @@ def conservative_grid_configs() -> list[dict[str, Any]]:
     return configs
 
 
+def adaptive_grid_configs() -> list[dict[str, Any]]:
+    base_candidates = [
+        {
+            "name": "adaptive_thr0.60_clip1.6_inh0.10_start8_cap0.78",
+            "k_threshold_base": 0.60,
+            "input_signal_clip": 1.60,
+            "inhibitory_suppression_gain": 0.10,
+            "fatigue_gain": 0.14,
+            "fatigue_threshold_gain": 0.07,
+            "fatigue_k_leak": 0.030,
+            "density_control_start_tick": 8,
+            "density_target_high": 0.72,
+            "density_soft_k_leak_gain": 1.25,
+            "density_hard_cap": 0.78,
+            "density_pruned_fatigue_gain": 0.06,
+        },
+        {
+            "name": "adaptive_thr0.63_clip1.6_inh0.10_start8_cap0.76",
+            "k_threshold_base": 0.63,
+            "input_signal_clip": 1.60,
+            "inhibitory_suppression_gain": 0.10,
+            "fatigue_gain": 0.15,
+            "fatigue_threshold_gain": 0.08,
+            "fatigue_k_leak": 0.035,
+            "density_control_start_tick": 8,
+            "density_target_high": 0.70,
+            "density_soft_k_leak_gain": 1.50,
+            "density_hard_cap": 0.76,
+            "density_pruned_fatigue_gain": 0.08,
+        },
+        {
+            "name": "adaptive_thr0.63_clip1.8_inh0.12_start10_cap0.80",
+            "k_threshold_base": 0.63,
+            "input_signal_clip": 1.80,
+            "inhibitory_suppression_gain": 0.12,
+            "fatigue_gain": 0.14,
+            "fatigue_threshold_gain": 0.08,
+            "fatigue_k_leak": 0.035,
+            "density_control_start_tick": 10,
+            "density_target_high": 0.74,
+            "density_soft_k_leak_gain": 1.25,
+            "density_hard_cap": 0.80,
+            "density_pruned_fatigue_gain": 0.06,
+        },
+        {
+            "name": "adaptive_thr0.66_clip1.6_inh0.12_start8_cap0.76",
+            "k_threshold_base": 0.66,
+            "input_signal_clip": 1.60,
+            "inhibitory_suppression_gain": 0.12,
+            "fatigue_gain": 0.16,
+            "fatigue_threshold_gain": 0.09,
+            "fatigue_k_leak": 0.040,
+            "density_control_start_tick": 8,
+            "density_target_high": 0.70,
+            "density_soft_k_leak_gain": 1.50,
+            "density_hard_cap": 0.76,
+            "density_pruned_fatigue_gain": 0.08,
+        },
+    ]
+    configs: list[dict[str, Any]] = []
+    for item in base_candidates:
+        params = dict(BASE_PARAMS)
+        threshold = float(item["k_threshold_base"])
+        params.update(
+            {
+                "k_threshold_base": threshold,
+                "k_remem_base": max(0.72, threshold + 0.18),
+                **{key: value for key, value in item.items() if key != "name"},
+            }
+        )
+        configs.append({"name": str(item["name"]), "params": params})
+    return configs
+
+
 def grid_configs(mode: str = "fine") -> list[dict[str, Any]]:
     if mode == "fine":
         return fine_grid_configs()
     if mode == "conservative":
         return conservative_grid_configs()
+    if mode == "adaptive":
+        return adaptive_grid_configs()
     raise ValueError(f"unknown grid mode: {mode}")
 
 
@@ -146,8 +222,30 @@ def write_csv(path: Path, rows: list[dict[str, Any]], fieldnames: list[str]) -> 
         writer.writerows(rows)
 
 
+def read_existing_csv(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    with path.open("r", encoding="utf-8-sig", newline="") as f:
+        return list(csv.DictReader(f))
+
+
+def upsert_row(rows: list[dict[str, Any]], row: dict[str, Any]) -> list[dict[str, Any]]:
+    keyed = {str(existing.get("config", "")): existing for existing in rows}
+    keyed[str(row.get("config", ""))] = row
+    merged = list(keyed.values())
+    merged.sort(key=lambda item: float(item.get("objective", 0.0)), reverse=True)
+    return merged
+
+
 def export_args(args: argparse.Namespace, config: dict[str, Any], out_dir: Path) -> SimpleNamespace:
-    params = config["params"]
+    params = {
+        "density_control_start_tick": 0,
+        "density_target_high": 1.0,
+        "density_soft_k_leak_gain": 0.0,
+        "density_hard_cap": 1.0,
+        "density_pruned_fatigue_gain": 0.0,
+        **config["params"],
+    }
     return SimpleNamespace(
         input=args.input,
         output_dir=out_dir,
@@ -189,8 +287,13 @@ def density_penalty(density: float, low: float = 0.55, high: float = 0.80) -> fl
 def score_feature_report(report: dict[str, Any]) -> dict[str, float]:
     branch = report["branch_health"]
     nn = report["nearest_neighbor"]
+    balanced_nn = report.get("balanced_nearest_neighbor", {})
     gd = report["group_distances"]
     lifts = [float(nn[axis]["lift"]) for axis in TRACKED_AXES]
+    balanced_lifts = [
+        float(balanced_nn.get(axis, {}).get("balanced_lift", 0.0))
+        for axis in TRACKED_AXES
+    ]
     separations = [float(gd[axis]["separation"]) for axis in TRACKED_AXES]
     len1 = float(branch["len1_ratio"])
     density = float(branch["mean_activation_density"])
@@ -203,8 +306,13 @@ def score_feature_report(report: dict[str, Any]) -> dict[str, float]:
         "len1_ratio": len1,
         "mean_activation_density": density,
         "tracked_lift_mean": lift,
+        "tracked_balanced_lift_mean": mean(balanced_lifts),
         "tracked_separation_mean": sep,
         **{f"{axis}_lift": float(nn[axis]["lift"]) for axis in TRACKED_AXES},
+        **{
+            f"{axis}_balanced_lift": float(balanced_nn.get(axis, {}).get("balanced_lift", 0.0))
+            for axis in TRACKED_AXES
+        },
         **{f"{axis}_separation": float(gd[axis]["separation"]) for axis in TRACKED_AXES},
     }
 
@@ -216,6 +324,10 @@ def score_candidate(branch_mean_report: dict[str, Any], branch_temporal_report: 
     density = mean_score["mean_activation_density"]
     branch_len = mean_score["mean_branch_len"]
     combined_lift = 0.7 * mean_score["tracked_lift_mean"] + 0.3 * temporal_score["tracked_lift_mean"]
+    combined_balanced_lift = (
+        0.7 * mean_score["tracked_balanced_lift_mean"]
+        + 0.3 * temporal_score["tracked_balanced_lift_mean"]
+    )
     combined_sep = 0.7 * mean_score["tracked_separation_mean"] + 0.3 * temporal_score["tracked_separation_mean"]
 
     # Prefer low collapse, controlled density, and stable branch geometry.
@@ -223,7 +335,8 @@ def score_candidate(branch_mean_report: dict[str, Any], branch_temporal_report: 
     # candidate reached density ~0.95 and weakened several emotion axes.
     objective = (
         3.0 * combined_sep
-        + 1.0 * combined_lift
+        + 0.5 * combined_lift
+        + 0.5 * combined_balanced_lift
         + 0.01 * min(branch_len, 40.0)
         - 4.0 * len1
         - 4.0 * density_penalty(density)
@@ -233,13 +346,17 @@ def score_candidate(branch_mean_report: dict[str, Any], branch_temporal_report: 
         "len1_ratio": round(len1, 6),
         "mean_activation_density": round(density, 6),
         "tracked_lift_mean": round(mean_score["tracked_lift_mean"], 6),
+        "tracked_balanced_lift_mean": round(mean_score["tracked_balanced_lift_mean"], 6),
         "tracked_separation_mean": round(mean_score["tracked_separation_mean"], 6),
         "branch_temporal_lift_mean": round(temporal_score["tracked_lift_mean"], 6),
+        "branch_temporal_balanced_lift_mean": round(temporal_score["tracked_balanced_lift_mean"], 6),
         "branch_temporal_separation_mean": round(temporal_score["tracked_separation_mean"], 6),
         "combined_lift_mean": round(combined_lift, 6),
+        "combined_balanced_lift_mean": round(combined_balanced_lift, 6),
         "combined_separation_mean": round(combined_sep, 6),
         "objective": round(objective, 6),
         **{f"{axis}_lift": round(mean_score[f"{axis}_lift"], 6) for axis in TRACKED_AXES},
+        **{f"{axis}_balanced_lift": round(mean_score[f"{axis}_balanced_lift"], 6) for axis in TRACKED_AXES},
         **{f"{axis}_separation": round(mean_score[f"{axis}_separation"], 6) for axis in TRACKED_AXES},
     }
 
@@ -261,16 +378,22 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "len1_ratio",
         "mean_activation_density",
         "tracked_lift_mean",
+        "tracked_balanced_lift_mean",
         "tracked_separation_mean",
         "branch_temporal_lift_mean",
+        "branch_temporal_balanced_lift_mean",
         "branch_temporal_separation_mean",
         "combined_lift_mean",
+        "combined_balanced_lift_mean",
         "combined_separation_mean",
         *[f"{axis}_lift" for axis in TRACKED_AXES],
+        *[f"{axis}_balanced_lift" for axis in TRACKED_AXES],
         *[f"{axis}_separation" for axis in TRACKED_AXES],
         "params_json",
     ]
     summary_csv = args.output_dir / "fine_dynamics_sweep_summary.csv"
+    if args.resume:
+        rows = read_existing_csv(summary_csv)
     for idx, config in enumerate(configs, start=1):
         print(f"fine-sweep: {idx}/{len(configs)} {config['name']}")
         out_dir = args.output_dir / config["name"]
@@ -293,8 +416,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             **score_candidate(branch_mean_report, branch_temporal_report),
             "params_json": json.dumps(config["params"], ensure_ascii=False, sort_keys=True),
         }
-        rows.append(row)
-        rows.sort(key=lambda item: float(item["objective"]), reverse=True)
+        rows = upsert_row(rows, row)
         write_csv(summary_csv, rows, fieldnames)
 
     rows.sort(key=lambda row: float(row["objective"]), reverse=True)
@@ -328,7 +450,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--min-ticks-before-converged", type=int, default=6)
     parser.add_argument("--convergence-patience", type=int, default=4)
     parser.add_argument("--resume", action="store_true")
-    parser.add_argument("--grid-mode", choices=["fine", "conservative"], default="fine")
+    parser.add_argument("--grid-mode", choices=["fine", "conservative", "adaptive"], default="fine")
     parser.add_argument("--start-index", type=int, default=1)
     parser.add_argument("--max-configs", type=int, default=None)
     return parser.parse_args()

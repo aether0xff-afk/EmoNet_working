@@ -252,11 +252,43 @@ APP_HTML = r"""<!doctype html>
     .msg { border: 1px solid var(--line); border-radius: 8px; padding: 13px 14px; white-space: pre-wrap; }
     .msg.user { background: #1d4a3b; }
     .msg.assistant { background: var(--panel2); }
+    .felt-panel {
+      border: 1px solid #375f4b; background: #111a20; border-radius: 8px; padding: 14px;
+      margin-top: -2px; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(260px, .75fr);
+      gap: 12px; align-items: stretch;
+    }
+    .felt-panel.anger { border-color: #7f4d44; background: #201715; }
+    .felt-panel.anxiety { border-color: #75613a; background: #1f1c14; }
+    .felt-panel.exhaustion { border-color: #49606b; background: #141b20; }
+    .felt-panel.grief { border-color: #4f5b7b; background: #151823; }
+    .felt-panel.recovery { border-color: #41664d; background: #121d17; }
+    .felt-signal { color: #9bd9ad; font-size: 12px; font-weight: 800; text-transform: uppercase; }
+    .felt-panel.anger .felt-signal { color: #ffb29e; }
+    .felt-panel.anxiety .felt-signal { color: #f1cf80; }
+    .felt-panel.exhaustion .felt-signal { color: #9bc7dc; }
+    .felt-panel.grief .felt-signal { color: #aebeff; }
+    .felt-quote { font-size: 24px; line-height: 1.26; font-weight: 800; margin-top: 5px; }
+    .felt-body { color: #cdd9e4; margin-top: 9px; }
+    .felt-readout { display: grid; grid-template-columns: 1fr; gap: 8px; }
+    .felt-row { border: 1px solid rgba(170, 182, 196, .23); background: rgba(8, 12, 17, .38); border-radius: 7px; padding: 9px; }
+    .felt-row .k { color: var(--muted); font-size: 12px; }
+    .felt-row .v { margin-top: 2px; font-weight: 750; overflow-wrap: anywhere; }
     .process {
       border: 1px solid #314253; background: #121922; border-radius: 8px; padding: 13px;
       margin-top: -4px;
     }
     .process h3 { font-size: 16px; margin-bottom: 10px; }
+    .felt {
+      border: 1px solid #315d43; background: linear-gradient(135deg, #12281d, #182330);
+      border-radius: 8px; padding: 14px; margin-bottom: 12px;
+    }
+    .felt-label { color: #9bd9ad; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+    .felt-main { font-size: 22px; font-weight: 750; margin-top: 4px; line-height: 1.28; }
+    .felt-sub { color: #c4d4df; margin-top: 8px; }
+    .felt-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+    .felt-chip { border: 1px solid #355167; background: rgba(10, 15, 21, .45); border-radius: 7px; padding: 8px; }
+    .felt-chip .k { color: var(--muted); font-size: 12px; }
+    .felt-chip .v { margin-top: 2px; font-weight: 700; overflow-wrap: anywhere; }
     .steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
     .step { border: 1px solid var(--line); background: #0f151c; border-radius: 7px; padding: 9px; min-height: 70px; }
     .step .num { color: var(--green); font-weight: 700; font-size: 12px; }
@@ -312,7 +344,7 @@ APP_HTML = r"""<!doctype html>
     @media (max-width: 840px) {
       .app { grid-template-columns: 1fr; }
       aside { border-right: 0; border-bottom: 1px solid var(--line); }
-      .metrics, .examples, .grid2, .steps, .detail-grid, .insight { grid-template-columns: 1fr; }
+      .metrics, .examples, .grid2, .steps, .detail-grid, .insight, .felt-grid, .felt-panel { grid-template-columns: 1fr; }
       .composer { grid-template-columns: 1fr; }
     }
   </style>
@@ -462,32 +494,214 @@ function chips(items) {
   return `<div class="chips">${arr.map(item => `<span class="chip">${esc(item)}</span>`).join("")}</div>`;
 }
 
+function meterRows(summary) {
+  if (!summary || typeof summary !== "object") return "<span class='muted'>no style meter</span>";
+  const entries = Object.entries(summary)
+    .filter(([, value]) => typeof value === "number" && Number.isFinite(value))
+    .slice(0, 8);
+  if (!entries.length) return "<span class='muted'>no numeric style meter</span>";
+  const values = entries.map(([, value]) => Number(value));
+  const zeroToOne = values.every(value => value >= 0 && value <= 1);
+  return entries.map(([key, value]) => {
+    const pct = zeroToOne ? Number(value) * 100 : ((Number(value) + 1) / 2) * 100;
+    const width = Math.max(0, Math.min(100, pct));
+    return `
+      <div class="meter-row">
+        <div>${esc(key)}</div>
+        <div class="meter-track"><div class="meter-fill" style="width:${width}%"></div></div>
+        <div>${num(value, 2)}</div>
+      </div>
+    `;
+  }).join("");
+}
+
+function phaseRows(lines) {
+  const arr = Array.isArray(lines) ? lines : [];
+  const phases = arr.filter(line => /^(초기|중기|후기):/.test(String(line)));
+  if (!phases.length) return "<span class='muted'>phase detail unavailable</span>";
+  return phases.map(line => {
+    const text = String(line);
+    const [name, ...rest] = text.split(":");
+    return `<div class="phase-row"><div class="phase-name">${esc(name)}</div><div class="phase-body">${esc(rest.join(":").trim())}</div></div>`;
+  }).join("");
+}
+
+function parseAppraisal(summaryText) {
+  const text = String(summaryText || "");
+  const found = [];
+  for (const key of ["통제 상실", "목표 차단", "소진", "위협", "상실", "분노", "불안", "회복"]) {
+    const match = text.match(new RegExp(`${key}\\s*(매우 높음|높음|중간|낮음|매우 낮음)`));
+    if (match) found.push(`${key} ${match[1]}`);
+  }
+  return found;
+}
+
+function feltHeadline(record) {
+  const tendency = compact(record.appraisal_tendency, "");
+  const target = compact(record.appraisal_target, "");
+  const appraisal = String(record.appraisal_summary_text || "");
+  const tags = Array.isArray(record.style_tags) ? record.style_tags.join(" ") : "";
+  const source = `${tendency} ${target} ${appraisal} ${tags}`;
+  if (/회복|후퇴|소진|피로|멍|휴식|탈진/.test(source)) {
+    return "지금은 더 밀어붙이기보다 물러나 회복하고 싶은 상태로 읽었습니다.";
+  }
+  if (/분노|따지고|공격|부당|무시/.test(source)) {
+    return "부당하게 밀려났고 바로잡고 싶은 분노로 읽었습니다.";
+  }
+  if (/불안|걱정|예민|위협/.test(source)) {
+    return "좋은 일 안에서도 불안과 경계가 남아 있는 상태로 읽었습니다.";
+  }
+  if (/슬픔|상실|외로움/.test(source)) {
+    return "상실감이나 외로움이 앞에 나와 있는 상태로 읽었습니다.";
+  }
+  return "감정의 방향을 먼저 잡고, 그 방향에 맞춰 답변을 만들었습니다.";
+}
+
+function strongestStyle(summary) {
+  if (!summary || typeof summary !== "object") return "style meter 없음";
+  const entries = Object.entries(summary)
+    .filter(([, value]) => typeof value === "number" && Number.isFinite(value))
+    .sort((a, b) => Number(b[1]) - Number(a[1]));
+  if (!entries.length) return "style meter 없음";
+  const [key, value] = entries[0];
+  return `${key} ${num(value, 2)}`;
+}
+
+function feltState(record) {
+  const tendency = compact(record.appraisal_tendency, "");
+  const appraisal = String(record.appraisal_summary_text || "");
+  const trace = String(record.trace_summary_text || "");
+  const tags = Array.isArray(record.style_tags) ? record.style_tags.join(" ") : "";
+  const source = `${record.input_text || ""} ${tendency} ${appraisal} ${trace} ${tags}`;
+
+  if (/분노|따지고|공격|부당|무시|목표 차단/.test(source)) {
+    return {
+      kind: "anger",
+      signal: "felt signal: anger / blocked agency",
+      quote: "나는 지금 밀려났고, 그냥 넘기고 싶지 않다.",
+      body: "핵심 정서는 위로받고 싶은 약함보다, 부당함을 바로잡고 싶은 긴장으로 읽힙니다.",
+      impulse: "맞서기",
+      restraint: "폭발 직전의 절제",
+    };
+  }
+  if (/불안|걱정|예민|위협|경계/.test(source)) {
+    return {
+      kind: "anxiety",
+      signal: "felt signal: anxiety / vigilance",
+      quote: "좋은 일이어도, 아직 안심하면 안 될 것 같다.",
+      body: "기쁨보다 먼저 위험을 스캔하는 감각이 앞에 있고, 작은 단서에도 몸이 조여드는 쪽입니다.",
+      impulse: "확인하고 대비하기",
+      restraint: "성급한 안심 거부",
+    };
+  }
+  if (/회복|후퇴|소진|피로|멍|휴식|탈진|놓아버리고/.test(source)) {
+    return {
+      kind: "exhaustion",
+      signal: "felt signal: exhaustion / withdrawal",
+      quote: "더 버티라는 말보다, 지금은 멈출 구실이 필요하다.",
+      body: "추진력보다 방전감이 크고, 해결책을 더 얹기 전에 에너지가 빠진 상태로 읽힙니다.",
+      impulse: "물러나기",
+      restraint: "추가 압박 회피",
+    };
+  }
+  if (/슬픔|상실|외로움|잃/.test(source)) {
+    return {
+      kind: "grief",
+      signal: "felt signal: grief / loss",
+      quote: "없어진 자리가 너무 커서, 말이 늦게 따라온다.",
+      body: "분석이나 해결보다 상실의 무게가 먼저 있고, 빠른 전환을 거부하는 정서입니다.",
+      impulse: "붙잡고 인정하기",
+      restraint: "성급한 회복 거부",
+    };
+  }
+  return {
+    kind: "recovery",
+    signal: "felt signal: mixed affect",
+    quote: "감정의 방향을 잡아야 답의 톤도 정해진다.",
+    body: "뚜렷한 단일 감정보다는 appraisal, trace, style 신호를 묶어 반응 방향을 정한 상태입니다.",
+    impulse: compact(tendency),
+    restraint: "과잉 해석 보류",
+  };
+}
+
+function feltPanel(record) {
+  if (!record) return "";
+  const state = feltState(record);
+  const appraisals = parseAppraisal(record.appraisal_summary_text);
+  return `
+    <div class="felt-panel ${esc(state.kind)}">
+      <div>
+        <div class="felt-signal">${esc(state.signal)}</div>
+        <div class="felt-quote">${esc(state.quote)}</div>
+        <div class="felt-body">${esc(state.body)}</div>
+      </div>
+      <div class="felt-readout">
+        <div class="felt-row"><div class="k">action tendency</div><div class="v">${esc(state.impulse)}</div></div>
+        <div class="felt-row"><div class="k">guardrail</div><div class="v">${esc(state.restraint)}</div></div>
+        <div class="felt-row"><div class="k">target</div><div class="v">${esc(targetLabel(record.appraisal_target))}</div></div>
+        <div class="felt-row"><div class="k">strongest style</div><div class="v">${esc(strongestStyle(record.style_summary))}</div></div>
+        <div class="felt-row"><div class="k">appraisal cues</div><div class="v">${esc(appraisals.slice(0, 3).join(" · ") || compact(record.appraisal_summary_text, "none"))}</div></div>
+      </div>
+    </div>
+  `;
+}
+
+function targetLabel(value) {
+  const raw = String(value || "").trim();
+  const map = {
+    situation: "상황/업무 맥락",
+    self: "자기 자신",
+    other: "타인",
+    relationship: "관계",
+    future: "미래"
+  };
+  return map[raw] || raw || "불명확";
+}
+
 function vectorBars(values) {
-  const arr = Array.isArray(values) ? values.slice(0, 32).map(Number).filter(Number.isFinite) : [];
+  const arr = Array.isArray(values) ? values.slice(0, 40).map(Number).filter(Number.isFinite) : [];
   if (!arr.length) return "<span class='muted'>no vector</span>";
   const maxAbs = Math.max(...arr.map(v => Math.abs(v)), 0.0001);
   return `<div class="vector">${arr.map(v => {
-    const h = Math.max(4, Math.round((Math.abs(v) / maxAbs) * 50));
+    const h = Math.max(4, Math.round((Math.abs(v) / maxAbs) * 34));
     const color = v >= 0 ? "#6fd08a" : "#ff8a8a";
-    return `<span class="bar" title="${num(v)}" style="height:${h}px;background:${color}"></span>`;
+    const margin = v >= 0 ? `margin-bottom:${34 - h}px` : `margin-top:${34 - h}px`;
+    return `<span class="vbar-wrap" title="${num(v)}"><span class="vbar" style="height:${h}px;background:${color};${margin}"></span></span>`;
   }).join("")}</div>`;
 }
 
 function processHtml(record) {
   if (!record) return "";
   const usage = record.llm_usage || {};
+  const appraisals = parseAppraisal(record.appraisal_summary_text);
   const validation = Array.isArray(record.response_validation_errors) && record.response_validation_errors.length
     ? listItems(record.response_validation_errors)
     : "<span class='ok'>passed</span>";
   return `
     <div class="process">
-      <h3>Internal Process</h3>
+      <h3>Internal Process: EmoNet이 답변을 만들기 전 읽은 것</h3>
+      <div class="felt">
+        <div class="felt-label">EmoNet felt this as</div>
+        <div class="felt-main">${esc(feltHeadline(record))}</div>
+        <div class="felt-sub">${esc(compact(record.appraisal_summary_text, "appraisal unavailable"))}</div>
+        <div class="felt-grid">
+          <div class="felt-chip"><div class="k">정서 방향</div><div class="v">${esc(compact(record.appraisal_tendency))}</div></div>
+          <div class="felt-chip"><div class="k">초점 대상</div><div class="v">${esc(targetLabel(record.appraisal_target))}</div></div>
+          <div class="felt-chip"><div class="k">핵심 단서</div><div class="v">${esc(appraisals.slice(0, 3).join(" · ") || compact(record.trace_summary_text, "trace"))}</div></div>
+        </div>
+      </div>
       <div class="steps">
         <div class="step"><div class="num">01</div><div class="title">Input</div><div class="desc">${esc(compact(record.input_text))}</div></div>
         <div class="step"><div class="num">02</div><div class="title">Branch</div><div class="desc">${esc(record.dominant_branch_len || 0)} branch nodes · ${esc(record.ticks_run || 0)} ticks</div></div>
         <div class="step"><div class="num">03</div><div class="title">Trace</div><div class="desc">${esc(compact(record.trace_summary_text, "trace summarized"))}</div></div>
         <div class="step"><div class="num">04</div><div class="title">Conditioning</div><div class="desc">${esc(record.conditioning_mode)} · ${esc(record.style_profile)}</div></div>
         <div class="step"><div class="num">05</div><div class="title">Claude</div><div class="desc">${esc(record.llm_model_name)} · retries ${esc(record.response_retry_count || 0)}</div></div>
+      </div>
+      <div class="insight">
+        <div class="insight-card"><div class="name">읽힌 정서 방향</div><div class="value">${esc(compact(record.appraisal_tendency))}</div></div>
+        <div class="insight-card"><div class="name">초점 대상</div><div class="value">${esc(compact(record.appraisal_target))}</div></div>
+        <div class="insight-card"><div class="name">동역학 상태</div><div class="value">${esc(compact(record.termination_reason))}</div></div>
+        <div class="insight-card"><div class="name">응답 검증</div><div class="value">${Array.isArray(record.response_validation_errors) && record.response_validation_errors.length ? "retry noted" : "passed"}</div></div>
       </div>
       <div class="detail-grid">
         <div class="detail">
@@ -510,8 +724,9 @@ function processHtml(record) {
           </div>
         </div>
         <div class="detail">
-          <div class="detail-title">Style Tags</div>
+          <div class="detail-title">Style Profile</div>
           ${chips(record.style_tags)}
+          ${meterRows(record.style_summary)}
           <div class="pre">${esc(compact(record.style_summary_text))}</div>
         </div>
         <div class="detail">
@@ -519,8 +734,8 @@ function processHtml(record) {
           <div class="pre">${esc(compact(record.expression_cues_text))}</div>
         </div>
         <div class="detail">
-          <div class="detail-title">Trace Lines</div>
-          ${listItems(record.trace_lines, 8)}
+          <div class="detail-title">Trace Phases</div>
+          ${phaseRows(record.trace_lines)}
         </div>
         <div class="detail">
           <div class="detail-title">Appraisal</div>
@@ -539,6 +754,10 @@ function processHtml(record) {
           ${vectorBars(record.z)}
         </div>
       </div>
+      <details>
+        <summary>Raw trace lines</summary>
+        ${listItems(record.trace_lines, 12)}
+      </details>
     </div>
   `;
 }
@@ -546,7 +765,7 @@ function processHtml(record) {
 function renderChat() {
   $("chatlog").innerHTML = messages.map(m => {
     const bubble = `<div class="msg ${esc(m.role)}">${esc(m.content)}</div>`;
-    return m.role === "assistant" ? bubble + processHtml(m.record) : bubble;
+    return m.role === "assistant" ? bubble + feltPanel(m.record) + processHtml(m.record) : bubble;
   }).join("");
   renderUsage();
 }

@@ -225,6 +225,52 @@ def nearest_neighbor(rows: list[dict[str, str]], distances: np.ndarray, axes: li
     return result
 
 
+def balanced_nearest_neighbor(
+    rows: list[dict[str, str]],
+    distances: np.ndarray,
+    axes: list[str],
+) -> dict[str, dict[str, float]]:
+    if distances.shape[0] < 2:
+        return {}
+    masked = distances.copy()
+    np.fill_diagonal(masked, math.inf)
+    nearest = np.argmin(masked, axis=1)
+
+    result: dict[str, dict[str, float]] = {}
+    for axis in axes:
+        labels = [norm(row.get(axis, "")) for row in rows]
+        counts = Counter(label for label in labels if label)
+        eligible_labels = [label for label, count in counts.items() if count >= 2]
+        per_label_hits: list[float] = []
+        per_label_random: list[float] = []
+        for label in eligible_labels:
+            indices = [idx for idx, value in enumerate(labels) if value == label]
+            if not indices:
+                continue
+            hits = 0
+            total = 0
+            for idx in indices:
+                neighbor_label = labels[int(nearest[idx])]
+                if not neighbor_label:
+                    continue
+                total += 1
+                if neighbor_label == label:
+                    hits += 1
+            if total:
+                per_label_hits.append(hits / total)
+                per_label_random.append((len(indices) - 1) / max(1, len(rows) - 1))
+
+        macro_consistency = sum(per_label_hits) / len(per_label_hits) if per_label_hits else 0.0
+        macro_random = sum(per_label_random) / len(per_label_random) if per_label_random else 0.0
+        result[axis] = {
+            "eligible_label_count": len(per_label_hits),
+            "balanced_nearest_neighbor_consistency": round(macro_consistency, 6),
+            "balanced_random_baseline": round(macro_random, 6),
+            "balanced_lift": round(macro_consistency - macro_random, 6),
+        }
+    return result
+
+
 def group_distances(rows: list[dict[str, str]], distances: np.ndarray, axes: list[str]) -> dict[str, dict[str, float]]:
     result: dict[str, dict[str, float]] = {}
     for axis in axes:
@@ -290,6 +336,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "branch_health": branch_health(rows),
         "value_counts": value_counts(rows, LABEL_AXES),
         "nearest_neighbor": nearest_neighbor(rows, distances, LABEL_AXES),
+        "balanced_nearest_neighbor": balanced_nearest_neighbor(rows, distances, LABEL_AXES),
         "group_distances": group_distances(rows, distances, LABEL_AXES),
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)

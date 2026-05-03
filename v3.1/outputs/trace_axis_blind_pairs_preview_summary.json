@@ -1,0 +1,14 @@
+{
+  "rows": 36,
+  "ok_rows": 0,
+  "error_rows": 36,
+  "overall": {
+    "n": 0,
+    "winner_counts": {},
+    "success_count": 0,
+    "success_rate": 0.0,
+    "tie_rate": 0.0
+  },
+  "by_question_type": {},
+  "by_axis": {}
+}

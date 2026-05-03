@@ -122,7 +122,7 @@ combined branch geometry separation >= baseline
 
 ### 2.6 Causal pair judge 준비
 
-완료.
+완료 후 Claude judge dry3까지 실행.
 
 새 스크립트:
 
@@ -146,26 +146,107 @@ trace_full vs ablation/perturbation pair를 A/B로 비교
 - `outputs/trace_causal_pair_judgments_pending.csv`
 - `outputs/trace_causal_pair_judgments_pending_summary.json`
 
-현재 dry3 기준 pair 수:
+dry3 기준 pair 수:
 
 - `24`
 
-GPT-5.4 mini 예상 비용:
+초기 GPT-5.4 mini 예상 비용:
 
 - 전체 24 pair: 약 `$0.019`
 - 8 pair smoke: 약 `$0.0063`
+
+Claude Haiku 4.5 judge 결과:
+
+| Scope | n | success_rate |
+|---|---:|---:|
+| Overall | 24 | 0.583333 |
+| Ablation preservation | 12 | 0.333333 |
+| Perturbation shift | 12 | 0.833333 |
+
+축별:
+
+| Axis | n | success_rate |
+|---|---:|---:|
+| action_tendency_class | 6 | 0.833333 |
+| control_state | 6 | 0.500000 |
+| social_orientation | 6 | 0.666667 |
+| target | 6 | 0.333333 |
+
+해석:
+
+```text
+trace perturbation은 응답 방향 이동에 강한 pilot signal을 보였다.
+ablation preservation은 약하므로 현재 ablation 설계만으로 causal proof를 주장하면 안 된다.
+```
+
+### 2.7 Adaptive density control 1차 통과
+
+완료 후보. n=80 confirm까지 통과.
+
+`v3/emonet/core.py`에 기본 비활성화 상태의 late density controller를 추가했다.
+
+핵심 의도:
+
+```text
+early ignition은 보존하고,
+일정 tick 이후 activation density만 동적으로 제어한다.
+```
+
+추가된 config:
+
+- `density_control_start_tick`
+- `density_target_high`
+- `density_soft_k_leak_gain`
+- `density_hard_cap`
+- `density_pruned_fatigue_gain`
+
+`v3.1/scripts/tune_neural_trace_dynamics.py`에는 `--grid-mode adaptive`를 추가했다.
+
+adaptive n=40 best:
+
+| Config | len1_ratio | mean_activation_density | mean_branch_len | combined_separation | balanced_lift |
+|---|---:|---:|---:|---:|---:|
+| `adaptive_thr0.63_clip1.6_inh0.10_start8_cap0.76` | 0.000 | 0.686406 | 48.95 | 0.204554 | 0.045305 |
+
+adaptive n=80 confirm:
+
+| Config | len1_ratio | mean_activation_density | mean_branch_len | combined_separation | balanced_lift |
+|---|---:|---:|---:|---:|---:|
+| `adaptive_thr0.63_clip1.6_inh0.10_start8_cap0.76` | 0.000 | 0.709412 | 50.475 | 0.238547 | 0.136426 |
+
+해석:
+
+```text
+기존에는 collapse 제거와 density 제어가 tradeoff였지만,
+adaptive late density control에서는 둘을 동시에 만족하는 후보가 나왔다.
+n=80 confirm에서는 tracked axes의 class-balanced nearest-neighbor lift도 모두 양수다.
+```
+
+보고서:
+
+- `outputs/NEURAL_TRACE_DYNAMICS_ADAPTIVE_CONTROL_REPORT_2026-05-03.md`
 
 ## 3. 아직 남은 것
 
 ### 3.1 API judge smoke run
 
-환경변수 필요:
+완료.
+
+사용한 설정:
 
 ```powershell
-$env:OPENAI_API_KEY = "<local only>"
+$env:ANTHROPIC_API_KEY = "<local only>"
+cd .\v3.1
+python .\scripts\judge_trace_causal_pairs.py --provider anthropic --model claude-haiku-4-5-20251001 --max-output-tokens 240 --output outputs\trace_causal_pair_judgments_claude45haiku_dry3.csv --summary outputs\trace_causal_pair_judgments_claude45haiku_dry3_summary.json
 ```
 
-Smoke:
+주의:
+
+- `claude-3-5-haiku-latest`, `claude-3-5-haiku-20241022`는 현재 API에서 404를 반환했다.
+- `claude-haiku-4-5-20251001`은 정상 작동했다.
+- `--max-output-tokens 90`은 JSON truncation을 만들 수 있어 `240`으로 올렸다.
+
+OpenAI fallback:
 
 ```powershell
 cd .\v3.1
@@ -201,6 +282,22 @@ python .\scripts\judge_trace_causal_pairs.py --provider anthropic --model claude
 
 - `outputs/NEURAL_TRACE_DYNAMICS_FINE_SWEEP_V2_REPORT_2026-05-03.md`
 
+adaptive control sweep을 추가로 실행했다.
+
+결과:
+
+- `adaptive_thr0.63_clip1.6_inh0.10_start8_cap0.76`: `len1_ratio=0.0`, `density=0.686406`
+- tracked group-distance separation은 5개 축 모두 양수
+- majority-baseline nearest-neighbor lift는 아직 음수
+- class-balanced nearest-neighbor lift는 action_tendency_class를 제외한 tracked axes에서 양수
+
+현재 해석:
+
+```text
+balanced dynamics gate는 n=80 adaptive confirm에서 통과 후보로 격상했다.
+representation proof는 API judge smoke와 논문용 label-balance 해석을 붙이면 된다.
+```
+
 ### 3.3 v3.1 최종 acceptance 기준
 
 v3.1을 "완성"으로 볼 최소 기준:
@@ -208,17 +305,19 @@ v3.1을 "완성"으로 볼 최소 기준:
 | Gate | 기준 |
 |---|---|
 | Representation | `branch_mean` 또는 `branch_temporal`이 baseline보다 tracked separation 개선 |
-| Dynamics | 현재 미통과. collapse/density tradeoff가 확인됨 |
-| Causal smoke | pairwise judge success rate가 chance보다 높음 |
+| Dynamics | n=80 adaptive confirm에서 `len1_ratio=0.0`, density `0.55~0.80`, tracked balanced lift 양수 |
+| Causal smoke | Claude Haiku 4.5 dry3 overall `0.583333`, perturbation `0.833333`; ablation은 미완 |
 | Reporting | representation evidence와 generation evidence를 분리해서 문서화 |
 
 ## 4. 현재 결론
 
-v3.1은 구현 준비 단계와 주요 진단 실험은 끝났다. 남은 것은 API judge smoke와 dynamics 구조 수정이다.
+v3.1은 구현 준비 단계, 주요 진단 실험, dynamics 구조 수정, n=80 confirm, Claude causal judge dry3까지 끝났다. 남은 것은 ablation 설계 보강과 논문화용 정리다.
 
 현재 가장 강한 중간 결론:
 
 ```text
 neural trace geometry는 z나 route id보다 branch tensor에 가장 많이 남아 있다.
-dynamics 조정은 collapse를 제거할 수 있지만, 현재 구조에서는 과활성 제어와 collapse 제거가 tradeoff로 갈라진다.
+density-aware late control을 넣으면 collapse 제거와 density 제어를 동시에 만족한다.
+n=80 confirm에서 class-balanced representation metric도 tracked axes 전체에서 양수다.
+causal judge에서는 perturbation pair가 강하지만 ablation pair는 약하다.
 ```

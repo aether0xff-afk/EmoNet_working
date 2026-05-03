@@ -1,0 +1,41 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - heading "Claude" [level=2] [ref=e4]
+    - generic [ref=e5]: API key
+    - textbox "API key" [ref=e6]:
+      - /placeholder: ANTHROPIC_API_KEY or paste here
+    - generic [ref=e7]: Budget
+    - spinbutton "Budget" [ref=e8]: "22"
+    - paragraph [ref=e9]: 키는 브라우저 메모리와 요청 본문에만 사용하고 파일에 저장하지 않습니다.
+    - button "Clear chat" [ref=e10] [cursor=pointer]
+    - button "Reset usage" [ref=e11] [cursor=pointer]
+  - main [ref=e12]:
+    - generic [ref=e14]:
+      - heading "EmoNet v4 Local" [level=1] [ref=e15]
+      - generic [ref=e16]: Streamlit을 제거한 안정판입니다. Claude Chat과 Human A/B만 제공합니다.
+      - generic [ref=e17]:
+        - generic [ref=e18]: "provider: anthropic"
+        - generic [ref=e19]: "model: claude-sonnet-4-20250514"
+        - generic [ref=e20]: "mode: hybrid_trace"
+        - generic [ref=e21]: "style: extended40"
+    - generic [ref=e22]:
+      - button "Chat" [ref=e23] [cursor=pointer]
+      - button "Human A/B" [ref=e24] [cursor=pointer]
+    - generic [ref=e25]:
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - generic [ref=e28]: Session spent
+          - generic [ref=e29]: $0.0000
+        - generic [ref=e30]:
+          - generic [ref=e31]: Budget left
+          - generic [ref=e32]: $22.00
+        - generic [ref=e33]:
+          - generic [ref=e34]: Tokens
+          - generic [ref=e35]: 0 / 0
+      - generic [ref=e36]:
+        - button "회의에서 또 나만 공개적으로 무시당했어. 바로 따지고 싶을 정도로 거슬려." [ref=e37] [cursor=pointer]
+        - button "이번 주 내내 야근이라 머리가 멍하고 다 놓아버리고 싶어." [ref=e38] [cursor=pointer]
+        - button "잘된 일인데도 이상하게 기쁘기보다 불안하고 예민해." [ref=e39] [cursor=pointer]
+      - generic [ref=e40]:
+        - textbox "메시지를 입력하세요" [ref=e41]
+        - button "Send" [ref=e42] [cursor=pointer]

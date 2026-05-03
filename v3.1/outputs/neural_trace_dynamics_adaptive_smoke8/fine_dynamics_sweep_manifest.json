@@ -1,0 +1,46 @@
+{
+  "output_dir": "outputs\\neural_trace_dynamics_adaptive_smoke8",
+  "summary_csv": "outputs\\neural_trace_dynamics_adaptive_smoke8\\fine_dynamics_sweep_summary.csv",
+  "limit": 8,
+  "n_neurons": 256,
+  "tracked_axes": [
+    "valence",
+    "social_orientation",
+    "action_tendency_class",
+    "appraisal_family",
+    "control_state"
+  ],
+  "density_target": [
+    0.55,
+    0.8
+  ],
+  "configs": 1,
+  "top_configs": [
+    {
+      "config": "adaptive_thr0.60_clip1.6_inh0.10_start8_cap0.78",
+      "ok_rows": 8,
+      "error_rows": 0,
+      "mean_branch_len": 38.5,
+      "len1_ratio": 0.0,
+      "mean_activation_density": 0.696831,
+      "tracked_lift_mean": -0.2,
+      "tracked_separation_mean": -0.231553,
+      "branch_temporal_lift_mean": -0.2,
+      "branch_temporal_separation_mean": -0.341416,
+      "combined_lift_mean": -0.2,
+      "combined_separation_mean": -0.264512,
+      "objective": -0.608535,
+      "valence_lift": 0.0,
+      "social_orientation_lift": -0.25,
+      "action_tendency_class_lift": -0.375,
+      "appraisal_family_lift": -0.25,
+      "control_state_lift": -0.125,
+      "valence_separation": -1.405297,
+      "social_orientation_separation": 0.108072,
+      "action_tendency_class_separation": 0.027886,
+      "appraisal_family_separation": 0.108072,
+      "control_state_separation": 0.003503,
+      "params_json": "{\"activity_churn_eps\": 0.02, \"density_control_start_tick\": 8, \"density_hard_cap\": 0.78, \"density_pruned_fatigue_gain\": 0.06, \"density_soft_k_leak_gain\": 1.25, \"density_target_high\": 0.72, \"fatigue_gain\": 0.14, \"fatigue_k_leak\": 0.03, \"fatigue_threshold_gain\": 0.07, \"inhibitory_suppression_gain\": 0.1, \"input_signal_clip\": 1.6, \"input_topk\": 4, \"intrinsic_alignment_gain\": 0.24, \"k_decay\": 0.99, \"k_remem_base\": 0.78, \"k_threshold_base\": 0.6, \"ne_remem_reduce_gain\": 0.25, \"ne_thresh_reduce_gain\": 0.25, \"refractory_ticks\": 1}"
+    }
+  ]
+}

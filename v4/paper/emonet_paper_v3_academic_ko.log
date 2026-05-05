@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999995 (MiKTeX 24.1) (preloaded format=xelatex 2026.5.5)  5 MAY 2026 16:49
+This is XeTeX, Version 3.141592653-2.6-0.999995 (MiKTeX 24.1) (preloaded format=xelatex 2026.5.5)  5 MAY 2026 22:25
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -766,35 +766,34 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
  [3]
 File: figures_full_ko/full_research_pipeline.png Graphic file (type bmp)
 <figures_full_ko/full_research_pipeline.png>
- [4] [5] [6] [7]
+ [4] [5] [6] [7] [8]
 File: figures_full_ko/emotion_definition_shift.png Graphic file (type bmp)
 <figures_full_ko/emotion_definition_shift.png>
 File: figures_full_ko/version_timeline.png Graphic file (type bmp)
 <figures_full_ko/version_timeline.png>
- [8]
 File: figures_full_ko/v1_pipeline_gui.png Graphic file (type bmp)
 <figures_full_ko/v1_pipeline_gui.png>
  [9]
 File: figures_full_ko/v2_module_structure.png Graphic file (type bmp)
 <figures_full_ko/v2_module_structure.png>
+ [10]
 File: figures_full_ko/v2_neuron_types.png Graphic file (type bmp)
 <figures_full_ko/v2_neuron_types.png>
- [10]
 File: figures_full_ko/branch_collapse_recovery.png Graphic file (type bmp)
 <figures_full_ko/branch_collapse_recovery.png>
 
 [11]
 File: figures_full_ko/style_bias_korean.png Graphic file (type bmp)
 <figures_full_ko/style_bias_korean.png>
+ [12]
 File: figures_full_ko/v31_adaptive_metrics.png Graphic file (type bmp)
 <figures_full_ko/v31_adaptive_metrics.png>
 File: figures_full_ko/v31_causal_results.png Graphic file (type bmp)
 <figures_full_ko/v31_causal_results.png>
- [12]
+ [13]
 File: figures_full_ko/episode_conditioning_workflow.png Graphic file (type bmp)
 
 <figures_full_ko/episode_conditioning_workflow.png>
- [13]
 File: figures_full_ko/experiment_before_after_map.png Graphic file (type bmp)
 <figures_full_ko/experiment_before_after_map.png>
  [14] [15]
@@ -804,26 +803,23 @@ File: figures_full_ko/v4_paired_win_tie_loss.png Graphic file (type bmp)
 <figures_full_ko/v4_paired_win_tie_loss.png>
 File: figures_full_ko/metric_taxonomy.png Graphic file (type bmp)
 <figures_full_ko/metric_taxonomy.png>
- [16] [17]
+ [16] [17] [18]
 File: figures_full_ko/general_vs_targeted_after.png Graphic file (type bmp)
 <figures_full_ko/general_vs_targeted_after.png>
 File: figures_full_ko/targeted_metric_deltas_after.png Graphic file (type bmp)
 <figures_full_ko/targeted_metric_deltas_after.png>
- [18] [19]
+ [19]
 File: figures_full_ko/claim_boundary_map.png Graphic file (type bmp)
 <figures_full_ko/claim_boundary_map.png>
- [20]
+ [20] [21]
 File: figures_full_ko/module_evidence_map.png Graphic file (type bmp)
 <figures_full_ko/module_evidence_map.png>
 
 
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-
 LaTeX Font Warning: Font shape `TU/NotoSerifKR(0)/m/it' undefined
-(Font)              using `TU/NotoSerifKR(0)/m/n' instead on input line 506.
+(Font)              using `TU/NotoSerifKR(0)/m/n' instead on input line 500.
 
-[21] [22] [23] (emonet_paper_v3_academic_ko.aux)
+[22] [23] (emonet_paper_v3_academic_ko.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-04>
@@ -832,20 +828,14 @@ L3 programming layer <2024-01-04>
 
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
-
-Package rerunfilecheck Warning: File `emonet_paper_v3_academic_ko.out' has chan
-ged.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
-
-Package rerunfilecheck Info: Checksums for `emonet_paper_v3_academic_ko.out':
-(rerunfilecheck)             Before: EE70C04C00DB6814561EA02D9C8798CE;8494
-(rerunfilecheck)             After:  8E4CFAD4AA8C248BBA178F2EED90FA3A;8494.
+Package rerunfilecheck Info: File `emonet_paper_v3_academic_ko.out' has not cha
+nged.
+(rerunfilecheck)             Checksum: 675E135E39116551C8B8358171114B58;8404.
  ) 
 Here is how much of TeX's memory you used:
  18253 strings out of 409617
  318769 string characters out of 5774014
- 1959191 words of memory out of 5000000
+ 1961191 words of memory out of 5000000
  40121 multiletter control sequences out of 15000+600000
  564870 words of font info for 92 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191

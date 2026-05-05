@@ -1,0 +1,56 @@
+\contentsline {section}{\numberline {1}서론}{4}{section.1}%
+\contentsline {subsection}{\numberline {1.1}연구 문제}{4}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}주요 기여}{4}{subsection.1.2}%
+\contentsline {section}{\numberline {2}선행 연구}{4}{section.2}%
+\contentsline {subsection}{\numberline {2.1}기본 감정 이론과 범주형 감정 표현}{4}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}차원형 감정 이론과 감정 벡터 표현}{5}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}평가 이론과 감정의 과정성}{5}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}정서 컴퓨팅과 기계의 감정 처리}{6}{subsection.2.4}%
+\contentsline {subsection}{\numberline {2.5}공감 대화 모델과 감정 상황 기반 데이터셋}{6}{subsection.2.5}%
+\contentsline {subsection}{\numberline {2.6}LLM-as-a-Judge 평가와 편향 문제}{6}{subsection.2.6}%
+\contentsline {section}{\numberline {3}선행 연구로부터 도출되는 문제 제기}{6}{section.3}%
+\contentsline {subsection}{\numberline {3.1}선행 연구가 남긴 공백}{6}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}LLM 공감 응답의 표면적 자연스러움과 구조적 결핍}{7}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}라벨과 벡터를 넘어 내부 trace가 필요한 이유}{7}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}내부 상태 모델링의 필요성}{7}{subsection.3.4}%
+\contentsline {section}{\numberline {4}개념적 정의와 연구 가설}{8}{section.4}%
+\contentsline {subsection}{\numberline {4.1}자극, 상태, trace의 구분}{8}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}trace-as-emotion 가설}{8}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}에피소드 조건화 가설}{8}{subsection.4.3}%
+\contentsline {section}{\numberline {5}시스템 발전 과정}{9}{section.5}%
+\contentsline {subsection}{\numberline {5.1}v1: 내부 상태화 파이프라인의 형성}{9}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}v2: 모듈형 감정 동역학 시스템}{10}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}v3: dominant branch와 collapse의 발견}{11}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}v3.1: trace-as-emotion 정의 전환}{12}{subsection.5.4}%
+\contentsline {subsection}{\numberline {5.5}v4: 에피소드 해석과 targeted 평가}{13}{subsection.5.5}%
+\contentsline {section}{\numberline {6}실험 설계}{14}{section.6}%
+\contentsline {subsection}{\numberline {6.1}실험 흐름}{14}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}초기 구조 실험}{14}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}branch/dynamics 보정 실험}{15}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}스타일 편향 분석}{15}{subsection.6.4}%
+\contentsline {subsection}{\numberline {6.5}trace 표현 검증}{15}{subsection.6.5}%
+\contentsline {subsection}{\numberline {6.6}trace 인과 조작 실험}{15}{subsection.6.6}%
+\contentsline {subsection}{\numberline {6.7}episode 응답 생성 및 targeted 비교}{16}{subsection.6.7}%
+\contentsline {section}{\numberline {7}평가 지표}{16}{section.7}%
+\contentsline {subsection}{\numberline {7.1}동역학 지표}{16}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}표현 지표}{17}{subsection.7.2}%
+\contentsline {subsection}{\numberline {7.3}인과 지표}{17}{subsection.7.3}%
+\contentsline {subsection}{\numberline {7.4}생성 지표}{17}{subsection.7.4}%
+\contentsline {section}{\numberline {8}결과}{17}{section.8}%
+\contentsline {subsection}{\numberline {8.1}내부 상태화 구조의 성립}{17}{subsection.8.1}%
+\contentsline {subsection}{\numberline {8.2}branch collapse 완화}{18}{subsection.8.2}%
+\contentsline {subsection}{\numberline {8.3}스타일 편향 확인}{18}{subsection.8.3}%
+\contentsline {subsection}{\numberline {8.4}trace 표현 검증}{18}{subsection.8.4}%
+\contentsline {subsection}{\numberline {8.5}인과 조작 결과}{18}{subsection.8.5}%
+\contentsline {subsection}{\numberline {8.6}일반 조건 실패와 targeted 조건 성공}{18}{subsection.8.6}%
+\contentsline {section}{\numberline {9}논의}{18}{section.9}%
+\contentsline {subsection}{\numberline {9.1}결과 벡터 중심 감정관에서 과정 중심 감정관으로}{18}{subsection.9.1}%
+\contentsline {subsection}{\numberline {9.2}실패가 연구를 조직한 방식}{19}{subsection.9.2}%
+\contentsline {subsection}{\numberline {9.3}LLM judge 편향에 대한 해석}{20}{subsection.9.3}%
+\contentsline {subsection}{\numberline {9.4}EmoTrace가 실제로 만든 것}{20}{subsection.9.4}%
+\contentsline {section}{\numberline {10}한계와 주장 가능 범위}{20}{section.10}%
+\contentsline {section}{\numberline {11}향후 연구}{21}{section.11}%
+\contentsline {section}{\numberline {12}결론}{21}{section.12}%
+\contentsline {section}{\numberline {A}핵심 용어}{21}{appendix.A}%
+\contentsline {section}{\numberline {B}모듈과 증거의 연결}{22}{appendix.B}%
+\contentsline {section}{\numberline {C}참고 자료}{22}{appendix.C}%

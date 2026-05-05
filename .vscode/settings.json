@@ -1,6 +1,42 @@
 {
     "python-envs.defaultEnvManager": "ms-python.python:conda",
     "python-envs.defaultPackageManager": "ms-python.python:conda",
-    "python.defaultInterpreterPath": "C:/Users/esl01/miniconda3/envs/emonet/python.exe"
-
+    "python.defaultInterpreterPath": "C:/Users/esl01/miniconda3/envs/emonet/python.exe",
+    "latex-workshop.latex.autoBuild.run": "onSave",
+    "latex-workshop.latex.recipe.default": "xelatex",
+    "latex-workshop.view.pdf.viewer": "tab",
+    "latex-workshop.latex.outDir": "%DIR%",
+    "latex-workshop.latex.recipes": [
+        {
+            "name": "xelatex",
+            "tools": [
+                "xelatex",
+                "xelatex"
+            ]
+        }
+    ],
+    "latex-workshop.latex.tools": [
+        {
+            "name": "xelatex",
+            "command": "xelatex",
+            "args": [
+                "-synctex=1",
+                "-interaction=nonstopmode",
+                "-file-line-error",
+                "%DOCFILE%"
+            ],
+            "cwd": "%DIR%",
+            "env": {}
+        }
+    ],
+    "[latex]": {
+        "editor.wordWrap": "on",
+        "editor.wordWrapColumn": 100,
+        "editor.wrappingIndent": "same"
+    },
+    "[tex]": {
+        "editor.wordWrap": "on",
+        "editor.wordWrapColumn": 100,
+        "editor.wrappingIndent": "same"
+    }
 }

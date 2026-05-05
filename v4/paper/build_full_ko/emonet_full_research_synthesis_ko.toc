@@ -1,0 +1,50 @@
+\contentsline {section}{\numberline {1}서론}{3}{section.1}%
+\contentsline {section}{\numberline {2}연구 질문}{3}{section.2}%
+\contentsline {section}{\numberline {3}버전별 시스템 발전}{4}{section.3}%
+\contentsline {subsection}{\numberline {3.1}v1: 감정 z 파이프라인}{4}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}v2: 모듈형 PyTorch MVP}{4}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}v3: 지배 흐름, 보정, z/s 연결}{4}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}v3.1: 신경 활성 추적 자체를 감정으로 정의}{5}{subsection.3.4}%
+\contentsline {subsection}{\numberline {3.5}v4: 감정 에피소드 해석과 targeted 우월성}{5}{subsection.3.5}%
+\contentsline {section}{\numberline {4}전체 방법}{6}{section.4}%
+\contentsline {subsection}{\numberline {4.1}입력과 자극}{6}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}신경 동역학}{6}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}지배 흐름}{6}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}잠재 표현과 스타일 표현}{6}{subsection.4.4}%
+\contentsline {subsection}{\numberline {4.5}에피소드 해석}{6}{subsection.4.5}%
+\contentsline {section}{\numberline {5}지표}{7}{section.5}%
+\contentsline {subsection}{\numberline {5.1}동역학 지표}{7}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}표현 지표}{7}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}생성 지표}{7}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}인과 지표}{7}{subsection.5.4}%
+\contentsline {section}{\numberline {6}실험 과정}{7}{section.6}%
+\contentsline {subsection}{\numberline {6.1}1단계: 초기 감정 벡터와 z}{7}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}2단계: 모듈화와 branch 개념 도입}{8}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}3단계: branch collapse 발견}{8}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}4단계: late ignition과 hard cap 확인}{8}{subsection.6.4}%
+\contentsline {subsection}{\numberline {6.5}5단계: reference config 보정}{8}{subsection.6.5}%
+\contentsline {subsection}{\numberline {6.6}6단계: 스타일 목표 편향 발견}{8}{subsection.6.6}%
+\contentsline {subsection}{\numberline {6.7}7단계: v3.1의 trace-as-emotion 전환}{10}{subsection.6.7}%
+\contentsline {subsection}{\numberline {6.8}8단계: v3.1 인과 조작 실험}{10}{subsection.6.8}%
+\contentsline {subsection}{\numberline {6.9}9단계: v4 episode interpretation}{10}{subsection.6.9}%
+\contentsline {subsection}{\numberline {6.10}10단계: v4 targeted superiority}{11}{subsection.6.10}%
+\contentsline {section}{\numberline {7}결과 요약}{12}{section.7}%
+\contentsline {subsection}{\numberline {7.1}동역학 결과}{12}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}표현 결과}{13}{subsection.7.2}%
+\contentsline {subsection}{\numberline {7.3}인과 결과}{13}{subsection.7.3}%
+\contentsline {subsection}{\numberline {7.4}생성 결과}{13}{subsection.7.4}%
+\contentsline {section}{\numberline {8}논의}{14}{section.8}%
+\contentsline {subsection}{\numberline {8.1}무엇을 만들었는가}{14}{subsection.8.1}%
+\contentsline {subsection}{\numberline {8.2}왜 실패한 실험이 중요했는가}{15}{subsection.8.2}%
+\contentsline {subsection}{\numberline {8.3}v3.1의 의미}{15}{subsection.8.3}%
+\contentsline {subsection}{\numberline {8.4}v4의 의미}{15}{subsection.8.4}%
+\contentsline {section}{\numberline {9}한계}{16}{section.9}%
+\contentsline {section}{\numberline {10}향후 연구}{16}{section.10}%
+\contentsline {section}{\numberline {11}버전별 행동과 근거}{17}{section.11}%
+\contentsline {section}{\numberline {12}모듈별 역할}{18}{section.12}%
+\contentsline {section}{\numberline {13}대표 사례 해석}{18}{section.13}%
+\contentsline {section}{\numberline {14}주장 가능 범위}{19}{section.14}%
+\contentsline {subsection}{\numberline {14.1}현재 주장 가능한 것}{19}{subsection.14.1}%
+\contentsline {subsection}{\numberline {14.2}아직 주장하면 안 되는 것}{19}{subsection.14.2}%
+\contentsline {section}{\numberline {15}논문화 전략}{20}{section.15}%
+\contentsline {section}{\numberline {16}결론}{20}{section.16}%

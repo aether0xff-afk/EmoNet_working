@@ -170,6 +170,7 @@ def request_score_payload(
     temperature: float,
     max_retries: int,
     api_key: str | None,
+    provider: str,
 ) -> tuple[dict[str, int], str, str]:
     try:
         payload, raw = request_json_response(
@@ -184,6 +185,8 @@ def request_score_payload(
             retry_instruction="직전 응답의 JSON 또는 점수 범위가 틀렸다. scores 안에 7개 항목을 1~5 정수로 다시 출력하라.",
             api_key=api_key,
             response_format={"type": "json_object"} if api_key and "api.openai.com" in base_url.lower() else None,
+            provider=provider,
+
         )
         return payload, raw, "json"
     except Exception as json_exc:
@@ -200,6 +203,7 @@ def request_score_payload(
                 retry_instruction="설명 없이 1~5 정수 일곱 개만 쉼표로 출력하라. 예: 4,4,3,4,4,4,4",
                 system_prompt="Return only seven comma-separated integers.",
                 api_key=api_key,
+                provider=provider,
             )
             return normalize_compact_scores(compact), raw, "compact"
         except Exception as compact_exc:
@@ -287,13 +291,16 @@ def main() -> None:
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--api-key-env", default=None)
+    parser.add_argument("--provider", default="openai_compatible", choices=["openai_compatible", "anthropic"])
+    parser.add_argument("--blind-condition", action="store_true")
     args = parser.parse_args()
 
     input_csv = Path(args.input_csv)
     output_csv = Path(args.output_csv)
     summary_json = Path(args.summary_json)
     api_key = resolve_api_key(args.api_key_env)
-    ensure_model_server_ready(args.base_url, args.timeout_sec, api_key=api_key)
+    if args.provider != "anthropic":
+        ensure_model_server_ready(args.base_url, args.timeout_sec, api_key=api_key)
 
     df = pd.read_csv(input_csv)
     df = df[df["status"].fillna("") == "ok"].copy() if "status" in df.columns else df.copy()
@@ -350,8 +357,12 @@ def main() -> None:
         for key in SUPERIORITY_SCORE_KEYS:
             scored[key] = pd.NA
         try:
+            judge_row = dict(row)
+            if args.blind_condition:
+                judge_row["condition"] = "candidate"
+
             payload, raw, parse_mode = request_score_payload(
-                row,
+                judge_row,
                 base_url=args.base_url,
                 model_name=args.model_name,
                 timeout_sec=args.timeout_sec,
@@ -359,6 +370,7 @@ def main() -> None:
                 temperature=args.temperature,
                 max_retries=args.max_retries,
                 api_key=api_key,
+                provider=args.provider,
             )
             scored["status"] = "ok"
             scored["judge_parse_mode"] = parse_mode

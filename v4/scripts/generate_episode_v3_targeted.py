@@ -6,6 +6,7 @@ from pathlib import Path
 import sys
 import time
 import urllib.request
+import os
 
 import pandas as pd
 
@@ -14,6 +15,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from emonet.episode_conditioning import build_episode_v3_generation_prompt, load_episode_payload
+from emonet.llm_api import request_plain_text_response
 
 
 OUTPUT_COLUMNS = [
@@ -95,12 +97,16 @@ def main() -> None:
     parser.add_argument("--baseline-conditions", default="stim_only,episode_trace")
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--base-url", default="http://127.0.0.1:11434/v1")
+    parser.add_argument("--provider", default="openai_compatible", choices=["openai_compatible", "anthropic"])
     parser.add_argument("--model-name", default="gpt-oss:20b")
+    parser.add_argument("--api-key-env", default=None)
     parser.add_argument("--temperature", type=float, default=0.45)
     parser.add_argument("--max-tokens", type=int, default=1600)
     parser.add_argument("--timeout-sec", type=int, default=240)
+    parser.add_argument("--max-retries", type=int, default=2)
     parser.add_argument("--progress-every", type=int, default=1)
     args = parser.parse_args()
+    api_key = os.environ.get(args.api_key_env, "").strip() if args.api_key_env else None
 
     targeted = pd.read_csv(args.targeted_csv)
     if args.limit is not None and args.limit > 0:
@@ -143,13 +149,17 @@ def main() -> None:
         try:
             episode_payload = load_episode_payload(Path(args.episode_dir) / record_id / "episode_interpretation.json")
             prompt = build_episode_v3_generation_prompt(input_text=row["text"], episode_payload=episode_payload)
-            response = call_chat(
+            response, _raw, _meta = request_plain_text_response(
+                provider=args.provider,
                 base_url=args.base_url,
                 model_name=args.model_name,
                 prompt=prompt,
                 temperature=args.temperature,
                 max_tokens=args.max_tokens,
                 timeout_sec=args.timeout_sec,
+                max_retries=args.max_retries,
+                system_prompt="Return a plain Korean response only. Do not return JSON. Keep reasoning brief.",
+                api_key=api_key,
             )
             if not response:
                 raise ValueError("empty LLM response")

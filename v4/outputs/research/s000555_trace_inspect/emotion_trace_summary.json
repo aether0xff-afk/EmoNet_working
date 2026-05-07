@@ -1,0 +1,70 @@
+{
+  "input_text": "대표님이 나만 빼고 팀원 모두에게 커피를 돌린 거 있지? 정말 당혹스러웠어. [SEP] 대표님의 행동에 곤란하고 당혹스러우셨겠어요. [SEP] 대표란 사람이 그렇게 공개적으로 차별 대우를 한다는 게 말이 안 되잖아. 다들 어떻게 생각했겠어. [SEP] 대놓고 차별하는 대표의 행동이 말이 안 된다고 생각하시는군요. 당혹스러움을 어떻게 조금이나마 덜어 낼 수 있을까요? [SEP] 너무 화가 나는데 뭘 어떻게 해야 할지 모르겠어. [SEP] 너무 화가 나서 어떻게 할지 혼란스러우시군요.",
+  "input_meta": {
+    "record_id": "s_000555",
+    "text": "대표님이 나만 빼고 팀원 모두에게 커피를 돌린 거 있지? 정말 당혹스러웠어. [SEP] 대표님의 행동에 곤란하고 당혹스러우셨겠어요. [SEP] 대표란 사람이 그렇게 공개적으로 차별 대우를 한다는 게 말이 안 되잖아. 다들 어떻게 생각했겠어. [SEP] 대놓고 차별하는 대표의 행동이 말이 안 된다고 생각하시는군요. 당혹스러움을 어떻게 조금이나마 덜어 낼 수 있을까요? [SEP] 너무 화가 나는데 뭘 어떻게 해야 할지 모르겠어. [SEP] 너무 화가 나서 어떻게 할지 혼란스러우시군요.",
+    "selection_bucket": "target_other",
+    "selection_reason": "episode target is another person or group",
+    "episode_label": "공개적 배제에 대한 공세적 당혹-분노",
+    "valence": "negative",
+    "arousal": "high",
+    "target": "other",
+    "control_state": "mixed",
+    "social_orientation": "defend",
+    "preserve": "공개적 배제, 차별로 읽힌 모욕감, 높은 경계 상태, 그리고 화는 큰데 대응 경로는 불명확한 혼란을 그대로 남겨야 한다.",
+    "avoid": "단순 서운함, 예민함, 오해 가능성 정도로 축소하면 왜곡이다. 이미 내부 처리는 실수보다 노골적 차별/모욕 쪽에 강하게 기울어 있다.",
+    "action_tendency": "즉각 화를 표출하거나 따지려는 충동은 있으나, 실제 행동 선택은 보류된 상태다. 따라서 행동 성향은 항의/문제제기 쪽으로 기울지만, 현재는 사회적 위험 계산 때문에 직접 행동보다 경계, 반추, 정당화 탐색으로 흐른다.",
+    "source": "outputs\\experiments\\eval_axis_split_v1\\targeted_records.csv",
+    "text_column": "text"
+  },
+  "ticks_run": 29,
+  "termination_reason": "stable_convergence",
+  "dominant_branch_len": 26,
+  "active_tick_count": 27,
+  "persistence_ratio": 0.9310344827586207,
+  "mean_active_nodes": 222.17241379310346,
+  "max_active_nodes": 256,
+  "mean_edges_fired": 1006.1724137931035,
+  "max_edges_fired": 1250,
+  "saturation_ratio": 0.8678609913793104,
+  "drive": 0.258672297000885,
+  "brake": 0.25591281056404114,
+  "alarm": 0.5382843613624573,
+  "fatigue": 0.22479328513145447,
+  "inhibitory_ratio": 0.44404780381809716,
+  "excitatory_ratio": 0.45196337110041906,
+  "modulatory_ratio": 0.10398882508148379,
+  "dominant_global_signal": "공세적 긴장",
+  "top_emotions": [
+    {
+      "emotion": "예민함/신경과민",
+      "score": 0.5486408486448486,
+      "explanation": "경계 신호와 지속 활성의 결합",
+      "level": "중간"
+    },
+    {
+      "emotion": "방어적 경계",
+      "score": 0.5124685082406237,
+      "explanation": "경계 신호 위에 억제/보호 성향이 얹힌 상태",
+      "level": "중간"
+    },
+    {
+      "emotion": "짜증/분노압",
+      "score": 0.47232301772570506,
+      "explanation": "경계 + 추동 + 낮은 완충",
+      "level": "중간"
+    },
+    {
+      "emotion": "소진/탈진",
+      "score": 0.4552332888903289,
+      "explanation": "피로 부하와 잔류 활성의 결합",
+      "level": "중간"
+    },
+    {
+      "emotion": "무기력/철수",
+      "score": 0.36820438443994585,
+      "explanation": "피로와 접근 동기 저하의 결합",
+      "level": "중간"
+    }
+  ]
+}

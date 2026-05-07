@@ -1,0 +1,16 @@
+{
+  "output_csv": "outputs\\experiments\\eval_axis_split_v1\\targeted_matrix_full58_claude.csv",
+  "rows": 115,
+  "conditions": {
+    "episode_trace_v3": {
+      "rows": 58,
+      "ok_rows": 58,
+      "error_rows": 0
+    },
+    "stim_only": {
+      "rows": 57,
+      "ok_rows": 57,
+      "error_rows": 0
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "base_csv": "outputs\\z\\out_z_training_learned_extended40_calref_v1.csv",
+  "relabel_csv": "outputs\\research\\style_relabel_v1\\style_relabel_claude.csv",
+  "output_csv": "outputs\\research\\style_relabel_v1\\out_z_training_learned_extended40_calref_v1_style_relabel_v1.csv",
+  "style_profile": "extended40",
+  "rows": 1800,
+  "applied_rows": 120,
+  "keep_column": "keep_sample",
+  "base_relabel_subset_negative_raw_mean": 0.001042,
+  "output_relabel_subset_negative_raw_mean": 0.324653,
+  "base_relabel_subset_soft_bias_mean": 0.847222,
+  "output_relabel_subset_soft_bias_mean": 0.414931,
+  "output_keep_negative_raw_mean": 0.025772,
+  "output_keep_soft_bias_mean": 0.784605
+}

@@ -1,0 +1,16 @@
+\begin{table}[t]
+\centering
+\caption{Effect of felt-state/style relabeling on style supervision bias.}
+\begin{tabular}{llrrr}
+\toprule
+Scope & Metric & Before & After & $\Delta$ \\
+\midrule
+Relabel subset & Negative raw mean & 0.0010 & 0.3247 & +0.3236 \\
+Relabel subset & Soft bias mean & 0.8472 & 0.4149 & -0.4323 \\
+All kept rows & Negative raw mean & 0.0032 & 0.0258 & +0.0226 \\
+All kept rows & Soft bias mean & 0.8148 & 0.7846 & -0.0302 \\
+All kept rows & Edge mean & 0.1039 & 0.1241 & +0.0202 \\
+\bottomrule
+\end{tabular}
+\label{tab:style-relabel-v1}
+\end{table}

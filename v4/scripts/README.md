@@ -24,6 +24,16 @@
   - prepare blinded human A/B CSVs and answer keys
 - `analyze_human_eval_results.py`
   - unblind filled human A/B results and compute win/tie/loss statistics
+- `audit_style_bias.py`
+  - audit extended style-axis bias by keep column, bucket, and rare/raw affect groups
+- `build_style_relabel_set.py`
+  - mine hard cases where text cues suggest raw affect but current style labels remain soft
+- `relabel_style_with_claude.py`
+  - relabel mined hard cases into separated felt-state and calibrated style targets using an ephemeral Claude API key
+- `apply_style_relabels.py`
+  - overlay Claude calibrated style labels onto a labeled training CSV for downstream decoder tests
+- `make_style_relabel_artifacts.py`
+  - build a compact report/table/figure package for the style relabeling proof of concept
 - `generate_paper_refresh_structfix.py`
   - refresh current paper figures/tables
 

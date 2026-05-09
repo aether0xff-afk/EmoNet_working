@@ -1,0 +1,18 @@
+{
+  "input_csv": "outputs\\z\\out_z_training_learned_extended40_calref_v1.csv",
+  "output_csv": "outputs\\research\\style_relabel_v1\\style_relabel_candidates_1000.csv",
+  "rows": 1000,
+  "target_size": 1000,
+  "keep_column": "keep_sample",
+  "style_profile": "extended40",
+  "bucket_counts": {
+    "anger_resentment": 252,
+    "fear_panic": 220,
+    "relationship_conflict": 220,
+    "despair_helplessness": 207,
+    "shame_guilt": 101
+  },
+  "mean_current_negative_raw_max": 0.013,
+  "mean_current_soft_bias_mean": 0.82675,
+  "seed": 42
+}

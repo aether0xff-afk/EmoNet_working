@@ -1,0 +1,134 @@
+{
+  "input_csv": "outputs\\research\\style_relabel_v1\\out_z_training_learned_extended40_calref_v1_style_relabel_v1.csv",
+  "rows": 1800,
+  "style_profile": "extended40",
+  "style_axes": [
+    "verbosity",
+    "sentence_length",
+    "pace",
+    "fragmentation",
+    "repetition",
+    "rhythmicity",
+    "directness",
+    "explicitness",
+    "specificity",
+    "abstraction",
+    "certainty",
+    "logicality",
+    "warmth",
+    "distance",
+    "politeness",
+    "formality",
+    "cooperativeness",
+    "dominance",
+    "calmness",
+    "tension",
+    "positivity",
+    "heaviness",
+    "urgency",
+    "emotional_openness",
+    "softness",
+    "sharpness",
+    "playfulness",
+    "seriousness",
+    "metaphoricity",
+    "plainness",
+    "initiative",
+    "reflectiveness",
+    "hostility",
+    "resentment",
+    "despair",
+    "volatility",
+    "fearfulness",
+    "shame",
+    "relief",
+    "trust"
+  ],
+  "keep_summaries": [
+    {
+      "keep_column": "keep_sample",
+      "rows": 1717,
+      "rate": 0.953889,
+      "soft_bias_mean": 0.784605,
+      "negative_raw_mean": 0.025772,
+      "edge_mean": 0.124054,
+      "top_shifted_axes": [
+        {
+          "axis": "hostility",
+          "mean": 0.009319,
+          "distance_from_neutral": 0.490681
+        },
+        {
+          "axis": "playfulness",
+          "mean": 0.01456,
+          "distance_from_neutral": 0.48544
+        },
+        {
+          "axis": "volatility",
+          "mean": 0.01689,
+          "distance_from_neutral": 0.48311
+        },
+        {
+          "axis": "resentment",
+          "mean": 0.021404,
+          "distance_from_neutral": 0.478596
+        },
+        {
+          "axis": "metaphoricity",
+          "mean": 0.021986,
+          "distance_from_neutral": 0.478014
+        },
+        {
+          "axis": "despair",
+          "mean": 0.031887,
+          "distance_from_neutral": 0.468113
+        },
+        {
+          "axis": "shame",
+          "mean": 0.033052,
+          "distance_from_neutral": 0.466948
+        },
+        {
+          "axis": "fearfulness",
+          "mean": 0.042079,
+          "distance_from_neutral": 0.457921
+        },
+        {
+          "axis": "plainness",
+          "mean": 0.921374,
+          "distance_from_neutral": 0.421374
+        },
+        {
+          "axis": "sharpness",
+          "mean": 0.079354,
+          "distance_from_neutral": 0.420646
+        }
+      ],
+      "bucket_counts": {
+        "mixed": 1514,
+        "rare_raw": 111,
+        "edgy": 92
+      },
+      "keep_reason_counts": {
+        "consistent_nonsoft": 1536,
+        "rare_affect_rescue": 181
+      },
+      "focus_axes": {
+        "softness": 0.890798,
+        "calmness": 0.87187,
+        "cooperativeness": 0.902009,
+        "positivity": 0.859202,
+        "warmth": 0.735149,
+        "trust": 0.448602,
+        "sharpness": 0.079354,
+        "tension": 0.125218,
+        "hostility": 0.009319,
+        "resentment": 0.021404,
+        "despair": 0.031887,
+        "volatility": 0.01689,
+        "fearfulness": 0.042079,
+        "shame": 0.033052
+      }
+    }
+  ]
+}

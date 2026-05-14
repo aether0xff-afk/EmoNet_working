@@ -1,0 +1,16 @@
+A clean academic Korean diagram showing emotional axes used to interpret trace and branch.
+
+Center: a blue box labeled:
+"trace / branch".
+
+Around it, place axis labels:
+"감정가(긍정-부정)",
+"통제감(높음-낮음)",
+"사회적 방향(자기-타인-관계)",
+"행동 경향(접근-회피-반격-억제)",
+"표현-억제",
+"책임 귀인".
+
+Use arrows from the axis labels to the center box.
+
+Style: white background, paper-friendly, simple layout, blue and gray accents, high readability, no decoration.

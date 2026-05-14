@@ -20,6 +20,11 @@
   - 현재 active 작업선
   - 개요는 [v4/README.md](C:/Users/esl01/OneDrive/문서/GitHub/EmoNet_working/v4/README.md)
   - 실행 의존성은 [v4/requirements.txt](C:/Users/esl01/OneDrive/문서/GitHub/EmoNet_working/v4/requirements.txt)
+- `v5`
+  - Luca형 캐릭터 대화 MVP 작업선
+  - `v4` runtime을 기반으로 캐릭터 카드, 세션 기억, v3.1 trace-as-emotion 원칙을 적용
+  - 개요는 [v5/README.md](C:/Users/esl01/OneDrive/문서/GitHub/EmoNet_working/v5/README.md)
+  - 실행 의존성은 [v5/requirements.txt](C:/Users/esl01/OneDrive/문서/GitHub/EmoNet_working/v5/requirements.txt)
 
 ## Rule Of Thumb
 
@@ -34,4 +39,10 @@ cd .\v4
 python -m emonet.cli --help
 python -m unittest discover -s tests -v
 streamlit run .\streamlit_app.py
+```
+
+```powershell
+cd .\v5
+python -m unittest discover -s tests -v
+python .\local_gui.py
 ```

@@ -1,0 +1,9 @@
+A clean academic diagram in Korean showing the overall architecture of EmoNet.
+
+Left to right flow:
+"episode" -> "stim_vec (4차원 자극 벡터)" -> "256-node neural network" -> "tick별 trace" -> "branch extraction" -> "dominant branch" -> "cluster path" -> "semantic report".
+
+Use simple boxes and arrows. Add section labels above the flow:
+"입력부", "신경망 처리부", "기록부", "구조화부", "해석부".
+
+Style: white background, blue accent color, gray secondary lines, minimal academic layout, paper-friendly, high readability, no 3D, no decorative background.

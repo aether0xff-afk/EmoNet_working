@@ -46,10 +46,14 @@ CONDITIONING_MODES = (
 )
 DEFAULT_MODEL_CACHE_PATH = project_root() / "artifacts" / "ridge_stim_encoder.joblib"
 DEFAULT_PROMPT_TEMPLATE_PATH = project_root() / "prompts" / "response_generation_prompt.md"
-DEFAULT_REQUEST_SYSTEM_PROMPT = "Return a plain Korean response only. Do not return JSON."
+DEFAULT_REQUEST_SYSTEM_PROMPT = (
+    "Return a plain Korean character utterance only. Do not return JSON. "
+    "Do not analyze or relabel emotions; translate the provided internal state into speech."
+)
 DEFAULT_RESPONSE_RETRY_INSTRUCTION = (
     "직전 응답은 반복, 미완성 문장, bullet/JSON, 혹은 부자연스러운 출력 때문에 거부되었다. "
-    "같은 문장이나 핵심 구절을 반복하지 말고, 마지막 문장은 완결된 한국어 평문으로 끝내라."
+    "같은 문장이나 핵심 구절을 반복하지 말고, 마지막 문장은 완결된 한국어 평문으로 끝내라. "
+    "행동 서술을 쓸 때는 문장 중간에 넣지 말고 반드시 별도 줄에서 '[ACTION] '으로 시작하라."
 )
 AGENT_PERCEPTION_SYSTEM_PROMPT = "Return JSON only. No markdown."
 AGENT_PERCEPTION_PROMPT = """[ROLE]
@@ -84,12 +88,25 @@ Return one JSON object:
     "novelty": 0.0-1.0,
     "ambiguity": 0.0-1.0
   }},
+  "interaction_event": {{
+    "has_user_action": true/false,
+    "action_intensity": 0.0-1.0,
+    "body_boundary_pressure": 0.0-1.0,
+    "forced_proximity": 0.0-1.0,
+    "reciprocity_evidence": 0.0-1.0,
+    "consent_ambiguity": 0.0-1.0
+  }},
   "confidence": 0.0-1.0
 }}
 
 [RULES]
 - Do not use keyword matching or lexical hint rules.
 - Use situation, relationship, scene pressure, and character persona.
+- If the latest user input narrates a physical action toward the character, encode it as interaction_event instead of treating it as ordinary dialogue.
+- Physical repositioning, gripping, blocking, invasive closeness, or controlled distance raises body_boundary_pressure, forced_proximity, control_pressure, ambiguity, and usually alarm.
+- Do not turn intense proximity into high approach_drive unless recent dialogue clearly shows reciprocal desire, permission, or shared initiative from the character.
+- Whispering or close contact can raise novelty or attachment only when reciprocity_evidence is high; otherwise it mainly raises ambiguity and control pressure.
+- Ordinary greetings or light banter should stay moderate even when the character persona is intense.
 - Do not output emotion names, felt tones, labels, explanations, or rationale.
 - Keep signals moderate unless the character would truly spike.
 - Calm, trust, acceptance, or tired care should not automatically become high alarm.
@@ -186,6 +203,7 @@ class ChatGenerationConfig:
     history_turns: int = 4
     character_card_path: Path = field(default_factory=default_character_card_path)
     affect_input_mode: str = "encoder"
+    raw_signal_policy: str = "event_annotated"
 
 
 @dataclass
@@ -370,6 +388,94 @@ def _raw_signal_to_stim_vec(raw_signal: Mapping[str, Any]) -> np.ndarray:
     )
 
 
+def _has_explicit_action_channel(user_text: str | None) -> bool:
+    text = str(user_text or "")
+    return "[ACTION]" in text.upper() or ("(" in text and ")" in text) or ("[" in text and "]" in text)
+
+
+def _normalize_interaction_event(event: Mapping[str, Any] | None, user_text: str | None = None) -> dict[str, Any]:
+    source = dict(event or {}) if isinstance(event, Mapping) else {}
+    has_action = bool(source.get("has_user_action"))
+    normalized = {
+        "has_user_action": has_action,
+        "action_intensity": _clamp01(source.get("action_intensity")),
+        "body_boundary_pressure": _clamp01(source.get("body_boundary_pressure")),
+        "forced_proximity": _clamp01(source.get("forced_proximity")),
+        "reciprocity_evidence": _clamp01(source.get("reciprocity_evidence")),
+        "consent_ambiguity": _clamp01(source.get("consent_ambiguity")),
+    }
+    if not has_action and max(
+        normalized["action_intensity"],
+        normalized["body_boundary_pressure"],
+        normalized["forced_proximity"],
+    ) >= 0.20:
+        normalized["has_user_action"] = True
+    if user_text is not None and not _has_explicit_action_channel(user_text) and "?" in str(user_text):
+        normalized.update(
+            {
+                "has_user_action": False,
+                "action_intensity": 0.0,
+                "body_boundary_pressure": 0.0,
+                "forced_proximity": 0.0,
+                "consent_ambiguity": min(normalized["consent_ambiguity"], 0.35),
+            }
+        )
+    return normalized
+
+
+def _apply_interaction_event_to_raw_signal(
+    raw_signal: Mapping[str, Any],
+    interaction_event: Mapping[str, Any] | None,
+) -> dict[str, float]:
+    adjusted = {
+        key: _clamp01(raw_signal.get(key))
+        for key in (
+            "approach_drive",
+            "safety_buffer",
+            "alarm",
+            "fatigue",
+            "attachment_pull",
+            "control_pressure",
+            "novelty",
+            "ambiguity",
+        )
+    }
+    event = _normalize_interaction_event(interaction_event)
+    if not event["has_user_action"]:
+        return adjusted
+
+    action = event["action_intensity"]
+    boundary = event["body_boundary_pressure"]
+    forced = event["forced_proximity"]
+    reciprocity = event["reciprocity_evidence"]
+    consent_ambiguity = event["consent_ambiguity"]
+    boundary_load = max(boundary, forced, consent_ambiguity * 0.85)
+
+    adjusted["control_pressure"] = max(
+        adjusted["control_pressure"],
+        _clamp01(0.18 + 0.58 * forced + 0.34 * boundary),
+    )
+    adjusted["ambiguity"] = max(
+        adjusted["ambiguity"],
+        _clamp01(0.22 + 0.48 * consent_ambiguity + 0.22 * boundary),
+    )
+    adjusted["alarm"] = max(
+        adjusted["alarm"],
+        _clamp01(0.14 + 0.50 * boundary + 0.28 * forced - 0.16 * reciprocity),
+    )
+    adjusted["safety_buffer"] = min(
+        adjusted["safety_buffer"],
+        _clamp01(0.66 - 0.44 * boundary_load + 0.18 * reciprocity),
+    )
+    adjusted["novelty"] = max(adjusted["novelty"], _clamp01(0.18 + 0.42 * action))
+    if reciprocity < 0.45 and boundary_load >= 0.35:
+        adjusted["approach_drive"] = min(adjusted["approach_drive"], _clamp01(0.34 + 0.24 * reciprocity))
+        adjusted["attachment_pull"] = min(adjusted["attachment_pull"], _clamp01(0.46 + 0.28 * reciprocity))
+    elif reciprocity >= 0.60:
+        adjusted["attachment_pull"] = max(adjusted["attachment_pull"], _clamp01(0.30 + 0.45 * reciprocity))
+    return adjusted
+
+
 def _build_agent_perceived_stim(
     *,
     generation_config: ChatGenerationConfig,
@@ -420,14 +526,36 @@ def _build_agent_perceived_stim(
     if payload is None:
         raise ValueError(f"agent perception returned invalid JSON: {last_error}. raw={raw[:300]}")
     raw_signal = payload.get("raw_signal") if isinstance(payload.get("raw_signal"), Mapping) else payload
-    vec = _raw_signal_to_stim_vec(raw_signal)
+    interaction_event = _normalize_interaction_event(
+        payload.get("interaction_event") if isinstance(payload.get("interaction_event"), Mapping) else {},
+        user_text,
+    )
+    policy = str(generation_config.raw_signal_policy or "event_annotated").strip()
+    if policy == "guarded":
+        adjusted_signal = _apply_interaction_event_to_raw_signal(raw_signal, interaction_event)
+    else:
+        adjusted_signal = {
+            key: _clamp01(raw_signal.get(key))
+            for key in (
+                "approach_drive",
+                "safety_buffer",
+                "alarm",
+                "fatigue",
+                "attachment_pull",
+                "control_pressure",
+                "novelty",
+                "ambiguity",
+            )
+        }
+    vec = _raw_signal_to_stim_vec(adjusted_signal)
     if float(vec.max()) <= 0.0:
         raise ValueError("agent perception returned an empty stim vector")
     metadata = {
         "mode": "llm_raw_signal",
+        "raw_signal_policy": policy,
         "raw": raw,
         "usage": usage,
-        "raw_signal": {key: _clamp01(raw_signal.get(key)) for key in (
+        "raw_signal_original": {key: _clamp01(raw_signal.get(key)) for key in (
             "approach_drive",
             "safety_buffer",
             "alarm",
@@ -437,6 +565,8 @@ def _build_agent_perceived_stim(
             "novelty",
             "ambiguity",
         )},
+        "raw_signal": adjusted_signal,
+        "interaction_event": interaction_event,
         "confidence": _clamp01(payload.get("confidence")),
         "stim_vec": vec.astype(float).tolist(),
     }
@@ -466,6 +596,7 @@ def _session_affect_record(session_state: CharacterSessionState | None) -> Mappi
         "affect_input_stim_vec": stim[:4],
         "agent_felt_state": {"felt_pressure": _clamp01(state.get("felt_pressure"))},
         "emotion_state": {"active_ratio": _clamp01(state.get("active_ratio"))},
+        "session_relation_load": _clamp01(state.get("relation_load")),
     }
 
 
@@ -488,23 +619,43 @@ def _apply_affective_carryover(
     felt = dict(previous.get("agent_felt_state", {}))
     previous_pressure = _clamp01(felt.get("felt_pressure"))
     previous_active = _clamp01((previous.get("emotion_state") or {}).get("active_ratio"))
-    if previous_pressure < 0.45 and previous_active < 0.20:
-        metadata["affective_carryover"] = {"applied": False, "previous_pressure": previous_pressure}
+    previous_relation_load = _clamp01(previous.get("session_relation_load"))
+    raw_signal = dict(metadata.get("raw_signal", {}))
+    event = _normalize_interaction_event(metadata.get("interaction_event") if isinstance(metadata.get("interaction_event"), Mapping) else {})
+    current_relation_load = max(
+        _clamp01(raw_signal.get("attachment_pull")),
+        _clamp01(raw_signal.get("ambiguity")),
+        _clamp01(raw_signal.get("fatigue")),
+    )
+    event_boundary_load = 0.0
+    if bool(event.get("has_user_action")):
+        event_boundary_load = max(
+            _clamp01(event.get("body_boundary_pressure")),
+            _clamp01(event.get("forced_proximity")),
+            _clamp01(event.get("consent_ambiguity")) * 0.80,
+        )
+    relation_load = max(previous_relation_load, current_relation_load)
+    if previous_pressure < 0.18 and previous_active < 0.08:
+        metadata["affective_carryover"] = {
+            "applied": False,
+            "previous_pressure": previous_pressure,
+            "previous_active_ratio": previous_active,
+            "relation_load": relation_load,
+        }
         return vec, metadata
 
     current = np.asarray(vec, dtype=np.float32).reshape(4).copy()
-    raw_signal = dict(metadata.get("raw_signal", {}))
-    attachment = _clamp01(raw_signal.get("attachment_pull"))
-    ambiguity = _clamp01(raw_signal.get("ambiguity"))
-    fatigue = _clamp01(raw_signal.get("fatigue"))
-    relation_load = max(attachment, ambiguity, fatigue)
-    blend = min(0.28, 0.08 + 0.18 * max(previous_pressure, previous_active) * relation_load)
+    blend = min(0.16, 0.025 + 0.10 * max(previous_pressure, previous_active, previous_relation_load * 0.30) * relation_load)
+    if relation_load >= 0.65 and (previous_pressure >= 0.22 or previous_active >= 0.10):
+        blend = max(blend, 0.07)
+    if event_boundary_load >= 0.45:
+        blend *= 0.55
     carried = (1.0 - blend) * current + blend * previous_stim
 
-    if relation_load >= 0.45 and previous_pressure >= 0.50:
-        carried[2] = max(float(carried[2]), min(0.65, 0.60 * float(previous_stim[2]) + 0.18))
-        carried[3] = max(float(carried[3]), min(0.60, 0.65 * float(current[3]) + 0.12 * previous_pressure))
-        carried[1] = min(float(carried[1]), max(0.0, float(current[1]) - 0.05 * previous_pressure))
+    if relation_load >= 0.55 and previous_pressure >= 0.22 and event_boundary_load < 0.45:
+        residual = min(0.12, 0.10 * relation_load)
+        carried[2] = max(float(carried[2]), float(current[2]) + residual * max(0.0, float(previous_stim[2]) - float(current[2])))
+        carried[3] = max(float(carried[3]), float(current[3]) + residual * max(0.0, float(previous_stim[3]) - float(current[3])))
 
     carried = np.clip(carried, 0.0, 1.0).astype(np.float32)
     metadata["affective_carryover"] = {
@@ -512,6 +663,8 @@ def _apply_affective_carryover(
         "blend": round(float(blend), 4),
         "previous_pressure": round(float(previous_pressure), 4),
         "previous_active_ratio": round(float(previous_active), 4),
+        "relation_load": round(float(relation_load), 4),
+        "event_boundary_load": round(float(event_boundary_load), 4),
         "previous_stim_vec": previous_stim.astype(float).tolist(),
         "stim_vec_before_carryover": current.astype(float).tolist(),
         "stim_vec_after_carryover": carried.astype(float).tolist(),
@@ -539,7 +692,11 @@ def _build_session_affect_state(
 
     felt = dict(profile.get("agent_felt_state", {}))
     emotion = dict(profile.get("emotion_state", {}))
-    raw_signal = dict((profile.get("agent_perception", {}) or {}).get("raw_signal", {}))
+    agent_perception = dict(profile.get("agent_perception", {}) or {})
+    raw_signal = dict(agent_perception.get("raw_signal", {}))
+    interaction_event = _normalize_interaction_event(
+        agent_perception.get("interaction_event") if isinstance(agent_perception.get("interaction_event"), Mapping) else {}
+    )
     current_pressure = _clamp01(felt.get("felt_pressure"))
     current_active = _clamp01(emotion.get("active_ratio"))
     relation_load = max(
@@ -551,17 +708,47 @@ def _build_session_affect_state(
     )
     previous_pressure = _clamp01(previous.get("felt_pressure"))
     previous_active = _clamp01(previous.get("active_ratio"))
+    event_boundary_load = 0.0
+    if bool(interaction_event.get("has_user_action")):
+        event_boundary_load = max(
+            _clamp01(interaction_event.get("body_boundary_pressure")),
+            _clamp01(interaction_event.get("forced_proximity")),
+            _clamp01(interaction_event.get("consent_ambiguity")) * 0.80,
+        )
 
-    decay = 0.52 + 0.30 * relation_load
+    saturation_pressure = max(0.0, float(previous_stim[2]) - 0.72) + max(0.0, float(previous_stim[3]) - 0.68)
+    axis_decay = np.asarray(
+        [
+            0.34 + 0.14 * relation_load,
+            0.54 + 0.12 * relation_load,
+            0.28 + 0.16 * relation_load - 0.20 * saturation_pressure,
+            0.36 + 0.16 * relation_load - 0.14 * max(0.0, float(previous_stim[3]) - 0.72),
+        ],
+        dtype=np.float32,
+    )
     if str(felt.get("trace_interpretation", "")) == "no_active_trace":
-        decay *= 0.82
-    decay = float(np.clip(decay, 0.35, 0.86))
-    current_weight = 1.0 - decay
+        axis_decay *= np.asarray([0.72, 0.90, 0.62, 0.78], dtype=np.float32)
+    if event_boundary_load >= 0.45:
+        axis_decay *= np.asarray([0.62, 0.86, 0.70, 0.74], dtype=np.float32)
+    axis_decay = np.clip(axis_decay, np.asarray([0.20, 0.42, 0.18, 0.26]), np.asarray([0.56, 0.76, 0.56, 0.62]))
+    current_weight = 1.0 - axis_decay
     if current_active >= 0.20 or current_pressure >= 0.45:
-        current_weight = max(current_weight, 0.38)
-    affect_stim = np.clip(decay * previous_stim + current_weight * current_stim, 0.0, 1.0)
-    pressure = max(current_pressure, decay * previous_pressure)
-    active_ratio = max(current_active, decay * previous_active)
+        current_weight = np.maximum(current_weight, np.asarray([0.46, 0.26, 0.48, 0.40], dtype=np.float32))
+    affect_stim = axis_decay * previous_stim + current_weight * current_stim
+    ne_soft_cap = 0.66 + 0.12 * relation_load + 0.06 * event_boundary_load
+    mela_soft_cap = 0.62 + 0.10 * relation_load + 0.04 * event_boundary_load
+    if affect_stim[2] > ne_soft_cap:
+        affect_stim[2] = ne_soft_cap + 0.22 * (float(affect_stim[2]) - ne_soft_cap)
+    if affect_stim[3] > mela_soft_cap:
+        affect_stim[3] = mela_soft_cap + 0.22 * (float(affect_stim[3]) - mela_soft_cap)
+    if affect_stim[2] > 0.78 and affect_stim[3] > 0.72:
+        affect_stim[0] *= 0.94
+        affect_stim[1] = max(float(affect_stim[1]), 0.18 + 0.12 * relation_load)
+    affect_stim = np.clip(affect_stim, 0.0, 0.96)
+    pressure_decay = float(np.clip(0.32 + 0.14 * relation_load - 0.18 * saturation_pressure, 0.20, 0.54))
+    active_decay = float(np.clip(0.30 + 0.12 * relation_load - 0.14 * saturation_pressure, 0.18, 0.50))
+    pressure = min(0.88, 0.76 * current_pressure + 0.24 * pressure_decay * previous_pressure)
+    active_ratio = min(0.70, 0.78 * current_active + 0.22 * active_decay * previous_active)
 
     if pressure < 0.08 and active_ratio < 0.04:
         affect_stim = current_stim
@@ -571,7 +758,11 @@ def _build_session_affect_state(
         "felt_pressure": round(float(pressure), 4),
         "active_ratio": round(float(active_ratio), 4),
         "relation_load": round(float(relation_load), 4),
-        "decay": round(float(decay), 4),
+        "axis_decay": [round(float(x), 4) for x in axis_decay.tolist()],
+        "pressure_decay": round(float(pressure_decay), 4),
+        "active_decay": round(float(active_decay), 4),
+        "saturation_pressure": round(float(saturation_pressure), 4),
+        "event_boundary_load": round(float(event_boundary_load), 4),
         "label": str(emotion.get("label", "")),
         "tendency": str(profile.get("appraisal_tendency", "")),
         "trace_interpretation": str(felt.get("trace_interpretation", "")),
@@ -726,6 +917,265 @@ def _summarize_agent_style_summary(style_summary: Mapping[str, Any]) -> str:
     return ", ".join(parts)
 
 
+def _build_translation_surface(profile: Mapping[str, Any]) -> dict[str, Any]:
+    session_affect = dict(profile.get("session_affect_state", {}))
+    agent_perception = dict(profile.get("agent_perception", {}) or {})
+    interaction_event = _normalize_interaction_event(
+        agent_perception.get("interaction_event") if isinstance(agent_perception.get("interaction_event"), Mapping) else {}
+    )
+    stim = _float_list(session_affect.get("affect_stim_vec", []))
+    if len(stim) < 4:
+        stim = _float_list(profile.get("affect_input_stim_vec", []))
+    dopamine = float(stim[0]) if len(stim) > 0 else 0.0
+    serotonin = float(stim[1]) if len(stim) > 1 else 0.0
+    norepinephrine = float(stim[2]) if len(stim) > 2 else 0.0
+    melatonin = float(stim[3]) if len(stim) > 3 else 0.0
+    felt = dict(profile.get("agent_felt_state", {}))
+    active_ratio = _clamp01((profile.get("emotion_state") or {}).get("active_ratio"))
+    pressure = max(_clamp01(felt.get("felt_pressure")), _clamp01(session_affect.get("felt_pressure")))
+    approach_tension = max(0.0, dopamine - serotonin)
+    stuckness = max(0.0, norepinephrine + melatonin - serotonin - 0.45)
+    event_boundary_load = 0.0
+    if bool(interaction_event.get("has_user_action")):
+        event_boundary_load = max(
+            _clamp01(interaction_event.get("body_boundary_pressure")),
+            _clamp01(interaction_event.get("forced_proximity")),
+            _clamp01(interaction_event.get("consent_ambiguity")) * 0.80,
+        )
+    reciprocity = _clamp01(interaction_event.get("reciprocity_evidence"))
+
+    if event_boundary_load >= 0.52 and reciprocity < 0.55:
+        mode = "body_boundary_event"
+        line_shape = "처음에는 몸이 먼저 멈추고, 말은 짧게 늦게 나온다. 설명보다 경계와 혼란을 남긴다."
+        action_texture = "한 발 물러서거나 손목/어깨/시선으로 공간을 확보한다. 붙잡거나 다가가는 행동은 쓰지 않는다."
+    elif melatonin >= 0.60 and norepinephrine >= 0.62:
+        mode = "stalled_pressure"
+        line_shape = "짧은 문장 뒤에 덜 끝난 문장을 남긴다. 확정적인 위로보다 막힌 느낌을 둔다."
+        action_texture = "움직임이 느려지거나 손/시선이 잠깐 멈춘다."
+    elif norepinephrine >= 0.62 and dopamine < 0.48:
+        mode = "flinch_boundary"
+        line_shape = "처음에는 짧게 부정하거나 멈칫하고, 뒤늦게 한 문장만 붙인다."
+        action_texture = "시선을 피하거나 손을 풀었다가 다시 멈춘다."
+    elif norepinephrine >= 0.55 and dopamine >= 0.52:
+        mode = "reach_under_pressure"
+        line_shape = "가까이 가고 싶은 말과 답을 못 찾는 말이 같이 나온다."
+        action_texture = "다가가거나 붙잡는 행동을 쓰되, 바로 설명으로 수습하지 않는다."
+    elif melatonin >= 0.52:
+        mode = "slow_heavy"
+        line_shape = "말끝이 무거워지고, 긴 설명보다 낮은 한두 문장으로 둔다."
+        action_texture = "숨, 어깨, 고개, 느린 손동작처럼 둔한 움직임을 쓴다."
+    elif serotonin >= 0.55 and pressure < 0.45:
+        mode = "soft_contact"
+        line_shape = "부드럽지만 자동 위로가 아니라 가볍게 붙어 있는 말로 둔다."
+        action_texture = "작은 시선, 고개 끄덕임, 가까운 자세 정도만 쓴다."
+    else:
+        mode = "uneven_contact"
+        line_shape = "문장을 매끈하게 정리하지 말고 작은 어긋남이나 망설임을 남긴다."
+        action_texture = "침묵, 시선, 손동작 중 하나만 짧게 쓴다."
+
+    if active_ratio >= 0.28 or pressure >= 0.62:
+        pacing = "압력이 높다. 길게 설명하지 말고 한 문장을 단단하게 남긴다."
+    elif stuckness >= 0.45:
+        pacing = "막힘이 남아 있다. 질문보다 미완성 반응을 우선한다."
+    else:
+        pacing = "압력은 낮다. 과장하지 않고 작게 반응한다."
+
+    avoid = [
+        "사용자 감정을 '~인 거네', '~해서 불안한 거고' 식으로 해설하지 않는다.",
+        "같은 행동을 반복하지 않는다. 직전 표현이 손/시선/침묵이면 다른 표면을 고른다.",
+        "미래를 단정하거나 관계를 깔끔하게 정리하지 않는다.",
+    ]
+    if event_boundary_load >= 0.45 and reciprocity < 0.55:
+        avoid.append("사용자 행동을 곧바로 로맨틱한 접근이나 동의로 번역하지 않는다.")
+    if mode in {"reach_under_pressure", "stalled_pressure"}:
+        avoid.append("바로 괜찮다고 말하지 않는다.")
+
+    return {
+        "mode": mode,
+        "line_shape": line_shape,
+        "action_texture": action_texture,
+        "pacing": pacing,
+        "avoid": avoid,
+        "source": {
+            "dopamine": round(float(dopamine), 4),
+            "serotonin": round(float(serotonin), 4),
+            "norepinephrine": round(float(norepinephrine), 4),
+            "melatonin": round(float(melatonin), 4),
+            "pressure": round(float(pressure), 4),
+            "active_ratio": round(float(active_ratio), 4),
+            "approach_tension": round(float(approach_tension), 4),
+            "stuckness": round(float(stuckness), 4),
+            "event_boundary_load": round(float(event_boundary_load), 4),
+            "reciprocity_evidence": round(float(reciprocity), 4),
+        },
+    }
+
+
+def _level_word(value: float) -> str:
+    value = _clamp01(value)
+    if value >= 0.72:
+        return "강하게"
+    if value >= 0.48:
+        return "뚜렷하게"
+    if value >= 0.24:
+        return "약하게"
+    return "거의 없이"
+
+
+def _build_felt_self_state(
+    previous_state: Mapping[str, Any] | None,
+    profile: Mapping[str, Any],
+) -> dict[str, Any]:
+    previous = dict(previous_state or {}) if isinstance(previous_state, Mapping) else {}
+    session_affect = dict(profile.get("session_affect_state", {}))
+    stim = _float_list(session_affect.get("affect_stim_vec", []))
+    if len(stim) < 4:
+        stim = _float_list(profile.get("affect_input_stim_vec", []))
+    dopamine = _clamp01(stim[0] if len(stim) > 0 else 0.0)
+    serotonin = _clamp01(stim[1] if len(stim) > 1 else 0.0)
+    norepinephrine = _clamp01(stim[2] if len(stim) > 2 else 0.0)
+    melatonin = _clamp01(stim[3] if len(stim) > 3 else 0.0)
+    raw_signal = dict((profile.get("agent_perception", {}) or {}).get("raw_signal", {}))
+    interaction_event = _normalize_interaction_event(
+        (profile.get("agent_perception", {}) or {}).get("interaction_event")
+        if isinstance((profile.get("agent_perception", {}) or {}).get("interaction_event"), Mapping)
+        else {}
+    )
+    boundary_load = _clamp01((profile.get("translation_surface", {}) or {}).get("source", {}).get("event_boundary_load"))
+    pressure = _clamp01(session_affect.get("felt_pressure"))
+    active = _clamp01(session_affect.get("active_ratio"))
+
+    approach_impulse = _clamp01(0.45 * dopamine + 0.35 * _clamp01(raw_signal.get("approach_drive")) + 0.20 * _clamp01(raw_signal.get("attachment_pull")))
+    avoidance_impulse = _clamp01(0.45 * norepinephrine + 0.30 * _clamp01(raw_signal.get("control_pressure")) + 0.25 * boundary_load - 0.15 * serotonin)
+    speak_impulse = _clamp01(0.34 * pressure + 0.30 * approach_impulse + 0.22 * active + 0.14 * _clamp01(raw_signal.get("ambiguity")))
+    hide_impulse = _clamp01(0.38 * avoidance_impulse + 0.28 * melatonin + 0.20 * _clamp01(raw_signal.get("ambiguity")) - 0.10 * approach_impulse)
+    attachment_residue = _clamp01(0.50 * _clamp01(previous.get("attachment_residue")) + 0.34 * _clamp01(raw_signal.get("attachment_pull")) + 0.16 * dopamine)
+    boundary_residue = _clamp01(0.46 * _clamp01(previous.get("boundary_residue")) + 0.34 * boundary_load + 0.20 * _clamp01(raw_signal.get("control_pressure")))
+    trust_shift = _clamp01(0.55 * serotonin + 0.25 * _clamp01(interaction_event.get("reciprocity_evidence")) - 0.25 * boundary_load)
+
+    if boundary_load >= 0.52:
+        unresolved = "가까워지고 싶은 마음보다 몸이 먼저 멈춘 감각이 남아 있다"
+        body_bias = "공간을 확보하려 하지만 시선을 완전히 끊지는 못한다"
+    elif approach_impulse >= avoidance_impulse + 0.16:
+        unresolved = "붙잡고 싶은 말이 먼저 올라오지만 너무 빠를까 봐 걸린다"
+        body_bias = "가까이 있고 싶지만 손이나 시선이 먼저 조심스러워진다"
+    elif avoidance_impulse >= approach_impulse + 0.14:
+        unresolved = "물러서고 싶은 힘과 확인하고 싶은 힘이 같이 남아 있다"
+        body_bias = "몸은 뒤로 가려 하고 말은 늦게 따라온다"
+    elif melatonin >= 0.52:
+        unresolved = "말하고 싶은데 힘이 늦게 따라오는 잔향이 있다"
+        body_bias = "숨과 어깨가 먼저 느려진다"
+    else:
+        unresolved = "작은 긴장이 남아 있지만 대화를 끊고 싶지는 않다"
+        body_bias = "짧게 시선을 맞추고 다음 말을 기다린다"
+
+    return {
+        "felt_toward": "user",
+        "felt_pressure": round(float(pressure), 4),
+        "approach_impulse": round(float(approach_impulse), 4),
+        "avoidance_impulse": round(float(avoidance_impulse), 4),
+        "speak_impulse": round(float(speak_impulse), 4),
+        "hide_impulse": round(float(hide_impulse), 4),
+        "attachment_residue": round(float(attachment_residue), 4),
+        "boundary_residue": round(float(boundary_residue), 4),
+        "trust_shift": round(float(trust_shift), 4),
+        "unresolved_phrase": unresolved,
+        "body_bias": body_bias,
+        "source": {
+            "dopamine": round(float(dopamine), 4),
+            "serotonin": round(float(serotonin), 4),
+            "norepinephrine": round(float(norepinephrine), 4),
+            "melatonin": round(float(melatonin), 4),
+            "boundary_load": round(float(boundary_load), 4),
+        },
+    }
+
+
+def _build_drive_state(profile: Mapping[str, Any], felt_self: Mapping[str, Any]) -> dict[str, Any]:
+    speak = _clamp01(felt_self.get("speak_impulse"))
+    hide = _clamp01(felt_self.get("hide_impulse"))
+    approach = _clamp01(felt_self.get("approach_impulse"))
+    avoid = _clamp01(felt_self.get("avoidance_impulse"))
+    boundary = _clamp01(felt_self.get("boundary_residue"))
+    pressure = _clamp01(felt_self.get("felt_pressure"))
+    initiative = _clamp01(0.45 * speak + 0.25 * pressure + 0.20 * approach - 0.18 * hide)
+    question_need = _clamp01(0.38 * _clamp01((profile.get("agent_perception", {}) or {}).get("raw_signal", {}).get("ambiguity")) + 0.22 * hide - 0.20 * initiative)
+    if boundary >= 0.45 or avoid > approach + 0.12:
+        action_bias = "공간을 확보하거나 몸이 먼저 멈추는 행동"
+    elif approach > avoid + 0.16:
+        action_bias = "시선을 맞추거나 가까이 남으려는 작은 행동"
+    elif hide > speak:
+        action_bias = "숨, 어깨, 손처럼 말보다 늦은 행동"
+    else:
+        action_bias = "짧은 시선 변화나 작은 침묵"
+    if speak >= hide + 0.12:
+        speech_bias = "먼저 한 문장을 남긴다"
+    elif hide >= speak + 0.12:
+        speech_bias = "말을 줄이고 덜 끝난 느낌을 둔다"
+    else:
+        speech_bias = "말하고 싶은 힘과 숨기고 싶은 힘을 같이 남긴다"
+    return {
+        "initiative": round(float(initiative), 4),
+        "question_need": round(float(question_need), 4),
+        "action_bias": action_bias,
+        "speech_bias": speech_bias,
+        "want_to_say": str(felt_self.get("unresolved_phrase", "")),
+        "want_to_do": str(felt_self.get("body_bias", "")),
+        "avoid": "감정을 설명하거나 정리하지 말고 충동의 방향만 말과 행동으로 번역한다.",
+        "levels": {
+            "approach": _level_word(approach),
+            "avoidance": _level_word(avoid),
+            "speak": _level_word(speak),
+            "hide": _level_word(hide),
+        },
+    }
+
+
+def _build_emotion_memory(
+    previous_memory: Sequence[Mapping[str, Any]] | None,
+    *,
+    user_text: str,
+    profile: Mapping[str, Any],
+    felt_self: Mapping[str, Any],
+    max_items: int = 6,
+) -> tuple[dict[str, Any], ...]:
+    carried: list[dict[str, Any]] = []
+    for item in previous_memory or ():
+        if not isinstance(item, Mapping):
+            continue
+        remaining = int(item.get("decay_turns", 0) or 0) - 1
+        if remaining <= 0:
+            continue
+        copied = dict(item)
+        copied["decay_turns"] = remaining
+        residue = dict(copied.get("residue", {}) if isinstance(copied.get("residue"), Mapping) else {})
+        copied["residue"] = {key: round(_clamp01(value) * 0.78, 4) for key, value in residue.items()}
+        carried.append(copied)
+
+    pressure = _clamp01(felt_self.get("felt_pressure"))
+    attachment = _clamp01(felt_self.get("attachment_residue"))
+    boundary = _clamp01(felt_self.get("boundary_residue"))
+    trust = _clamp01(felt_self.get("trust_shift"))
+    if max(pressure, attachment, boundary) >= 0.22:
+        event = _compact_text(user_text, limit=90)
+        carried.append(
+            {
+                "event": event,
+                "felt_after": str(felt_self.get("unresolved_phrase", "")),
+                "body_after": str(felt_self.get("body_bias", "")),
+                "residue": {
+                    "attachment": round(float(attachment), 4),
+                    "boundary": round(float(boundary), 4),
+                    "trust": round(float(trust), 4),
+                    "pressure": round(float(pressure), 4),
+                },
+                "surface_mode": str((profile.get("translation_surface", {}) or {}).get("mode", "")),
+                "decay_turns": 4 if pressure >= 0.45 or boundary >= 0.35 else 2,
+            }
+        )
+    return tuple(carried[-max(1, int(max_items)) :])
+
+
 def _build_raw_emonet_trace_block(profile: Mapping[str, Any]) -> str:
     lines: list[str] = []
     trace_lines = _string_list(profile.get("trace_lines", []))
@@ -762,6 +1212,8 @@ def _build_raw_emonet_trace_block(profile: Mapping[str, Any]) -> str:
     lines.append(json.dumps(emotion_state, ensure_ascii=False, sort_keys=True))
     lines.append("[agent_felt_state_raw]")
     lines.append(json.dumps(agent_felt_state, ensure_ascii=False, sort_keys=True))
+    lines.append("[translation_surface_raw]")
+    lines.append(json.dumps(profile.get("translation_surface", {}), ensure_ascii=False, sort_keys=True))
     return "\n".join(lines)
 
 
@@ -784,6 +1236,7 @@ def _serialize_profile(
         "llm_response": str(assistant_text),
         "stim_vec": _float_list(profile.get("stim_vec", [])),
         "affect_input_mode": str(profile.get("affect_input_mode", "")),
+        "raw_signal_policy": str(profile.get("raw_signal_policy", "")),
         "affect_input_stim_vec": _float_list(profile.get("affect_input_stim_vec", [])),
         "agent_perception": dict(profile.get("agent_perception", {})),
         "dominant_branch_len": int(profile.get("dominant_branch_len", 0)),
@@ -799,6 +1252,10 @@ def _serialize_profile(
         "emotion_state": dict(profile.get("emotion_state", {})),
         "agent_felt_state": dict(profile.get("agent_felt_state", {})),
         "session_affect_state": dict(profile.get("session_affect_state", {})),
+        "felt_self": dict(profile.get("felt_self", {})),
+        "emotion_memory": [dict(item) for item in profile.get("emotion_memory", []) if isinstance(item, Mapping)],
+        "drive": dict(profile.get("drive", {})),
+        "translation_surface": dict(profile.get("translation_surface", {})),
         "appraisal_scores": dict(profile.get("appraisal_scores", {})),
         "appraisal_summary_text": str(profile.get("appraisal_summary_text", "")),
         "appraisal_lines": _string_list(profile.get("appraisal_lines", [])),
@@ -855,6 +1312,8 @@ def generate_chat_turn(
         raise ValueError(f"unsupported conditioning_mode: {generation_config.conditioning_mode}")
     if generation_config.affect_input_mode not in {"encoder", "llm_perception", "llm_raw_signal"}:
         raise ValueError(f"unsupported affect_input_mode: {generation_config.affect_input_mode}")
+    if generation_config.raw_signal_policy not in {"raw_pure", "event_annotated", "guarded"}:
+        raise ValueError(f"unsupported raw_signal_policy: {generation_config.raw_signal_policy}")
     if generation_config.style_profile not in STYLE_AXIS_PROFILES:
         valid = ", ".join(available_style_profiles())
         raise ValueError(f"unknown style_profile '{generation_config.style_profile}'. valid profiles: {valid}")
@@ -886,12 +1345,15 @@ def generate_chat_turn(
             character_card=active_character,
             session_state=active_session,
         )
-        emonet_input, perception_meta = _apply_affective_carryover(
-            emonet_input,
-            perception_meta,
-            history,
-            active_session,
-        )
+        if generation_config.raw_signal_policy == "raw_pure":
+            perception_meta["affective_carryover"] = {"applied": False, "reason": "raw_pure_policy"}
+        else:
+            emonet_input, perception_meta = _apply_affective_carryover(
+                emonet_input,
+                perception_meta,
+                history,
+                active_session,
+            )
     profile = infer_style_profile(
         model=runtime.model,
         decoder=runtime.decoder,
@@ -899,6 +1361,7 @@ def generate_chat_turn(
         style_profile=generation_config.style_profile,
     )
     profile["affect_input_mode"] = generation_config.affect_input_mode
+    profile["raw_signal_policy"] = generation_config.raw_signal_policy
     profile["affect_input_stim_vec"] = _float_list(emonet_input if not isinstance(emonet_input, str) else profile.get("stim_vec", []))
     profile["agent_perception"] = perception_meta
     if generation_config.conditioning_mode in {"episode_trace", "episode_trace_v3", "hybrid_episode"}:
@@ -913,6 +1376,27 @@ def generate_chat_turn(
     )
     next_affect_state = _build_session_affect_state(active_session.affect_state, profile)
     profile["session_affect_state"] = next_affect_state
+    profile["translation_surface"] = _build_translation_surface(profile)
+    felt_self = _build_felt_self_state(active_session.felt_self, profile)
+    drive = _build_drive_state(profile, felt_self)
+    emotion_memory = _build_emotion_memory(
+        active_session.emotion_memory,
+        user_text=user_text,
+        profile=profile,
+        felt_self=felt_self,
+    )
+    profile["felt_self"] = felt_self
+    profile["drive"] = drive
+    profile["emotion_memory"] = [dict(item) for item in emotion_memory]
+    prompt_session = CharacterSessionState(
+        user_memory=active_session.user_memory,
+        relationship_state=active_session.relationship_state,
+        scene_state=active_session.scene_state,
+        affect_state=next_affect_state,
+        felt_self=felt_self,
+        emotion_memory=emotion_memory,
+        drive=drive,
+    )
 
     base_prompt, prompt_sections = build_conditioned_generation_prompt(
         input_text=user_text,
@@ -924,7 +1408,7 @@ def generate_chat_turn(
     prompt = build_character_context_prompt(
         base_prompt=history_prompt,
         character_card=active_character,
-        session_state=active_session,
+        session_state=prompt_session,
         trace_summary=str(profile.get("trace_summary_text", "")),
         appraisal_summary=str(profile.get("appraisal_summary_text", "")),
         raw_trace_block=_build_raw_emonet_trace_block(profile),
@@ -961,6 +1445,9 @@ def generate_chat_turn(
         user_text=user_text,
         assistant_text=response_text,
         affect_state=next_affect_state,
+        felt_self=felt_self,
+        emotion_memory=emotion_memory,
+        drive=drive,
     )
     record = _serialize_profile(
         input_text=user_text,

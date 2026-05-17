@@ -59,7 +59,12 @@ def _estimate_cost(input_tokens: int, output_tokens: int) -> float:
     return (input_tokens * CLAUDE_INPUT_PRICE + output_tokens * CLAUDE_OUTPUT_PRICE) / 1_000_000.0
 
 
-def _chat_config(api_key: str, *, affect_input_mode: str = "encoder") -> ChatGenerationConfig:
+def _chat_config(
+    api_key: str,
+    *,
+    affect_input_mode: str = "encoder",
+    raw_signal_policy: str = "event_annotated",
+) -> ChatGenerationConfig:
     return ChatGenerationConfig(
         provider="anthropic",
         base_url=CLAUDE_BASE_URL,
@@ -73,6 +78,7 @@ def _chat_config(api_key: str, *, affect_input_mode: str = "encoder") -> ChatGen
         timeout_sec=180,
         history_turns=6,
         affect_input_mode=affect_input_mode,
+        raw_signal_policy=raw_signal_policy,
     )
 
 
@@ -232,6 +238,10 @@ APP_HTML = r"""<!doctype html>
     .process-step { border: 1px solid rgba(174,184,192,.22); background: rgba(5,8,10,.25); border-radius: 7px; padding: 10px; }
     .process-step .step-name { color: var(--accent); font-size: 12px; font-weight: 800; text-transform: uppercase; }
     .process-step pre { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); font-size: 12px; line-height: 1.45; }
+    .section-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0; }
+    .section-toggle h2 { margin: 0; }
+    .ghost { background: transparent; border-color: var(--line); color: var(--muted); }
+    .collapsible-body { margin-top: 12px; }
     .emotion { border: 1px solid #5d5140; background: #1a1712; border-radius: 8px; padding: 12px; margin-top: -4px; }
     .emotion-head { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
     .emotion-label { font-size: 20px; font-weight: 800; }
@@ -259,6 +269,13 @@ APP_HTML = r"""<!doctype html>
       <p class="small">model: """ + CLAUDE_MODEL + r"""</p>
       <label class="checkrow"><input id="llmPerception" type="checkbox" checked /> Raw signal input</label>
       <p class="small">켜면 Haiku가 감정 이름 없이 raw 신호만 만들고, EmoNet이 감정 상태를 판단합니다.</p>
+      <label for="rawPolicy">Raw policy</label>
+      <select id="rawPolicy">
+        <option value="event_annotated" selected>event annotated</option>
+        <option value="raw_pure">raw pure</option>
+        <option value="guarded">guarded</option>
+      </select>
+      <p class="small">raw pure는 수치 보정과 carryover를 끄고, event annotated는 행동 사건만 기록합니다.</p>
       <label class="checkrow"><input id="showInternals" type="checkbox" /> Show internals</label>
       <button id="clearChat">Clear session</button>
       <button id="resetMemory">Reset memory</button>
@@ -298,13 +315,18 @@ APP_HTML = r"""<!doctype html>
       <div id="chatError" class="error hidden"></div>
       <div id="chatlog" class="chatlog"></div>
       <section class="card">
-        <h2>AI Dialogue Test</h2>
-        <div class="sub">상대 AI가 USER 역할 발화를 만들고, Ruca가 기존 EmoNet 경로로 답합니다.</div>
-        <label for="aiScenario">Scenario</label>
-        <textarea id="aiScenario">관계가 흔들리는 밤. 상대는 Ruca에게 곧 떠나야 한다고 말하고, Ruca가 자기 내부 감정으로 반응하는지 테스트한다.</textarea>
-        <label for="aiTurns">Turns</label>
-        <input id="aiTurns" type="number" min="1" max="12" value="4" />
-        <button id="runAi" class="primary">Run AI dialogue</button>
+        <div class="section-toggle">
+          <h2>AI Dialogue Test</h2>
+          <button id="toggleAiTest" class="ghost" type="button" aria-expanded="false">Show</button>
+        </div>
+        <div id="aiTestBody" class="collapsible-body hidden">
+          <div class="sub">상대 AI가 USER 역할 발화를 만들고, Ruca가 기존 EmoNet 경로로 답합니다.</div>
+          <label for="aiScenario">Scenario</label>
+          <textarea id="aiScenario">관계가 흔들리는 밤. 상대는 Ruca에게 곧 떠나야 한다고 말하고, Ruca가 자기 내부 감정으로 반응하는지 테스트한다.</textarea>
+          <label for="aiTurns">Turns</label>
+          <input id="aiTurns" type="number" min="1" max="12" value="4" />
+          <button id="runAi" class="primary">Run AI dialogue</button>
+        </div>
       </section>
       <div class="composer">
         <textarea id="message" placeholder="메시지를 입력하세요"></textarea>
@@ -364,6 +386,7 @@ function traceHtml(record) {
         <div class="trace-cell"><div class="k">felt direction</div><div class="v">${esc(compact(record.appraisal_tendency, "unknown"))}</div></div>
         <div class="trace-cell"><div class="k">target</div><div class="v">${esc(compact(record.appraisal_target, "unknown"))}</div></div>
         <div class="trace-cell"><div class="k">input mode</div><div class="v">${esc(compact(record.affect_input_mode, "encoder"))}</div></div>
+        <div class="trace-cell"><div class="k">raw policy</div><div class="v">${esc(compact(record.raw_signal_policy, "event_annotated"))}</div></div>
         <div class="trace-cell"><div class="k">trace summary</div><div class="v">${esc(compact(record.trace_summary_text, "none"))}</div></div>
         <div class="trace-cell"><div class="k">raw signal</div><div class="v">${esc(compact(JSON.stringify((record.agent_perception || {}).raw_signal || {}), "none"))}</div></div>
         <div class="trace-cell"><div class="k">saturation</div><div class="v">${esc(Math.round(saturation * 100))}%</div></div>
@@ -408,6 +431,7 @@ function renderProcessPanel() {
   const rawSignal = (record.agent_perception || {}).raw_signal || {};
   const emotion = record.emotion_state || {};
   const felt = record.agent_felt_state || {};
+  const translation = record.translation_surface || {};
   const steps = [
     processStep("1. input", record.input_text || ""),
     processStep("2. raw signal", formatJson({
@@ -420,10 +444,20 @@ function renderProcessPanel() {
     processStep("4. felt state", formatJson({
       emotion_state: emotion,
       agent_felt_state: felt,
+      session_affect_state: record.session_affect_state || {},
+      felt_self: record.felt_self || {},
+      emotion_memory: record.emotion_memory || [],
+      drive: record.drive || {},
       appraisal_tendency: record.appraisal_tendency,
       appraisal_target: record.appraisal_target
     })),
-    processStep("5. response validation", formatJson({
+    processStep("5. drive", formatJson({
+      felt_self: record.felt_self || {},
+      emotion_memory: record.emotion_memory || [],
+      drive: record.drive || {}
+    })),
+    processStep("6. translation surface", formatJson(translation)),
+    processStep("7. response validation", formatJson({
       retry_count: record.response_retry_count || 0,
       validation_errors: record.response_validation_errors || []
     }))
@@ -478,7 +512,8 @@ async function sendMessage(text) {
     const payload = await api("/api/chat", {
       message: prompt,
       api_key: $("apiKey").value,
-      affect_input_mode: $("llmPerception").checked ? "llm_raw_signal" : "encoder"
+      affect_input_mode: $("llmPerception").checked ? "llm_raw_signal" : "encoder",
+      raw_signal_policy: $("rawPolicy").value
     });
     messages = payload.messages || messages;
     usage = payload.usage || usage;
@@ -503,7 +538,8 @@ async function runAiDialogue() {
       api_key: $("apiKey").value,
       scenario: $("aiScenario").value,
       turns: Number($("aiTurns").value || 4),
-      affect_input_mode: $("llmPerception").checked ? "llm_raw_signal" : "encoder"
+      affect_input_mode: $("llmPerception").checked ? "llm_raw_signal" : "encoder",
+      raw_signal_policy: $("rawPolicy").value
     });
     messages = payload.messages || messages;
     usage = payload.usage || usage;
@@ -519,8 +555,15 @@ async function runAiDialogue() {
   }
 }
 
+function setAiTestOpen(open) {
+  $("aiTestBody").classList.toggle("hidden", !open);
+  $("toggleAiTest").textContent = open ? "Hide" : "Show";
+  $("toggleAiTest").setAttribute("aria-expanded", open ? "true" : "false");
+}
+
 $("send").onclick = () => sendMessage($("message").value);
 $("runAi").onclick = () => runAiDialogue();
+$("toggleAiTest").onclick = () => setAiTestOpen($("aiTestBody").classList.contains("hidden"));
 $("message").addEventListener("keydown", ev => {
   if (ev.key === "Enter" && (ev.ctrlKey || ev.metaKey)) sendMessage($("message").value);
 });
@@ -580,6 +623,7 @@ class LocalGuiHandler(BaseHTTPRequestHandler):
                 api_key = str(payload.get("api_key") or os.environ.get("ANTHROPIC_API_KEY") or "").strip()
                 message = str(payload.get("message") or "").strip()
                 affect_input_mode = str(payload.get("affect_input_mode") or "encoder").strip()
+                raw_signal_policy = str(payload.get("raw_signal_policy") or "event_annotated").strip()
                 if not api_key:
                     self._error(HTTPStatus.BAD_REQUEST, "Claude API key가 필요합니다. 왼쪽에 입력하거나 ANTHROPIC_API_KEY를 설정하세요.")
                     return
@@ -590,7 +634,11 @@ class LocalGuiHandler(BaseHTTPRequestHandler):
                     card = load_character_card()
                     result = generate_chat_turn(
                         runtime=_runtime_cached(),
-                        generation_config=_chat_config(api_key, affect_input_mode=affect_input_mode),
+                        generation_config=_chat_config(
+                            api_key,
+                            affect_input_mode=affect_input_mode,
+                            raw_signal_policy=raw_signal_policy,
+                        ),
                         input_text=message,
                         history=list(_messages),
                         character_card=card,
@@ -608,6 +656,7 @@ class LocalGuiHandler(BaseHTTPRequestHandler):
                 scenario = str(payload.get("scenario") or "").strip()
                 turns = max(1, min(12, int(payload.get("turns") or 4)))
                 affect_input_mode = str(payload.get("affect_input_mode") or "encoder").strip()
+                raw_signal_policy = str(payload.get("raw_signal_policy") or "event_annotated").strip()
                 if not api_key:
                     self._error(HTTPStatus.BAD_REQUEST, "Claude API key가 필요합니다. 왼쪽에 입력하거나 ANTHROPIC_API_KEY를 설정하세요.")
                     return
@@ -627,7 +676,11 @@ class LocalGuiHandler(BaseHTTPRequestHandler):
                         )
                         result = generate_chat_turn(
                             runtime=_runtime_cached(),
-                            generation_config=_chat_config(api_key, affect_input_mode=affect_input_mode),
+                            generation_config=_chat_config(
+                                api_key,
+                                affect_input_mode=affect_input_mode,
+                                raw_signal_policy=raw_signal_policy,
+                            ),
                             input_text=user_message,
                             history=list(_messages),
                             character_card=card,

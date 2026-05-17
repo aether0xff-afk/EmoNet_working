@@ -31,6 +31,10 @@ class CharacterChatTests(unittest.TestCase):
         self.assertTrue(card.world_state)
         self.assertGreater(len(card.do_not_say), 0)
         self.assertGreater(len(card.response_rules), 0)
+        self.assertTrue(card.temperament)
+        self.assertTrue(card.trigger_map)
+        self.assertGreater(len(card.boundary_rules), 0)
+        self.assertTrue(card.relationship_stages)
 
     def test_character_context_prompt_includes_v31_trace_as_emotion_principle(self) -> None:
         card = CharacterCard(
@@ -47,6 +51,9 @@ class CharacterChatTests(unittest.TestCase):
             relationship_state="신뢰를 쌓는 중",
             scene_state="비가 오는 복도",
             affect_state={"felt_pressure": 0.6, "label": "불안/경계"},
+            felt_self={"approach_impulse": 0.4, "unresolved_phrase": "말이 남아 있다"},
+            emotion_memory=({"event": "이전 대화", "felt_after": "긴장이 남음", "decay_turns": 2},),
+            drive={"initiative": 0.5, "speech_bias": "먼저 한 문장을 남긴다"},
         )
         prompt = build_character_context_prompt(
             base_prompt="[USER_INPUT]\n최신 입력",
@@ -62,8 +69,19 @@ class CharacterChatTests(unittest.TestCase):
         self.assertIn("[RECENT_MEMORY]", prompt)
         self.assertIn("[RAW_EMONET_TRACE]", prompt)
         self.assertIn("[SESSION_AFFECT_STATE]", prompt)
+        self.assertIn("[FELT_SELF_STATE]", prompt)
+        self.assertIn("[EMOTION_MEMORY]", prompt)
+        self.assertIn("[DRIVE_STATE]", prompt)
         self.assertIn("불안/경계", prompt)
+        self.assertIn("말이 남아 있다", prompt)
+        self.assertIn("이전 대화", prompt)
+        self.assertIn("먼저 한 문장을 남긴다", prompt)
         self.assertIn("요약하거나 분류하지 말고", prompt)
+        self.assertIn("역할은 번역뿐", prompt)
+        self.assertIn("새로 분석하지 않는다", prompt)
+        self.assertIn("라벨에 맞춰 정돈하지 않는다", prompt)
+        self.assertIn("캐릭터 본인에게 남은 반응", prompt)
+        self.assertIn("캐릭터가 자기 안에서 느끼는 방향", prompt)
         self.assertIn("tick=1", prompt)
         self.assertIn("사용자는 공개적 무시에 예민하다.", prompt)
 
@@ -80,12 +98,12 @@ class CharacterChatTests(unittest.TestCase):
             validate_character_response_text("trace를 보면 화가 큽니다.", plain)
         with self.assertRaisesRegex(ValueError, "internal"):
             validate_character_response_text("현재 내부 상태를 보면 긴장이 높습니다.", plain)
-        with self.assertRaisesRegex(ValueError, "markdown"):
-            validate_character_response_text("좋아.\n\n---\n\n다시 말할게.", plain)
-        with self.assertRaisesRegex(ValueError, "ACTION|action"):
-            validate_character_response_text("말을 잇지 못하고 한 발 물러선다.", plain)
-        with self.assertRaisesRegex(ValueError, "ACTION|action"):
-            validate_character_response_text("그래. [ACTION] 고개를 든다. 다시 말할게.", plain)
+        self.assertEqual(validate_character_response_text("좋아.\n\n---\n\n다시 말할게.", plain), "좋아.\n---\n다시 말할게.")
+        self.assertEqual(validate_character_response_text("말을 잇지 못하고 한 발 물러선다.", plain), "말을 잇지 못하고 한 발 물러선다.")
+        self.assertEqual(
+            validate_character_response_text("그래. [ACTION] 고개를 든다. 다시 말할게.", plain),
+            "그래.\n[ACTION] 고개를 든다.\n다시 말할게.",
+        )
         with self.assertRaisesRegex(ValueError, "incomplete"):
             validate_character_response_text("너 때문은 아니야. 그건 알아 두.", plain)
 
@@ -162,11 +180,19 @@ class CharacterChatTests(unittest.TestCase):
         self.assertIn("[RECENT_MEMORY]", called_prompt)
         self.assertIn("[RAW_EMONET_TRACE]", called_prompt)
         self.assertIn("[trace_lines]", called_prompt)
+        self.assertIn("[translation_surface_raw]", called_prompt)
         self.assertIn("tick=1", called_prompt)
         self.assertIn("사용자는 공개적으로 무시당하는 일을 싫어한다.", called_prompt)
         self.assertEqual(result.record["character_name"], "Ruca")
         self.assertEqual(result.record["prompt_sections"], "character_context,raw_trace")
+        self.assertIn("translation_surface", result.record)
+        self.assertIn("felt_self", result.record)
+        self.assertIn("emotion_memory", result.record)
+        self.assertIn("drive", result.record)
         self.assertIn("affect_state", result.character_session.to_record())
+        self.assertIn("felt_self", result.character_session.to_record())
+        self.assertIn("emotion_memory", result.character_session.to_record())
+        self.assertIn("drive", result.character_session.to_record())
 
 
 if __name__ == "__main__":

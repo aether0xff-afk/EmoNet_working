@@ -1,0 +1,54 @@
+{
+  "output_dir": "outputs\\neural_trace_dynamics_adaptive_confirm80_v1",
+  "summary_csv": "outputs\\neural_trace_dynamics_adaptive_confirm80_v1\\fine_dynamics_sweep_summary.csv",
+  "limit": 80,
+  "n_neurons": 256,
+  "tracked_axes": [
+    "valence",
+    "social_orientation",
+    "action_tendency_class",
+    "appraisal_family",
+    "control_state"
+  ],
+  "density_target": [
+    0.55,
+    0.8
+  ],
+  "configs": 1,
+  "top_configs": [
+    {
+      "config": "adaptive_thr0.63_clip1.6_inh0.10_start8_cap0.76",
+      "ok_rows": 80,
+      "error_rows": 0,
+      "mean_branch_len": 50.475,
+      "len1_ratio": 0.0,
+      "mean_activation_density": 0.709412,
+      "tracked_lift_mean": 0.005,
+      "tracked_balanced_lift_mean": 0.130097,
+      "tracked_separation_mean": 0.246062,
+      "branch_temporal_lift_mean": -0.005,
+      "branch_temporal_balanced_lift_mean": 0.151194,
+      "branch_temporal_separation_mean": 0.221011,
+      "combined_lift_mean": 0.002,
+      "combined_balanced_lift_mean": 0.136426,
+      "combined_separation_mean": 0.238547,
+      "objective": 1.184853,
+      "valence_lift": 0.0125,
+      "social_orientation_lift": 0.1,
+      "action_tendency_class_lift": -0.125,
+      "appraisal_family_lift": 0.0875,
+      "control_state_lift": -0.05,
+      "valence_balanced_lift": 0.25848,
+      "social_orientation_balanced_lift": 0.119748,
+      "action_tendency_class_balanced_lift": 0.017921,
+      "appraisal_family_balanced_lift": 0.078728,
+      "control_state_balanced_lift": 0.175607,
+      "valence_separation": 0.610754,
+      "social_orientation_separation": 0.113039,
+      "action_tendency_class_separation": 0.206921,
+      "appraisal_family_separation": 0.093028,
+      "control_state_separation": 0.206567,
+      "params_json": "{\"activity_churn_eps\": 0.02, \"density_control_start_tick\": 8, \"density_hard_cap\": 0.76, \"density_pruned_fatigue_gain\": 0.08, \"density_soft_k_leak_gain\": 1.5, \"density_target_high\": 0.7, \"fatigue_gain\": 0.15, \"fatigue_k_leak\": 0.035, \"fatigue_threshold_gain\": 0.08, \"inhibitory_suppression_gain\": 0.1, \"input_signal_clip\": 1.6, \"input_topk\": 4, \"intrinsic_alignment_gain\": 0.24, \"k_decay\": 0.99, \"k_remem_base\": 0.81, \"k_threshold_base\": 0.63, \"ne_remem_reduce_gain\": 0.25, \"ne_thresh_reduce_gain\": 0.25, \"refractory_ticks\": 1}"
+    }
+  ]
+}

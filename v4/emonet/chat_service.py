@@ -92,6 +92,7 @@ class ChatRuntimeConfig:
 
 @dataclass(frozen=True)
 class ChatGenerationConfig:
+    provider: str = "openai_compatible"
     base_url: str = "http://127.0.0.1:11434/v1"
     model_name: str = "gpt-oss:20b"
     api_key: str | None = None
@@ -250,6 +251,8 @@ def _serialize_profile(
         "termination_reason": str(profile.get("termination_reason", "")),
         "conditioning_mode": str(generation_config.conditioning_mode),
         "style_profile": str(generation_config.style_profile),
+        "llm_provider": str(generation_config.provider),
+        "llm_usage": dict(response_meta.get("usage", {})),
         "response_retry_count": int(response_meta.get("retry_count", 0)),
         "response_validation_errors": _string_list(response_meta.get("validation_errors", [])),
         "prompt_sections": str(prompt_sections),
@@ -280,11 +283,12 @@ def generate_chat_turn(
         valid = ", ".join(available_style_profiles())
         raise ValueError(f"unknown style_profile '{generation_config.style_profile}'. valid profiles: {valid}")
 
-    ensure_model_server_ready(
-        generation_config.base_url,
-        generation_config.timeout_sec,
-        api_key=generation_config.api_key,
-    )
+    if str(generation_config.provider).strip().lower() != "anthropic":
+        ensure_model_server_ready(
+            generation_config.base_url,
+            generation_config.timeout_sec,
+            api_key=generation_config.api_key,
+        )
     profile = infer_style_profile(
         model=runtime.model,
         decoder=runtime.decoder,
@@ -316,6 +320,7 @@ def generate_chat_turn(
         system_prompt=DEFAULT_REQUEST_SYSTEM_PROMPT,
         api_key=generation_config.api_key,
         reasoning_effort=generation_config.reasoning_effort,
+        provider=generation_config.provider,
     )
     chat_history_excerpt = build_recent_dialogue_block(history, generation_config.history_turns)
     record = _serialize_profile(

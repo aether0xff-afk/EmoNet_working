@@ -1,0 +1,12 @@
+A clean academic Korean diagram explaining how an "episode" is converted into a 4-dimensional "stim_vec".
+
+On the left, a rounded box labeled "episode" with example text:
+"친구가 사람들 앞에서 나를 무시했다".
+
+In the middle, show extracted cues:
+"공개적 모욕", "사회적 위협", "부당함 판단", "관계 손상 가능성", "반격 충동", "표현 억제".
+
+On the right, show a vector box labeled "stim_vec" with four abstract dimensions:
+"d1", "d2", "d3", "d4".
+
+Use arrows from episode to cues to vector. Style: minimal academic style, white background, blue and gray accents, Korean labels, high readability.

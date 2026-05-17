@@ -87,6 +87,11 @@ def build_model(args: argparse.Namespace) -> EmoNet:
         fatigue_threshold_gain=args.fatigue_threshold_gain,
         fatigue_k_leak=args.fatigue_k_leak,
         inhibitory_suppression_gain=args.inhibitory_suppression_gain,
+        density_control_start_tick=args.density_control_start_tick,
+        density_target_high=args.density_target_high,
+        density_soft_k_leak_gain=args.density_soft_k_leak_gain,
+        density_hard_cap=args.density_hard_cap,
+        density_pruned_fatigue_gain=args.density_pruned_fatigue_gain,
         ne_thresh_reduce_gain=args.ne_thresh_reduce_gain,
         ne_remem_reduce_gain=args.ne_remem_reduce_gain,
         activity_churn_eps=args.activity_churn_eps,
@@ -274,6 +279,11 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "fatigue_threshold_gain": args.fatigue_threshold_gain,
             "fatigue_k_leak": args.fatigue_k_leak,
             "inhibitory_suppression_gain": args.inhibitory_suppression_gain,
+            "density_control_start_tick": args.density_control_start_tick,
+            "density_target_high": args.density_target_high,
+            "density_soft_k_leak_gain": args.density_soft_k_leak_gain,
+            "density_hard_cap": args.density_hard_cap,
+            "density_pruned_fatigue_gain": args.density_pruned_fatigue_gain,
             "ne_thresh_reduce_gain": args.ne_thresh_reduce_gain,
             "ne_remem_reduce_gain": args.ne_remem_reduce_gain,
             "activity_churn_eps": args.activity_churn_eps,
@@ -311,6 +321,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--fatigue-threshold-gain", type=float, default=0.18)
     parser.add_argument("--fatigue-k-leak", type=float, default=0.08)
     parser.add_argument("--inhibitory-suppression-gain", type=float, default=0.18)
+    parser.add_argument("--density-control-start-tick", type=int, default=0)
+    parser.add_argument("--density-target-high", type=float, default=1.0)
+    parser.add_argument("--density-soft-k-leak-gain", type=float, default=0.0)
+    parser.add_argument("--density-hard-cap", type=float, default=1.0)
+    parser.add_argument("--density-pruned-fatigue-gain", type=float, default=0.0)
     parser.add_argument("--ne-thresh-reduce-gain", type=float, default=0.25)
     parser.add_argument("--ne-remem-reduce-gain", type=float, default=0.25)
     parser.add_argument("--activity-churn-eps", type=float, default=0.02)

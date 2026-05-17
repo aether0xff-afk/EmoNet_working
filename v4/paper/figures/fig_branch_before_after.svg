@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="620" viewBox="0 0 1080 620">
+<style>
+text { font-family: 'Malgun Gothic', 'Segoe UI', sans-serif; fill: #1f2937; }
+.title { font-size: 24px; font-weight: 700; }
+.subtitle { font-size: 13px; fill: #6b7280; }
+.axis { font-size: 12px; fill: #4b5563; }
+.label { font-size: 12px; }
+.small { font-size: 11px; fill: #4b5563; }
+.value { font-size: 11px; font-weight: 600; }
+.grid { stroke: #e5e7eb; stroke-width: 1; }
+.axis-line { stroke: #9ca3af; stroke-width: 1.2; }
+.note { font-size: 12px; fill: #374151; }
+</style>
+<rect x="0" y="0" width="100%" height="100%" fill="#ffffff"/>
+<text class="title" x="40" y="42">Dominant Branch Before vs After Structfix</text>
+<text class="subtitle" x="40" y="66">Legacy export compared with current structfix export</text>
+<line class="grid" x1="90" y1="120.00" x2="1030" y2="120.00"/>
+<text class="axis" x="82" y="124.00" text-anchor="end">144.9</text>
+<line class="grid" x1="90" y1="199.00" x2="1030" y2="199.00"/>
+<text class="axis" x="82" y="203.00" text-anchor="end">115.9</text>
+<line class="grid" x1="90" y1="278.00" x2="1030" y2="278.00"/>
+<text class="axis" x="82" y="282.00" text-anchor="end">86.9</text>
+<line class="grid" x1="90" y1="357.00" x2="1030" y2="357.00"/>
+<text class="axis" x="82" y="361.00" text-anchor="end">58.0</text>
+<line class="grid" x1="90" y1="436.00" x2="1030" y2="436.00"/>
+<text class="axis" x="82" y="440.00" text-anchor="end">29.0</text>
+<line class="grid" x1="90" y1="515.00" x2="1030" y2="515.00"/>
+<text class="axis" x="82" y="519.00" text-anchor="end">0.0</text>
+<line class="axis-line" x1="90" y1="515" x2="1030" y2="515"/>
+<line class="axis-line" x1="90" y1="120" x2="90" y2="515"/>
+<rect x="252.00" y="512.35" width="42.00" height="2.65" rx="5" fill="#dc2626"/>
+<text class="small" x="273.00" y="506.35" text-anchor="middle">0.97</text>
+<rect x="304.00" y="512.13" width="42.00" height="2.87" rx="5" fill="#2563eb"/>
+<text class="small" x="325.00" y="506.13" text-anchor="middle">1.05</text>
+<rect x="356.00" y="512.27" width="42.00" height="2.73" rx="5" fill="#14b8a6"/>
+<text class="small" x="377.00" y="506.27" text-anchor="middle">1.00</text>
+<text class="label" x="325.00" y="537.00" text-anchor="middle">before</text>
+<rect x="722.00" y="514.74" width="42.00" height="0.26" rx="5" fill="#dc2626"/>
+<text class="small" x="743.00" y="508.74" text-anchor="middle">0.09</text>
+<rect x="774.00" y="322.90" width="42.00" height="192.10" rx="5" fill="#2563eb"/>
+<text class="small" x="795.00" y="316.90" text-anchor="middle">70.47</text>
+<rect x="826.00" y="171.52" width="42.00" height="343.48" rx="5" fill="#14b8a6"/>
+<text class="small" x="847.00" y="165.52" text-anchor="middle">126.00</text>
+<text class="label" x="795.00" y="537.00" text-anchor="middle">after</text>
+<rect x="90" y="551" width="18" height="18" rx="3" fill="#dc2626"/>
+<text class="small" x="116" y="564">len1_ratio</text>
+<rect x="280" y="551" width="18" height="18" rx="3" fill="#2563eb"/>
+<text class="small" x="306" y="564">mean</text>
+<rect x="470" y="551" width="18" height="18" rx="3" fill="#14b8a6"/>
+<text class="small" x="496" y="564">p95</text>
+<text class="axis" x="32" y="104" text-anchor="start">value</text>
+<text class="note" x="40" y="602">len1_ratio should drop while mean/p95 rise.</text>
+</svg>

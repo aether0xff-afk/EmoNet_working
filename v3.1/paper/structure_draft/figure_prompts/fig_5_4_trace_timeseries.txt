@@ -1,0 +1,14 @@
+A clean academic diagram in Korean showing trace as a time-series record.
+
+Create a horizontal timeline labeled:
+t0, t1, t2, t3, t4, t5.
+
+At each time point, show small node circles with different activation strengths using blue intensity. Connect selected nodes across time with thin arrows to show internal flow.
+
+Under the timeline, add the label:
+"trace = tick별 내부 활성 기록".
+
+Add small annotations:
+"활성 정보", "강도 정보", "지속 정보", "경로 정보".
+
+Style: minimal white background, paper-friendly, blue and gray accents, high readability.

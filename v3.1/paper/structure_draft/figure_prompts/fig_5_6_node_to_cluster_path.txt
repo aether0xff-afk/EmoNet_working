@@ -1,0 +1,13 @@
+A clean academic Korean diagram showing conversion from node path to cluster path.
+
+Top row:
+node path with circles:
+"n0 -> n3 -> n6 -> n10 -> n13".
+
+Bottom row:
+cluster path with rounded boxes:
+"위협 감지" -> "부당함 평가" -> "반격 충동" -> "표현 준비" -> "최종 상태".
+
+Use vertical mapping arrows from each node to its cluster meaning.
+
+Style: white background, blue and gray accents, minimal academic style, high readability, no 3D.

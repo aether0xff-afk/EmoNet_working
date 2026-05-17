@@ -1,0 +1,50 @@
+{
+  "input_csv": "outputs\\experiments\\eval_axis_split_v1\\targeted_matrix_pilot1_claude.csv",
+  "output_csv": "outputs\\experiments\\eval_axis_split_v1\\trace_sensitive_pilot1_claude.csv",
+  "rows": 2,
+  "ok_rows": 2,
+  "score_keys": [
+    "appraisal_fidelity",
+    "raw_affect_preservation",
+    "anti_softening",
+    "action_tendency_fit",
+    "emotional_specificity",
+    "naturalness",
+    "overall_preference"
+  ],
+  "primary_score_keys": [
+    "appraisal_fidelity",
+    "raw_affect_preservation",
+    "anti_softening",
+    "action_tendency_fit",
+    "emotional_specificity"
+  ],
+  "conditions": [
+    {
+      "condition": "episode_trace_v3",
+      "rows": 1,
+      "mean_appraisal_fidelity": 5.0,
+      "mean_raw_affect_preservation": 5.0,
+      "mean_anti_softening": 5.0,
+      "mean_action_tendency_fit": 4.0,
+      "mean_emotional_specificity": 5.0,
+      "mean_naturalness": 4.0,
+      "mean_overall_preference": 5.0,
+      "mean_primary_total": 4.8,
+      "mean_total": 4.7143
+    },
+    {
+      "condition": "stim_only",
+      "rows": 1,
+      "mean_appraisal_fidelity": 2.0,
+      "mean_raw_affect_preservation": 1.0,
+      "mean_anti_softening": 1.0,
+      "mean_action_tendency_fit": 1.0,
+      "mean_emotional_specificity": 2.0,
+      "mean_naturalness": 3.0,
+      "mean_overall_preference": 1.0,
+      "mean_primary_total": 1.4,
+      "mean_total": 1.5714
+    }
+  ]
+}

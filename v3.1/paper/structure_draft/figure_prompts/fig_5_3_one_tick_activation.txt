@@ -1,0 +1,10 @@
+A clean Korean academic flowchart showing one tick of node activation in EmoNet.
+
+Flow:
+"현재 stim_vec" + "이전 기억(memory)" + "연결 노드 입력" - "피로도/억제" -> "활성 후보값 K 계산" -> "threshold 비교".
+
+From "threshold 비교", split into two paths:
+1. pass: "노드 활성화 및 신호 전달"
+2. fail: "약화 또는 비활성"
+
+Use a simple decision diamond for threshold. Style: white background, blue accent, gray secondary lines, readable Korean text, no 3D.

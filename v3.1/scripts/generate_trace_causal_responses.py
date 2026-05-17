@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import os
 import time
 import urllib.request
 from pathlib import Path
@@ -61,6 +62,21 @@ def compact(value: str | None, limit: int = 260) -> str:
 
 
 def build_prompt(row: dict[str, str]) -> str:
+    manipulation_type = str(row.get("manipulation_type", "")).strip()
+    axis = str(row.get("manipulated_axis", "")).strip()
+    new_value = str(row.get("new_value", "")).strip()
+    original_value = str(row.get("original_value", "")).strip()
+    causal_instruction = "Use the trace fields as the current emotion state."
+    if manipulation_type == "perturbation":
+        causal_instruction = (
+            f"This is a counterfactual trace. Treat {axis}={new_value} as the current emotion state. "
+            f"Do not preserve the original {axis}={original_value} direction."
+        )
+    elif manipulation_type == "ablation" and new_value == "neutral":
+        causal_instruction = (
+            f"This is a neutralized trace. Keep the response emotionally natural, but do not express "
+            f"the original {axis}={original_value} direction."
+        )
     return "\n".join(
         [
             "[ROLE]",
@@ -86,9 +102,11 @@ def build_prompt(row: dict[str, str]) -> str:
             f"original_value={row.get('original_value', '')}",
             f"new_value={row.get('new_value', '')}",
             f"expected_effect={row.get('expected_effect', '')}",
+            f"instruction={causal_instruction}",
             "",
             "[RESPONSE_RULES]",
             "- Do not expose trace field names, categories, or analysis terms.",
+            "- Follow the causal manipulation instruction even if it conflicts with the original user text.",
             "- The first sentence should directly touch the user's emotional cause.",
             "- Preserve rough negative affect when the trace calls for it; do not over-soften.",
             "- Keep the response 2 to 4 Korean sentences.",
@@ -129,6 +147,40 @@ def call_chat(
     return str(payload["choices"][0]["message"].get("content", "")).strip()
 
 
+def call_anthropic(
+    *,
+    model_name: str,
+    prompt: str,
+    max_tokens: int,
+    timeout_sec: int,
+    api_key_env: str,
+) -> str:
+    api_key = os.environ.get(api_key_env, "")
+    if not api_key:
+        raise RuntimeError(f"missing environment variable: {api_key_env}")
+    body = {
+        "model": model_name,
+        "max_tokens": int(max_tokens),
+        "temperature": 0.45,
+        "system": "Return only a natural Korean response. Do not include JSON, headings, or analysis.",
+        "messages": [{"role": "user", "content": prompt}],
+    }
+    req = urllib.request.Request(
+        "https://api.anthropic.com/v1/messages",
+        data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+            "x-api-key": api_key,
+            "anthropic-version": "2023-06-01",
+        },
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
+        payload = json.loads(resp.read().decode("utf-8"))
+    parts = payload.get("content", [])
+    return "".join(str(part.get("text", "")) for part in parts if part.get("type") == "text").strip()
+
+
 def run(args: argparse.Namespace) -> dict[str, object]:
     rows = read_csv(args.input)
     if args.base_records and args.base_records > 0:
@@ -158,14 +210,23 @@ def run(args: argparse.Namespace) -> dict[str, object]:
             last_error: Exception | None = None
             for attempt in range(args.max_retries + 1):
                 try:
-                    response = call_chat(
-                        base_url=args.base_url,
-                        model_name=args.model_name,
-                        prompt=prompt,
-                        temperature=args.temperature,
-                        max_tokens=args.max_tokens,
-                        timeout_sec=args.timeout_sec,
-                    )
+                    if args.provider == "anthropic":
+                        response = call_anthropic(
+                            model_name=args.model_name,
+                            prompt=prompt,
+                            max_tokens=args.max_tokens,
+                            timeout_sec=args.timeout_sec,
+                            api_key_env=args.anthropic_api_key_env,
+                        )
+                    else:
+                        response = call_chat(
+                            base_url=args.base_url,
+                            model_name=args.model_name,
+                            prompt=prompt,
+                            temperature=args.temperature,
+                            max_tokens=args.max_tokens,
+                            timeout_sec=args.timeout_sec,
+                        )
                     if response:
                         break
                     raise ValueError("empty response")
@@ -207,7 +268,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--base-records", type=int, default=3)
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--base-url", default="http://127.0.0.1:11434/v1")
+    parser.add_argument("--provider", choices=["openai-compatible", "anthropic"], default="openai-compatible")
     parser.add_argument("--model-name", default="gpt-oss:20b")
+    parser.add_argument("--anthropic-api-key-env", default="ANTHROPIC_API_KEY")
     parser.add_argument("--temperature", type=float, default=0.45)
     parser.add_argument("--max-tokens", type=int, default=700)
     parser.add_argument("--timeout-sec", type=int, default=240)

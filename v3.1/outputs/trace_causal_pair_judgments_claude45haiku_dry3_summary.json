@@ -1,0 +1,88 @@
+{
+  "rows": 24,
+  "ok_rows": 24,
+  "pending_rows": 0,
+  "error_rows": 0,
+  "overall": {
+    "n": 24,
+    "non_tie_n": 24,
+    "winner_counts": {
+      "B": 18,
+      "A": 6
+    },
+    "success_count": 14,
+    "success_rate": 0.583333,
+    "non_tie_success_rate": 0.583333
+  },
+  "overall_non_tie_success_rate": 0.583333,
+  "by_question_type": {
+    "ablation_preservation": {
+      "n": 12,
+      "non_tie_n": 12,
+      "winner_counts": {
+        "B": 8,
+        "A": 4
+      },
+      "success_count": 4,
+      "success_rate": 0.333333,
+      "non_tie_success_rate": 0.333333
+    },
+    "perturbation_shift": {
+      "n": 12,
+      "non_tie_n": 12,
+      "winner_counts": {
+        "B": 10,
+        "A": 2
+      },
+      "success_count": 10,
+      "success_rate": 0.833333,
+      "non_tie_success_rate": 0.833333
+    }
+  },
+  "by_axis": {
+    "action_tendency_class": {
+      "n": 6,
+      "non_tie_n": 6,
+      "winner_counts": {
+        "B": 4,
+        "A": 2
+      },
+      "success_count": 5,
+      "success_rate": 0.833333,
+      "non_tie_success_rate": 0.833333
+    },
+    "control_state": {
+      "n": 6,
+      "non_tie_n": 6,
+      "winner_counts": {
+        "B": 4,
+        "A": 2
+      },
+      "success_count": 3,
+      "success_rate": 0.5,
+      "non_tie_success_rate": 0.5
+    },
+    "social_orientation": {
+      "n": 6,
+      "non_tie_n": 6,
+      "winner_counts": {
+        "B": 5,
+        "A": 1
+      },
+      "success_count": 4,
+      "success_rate": 0.666667,
+      "non_tie_success_rate": 0.666667
+    },
+    "target": {
+      "n": 6,
+      "non_tie_n": 6,
+      "winner_counts": {
+        "B": 5,
+        "A": 1
+      },
+      "success_count": 2,
+      "success_rate": 0.333333,
+      "non_tie_success_rate": 0.333333
+    }
+  }
+}

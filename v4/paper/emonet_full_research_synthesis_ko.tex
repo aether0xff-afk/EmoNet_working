@@ -1,0 +1,647 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{kotex}
+\usepackage{fontspec}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{xcolor}
+
+\geometry{margin=23mm}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  citecolor=blue,
+  urlcolor=blue
+}
+\setlist{nosep}
+\emergencystretch=3em
+\sloppy
+
+\setmainfont{Noto Serif KR}
+\setsansfont{Noto Sans KR}
+\setmonofont{Consolas}
+\setmainhangulfont{Noto Serif KR}
+\setsanshangulfont{Noto Sans KR}
+\setmonohangulfont{Noto Sans KR}
+
+\newcommand{\eng}[1]{\texttt{#1}}
+\newcommand{\figdir}{figures_full_ko}
+
+\title{\textbf{EmoNet: 자극에서 신경 활성 추적으로, 그리고 감정 에피소드 응답으로}\\
+\large v1부터 v4까지의 연구 과정, 실험, 지표, 한계에 대한 한국어 논문형 종합 원고}
+\author{EmoNet Working Draft}
+\date{2026년 5월 4일}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+본 논문은 EmoNet 연구선의 전체 발전 과정을 정리한다. EmoNet의 출발점은 감정을 단순한 라벨이나 응답 문체가 아니라 계산 가능한 내부 상태로 다루려는 시도였다. v1과 v2에서는 입력 문장을 감정 벡터로 바꾸고, 그 벡터를 뇌 모사 뉴런망에 통과시켜 변화된 감정 벡터 또는 잠재 표현을 얻은 뒤, 이를 LLM 응답 조건으로 사용하는 구조를 만들었다. v3에서는 자극이 뉴런망 안에서 지나간 대표 경로를 추출하기 시작했고, 지배 흐름, 잠재 표현, 스타일 표현을 연결하는 구조를 만들었다. 이 과정에서 한 칸짜리 흐름 붕괴, 늦은 점화, 상단 포화, 스타일 목표의 과도한 온건화, 최종 생성 자연스러움 저하가 차례로 드러났다. v3.1에서는 감정 정의 자체를 바꾸었다. 처음 입력되는 감정 벡터는 감정이 아니라 자극이며, 그 자극이 뉴런망 안을 돌며 만든 신경 활성 추적이 감정 상태 표현이라는 가설을 세웠다. 이를 검증하기 위해 후반부 적응형 활성 조절, 균형 보정 표현 지표, 방향 교란, 강한 정보 중립화, 축 전용 눈가림 판정을 도입했다. 마지막으로 v4에서는 이전 실험을 정리하고, 신경 활성 추적을 LLM이 해석한 감정 에피소드로 변환한 뒤, 에피소드 정보가 필요한 targeted 입력에서 자극만 사용하는 강한 기준선과 비교했다.
+
+핵심 결과는 세 층으로 요약된다. 첫째, v3의 보정 실험은 51,628개 export 기준 지배 흐름 평균 길이를 1.0539에서 70.4684로 늘리고, 한 칸짜리 흐름 비율을 0.9734에서 0.0948로 낮추었다. 둘째, v3.1의 최종 적응형 설정은 n=80 확인 실험에서 흐름 길이 50.475, 한 칸짜리 흐름 비율 0.000, 활성 밀도 0.709412, 감정 구조 분리도 0.238547, 균형 보정 감정 신호 0.136426을 보였고, 통합 인과 확인 실험에서는 전체 성공률 0.916667을 얻었다. 셋째, v4의 targeted episode-sensitive 실험에서 \eng{episode\_trace\_v3}는 \eng{stim\_only} 대비 paired n=78, 평균 차이 +1.8308, 95\% 부트스트랩 신뢰구간 [+1.5667, +2.0897], 승/무/패 70/3/5를 보였다. 다만 이 결과는 모든 일반 감정 응답에서 EmoNet이 항상 우월하다는 뜻이 아니다. 본 논문이 방어하는 주장은 더 좁다. EmoNet은 자극을 내부 신경 활성 흐름으로 전개하고, 그 흐름을 감정 상태 표현 후보로 분석하며, 에피소드 정보가 중요한 입력에서는 자극만 쓰는 응답보다 더 구체적인 감정 원인, 행동 경향, 날것의 정서를 보존할 수 있다.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{서론}
+
+감정을 계산 모델로 다루는 많은 접근은 감정을 입력 텍스트에 붙는 외부 라벨로 본다. 문장이 주어지면 모델은 분노, 슬픔, 불안, 기쁨 같은 이름을 예측하거나, 긍정--부정과 각성--진정 같은 연속값을 출력한다. 생성형 언어 모델에서는 감정이 더 자주 프롬프트 조건으로 사용된다. 예를 들어 ``공감적으로 답하라'', ``차분한 톤으로 답하라'', ``상대의 슬픔을 위로하라'' 같은 방식이다. 이러한 방식은 실용적이지만, 감정이 내부에서 어떻게 형성되는지 설명하지 못한다. 감정 라벨은 결과에 가까우며, 문체 조건은 표면화 규칙에 가깝다.
+
+EmoNet은 이 문제를 다른 방향에서 다룬다. 이 연구는 감정을 곧바로 라벨이나 문체로 환원하지 않고, 자극이 내부 신경망에서 지나가는 과정으로 본다. 같은 분노라도 그것이 공개적 모욕에서 생긴 것인지, 부당한 책임 전가에서 생긴 것인지, 자기 실패를 만회하려는 압박에서 생긴 것인지에 따라 내부 구조가 다르다. 같은 슬픔도 상실, 자기비난, 관계 단절, 무력감, 체념, 도움 요청으로 갈라진다. 따라서 감정 상태를 제대로 다루려면 단일 라벨보다 자극, 평가, 활성 경로, 통제감, 행동 경향, 응답 표면화의 연쇄를 보아야 한다.
+
+본 논문의 목적은 EmoNet이 완성된 범용 감정 응답 생성기라고 주장하는 것이 아니다. 오히려 이 논문은 연구 과정 전체를 드러내는 것을 목표로 한다. 성공한 실험뿐 아니라 실패한 실험, 병목을 찾기 위해 만든 지표, 기준선을 이기지 못한 결과, 그 결과 때문에 연구 질문을 다시 좁힌 과정까지 포함한다. 사용자가 만들고자 한 핵심은 ``AI가 정말 감정을 느낀다''는 선언이 아니라, 감정 상태를 내부 흐름으로 모델링하고 그 흐름이 응답에 어떤 방식으로 반영되는지 추적 가능한 구조를 만드는 것이었다.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{\figdir/version_timeline.png}
+  \caption{EmoNet 연구 버전의 개념 발전. v1/v2는 감정 벡터와 잠재 표현, v3는 지배 흐름과 z/s 연결, v3.1은 신경 활성 추적 자체를 감정 상태 표현으로 보는 가설, v4는 에피소드 해석과 targeted 우월성 평가를 중심에 둔다.}
+  \label{fig:timeline}
+\end{figure}
+
+그림 \ref{fig:timeline}은 전체 연구 흐름을 요약한다. v1과 v2에서는 감정 벡터를 만들고 뉴런망에 넣어 변화된 감정 벡터 또는 잠재 표현을 얻었다. 이때 결과 벡터는 ``AI가 느낀 감정''에 가까운 것으로 취급되었다. v3에서는 자극이 뉴런망 안에서 지나간 대표 경로를 추출하기 시작했다. 이때 \eng{dominant branch}에서 \eng{z}, 다시 \eng{s}로 이어지는 구조가 만들어졌다. v3.1에서는 감정 정의가 바뀌었다. 처음의 감정 벡터는 감정이 아니라 자극이고, 그 자극이 뉴런망 안을 돌며 만든 trace 자체가 감정이라는 관점이 중심이 되었다. v4에서는 이전 실험들을 정리하고, 응답 생성, 에피소드 평가, targeted superiority, 논문용 지표와 그림을 모아 전체 연구를 마무리하는 작업선이 되었다.
+
+\section{연구 질문}
+
+본 연구의 중심 질문은 세 단계로 발전했다.
+
+\begin{enumerate}
+  \item 입력 문장을 감정 벡터로 바꾸고, 뉴런망 동역학을 통과시켜 새로운 감정 표현을 만들 수 있는가?
+  \item 자극이 뉴런망 내부에서 지나간 대표 경로를 추출하면, 그 경로가 감정 상태를 설명하는 중간 표현이 될 수 있는가?
+  \item 최초 감정 벡터가 아니라 신경 활성 추적 자체를 감정 상태로 보면, 그 추적은 구조적 감정 정보를 담고 조작 가능한가?
+\end{enumerate}
+
+v4에서 추가된 질문은 다음이다.
+
+\begin{quote}
+신경 활성 추적을 해석해 만든 감정 에피소드 정보는, 감정 원인과 행동 경향이 중요한 targeted 입력에서 자극만 사용하는 응답보다 더 나은 응답 조건이 되는가?
+\end{quote}
+
+이 질문들은 서로 대체 관계가 아니다. 앞 질문의 실패 또는 한계가 다음 질문의 설계를 낳았다. v3에서 branch collapse가 드러났기 때문에 동역학 보정이 필요했고, v3의 최종 생성 품질이 \eng{stim\_only}를 안정적으로 넘지 못했기 때문에 v3.1에서는 생성 품질보다 표현 증거와 인과 증거를 먼저 보았다. v4에서는 전체 응답 품질 우월성을 주장하지 않고, 에피소드 정보가 필요한 입력군으로 claim을 좁혔다.
+
+\section{버전별 시스템 발전}
+
+\subsection{v1: 감정 z 파이프라인}
+
+v1은 \eng{emotion\_z\_pipeline.py}와 GUI를 중심으로 구성된 초기 실험선이다. 코드 주석과 구조에 따르면 파이프라인은 텍스트, 자극 인코더, 감정 동역학 네트워크, 히스토리, GRU 기반 히스토리 인코더, \eng{z}로 이어진다. 이 단계의 목표는 감정을 직접 라벨로만 예측하는 것이 아니라, 텍스트가 만든 자극을 뉴런망 동역학에 통과시켜 잠재 표현 \eng{z}로 만들 수 있는지 확인하는 것이었다.
+
+v1의 중요한 구성 요소는 세 가지다. 첫째, \eng{BestRidgeStimulusEncoder}는 텍스트를 TF-IDF 기반 특징으로 바꾸고, 정서 점수 또는 평가 구조로 변환한다. 둘째, \eng{EmotionDynamicsNet}은 흥분성, 억제성, 조절성 뉴런을 두고, 감정 벡터와 뉴런 선호 벡터의 유사도, 막전위, 홈오스테이시스, 재배선, 억제와 기억을 계산한다. 셋째, GUI는 학습과 추론, 결과 시각화를 가능하게 해 연구자가 \eng{z}와 히스토리 변화를 직접 확인할 수 있게 했다.
+
+v1에서의 감정 정의는 아직 결과 벡터 중심이었다. 입력 텍스트에서 감정 벡터를 만들고, 동역학이 그것을 변화시키며, 그 변화된 표현을 감정 상태로 본다. 이 접근은 출발점으로는 유효했지만, 내부 흐름 자체를 감정으로 정의하지는 않았다. 따라서 ``무엇이 감정인가''라는 질문에는 아직 충분히 답하지 못했다.
+
+\subsection{v2: 모듈형 PyTorch MVP}
+
+v2는 실행 가능한 모듈형 MVP로 정리되었다. \eng{v2/emonet/README.md}는 v2의 핵심 요소를 텍스트에서 4차원 제어 벡터, trait EMA, 구조 기반 클러스터링, 클러스터 단위 재배선, 뉴런 path 기반 branch 추적, 전역 history와 dominant path 인코딩, \eng{z -> s} 스타일 회귀, 규칙 기반 prompt generator, frozen text regressor 기반 style scorer로 요약한다.
+
+v2의 중요성은 연구 대상을 하나의 스크립트에서 분리된 모듈 집합으로 옮겼다는 점이다. \eng{encoders.py}는 입력 인코딩을, \eng{dynamics.py}는 감정 동역학을, \eng{branching.py}는 경로 추적을, \eng{history\_encoder.py}는 전역 히스토리와 지배 경로 인코딩을, \eng{tone\_regressor.py}는 \eng{z -> s} 변환을 맡는다. 이 구조는 이후 v3의 self-contained 연구선으로 이어졌다.
+
+그러나 v2 역시 아직 ``감정 벡터를 만들고 그것을 내부 동역학으로 변형한 뒤 응답에 넣는다''는 관점이 강했다. 지배 경로와 \eng{z -> s} 연결은 존재했지만, trace 자체를 감정의 본체로 선언하고 검증하는 단계는 아니었다.
+
+\subsection{v3: 지배 흐름, 보정, z/s 연결}
+
+v3는 self-contained legacy research line으로 정리된 안정 스냅샷이다. 이 버전에서 연구의 중심은 \eng{dominant branch}가 실제로 의미 있는 내부 흐름인가를 확인하는 쪽으로 이동했다. 파이프라인은 입력 문장을 4차원 자극으로 만들고, 클러스터 기반 뉴런망 동역학을 실행한 뒤, tick별 활성과 firing edge를 기록하고, 지배 흐름을 추출한다. 이후 지배 흐름은 잠재 감정 표현 \eng{z}로 압축되고, \eng{z}는 스타일 표현 \eng{s}로 회귀된다. 최종 LLM은 \eng{s}와 요약된 스타일 지시를 받아 응답을 표면화한다.
+
+v3의 가장 중요한 발견은 branch collapse였다. 초기 full export 51,628개 기준 지배 흐름 평균 길이는 1.0539였고, 한 칸짜리 흐름 비율은 0.9734였다. 이는 거의 모든 샘플에서 경로가 한 tick 또는 한 노드 수준으로 끝났다는 뜻이다. 이 상태에서는 지배 흐름을 감정 상태 표현의 근거로 쓰기 어렵다. 따라서 v3에서는 dynamics가 너무 빨리 죽는 문제, 조절성 dropout과 pruning 압력, survivor-only pruning, 길이보다 강한 spike를 선호하는 점수식, 조기 종료 조건을 차례로 분석했다.
+
+v3에서 취한 행동은 단순한 파라미터 조정이 아니었다. 각 행동에는 대응되는 지표가 붙었다. branch collapse를 줄이기 위해 평균 지배 흐름 길이, 한 칸짜리 흐름 비율, 최대 길이, 95백분위 길이를 보았다. 늦은 점화를 확인하기 위해 첫 활성 tick, 늦은 점화 비율, 활성 창 길이를 보았다. 과도한 포화를 막기 위해 최대 tick 도달 비율과 상단 tail을 보았다. 이 때문에 v3는 단순 생성 실험이 아니라 동역학 진단 실험으로 성격이 바뀌었다.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.92\linewidth]{\figdir/branch_collapse_recovery.png}
+  \caption{v3 보정 전후의 지배 흐름 붕괴 완화. 평균 길이는 1.0539에서 70.4684로 증가했고, 한 칸짜리 흐름 비율은 0.9734에서 0.0948로 감소했다.}
+  \label{fig:branch-recovery}
+\end{figure}
+
+그림 \ref{fig:branch-recovery}는 v3의 핵심 성과를 보여준다. 보정 이후 지배 흐름은 더 이상 대부분 한 칸에서 끝나지 않았다. 다만 상단 tail은 여전히 126 tick 근처에 붙었다. 따라서 v3의 결론은 ``branch 문제를 완전히 해결했다''가 아니라, ``한 칸 붕괴는 크게 완화되었지만 상단 포화와 생성 품질 병목이 남았다''였다.
+
+\subsection{v3.1: 신경 활성 추적 자체를 감정으로 정의}
+
+v3.1은 개념적으로 가장 중요한 전환점이다. 이 버전에서 최초 입력 벡터는 더 이상 감정 그 자체가 아니다. 그것은 자극이다. 감정은 자극이 뉴런망 내부를 지나며 만든 활성 흐름, 가지 구조, 시간별 상태 변화, 그리고 그 압축 표현으로 정의된다. 다시 말해 v3.1의 핵심 가설은 다음과 같다.
+
+\begin{quote}
+감정은 입력 벡터가 아니라, 입력 자극이 신경 동역학 안에서 남긴 추적이다.
+\end{quote}
+
+이 정의는 평가 방식도 바꾸었다. 응답이 좋아 보이는지를 먼저 보지 않고, trace 안에 감정축 구조가 남아 있는지, trace를 조작하면 응답의 감정축 해석도 움직이는지, trace에서 특정 축 단서를 제거하면 원래 신호가 약해지는지를 보았다. 이를 위해 v3.1에서는 후반부 적응형 활성 조절, 균형 보정 최근접 이웃 지표, 방향 교란, 강한 정보 중립화, 축 전용 눈가림 판정을 추가했다.
+
+후반부 적응형 활성 조절은 다음 문제를 겨냥했다. 흐름이 너무 짧으면 감정 상태를 형성할 시간이 없고, 반대로 활성 밀도가 너무 높으면 거의 모든 뉴런이 켜져 trace가 구분력을 잃는다. 따라서 초반에는 흐름이 충분히 생기도록 두고, 후반에는 활성 밀도가 지나치게 높아지면 누수와 피로를 늘려 과활성을 낮춘다. 최종 설정은 \eng{adaptive\_thr0.63\_clip1.6\_inh0.10\_start8\_cap0.76}이다.
+
+\subsection{v4: 감정 에피소드 해석과 targeted 우월성}
+
+v4는 이전 실험을 정리하고 논문형 평가 파이프라인으로 묶은 작업선이다. v4의 핵심 질문은 broad generation superiority가 아니다. v3와 v4 초기 결과에서 \eng{stim\_only}는 자연스러움과 전체 품질에서 여전히 강했다. 따라서 v4는 ``모든 응답에서 EmoNet이 더 좋다''는 주장을 버리고, claim을 좁혔다. 핵심 질문은 ``에피소드 정보가 필요한 targeted 입력에서 내부 trace 기반 응답이 자극만 쓰는 응답보다 더 정확한가''이다.
+
+v4에서는 raw trajectory를 GPT-5.4로 해석하여 감정 에피소드 설명을 만든다. 이 에피소드는 단순 감정 라벨이 아니라, 평가 구조, 감정가, 각성, 행동 경향, 부드러워질 위험, 신뢰도 등을 포함한다. 이후 \eng{episode\_trace}, \eng{episode\_trace\_v3} 같은 조건을 만들어 자극만 쓰는 \eng{stim\_only}와 비교한다. 특히 \eng{episode\_trace\_v3}는 anti-softening, 평가 충실도, 날것의 정서 보존, 행동 경향 반영을 강화한 조건이다.
+
+\section{전체 방법}
+
+\subsection{입력과 자극}
+
+EmoNet의 입력은 한국어 감성대화 말뭉치 기반의 문장 또는 대화 상황이다. 초기 버전에서는 이 입력이 곧 감정 벡터로 변환되었다. 그러나 v3.1 이후의 해석에서는 입력에서 얻은 4차원 값은 감정이 아니라 자극이다. 이 4차원 값은 dopamine, serotonin, norepinephrine, melatonin 같은 조절 축으로 표현되며, 실제 뇌물질을 정확히 모델링하려는 생물학적 주장이라기보다, 접근성, 안정성, 긴장, 억제/진정 같은 동역학 조절 방향을 담는 계산 축으로 사용된다.
+
+\subsection{신경 동역학}
+
+신경 동역학 코어는 여러 노드와 edge를 가진 그래프 기반 뉴런망이다. 각 노드는 선호 자극 방향, 활성 상태, 피로, 최근 활성 이력, threshold, 기억을 가진다. 자극이 들어오면 각 tick마다 노드 활성과 edge 전달이 계산된다. 이 과정에서 흥분, 억제, 기억, 피로, 재배선, pruning, 조절성 dropout이 함께 작동한다. 중요한 것은 출력 벡터 하나가 아니라 tick별 사건 전체다. 어떤 노드가 언제 켜졌는지, 어떤 edge를 통해 다음 노드로 전달되었는지, 활성 창이 얼마나 길었는지가 모두 감정 상태 후보의 일부가 된다.
+
+\subsection{지배 흐름}
+
+모든 활성 사건을 그대로 쓰면 해석이 어렵다. 따라서 v3부터 지배 흐름을 추출했다. 지배 흐름은 전체 활성 그래프 안에서 가장 대표적인 경로 또는 가지 구조를 고르는 절차다. 초기에는 마지막 survivor 중심의 경로 선택이 짧고 강한 spike를 과도하게 선호했다. 이후 길이 보정, branch end window, path coverage, active window 분석을 통해 더 안정적인 추출을 시도했다.
+
+\subsection{잠재 표현과 스타일 표현}
+
+v2와 v3에서는 지배 흐름을 잠재 표현 \eng{z}로 압축하고, \eng{z}에서 스타일 표현 \eng{s}를 회귀했다. \eng{s}는 부드러움, 차분함, 협조성, 긍정성, 적대성, 원망, 절망, 수치심 같은 여러 스타일 또는 정서 표현 축을 포함한다. 이 구조의 의도는 내부 흐름을 LLM이 사용할 수 있는 응답 조건으로 바꾸는 것이었다.
+
+그러나 v3 실험은 이 경로의 한계를 드러냈다. branch collapse는 완화되었지만, \eng{z -> s} predictor는 text baseline을 안정적으로 넘지 못했다. 또한 스타일 목표 자체가 과도하게 온건했다. 따라서 v3.1에서는 \eng{z -> s} 성능보다 trace 자체의 표현성과 조작 가능성을 먼저 검증하는 방향으로 전환했다.
+
+\subsection{에피소드 해석}
+
+v4에서는 raw trajectory를 LLM이 읽어 감정 에피소드로 해석하는 절차를 추가했다. 여기서 LLM은 감정을 만들어내는 주체가 아니라 trace를 읽는 해석기다. 에피소드 해석은 감정 이름 하나를 출력하지 않고, 왜 그런 감정이 형성되었는지, 자극이 어떤 평가 구조로 처리되었는지, 행동 경향은 무엇인지, 감정가와 각성 수준은 어떤지, 표면 응답에서 부드러워질 위험은 얼마나 되는지까지 설명한다.
+
+\section{지표}
+
+\subsection{동역학 지표}
+
+동역학 지표는 trace가 감정 상태 표현으로 쓸 수 있을 만큼 살아 있는지를 판단한다. 주요 지표는 다음과 같다.
+
+\begin{longtable}{p{0.28\linewidth}p{0.62\linewidth}}
+\toprule
+지표 & 의미 \\
+\midrule
+감정 흐름 길이 & 지배 흐름이 몇 tick 또는 몇 단계 동안 지속되는지 나타낸다. 너무 짧으면 내부 형성이 없고, 너무 길면 포화 가능성이 있다. \\
+한 칸짜리 흐름 비율 & 길이 1인 지배 흐름의 비율이다. 값이 높으면 branch collapse가 심하다. \\
+활성 밀도 & tick별로 켜진 노드 비율의 평균이다. 너무 낮으면 무활성, 너무 높으면 비구분적 과활성이다. \\
+최대 tick 도달 비율 & 실행이 수렴하지 못하고 hard cap에 걸리는 비율이다. 상단 포화의 근거가 된다. \\
+첫 활성 tick & 자극 후 첫 의미 있는 활성까지 걸린 시간이다. 값이 크면 늦은 점화 문제가 있다. \\
+활성 창 길이 & 실제 활성 흐름이 유지된 시간 구간이다. 단순 실행 tick 수보다 중요하다. \\
+\bottomrule
+\end{longtable}
+
+\subsection{표현 지표}
+
+표현 지표는 trace가 감정축 구조를 담고 있는지 본다. v3.1에서는 감정가, 사회적 방향, 행동 경향, 평가 계열, 통제감 상태 같은 축을 사용했다. 중요한 점은 단순 정확도가 아니라 데이터 불균형을 고려한 균형 보정 신호를 보았다는 것이다. 특정 감정축의 빈도가 크면 단순 최근접 이웃은 빈도 높은 축을 잘 맞히는 것처럼 보일 수 있다. 따라서 class-balanced nearest-neighbor lift를 추가했다.
+
+\subsection{생성 지표}
+
+v3와 v4의 생성 평가는 두 종류다. 하나는 일반 응답 품질 평가로, 내용 적합성, 정서 적절성, 스타일 일치, 자연스러움, 종합 품질을 본다. 다른 하나는 targeted episode-fidelity 평가로, 평가 충실도, 날것의 정서 보존, 과도한 부드러움 방지, 행동 경향 적합도, 감정 특이성, 자연스러움, 전체 선호를 본다. 후자의 목적은 ``좋은 답변''이 아니라 ``내부 에피소드 정보를 더 정확히 반영하는 답변''을 고르는 것이다.
+
+\subsection{인과 지표}
+
+v3.1의 인과 지표는 trace 조작이 응답의 감정축 해석을 움직이는지 본다. 방향 교란은 특정 축 값을 다른 방향으로 바꾸고 응답이 그 방향으로 이동하는지 본다. 정보 중립화는 특정 축 단서를 neutral로 바꾸고 관련 텍스트 단서까지 제거했을 때 원래 축 신호가 약해지는지 본다. 동일 응답 무효 비교는 같은 응답끼리 비교하게 하여 판정기가 억지로 한쪽을 고르는지 확인한다. 특히 축 전용 눈가림 판정은 도움됨, 따뜻함, 자연스러움, 공손함, 일반 품질을 보지 못하게 하고 target emotion axis만 판단하도록 설계되었다.
+
+\section{실험 과정}
+
+\subsection{1단계: 초기 감정 벡터와 z}
+
+초기 실험은 문장 자극을 수치 벡터로 바꾸고, 뉴런망 동역학을 거쳐 \eng{z}를 얻는 것이었다. 이 단계의 행동은 명확했다. 먼저 텍스트 인코더를 만들고, 정서 점수 또는 평가 구조를 4차원 조절 벡터로 변환했다. 그 다음 뉴런망을 실행하여 시간별 히스토리를 얻었고, GRU 기반 인코더로 \eng{z}를 만들었다. GUI는 이 과정을 관찰 가능하게 만들었다.
+
+이 단계의 성과는 ``감정 벡터를 뉴런망에 통과시키는 실행 가능한 파이프라인''을 만든 것이다. 한계는 감정이 여전히 결과 벡터처럼 취급되었다는 점이다. 내부 흐름이 왜 감정인지, 그 흐름이 조작 가능한지, 응답 수준에서 어떤 영향을 주는지는 아직 충분히 검증되지 않았다.
+
+\subsection{2단계: 모듈화와 branch 개념 도입}
+
+v2에서는 시스템을 모듈화했다. 텍스트 인코더, trait memory, 동역학, 클러스터링, 재배선, branch 추적, history encoder, \eng{z -> s}, prompt generator, style scorer가 분리되었다. 이 행동은 이후 실험을 가능하게 했다. 문제를 발견했을 때 전체 코드를 다시 쓰지 않고 특정 모듈과 지표를 분리해서 볼 수 있었기 때문이다.
+
+이 단계에서 branch는 아직 최종 연구 주장이라기보다 내부 경로 추적 장치였다. 그러나 이 장치가 있었기 때문에 v3에서 branch collapse라는 결정적 병목을 발견할 수 있었다.
+
+\subsection{3단계: branch collapse 발견}
+
+v3의 첫 큰 실험은 full export에서 지배 흐름 길이를 보는 것이었다. 결과는 심각했다. 총 51,628개 row에서 평균 길이는 1.0539였고, 길이 1 비율은 0.9734였다. 이는 ``지배 흐름''이라고 부르기 어려운 상태였다. 이 결과는 실패였지만, 연구적으로 매우 중요한 실패였다. EmoNet이 왜 응답 조건으로 강하지 않은지 내부 수준에서 설명할 수 있었기 때문이다.
+
+이후 분석은 다음 행동으로 이어졌다. dynamics가 너무 빨리 죽는지 보기 위해 decay, threshold, refractory, memory mix를 점검했다. pruning과 dropout이 너무 강한지 보기 위해 serotonin, melatonin 기반 조절을 점검했다. extraction rule이 짧은 spike를 선호하는지 보기 위해 survivor-only pruning과 path scoring을 점검했다. 조기 종료가 문제인지 보기 위해 최소 tick과 max tick 조건을 점검했다. 각 행동은 평균 흐름 길이, 한 칸 비율, 최대 길이, tick 분포로 평가되었다.
+
+\subsection{4단계: late ignition과 hard cap 확인}
+
+branchfix와 structfix 이후 한 칸 붕괴는 크게 완화되었지만, 새로운 병목이 나타났다. v3의 branch depth research는 현재 코드 샘플 200개에서 평균 branch length 18.915, 평균 ticks run 40.0, max ticks 도달 비율 1.0을 보였다. 종료 이유는 200/200 모두 \eng{max\_ticks}였다. 즉 시스템은 더 이상 초기에 죽는 것이 아니라, 늦게 점화된 뒤 hard cap에 부딪히고 있었다.
+
+첫 활성 tick 평균은 20.89였고, 늦은 점화 비율은 0.935였다. 이 결과는 추가 파라미터 튜닝만으로 충분하지 않다는 결론으로 이어졌다. 필요한 것은 명시적 점화 메커니즘, 더 긴 horizon, 그리고 수렴 규칙 재평가였다. v3의 중요한 교훈은 ``문제를 고쳤더니 다음 문제가 드러난다''는 점이다. branch collapse가 해결되자 late ignition과 saturation이 보였다.
+
+\subsection{5단계: reference config 보정}
+
+다음 행동은 기준 설정을 감으로 정하지 않고 실험으로 보정하는 것이었다. reference config calibration은 무활성 비율, 한 칸 흐름 비율, 최대 tick 도달 비율, 첫 활성 tick, 늦은 점화 비율, 평균 흐름 길이에 제약을 걸었다. 목표는 ``길기만 한 흐름''이 아니라 ``일찍 점화되고, 한 칸 붕괴가 낮고, 최대 tick 포화가 과도하지 않으며, 평균 길이가 충분한 흐름''이었다.
+
+결합 검증 결과는 feasible이었다. 무활성 비율은 0.05, 한 칸 흐름 비율은 0.05, 최대 tick 도달 비율은 0.25, 첫 활성 tick 평균은 2.40, 늦은 점화 비율은 0.00, 평균 흐름 길이는 79.78이었다. 이 설정은 이후 v3와 v4에서 reference working point가 되었다.
+
+\subsection{6단계: 스타일 목표 편향 발견}
+
+branch collapse가 완화되어도 생성 결과는 곧바로 좋아지지 않았다. v3의 스타일 분석은 목표 \eng{s} 자체가 지나치게 온건하다는 점을 보였다. keep set 기준 부드러움 0.9276, 차분함 0.9132, 협조성 0.9202, 긍정성 0.9051처럼 사회적으로 안전한 축은 매우 높았다. 반대로 적대성 0.0003, 원망 0.0003, 절망 0.0044, 불안정 0.0022, 두려움 0.0100, 수치심 0.0017은 거의 살아 있지 않았다.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.9\linewidth]{\figdir/style_bias_korean.png}
+  \caption{v3 스타일 목표 편향. 스타일 라벨은 온건하고 협조적인 축으로 강하게 치우쳤고, 원망, 적대성, 절망, 수치심 같은 날것의 감정축은 거의 활성화되지 않았다.}
+  \label{fig:style-bias}
+\end{figure}
+
+그림 \ref{fig:style-bias}는 이 문제를 보여준다. 이 결과는 응답이 부드러워지는 원인을 생성 모델 탓만으로 돌릴 수 없게 했다. 학습 목표 자체가 부드럽고 안전한 응답을 선호하면, 내부 trace가 강한 감정을 담아도 최종 표면화에서 희석될 수 있다. 따라서 이후 실험은 anti-softening과 raw affect preservation을 별도 지표로 보기 시작했다.
+
+다만 이 그림 하나만으로 현재 상태를 판단하면 안 된다. 그림 \ref{fig:style-bias}는 v3의 전역 스타일 목표 편향을 보여주는 ``이전 문제''이다. 현재 v4의 targeted 실험은 같은 스타일 라벨 분포를 다시 학습한 것이 아니라, 그 편향이 응답 표면화에서 얼마나 완화되는지를 별도 judge 지표로 본 것이다. 따라서 이전과 이후는 완전히 같은 지표가 아니라, ``라벨 목표의 편향''과 ``응답에서 그 편향을 제어한 결과''로 나누어 읽어야 한다.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.84\linewidth]{\figdir/bias_status_summary.png}
+  \caption{전역 스타일 목표 편향과 현재 targeted 응답 지표의 관계. v3의 긍정성/부드러움 목표는 여전히 강한 문제로 기록되어야 하며, v4 targeted 조건에서는 anti-softening과 raw affect 보존 지표가 별도로 개선되었다.}
+  \label{fig:bias-status}
+\end{figure}
+
+그림 \ref{fig:bias-status}의 해석은 명확하다. 전역 스타일 목표의 긍정성 및 부드러움 편향은 ``사라졌다''고 말할 수 없다. 현재 말할 수 있는 것은 더 좁다. v4의 targeted 조건에서 \eng{episode\_trace\_v3}는 자극만 쓰는 기준선보다 과도한 온건화를 덜 하고, 날것의 정서를 더 보존하도록 평가되었다. 따라서 논문에서는 ``전역 편향이 해결되었다''가 아니라 ``전역 편향은 남아 있으나 targeted episode conditioning에서 표면화 편향이 완화되었다''고 써야 한다.
+
+\subsection{7단계: v3.1의 trace-as-emotion 전환}
+
+v3.1에서는 연구 질문이 바뀌었다. 더 이상 \eng{z -> s} predictor가 text baseline을 이기는지만 보지 않았다. 대신 trace가 감정 상태 표현으로 기능하는지 보았다. 이를 위해 먼저 동역학을 안정화했다. 최종 적응형 설정은 초반에는 활성 흐름이 생기도록 두고, 후반에는 활성 밀도가 너무 높을 때 누수와 피로를 키워 과활성을 낮추는 방식이다.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.82\linewidth]{\figdir/v31_adaptive_metrics.png}
+  \caption{v3.1 후반부 적응형 활성 조절의 핵심 결과. 감정 흐름 길이, 활성 밀도, 구조 분리도, 균형 보정 신호가 동시에 확인되었다.}
+  \label{fig:v31-dynamics}
+\end{figure}
+
+n=80 확인 실험에서 감정 흐름 길이는 50.475, 한 칸짜리 흐름 비율은 0.000, 활성 밀도는 0.709412였다. 감정 구조 분리도는 0.238547, 균형 보정 감정 신호는 0.136426이었다. 축별 균형 보정 신호는 감정가 0.258480, 사회적 방향 0.119748, 행동 경향 0.017921, 평가 계열 0.078728, 통제감 상태 0.175607로 모두 양수였다. 이는 trace 안에 감정축 구조가 남아 있다는 표현 증거다.
+
+\subsection{8단계: v3.1 인과 조작 실험}
+
+표현 증거만으로는 충분하지 않다. trace가 감정 상태 표현이라면, trace의 특정 감정축을 바꿀 때 응답 수준의 감정축 해석도 움직여야 한다. v3.1은 이를 보기 위해 causal probe set을 만들었다. 방향 교란은 축 값을 다른 방향으로 바꾸고, 강한 정보 중립화는 해당 축 field를 neutral로 바꾸며 preserve, avoid, action tendency 문장에서도 해당 축 단서를 제거했다. 또한 생성 프롬프트에도 원래 축 방향을 표현하지 말라고 명시했다.
+
+초기 LLM judge는 좋은 답변, 자연스러운 답변, 따뜻한 답변을 선호할 위험이 있었다. 사용자가 지적한 것처럼 ``LLM 저지가 LLM 스타일의 좋은 답을 좋은 답이라고 하는 것''은 프로젝트 목표에 맞지 않는다. 그래서 축 전용 눈가림 judge를 만들었다. 이 judge는 조건을 숨기고, A/B 순서를 결정적으로 섞고, helpfulness, warmth, politeness, fluency, empathy, general quality를 판단하지 못하게 했다. 판단 대상은 오직 target emotion axis였다.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.78\linewidth]{\figdir/v31_causal_results.png}
+  \caption{v3.1 축 전용 눈가림 인과 확인 실험. 동일 응답 무효 비교는 40/40 tie였고, 방향 교란과 강한 정보 중립화가 같은 생성 조건에서 기준을 통과했다.}
+  \label{fig:v31-causal}
+\end{figure}
+
+통합 confirm10 결과는 그림 \ref{fig:v31-causal}과 같다. 전체 성공률은 0.916667, 강한 정보 중립화는 0.975000, 방향 교란은 0.775000, 동일 응답 무효 비교 tie 비율은 1.000000이었다. 축별 결과도 행동 경향 0.866667, 통제감 상태 0.966667, 사회적 방향 0.900000, 감정이 향하는 대상 0.933333으로 안정적이었다. 이는 v3.1이 ``trace-as-emotion'' 가설에 대해 표현 증거와 초기 인과 증거를 모두 확보했음을 의미한다.
+
+\subsection{9단계: v4 episode interpretation}
+
+v4에서는 raw trajectory를 감정 에피소드로 해석했다. 120개 샘플에 대한 GPT-5.4 episode interpretation 결과 평균 신뢰도는 0.9293이었다. 감정가는 negative 89개, mixed 19개, positive 12개였고, 각성은 high 109개, medium 9개, low 2개였다. 이 분포는 데이터 자체가 부정적 고각성 상태에 치우쳐 있음을 보여준다.
+
+중요한 것은 에피소드 해석이 단순 라벨보다 풍부하다는 점이다. 예를 들어 \eng{s\_000555}는 공개적 배제에 대한 공세적 당혹-분노로 해석되었고, 행동 경향은 항의와 문제제기 충동이 있으나 사회적 위험 계산 때문에 실제 행동은 보류된 상태로 설명되었다. \eng{s\_003491}는 소진 압박에 묶인 경계성 긴장으로 해석되었고, 단순 휴식 욕구가 아니라 업무 압박을 방어적으로 관리하려는 방향으로 읽혔다. \eng{s\_000527}은 표면상 승진 불안이지만 내부적으로는 위협, 희망, 압박 중 어느 쪽도 우세하지 않은 미점화 예기 상태로 해석되었다.
+
+이런 사례는 EmoNet이 감정 이름 하나를 출력하는 모델이 아니라, 자극이 내부에서 어떤 평가 구조와 행동 경향으로 흘러가는지를 읽는 도구가 될 수 있음을 보여준다.
+
+\subsection{10단계: v4 targeted superiority}
+
+v4의 생성 실험은 두 갈래로 나뉜다. 일반 응답 품질에서는 여전히 \eng{stim\_only}가 강했다. episode v2 summary에서 \eng{stim\_only}의 전체 평균은 3.5404, \eng{direct}는 3.5115, \eng{episode\_trace}는 3.4673이었다. 따라서 일반 전체 품질에서 EmoNet이 무조건 우월하다고 주장할 수 없다.
+
+대신 targeted episode-sensitive set 80개를 구성했다. 이 set은 감정 원인, blame 방향, 날것의 정서 강도, 행동 경향이 중요한 입력을 의도적으로 포함한다. bucket은 balanced filler 22개, social mixed 20개, guilt/self-blame 15개, target-other 12개, strong failure cases 11개로 구성되었다. 평가 조건은 \eng{stim\_only}, 기존 \eng{episode\_trace}, 새 \eng{episode\_trace\_v3}였다.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.9\linewidth]{\figdir/v4_targeted_scores.png}
+  \caption{v4 targeted episode-sensitive 입력에서 조건별 점수. \eng{episode\_trace\_v3}는 주 지표 평균, 전체 평균, 자연스러움에서 모두 가장 높았다.}
+  \label{fig:v4-targeted}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.9\linewidth]{\figdir/v4_paired_win_tie_loss.png}
+  \caption{v4 쌍대 우월성 평가. \eng{episode\_trace\_v3}는 \eng{stim\_only} 대비 70승 3무 5패를 보였다.}
+  \label{fig:v4-paired}
+\end{figure}
+
+그림 \ref{fig:v4-targeted}와 \ref{fig:v4-paired}는 targeted 결과를 보여준다. \eng{episode\_trace\_v3}는 \eng{stim\_only} 대비 paired n=78, 평균 차이 +1.8308, 중앙값 차이 +2.0000, 95\% 부트스트랩 신뢰구간 [+1.5667, +2.0897], 승/무/패 70/3/5, 승률 0.8974를 보였다. 기존 \eng{episode\_trace}도 \eng{stim\_only} 대비 평균 차이 +1.4156, 승/무/패 69/6/2로 강했다. \eng{episode\_trace\_v3}는 기존 \eng{episode\_trace}보다 평균 차이 +0.4519, 95\% 신뢰구간 [+0.1403, +0.7558]를 보였지만, 승/무/패 41/6/30, sign test p=0.2351로 압도적이라고 보기는 어렵다.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.86\linewidth]{\figdir/general_vs_targeted_after.png}
+  \caption{일반 조건과 targeted 조건의 이전/이후 비교. 일반 episode v2 조건에서는 \eng{episode\_trace}가 \eng{stim\_only}를 넘지 못했지만, targeted v4 조건에서는 \eng{episode\_trace\_v3}가 큰 양의 차이를 보였다.}
+  \label{fig:general-targeted}
+\end{figure}
+
+그림 \ref{fig:general-targeted}은 v4 결과를 해석할 때 가장 중요하다. 일반 episode v2 평가에서 \eng{episode\_trace}는 \eng{stim\_only} 대비 평균 차이 -0.081416, 95\% 부트스트랩 신뢰구간 [-0.226549, 0.056637]로 우위를 보이지 못했다. 즉 현재 시스템이 일반 감정 응답 전체에서 기준선을 넘었다고 주장하면 안 된다. 반면 targeted v4 평가에서 \eng{episode\_trace\_v3}는 평균 차이 +1.830769, 95\% 부트스트랩 신뢰구간 [+1.566667, +2.089744]를 보였다. 이 차이는 claim을 넓히는 것이 아니라 좁힌 결과다. 입력을 episode-sensitive 상황으로 제한하고, judge도 일반 품질이 아니라 평가 충실도, raw affect 보존, anti-softening, 행동 경향 적합도, 감정 특이성을 보도록 바꾸었을 때 장점이 드러났다.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.88\linewidth]{\figdir/targeted_metric_deltas_after.png}
+  \caption{현재 targeted 조건에서 \eng{episode\_trace\_v3}가 \eng{stim\_only}보다 개선된 지표. 가장 큰 개선은 과도한 온건화 방지에서 나타났고, 평가 충실도, 행동 경향 적합도, 감정 특이성, 날것의 정서 보존도 모두 양의 차이를 보였다.}
+  \label{fig:targeted-deltas}
+\end{figure}
+
+그림 \ref{fig:targeted-deltas}는 v4가 v3의 온건화 문제에 어떻게 대응했는지를 보여준다. \eng{episode\_trace\_v3}는 \eng{stim\_only} 대비 평가 충실도 +1.9487, 날것의 정서 보존 +1.5141, 과도한 온건화 방지 +2.1593, 행동 경향 적합도 +1.7381, 감정 특이성 +1.8282를 보였다. 이는 v3에서 발견한 스타일 목표 편향이 현재 targeted 조건에서는 응답 지표 수준에서 상당히 완화되었다는 뜻이다. 그러나 이는 targeted 조건에서의 완화이지, 전역 스타일 목표 분포 자체가 재균형되었다는 증거는 아니다.
+
+\section{결과 요약}
+
+\subsection{동역학 결과}
+
+\begin{table}[h]
+\centering
+\caption{v3와 v3.1의 핵심 동역학 결과}
+\begin{tabularx}{\linewidth}{lXr}
+\toprule
+단계 & 지표 & 값 \\
+\midrule
+v3 보정 전 & 지배 흐름 평균 길이 & 1.0539 \\
+v3 보정 전 & 한 칸짜리 흐름 비율 & 0.9734 \\
+v3 보정 후 & 지배 흐름 평균 길이 & 70.4684 \\
+v3 보정 후 & 한 칸짜리 흐름 비율 & 0.0948 \\
+v3 reference config & 첫 활성 tick 평균 & 2.40 \\
+v3 reference config & 최대 tick 도달 비율 & 0.25 \\
+v3.1 적응형 설정 & 감정 흐름 길이 & 50.475 \\
+v3.1 적응형 설정 & 한 칸짜리 흐름 비율 & 0.000 \\
+v3.1 적응형 설정 & 활성 밀도 & 0.709412 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+이 결과는 EmoNet의 내부 동역학이 초기 한 칸 붕괴 상태에서 벗어나, 논문에서 다룰 수 있는 수준의 시간적 흐름을 형성하게 되었음을 보여준다. v3의 보정은 branch를 살렸고, v3.1의 적응형 조절은 길이와 밀도의 균형을 맞추었다.
+
+\subsection{표현 결과}
+
+\begin{table}[h]
+\centering
+\caption{v3.1 n=80 확인 실험의 균형 보정 감정 신호}
+\begin{tabular}{lr}
+\toprule
+감정축 & 균형 보정 감정 신호 \\
+\midrule
+감정가 & 0.258480 \\
+사회적 방향 & 0.119748 \\
+행동 경향 & 0.017921 \\
+평가 계열 & 0.078728 \\
+통제감 상태 & 0.175607 \\
+\midrule
+전체 평균 & 0.136426 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+모든 추적 축에서 값이 양수라는 점이 중요하다. 이는 trace가 단순 노이즈가 아니며, 데이터 불균형을 보정해도 감정축 구조를 일부 보존한다는 뜻이다.
+
+\subsection{인과 결과}
+
+\begin{table}[h]
+\centering
+\caption{v3.1 통합 인과 확인 실험}
+\begin{tabular}{lrr}
+\toprule
+평가 & n & 성공률 또는 tie 비율 \\
+\midrule
+전체 & 120 & 0.916667 \\
+강한 정보 중립화 & 40 & 0.975000 \\
+방향 교란 & 40 & 0.775000 \\
+동일 응답 무효 비교 & 40 & 1.000000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+이 결과는 v3.1의 가장 중요한 논문화 근거다. trace의 특정 감정축 조작이 응답의 감정축 해석을 움직였고, 동일 응답 비교에서는 판정기가 억지로 차이를 만들지 않았다.
+
+\subsection{생성 결과}
+
+\begin{table}[h]
+\centering
+\caption{v4 일반 episode v2 생성 평가}
+\begin{tabularx}{\linewidth}{lrrrr}
+\toprule
+조건 & 내용 적합성 & 정서 적절성 & 자연스러움 & 전체 평균 \\
+\midrule
+\eng{stim\_only} & 3.9123 & 3.6228 & 4.4561 & 3.5404 \\
+\eng{direct} & 3.9292 & 3.5841 & 4.4159 & 3.5115 \\
+\eng{episode\_trace} & 4.0531 & 3.5664 & 4.1947 & 3.4673 \\
+\eng{raw\_trace} & 3.9558 & 3.5133 & 4.1770 & 3.3717 \\
+\eng{emonet\_full} & 3.6814 & 3.3805 & 3.7345 & 3.2478 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+일반 생성 평가에서는 \eng{stim\_only}가 여전히 가장 높다. 이는 연구 주장을 좁혀야 한다는 근거다. EmoNet은 모든 일반 응답에서 우월한 시스템이 아니라, 내부 감정 에피소드 정보가 필요한 상황에서 장점을 보이는 시스템으로 정리되어야 한다.
+
+일반 조건의 쌍대 비교도 같은 결론을 준다. \eng{episode\_trace}는 \eng{stim\_only} 대비 paired n=113에서 평균 차이 -0.081416, 승/무/패 47/15/51, 승률 0.415929였다. \eng{raw\_trace}, \eng{emonet\_full}, \eng{hybrid\_episode}도 일반 조건에서는 평균 차이가 음수였다. 따라서 v4 이전 일반 실험은 ``아직 현재 시스템이 전역적으로 기준선을 넘지 못했다''는 이전 결과로 반드시 함께 제시되어야 한다.
+
+\begin{table}[h]
+\centering
+\caption{v4 일반 조건과 targeted 조건의 이전/이후 비교}
+\begin{tabularx}{\linewidth}{lrrrr}
+\toprule
+비교 & paired n & 평균 차이 & 95\% 신뢰구간 & 승/무/패 \\
+\midrule
+일반 \eng{episode\_trace} vs \eng{stim\_only} & 113 & -0.0814 & [-0.2265, 0.0566] & 47/15/51 \\
+targeted \eng{episode\_trace} vs \eng{stim\_only} & 77 & +1.4156 & [+1.1740, +1.6519] & 69/6/2 \\
+targeted \eng{episode\_trace\_v3} vs \eng{stim\_only} & 78 & +1.8308 & [+1.5667, +2.0897] & 70/3/5 \\
+targeted \eng{episode\_trace\_v3} vs \eng{episode\_trace} & 77 & +0.4519 & [+0.1403, +0.7558] & 41/6/30 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+이 표는 사용자가 요구한 ``모든 실험에는 이전과 이후가 있어야 한다''는 기준에 맞게 v4 결과를 다시 배열한 것이다. 이전 일반 조건에서는 episode trace가 기준선을 넘지 못했다. 이후 targeted 조건에서는 평가 질문과 입력군을 좁히자 episode trace 계열이 기준선을 크게 넘었다. 단, \eng{episode\_trace\_v3}가 기존 \eng{episode\_trace}보다 항상 우수하다는 주장은 아직 약하다. 평균 차이와 bootstrap 신뢰구간은 양수지만, win-rate와 sign test는 더 조심스럽게 해석해야 한다.
+
+\section{논의}
+
+\subsection{무엇을 만들었는가}
+
+이 연구가 만든 것은 단순한 감정 응답 생성기가 아니다. 더 정확히 말하면, EmoNet은 다음 네 가지를 만들었다.
+
+\begin{enumerate}
+  \item 텍스트 자극을 내부 신경 동역학으로 전개하는 계산 구조.
+  \item 그 동역학에서 지배 흐름과 시간별 활성 추적을 뽑는 분석 구조.
+  \item trace가 감정 상태 표현인지 확인하기 위한 표현 지표와 인과 조작 지표.
+  \item trace를 감정 에피소드로 해석하고, targeted 입력에서 응답 조건으로 사용하는 평가 구조.
+\end{enumerate}
+
+사용자가 만들고자 한 핵심은 ``감정 벡터를 넣었으니 AI가 감정을 느꼈다''가 아니다. 오히려 연구는 그 단순한 해석에서 벗어났다. v3.1 이후 감정 벡터는 자극으로 격하되었고, 감정은 신경망 내부에서 생긴 trace로 재정의되었다. 이것이 본 연구의 가장 중요한 이론적 전환이다.
+
+\subsection{왜 실패한 실험이 중요했는가}
+
+v3의 branch collapse, style bias, predictor 한계, 일반 생성 평가 실패는 논문에서 숨길 내용이 아니다. 이 실패들이 연구 질문을 더 정밀하게 만들었다. branch collapse는 trace가 감정 상태 표현이 되려면 먼저 시간적 깊이가 있어야 함을 보여주었다. style bias는 최종 응답의 부드러움이 LLM만의 문제가 아니라 목표 라벨 구성의 문제임을 보여주었다. \eng{z -> s} predictor가 text baseline을 넘지 못한 것은 branch dynamics가 좋아졌다고 해서 곧바로 응답 성능이 좋아지는 것은 아님을 보여주었다. 일반 생성에서 \eng{stim\_only}가 강했던 것은 broad superiority 주장을 버리고 targeted episode-fidelity claim으로 좁히게 했다.
+
+따라서 모든 행동에는 그에 맞는 지표가 붙어야 했다. branch를 고치면 branch 길이와 한 칸 비율을 봐야 했다. 점화를 고치면 첫 활성 tick을 봐야 했다. 포화를 고치면 최대 tick 도달 비율을 봐야 했다. 스타일을 고치면 raw affect preservation과 anti-softening을 봐야 했다. 인과성을 주장하려면 방향 교란, 정보 중립화, 무효 비교가 필요했다.
+
+\subsection{v3.1의 의미}
+
+v3.1은 EmoNet의 이론적 중심이다. v4가 더 넓은 응답 평가를 제공하지만, 감정 정의의 핵심은 v3.1에서 확정되었다. ``자극 벡터는 감정이 아니며, trace가 감정이다''라는 정의는 평가의 기준을 바꾼다. 좋은 응답을 만들었는가보다 먼저, trace가 충분히 안정적인지, 감정축 구조를 담는지, 조작 가능한지를 묻게 된다.
+
+v3.1의 confirm10은 아직 대규모 확증 실험은 아니다. 생성기와 judge가 모두 Claude Haiku 4.5였기 때문에 model-family bias 가능성이 남는다. 그러나 같은 조건에서 방향 교란과 강한 정보 중립화가 동시에 통과했고, 동일 응답 무효 비교가 40/40 tie였다는 점은 강한 초기 증거다. 논문에서는 이를 ``최초의 통합 인과 확인 증거''로 표현하는 것이 적절하다.
+
+\subsection{v4의 의미}
+
+v4는 연구 주장을 응답 생성 쪽으로 다시 연결한다. 그러나 이 연결은 조심스럽다. 일반 응답 품질에서는 \eng{stim\_only}가 여전히 강하다. 따라서 v4의 올바른 주장은 ``EmoNet이 모든 응답에서 더 좋다''가 아니라, ``감정 원인, blame 방향, 날것의 정서, 행동 경향이 중요한 targeted 입력에서 episode trace conditioning이 더 잘 맞는다''이다.
+
+이 좁은 주장은 더 방어 가능하다. \eng{episode\_trace\_v3}는 targeted set에서 평가 충실도, raw affect preservation, anti-softening, action tendency fit, emotional specificity를 모두 높였다. 자연스러움도 떨어지지 않았다. 이는 내부 감정 episode 정보가 응답 표면화에 실질적으로 도움이 되는 조건이 있음을 보여준다.
+
+\section{한계}
+
+첫째, LLM judge 의존성이 남아 있다. v3.1의 confirm10과 v4 targeted superiority는 모두 자동 판정이 핵심이다. v3.1에서는 축 전용 눈가림과 동일 응답 무효 비교로 judge 편향을 줄였지만, 독립 judge와 사람 평가는 아직 필요하다. v4도 human blind A/B package는 준비되었지만 실제 사람 평가가 완료된 것은 아니다.
+
+둘째, 데이터 분포가 치우쳐 있다. v4 episode interpretation 120개 중 negative valence가 89개, high arousal이 109개였다. 이는 현재 결과가 부정적 고각성 상황에 특히 강하게 맞춰져 있을 가능성을 뜻한다. positive arousal, low-arousal negative, anticipatory state, target-other bucket은 더 보강해야 한다.
+
+셋째, \eng{z -> s} 경로는 아직 강하지 않다. v3의 predictor comparison에서 text TF-IDF baseline은 mean gain +0.002660을 보였지만, structfix learned z64는 -0.000040이었다. 즉 branch dynamics가 살아났다고 해서 잠재 표현이 supervised style prediction에서 강해진 것은 아니다.
+
+넷째, 스타일 목표 편향이 남아 있다. 온건한 축은 높고 raw affect 축은 낮다. 이는 최종 응답이 부드러워지는 구조적 원인이다. v4의 targeted judge는 anti-softening을 따로 보았지만, 학습 목표와 라벨링 파이프라인 자체를 고치는 일은 아직 남아 있다.
+
+다섯째, v3.1의 causal confirm10은 규모가 작다. base record 10개, judge pair 120개는 pilot을 넘는 통합 확인 실험이지만, full targeted set이나 다중 모델 독립 평가에 비하면 작다. 따라서 ``초기 인과 증거''로 쓰는 것이 안전하다.
+
+\section{향후 연구}
+
+향후 연구는 네 방향으로 정리된다.
+
+첫째, 사람 눈가림 평가를 완료해야 한다. v4의 \eng{episode\_trace\_v3} vs \eng{stim\_only} human A/B를 실제 사람에게 수행하고, LLM judge와 일치하는지 확인해야 한다. 특히 평가자는 일반적 따뜻함보다 감정 원인, 행동 경향, raw affect 보존을 기준으로 보아야 한다.
+
+둘째, targeted set을 확장해야 한다. target-other bucket은 12개에 그쳤다. 원래 목표였던 30개 이상으로 늘리고, social mixed, guilt/self-blame, strong failure case, positive high-arousal, low-arousal negative를 균형 있게 구성해야 한다.
+
+셋째, trace causal test를 확장해야 한다. v3.1의 방향 교란과 정보 중립화는 더 많은 base record, 다른 생성 모델, 다른 judge 모델, 사람 판정으로 반복되어야 한다. 또한 축별로 어떤 축이 잘 조작되고 어떤 축이 약한지 분리해야 한다.
+
+넷째, \eng{z -> s}와 episode conditioning 사이를 다시 설계해야 한다. 현재 \eng{z -> s} predictor는 약하지만, raw trajectory를 episode로 해석하면 targeted 응답에서는 강점이 나타난다. 이는 압축된 \eng{z}보다 구조화된 episode 표현이 현재 더 유용하다는 뜻일 수 있다. 따라서 trace를 벡터 하나로 누르기보다, 평가 구조, 행동 경향, 대상 방향, 통제감, raw affect를 분리한 중간 표현으로 만드는 방향이 유망하다.
+
+\section{버전별 행동과 근거}
+
+본 절은 연구 과정에서 수행된 주요 행동을 정리한다. EmoNet의 연구 원칙은 어떤 변경도 단순한 직감으로 채택하지 않는 것이다. 변경에는 가설이 있어야 하고, 가설에는 대응 지표가 있어야 하며, 지표가 나빠지면 claim을 줄이거나 설계를 되돌려야 한다.
+
+\begin{longtable}{p{0.13\linewidth}p{0.25\linewidth}p{0.32\linewidth}p{0.20\linewidth}}
+\caption{버전별 핵심 행동과 대응 지표}\\
+\toprule
+버전 & 행동 & 이유 & 대응 지표 \\
+\midrule
+v1 & 텍스트를 감정 자극으로 변환하고 뉴런망 동역학을 실행 & 감정을 라벨이 아니라 내부 변화로 다루기 위한 첫 실행 구조 필요 & 추론 가능 여부, \eng{z} 생성, 히스토리 시각화 \\
+v1 & GUI 추가 & 연구자가 \eng{z}와 시간별 히스토리를 직접 확인해야 함 & 추론 결과 표시, 히스토리 plot \\
+v2 & 모듈형 PyTorch MVP로 분리 & 이후 실험에서 인코더, 동역학, branch, decoder를 따로 진단하기 위함 & 모듈별 실행 가능성, CLI 추론 \\
+v2 & branch tracking 도입 & 내부 경로를 단순 최종 벡터보다 풍부한 표현으로 쓰기 위함 & path 추적 여부, dominant path 생성 \\
+v3 & full export branch length 분석 & 지배 흐름이 실제로 시간적 깊이를 갖는지 확인 & 평균 길이 1.0539, 한 칸 비율 0.9734 \\
+v3 & branch collapse 완화 & 길이 1 흐름으로는 감정 trace 주장을 할 수 없음 & 평균 길이 70.4684, 한 칸 비율 0.0948 \\
+v3 & late ignition 분석 & collapse 이후에도 흐름이 늦게 켜지고 cap에 걸리는 현상 확인 & 첫 활성 tick 20.89, max tick 도달 1.0 \\
+v3 & reference config calibration & 기준 파라미터를 임의값이 아니라 제약 기반으로 선택 & 무활성 0.05, 한 칸 0.05, 첫 활성 2.40 \\
+v3 & style bias 분석 & 최종 응답이 부드러워지는 원인을 target construction에서 찾기 위함 & 부드러움 0.9276, 적대성 0.0003 \\
+v3.1 & trace-as-emotion 재정의 & 입력 감정 벡터가 아니라 내부 trace를 감정 상태로 보기 위함 & 구조 분리도, 균형 보정 감정 신호 \\
+v3.1 & 적응형 활성 밀도 조절 & 흐름 붕괴와 과활성을 동시에 피하기 위함 & 흐름 길이 50.475, 밀도 0.709412 \\
+v3.1 & 방향 교란과 정보 중립화 & trace 조작이 응답 감정축 해석을 움직이는지 확인 & 교란 0.775, 중립화 0.975 \\
+v3.1 & 축 전용 눈가림 judge & LLM이 좋은 답변을 선호하는 편향을 줄이기 위함 & 동일 응답 tie 1.000 \\
+v4 & episode interpretation & trace를 단일 라벨보다 풍부한 감정 에피소드로 읽기 위함 & 120개 해석, 평균 신뢰도 0.9293 \\
+v4 & targeted superiority set 구성 & broad generation superiority 대신 episode-sensitive claim 검증 & targeted set 80개, paired n 78 \\
+v4 & \eng{episode\_trace\_v3} 설계 & anti-softening과 raw affect 보존을 강화하기 위함 & \eng{stim\_only} 대비 +1.8308 \\
+\bottomrule
+\end{longtable}
+
+이 표의 핵심은 연구가 한 방향으로만 진행되지 않았다는 점이다. v3에서 branch가 살아났지만 생성이 곧바로 좋아지지 않았고, v3.1에서 trace의 표현성과 인과성을 먼저 세웠으며, v4에서 다시 응답 생성으로 돌아왔다. 이는 우회가 아니라 필요한 순서였다. 내부 표현이 안정적이지 않은 상태에서 응답 품질을 논하면 원인을 알 수 없고, 응답 품질만 높이려 하면 trace가 실제 감정 상태인지 검증하지 못한다.
+
+\section{모듈별 역할}
+
+EmoNet은 단일 모델이라기보다 여러 모듈이 결합된 연구 파이프라인이다. 각 모듈은 서로 다른 질문에 답한다.
+
+\begin{longtable}{p{0.34\linewidth}p{0.25\linewidth}p{0.31\linewidth}}
+\caption{주요 모듈과 논문 내 역할}\\
+\toprule
+모듈 & 한국어 역할 & 논문에서의 의미 \\
+\midrule
+\eng{emotion\_z\_pipeline.py} & 초기 감정 z 파이프라인 & v1에서 텍스트-자극-동역학-히스토리-\eng{z} 흐름을 처음 실행한 근거 \\
+\eng{EmotionDynamicsNet} & 감정 동역학 뉴런망 & 자극이 내부 활성 흐름을 만드는 계산 공간 \\
+\eng{history\_encoder.py} & 히스토리 인코더 & 시간별 내부 상태를 잠재 표현으로 압축하는 초기 방법 \\
+\eng{branching.py} & 경로 추적기 & 지배 흐름 개념의 출발점 \\
+\eng{core.py} & 통합 동역학 코어 & v3/v4의 실제 branch dynamics, 활성, 피로, 억제, 재배선 계산 \\
+\eng{cli.py} & 실행 인터페이스 & export, generate, inspect 같은 실험 실행의 진입점 \\
+\eng{calibrate\_reference\_config.py} & 기준 설정 보정기 & reference config를 실험 제약으로 선택한 근거 \\
+\eng{analyze\_branch\_dynamics.py} & 브랜치 동역학 분석 & collapse, late ignition, hard cap을 정량화한 도구 \\
+\eng{export\_neural\_activation\_traces.py} & 신경 활성 추적 export & v3.1 trace-as-emotion 실험의 데이터 생성기 \\
+\eng{probe\_neural\_trace\_geometry.py} & trace 구조 탐침 & 감정축 구조와 균형 보정 신호를 측정한 도구 \\
+\eng{build\_trace\_causal\_probe\_set.py} & 인과 probe set 생성기 & 방향 교란과 정보 중립화를 구성한 도구 \\
+\eng{judge\_trace\_axis\_blind.py} & 축 전용 눈가림 판정기 & 일반 품질이 아니라 감정축 이동만 평가하게 만든 도구 \\
+\eng{interpret\_emotion\_trajectory.py} & 감정 에피소드 해석기 & raw trajectory를 평가 구조와 행동 경향으로 변환한 도구 \\
+\eng{generate\_episode\_v3\_targeted.py} & targeted episode 응답 생성기 & \eng{episode\_trace\_v3} 조건을 만든 도구 \\
+\eng{score\_superiority\_judge.py} & targeted 우월성 판정기 & \eng{stim\_only} 대비 episode-conditioned 응답 우위를 측정한 도구 \\
+\bottomrule
+\end{longtable}
+
+이 모듈 구조는 논문에서 중요하다. 왜냐하면 EmoNet의 claim은 하나의 black-box LLM 출력이 아니라, 내부 자극, 동역학, trace, 에피소드, 응답 표면화를 분해해서 진단할 수 있다는 데 있기 때문이다. 실패가 발생했을 때도 ``모델이 별로다''로 끝나지 않고, branch가 짧은지, 점화가 늦은지, 스타일 목표가 편향되었는지, episode prompt가 과도한지, judge가 일반 품질을 보고 있는지 분리할 수 있다.
+
+\section{대표 사례 해석}
+
+정량 지표만으로는 trace-as-emotion의 의미가 충분히 드러나지 않는다. v4의 episode interpretation은 raw trajectory가 단순 라벨보다 복잡한 내부 상태를 담고 있음을 보여준다.
+
+\begin{longtable}{p{0.14\linewidth}p{0.24\linewidth}p{0.47\linewidth}p{0.08\linewidth}}
+\caption{대표 감정 에피소드 사례}\\
+\toprule
+샘플 & 에피소드 이름 & 행동 경향 해석 & 신뢰도 \\
+\midrule
+\eng{s\_000555} & 공개적 배제에 대한 공세적 당혹-분노 & 타인이 공개적으로 자신을 낮추고 배제했다는 위협/모욕 해석이 핵심이다. 항의나 문제제기 충동은 있으나, 사회적 위험 계산 때문에 실제 행동은 보류된다. & 0.95 \\
+\eng{s\_003491} & 소진 압박에 묶인 경계성 긴장 & 휴식 필요는 강하지만 쓰러지듯 철수하기보다 상황을 방어적으로 관리하고 업무 압박에 대비하려는 방향으로 흐른다. & 0.94 \\
+\eng{s\_000527} & 미점화된 승진 불안 예고 & 표면상 초조하지만 내부적으로는 위협, 희망, 압박 중 어느 한쪽도 우세하지 않은 미분화 예기 상태로 읽힌다. & 0.95 \\
+\eng{s\_001756} & 안도 기반의 적극적 감사 & 불안 요인이 배우자의 선제적 대비로 완충되었고, 고마움을 구체적 보답 행동으로 옮기려는 접근 성향이 강하다. & 0.94 \\
+\eng{s\_001146} & 방어적 자살사고 경계 고착 & 자기 대상 위협이자 즉각 관리가 필요한 사태로 처리되며, 따뜻한 공감보다 위험 신호 확인과 관리 방향으로 반응하려는 성향이 강하다. & 0.95 \\
+\eng{s\_003887} & 불공정 지각에 따른 공세적 항의 모드 & 불공정하고 편파적인 처우로 해석되며, 직접 항의하거나 인정받기 위해 자신을 드러내려는 접근 성향이 강하다. & 0.94 \\
+\bottomrule
+\end{longtable}
+
+이 사례들은 감정이 단순히 ``분노'', ``불안'', ``감사''로 끝나지 않음을 보여준다. 같은 negative high-arousal 상태라도 공개적 모욕, 소진 압박, 생계 위협, 자기비난, 관계위협은 서로 다른 행동 경향을 갖는다. EmoNet의 trace와 episode 해석은 바로 이 차이를 보존하려는 시도다.
+
+\section{주장 가능 범위}
+
+논문에서 가장 위험한 부분은 과장이다. EmoNet은 흥미로운 결과를 냈지만, 아직 모든 claim을 허용하지는 않는다. 따라서 본 논문은 주장 가능 범위를 명시한다.
+
+\subsection{현재 주장 가능한 것}
+
+\begin{enumerate}
+  \item v3의 보정 이후 지배 흐름의 한 칸 붕괴는 크게 완화되었다.
+  \item reference config는 임의값이 아니라 제약 기반 calibration으로 선택되었다.
+  \item v3.1의 적응형 설정은 흐름 길이, 활성 밀도, 구조 분리도를 동시에 만족했다.
+  \item v3.1 trace는 감정가, 사회적 방향, 행동 경향, 평가 계열, 통제감 상태에 대해 양의 균형 보정 신호를 보였다.
+  \item v3.1의 방향 교란과 강한 정보 중립화는 축 전용 눈가림 judge에서 통합 기준을 통과했다.
+  \item v4의 targeted episode-sensitive 입력에서는 \eng{episode\_trace\_v3}가 \eng{stim\_only}보다 강한 우위를 보였다.
+\end{enumerate}
+
+\subsection{아직 주장하면 안 되는 것}
+
+\begin{enumerate}
+  \item EmoNet이 인간처럼 실제 감정을 느낀다는 주장.
+  \item EmoNet이 모든 일반 감정 응답 생성에서 \eng{stim\_only}보다 항상 우수하다는 주장.
+  \item 현재 \eng{z -> s} predictor가 text baseline보다 강하다는 주장.
+  \item v3.1 confirm10만으로 완전한 인과성이 입증되었다는 주장.
+  \item LLM judge 결과만으로 사람 평가까지 통과했다고 보는 주장.
+\end{enumerate}
+
+이 구분은 논문 전략의 핵심이다. 과장된 claim은 방어하기 어렵지만, 좁고 정확한 claim은 현재 산출물로 방어할 수 있다. 따라서 최종 논문 제목과 초록도 ``범용 감정 응답 생성기의 우월성''이 아니라 ``신경 활성 추적 기반 감정 상태 표현과 targeted episode-fidelity''에 맞추는 편이 안전하다.
+
+\section{논문화 전략}
+
+최종 논문은 세 가지 축으로 구성하는 것이 적절하다.
+
+첫째, 방법 논문으로서의 축이다. EmoNet은 자극, 신경 동역학, 지배 흐름, trace, 에피소드 해석, 응답 조건화를 하나의 파이프라인으로 묶는다. 이 축에서는 모듈 구조와 지표 설계가 중요하다.
+
+둘째, 표현 검증 논문으로서의 축이다. v3.1은 trace가 감정 상태 표현 후보인지 묻고, 균형 보정 감정 신호와 축 전용 인과 조작으로 답한다. 이 축에서는 생성 점수보다 trace 안정성, 구조 분리도, 방향 교란, 정보 중립화가 중요하다.
+
+셋째, 응답 적용 논문으로서의 축이다. v4는 trace를 감정 에피소드로 해석하고, episode-sensitive targeted 입력에서 응답 조건으로 사용한다. 이 축에서는 broad superiority가 아니라 targeted superiority가 핵심이다.
+
+따라서 본 연구의 최종 제목은 ``EmoNet: 감정 응답 생성기''보다 ``EmoNet: 신경 활성 추적 기반 감정 상태 표현과 에피소드 조건화''에 가까워야 한다. 논문 초록도 ``좋은 답변을 만들었다''가 아니라 ``감정 상태를 trace로 정의하고, trace가 구조적 신호와 초기 인과 조작 가능성을 가지며, targeted 입력에서 응답 충실도를 높였다''로 써야 한다.
+
+\section{결론}
+
+EmoNet 연구의 전체 과정은 감정을 어떻게 정의할 것인가에 대한 변화의 과정이었다. v1/v2에서는 감정 벡터를 만들고 뉴런망을 통과시킨 결과를 감정 상태처럼 보았다. v3에서는 그 내부에서 지나간 대표 경로를 추출했고, branch collapse와 style bias라는 중요한 병목을 발견했다. v3.1에서는 감정 정의를 바꾸어 최초 벡터를 자극으로 보고, 신경 활성 추적 자체를 감정 상태 표현으로 정의했다. v4에서는 이 trace를 감정 에피소드로 해석하고, targeted 입력에서 자극만 사용하는 기준선보다 나은 응답 조건이 될 수 있음을 보였다.
+
+현재 가장 방어 가능한 결론은 다음이다. EmoNet은 아직 모든 일반 감정 응답에서 가장 좋은 시스템은 아니다. v3에서 발견된 전역 스타일 목표의 긍정성, 부드러움, 협조성 편향은 현재도 남아 있는 문제로 기록해야 한다. 다만 v4의 targeted episode-sensitive 조건에서는 그 편향이 응답 표면화 지표 수준에서 완화되었다. 특히 \eng{episode\_trace\_v3}는 자극만 사용하는 기준선보다 과도한 온건화 방지, 날것의 정서 보존, 평가 충실도, 행동 경향 적합도에서 크게 높은 점수를 얻었다. 따라서 현재 논문에서 주장할 수 있는 핵심은 ``전역 편향의 완전 해결''이 아니라, ``trace 기반 episode conditioning이 targeted 조건에서 기존 온건화 편향을 완화하고 감정 에피소드 충실도를 높였다''이다.
+
+결국 EmoNet이 만든 것은 단순히 더 긍정적인 응답 생성기가 아니다. 오히려 이 연구는 긍정적이고 안전한 응답으로 흐르는 기존 LLM 표면화 편향을 드러냈고, 내부 trace와 episode 정보를 사용해 그 편향을 언제, 어떤 조건에서 줄일 수 있는지를 실험적으로 분리했다. 감정 상태를 단순 라벨이나 표면 문체가 아니라 자극이 내부 신경망에서 만든 trace로 다루는 구조, 그리고 그 trace가 안정적 동역학, 감정축 구조, 초기 인과 조작 가능성을 가진다는 증거가 현재 EmoNet의 핵심 기여다.
+
+\begin{thebibliography}{9}
+\bibitem{v2readme}
+EmoNet v2 README. \textit{모듈형 PyTorch MVP 설명 문서}. 2026.
+
+\bibitem{v3draft}
+EmoNet v3 Korean Draft. \textit{감정 동역학 기반 한국어 응답 생성 프레임워크}. 2026.
+
+\bibitem{branchcollapse}
+Branch Collapse Mitigation. \textit{v3 branch length collapse 분석 및 완화 기록}. 2026.
+
+\bibitem{branchdepth}
+Branch Depth Research. \textit{v3 late ignition 및 hard cap 분석 기록}. 2026.
+
+\bibitem{calibration}
+Reference Config Calibration Report. \textit{v3 reference configuration 보정 보고서}. 2026.
+
+\bibitem{v31report}
+v3.1 Final Completion Report. \textit{trace-as-emotion 표현 및 인과 검증 보고서}. 2026.
+
+\bibitem{v4summary}
+EmoNet v4 Research Summary. \textit{episode interpretation 및 generation 평가 요약}. 2026.
+
+\bibitem{targeted}
+EmoNet Targeted Superiority Report. \textit{targeted episode-sensitive 입력에서의 쌍대 우월성 평가}. 2026.
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,122 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand*\HyPL@Entry[1]{}
+\HyPL@Entry{0<</S/D>>}
+\citation{ekman1992}
+\citation{plutchik1980}
+\@writefile{toc}{\contentsline {section}{\numberline {1}서론}{4}{section.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}연구 문제}{4}{subsection.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.2}주요 기여}{4}{subsection.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}선행 연구}{4}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}기본 감정 이론과 범주형 감정 표현}{4}{subsection.2.1}\protected@file@percent }
+\citation{russell1980}
+\citation{scherer2009}
+\citation{gross1998}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces EmoTrace 전체 연구 파이프라인과 버전별 역할.}}{5}{figure.caption.2}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:academic-full-pipeline}{{1}{5}{EmoTrace 전체 연구 파이프라인과 버전별 역할}{figure.caption.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}연속적인 차원형 감정 이론과 감정 벡터 표현}{5}{subsection.2.2}\protected@file@percent }
+\citation{rashkin2019}
+\citation{zheng2023}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}평가 이론과 감정의 과정성}{6}{subsection.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}공감 대화 모델과 감정 상황 기반 데이터셋}{6}{subsection.2.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5}LLM이 평가자가 되는 평가와 편향 문제}{6}{subsection.2.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}선행 연구로부터 도출되는 문제 제기}{6}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}선행 연구가 남긴 빈 부분}{6}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}LLM 공감 응답의 표면적 자연스러움과 \textcolor {blue}{구조적} 결핍}{7}{subsection.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}러프한 감정 감지와 내부 감성 상태의 구분}{7}{subsection.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}내부 상태 모델링의 필요성}{8}{subsection.3.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}개념적 정의와 연구 가설}{8}{section.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}자극, 감성 상태, trace의 구분}{8}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}trace-as-emotion 가설}{8}{subsection.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}에피소드 조건화 가설}{8}{subsection.4.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces 감정 정의의 변화. v1/v2는 결과 벡터 중심 해석을 사용했고, v3는 대표 경로의 중요성을 발견했으며, v3.1은 trace 자체를 감정 상태 표현 후보로 재정의했다.}}{9}{figure.caption.3}\protected@file@percent }
+\newlabel{fig:academic-definition-shift}{{2}{9}{감정 정의의 변화. v1/v2는 결과 벡터 중심 해석을 사용했고, v3는 대표 경로의 중요성을 발견했으며, v3.1은 trace 자체를 감정 상태 표현 후보로 재정의했다}{figure.caption.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces EmoTrace 연구 버전의 개념 발전.}}{9}{figure.caption.4}\protected@file@percent }
+\newlabel{fig:academic-timeline}{{3}{9}{EmoTrace 연구 버전의 개념 발전}{figure.caption.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}시스템 발전 과정}{9}{section.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}v1: 내부 상태화 파이프라인의 형성}{9}{subsection.5.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces v1 파이프라인. 입력 문장은 감정/자극 벡터로 변환되고, \texttt  {EmotionDynamicsNet}의 시간별 히스토리를 거쳐 잠재 상태 \texttt  {z}로 압축된다.}}{10}{figure.caption.5}\protected@file@percent }
+\newlabel{fig:academic-v1}{{4}{10}{v1 파이프라인. 입력 문장은 감정/자극 벡터로 변환되고, \eng {EmotionDynamicsNet}의 시간별 히스토리를 거쳐 잠재 상태 \eng {z}로 압축된다}{figure.caption.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces v2 모듈 구조. 모듈 분리는 이후 v3/v3.1/v4의 진단 실험을 가능하게 했다.}}{10}{figure.caption.6}\protected@file@percent }
+\newlabel{fig:academic-v2-modules}{{5}{10}{v2 모듈 구조. 모듈 분리는 이후 v3/v3.1/v4의 진단 실험을 가능하게 했다}{figure.caption.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}v2: 모듈형 감정 동역학 시스템}{10}{subsection.5.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces v2 뉴런 타입 구조. 흥분성, 억제성, 조절성 뉴런은 각각 신호 확산, 과활성 억제, 흐름 조절의 역할을 맡는다.}}{11}{figure.caption.7}\protected@file@percent }
+\newlabel{fig:academic-v2-neurons}{{6}{11}{v2 뉴런 타입 구조. 흥분성, 억제성, 조절성 뉴런은 각각 신호 확산, 과활성 억제, 흐름 조절의 역할을 맡는다}{figure.caption.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}v3: dominant branch와 collapse의 발견}{11}{subsection.5.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces v3 보정 전후의 지배 흐름 붕괴 완화.}}{12}{figure.caption.8}\protected@file@percent }
+\newlabel{fig:academic-branch-recovery}{{7}{12}{v3 보정 전후의 지배 흐름 붕괴 완화}{figure.caption.8}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces v3 스타일 목표 편향. 온건한 축은 높고 날것의 감정축은 낮게 나타났다.}}{12}{figure.caption.9}\protected@file@percent }
+\newlabel{fig:academic-style-bias}{{8}{12}{v3 스타일 목표 편향. 온건한 축은 높고 날것의 감정축은 낮게 나타났다}{figure.caption.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}v3.1: trace-as-emotion 정의 전환}{12}{subsection.5.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces v3.1 적응형 설정의 주요 동역학 및 표현 지표.}}{13}{figure.caption.10}\protected@file@percent }
+\newlabel{fig:academic-v31-metrics}{{9}{13}{v3.1 적응형 설정의 주요 동역학 및 표현 지표}{figure.caption.10}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces v3.1 trace 인과 조작 실험 결과.}}{13}{figure.caption.11}\protected@file@percent }
+\newlabel{fig:academic-v31-causal}{{10}{13}{v3.1 trace 인과 조작 실험 결과}{figure.caption.11}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces v4 episode conditioning 흐름. trace는 응답 가능한 사건 구조로 번역된다.}}{14}{figure.caption.12}\protected@file@percent }
+\newlabel{fig:academic-episode-workflow}{{11}{14}{v4 episode conditioning 흐름. trace는 응답 가능한 사건 구조로 번역된다}{figure.caption.12}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.5}v4: 에피소드 해석과 targeted 평가}{14}{subsection.5.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}실험 설계}{14}{section.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}실험 흐름}{14}{subsection.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}초기 구조 실험}{14}{subsection.6.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces 주요 실험의 이전/이후 구조.}}{15}{figure.caption.13}\protected@file@percent }
+\newlabel{fig:academic-before-after}{{12}{15}{주요 실험의 이전/이후 구조}{figure.caption.13}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}branch/dynamics 보정 실험}{15}{subsection.6.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}스타일 편향 분석}{15}{subsection.6.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.5}trace 표현 검증}{15}{subsection.6.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces v4 targeted episode-sensitive 입력에서의 조건별 점수.}}{16}{figure.caption.14}\protected@file@percent }
+\newlabel{fig:academic-targeted-scores}{{13}{16}{v4 targeted episode-sensitive 입력에서의 조건별 점수}{figure.caption.14}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.6}trace 인과 조작 실험}{16}{subsection.6.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.7}episode 응답 생성 및 targeted 비교}{16}{subsection.6.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7}평가 지표}{16}{section.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}동역학 지표}{16}{subsection.7.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {14}{\ignorespaces v4 쌍대 우월성 평가.}}{17}{figure.caption.15}\protected@file@percent }
+\newlabel{fig:academic-paired}{{14}{17}{v4 쌍대 우월성 평가}{figure.caption.15}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}표현 지표}{17}{subsection.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}인과 지표}{17}{subsection.7.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.4}생성 지표}{17}{subsection.7.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8}결과}{17}{section.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.1}내부 상태화 구조의 성립}{17}{subsection.8.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces EmoTrace 지표 체계. trace가 생성되었는지, 내부 감성 상태로 의미가 있는지, 표출에 영향을 주는지를 분리하여 평가한다.}}{18}{figure.caption.16}\protected@file@percent }
+\newlabel{fig:academic-metrics}{{15}{18}{EmoTrace 지표 체계. trace가 생성되었는지, 내부 감성 상태로 의미가 있는지, 표출에 영향을 주는지를 분리하여 평가한다}{figure.caption.16}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.2}branch collapse 완화}{18}{subsection.8.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.3}스타일 편향 확인}{18}{subsection.8.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.4}trace 표현 검증}{18}{subsection.8.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {16}{\ignorespaces 일반 조건과 targeted 조건의 이전/이후 비교.}}{19}{figure.caption.17}\protected@file@percent }
+\newlabel{fig:academic-general-targeted}{{16}{19}{일반 조건과 targeted 조건의 이전/이후 비교}{figure.caption.17}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {17}{\ignorespaces targeted 조건에서 지표별 향상량.}}{19}{figure.caption.18}\protected@file@percent }
+\newlabel{fig:academic-targeted-deltas}{{17}{19}{targeted 조건에서 지표별 향상량}{figure.caption.18}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.5}인과 조작 결과}{19}{subsection.8.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.6}일반 조건 실패와 targeted 조건 성공}{19}{subsection.8.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {9}논의}{20}{section.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1}결과 벡터 중심 감정관에서 내부 형성 중심 감정관으로}{20}{subsection.9.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.2}실패가 연구를 조직한 방식}{20}{subsection.9.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.3}LLM judge 편향에 대한 해석}{20}{subsection.9.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.4}EmoTrace가 실제로 만든 것}{20}{subsection.9.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {18}{\ignorespaces 현재 주장 가능 범위와 아직 주장하면 안 되는 범위.}}{21}{figure.caption.19}\protected@file@percent }
+\newlabel{fig:academic-claim-boundary}{{18}{21}{현재 주장 가능 범위와 아직 주장하면 안 되는 범위}{figure.caption.19}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {10}한계와 주장 가능 범위}{21}{section.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {11}향후 연구}{21}{section.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {12}결론}{21}{section.12}\protected@file@percent }
+\gdef \LT@i {\LT@entry 
+    {1}{123.9926pt}\LT@entry 
+    {1}{319.97433pt}}
+\bibcite{ekman1992}{1}
+\@writefile{toc}{\contentsline {section}{\numberline {A}핵심 용어}{22}{appendix.A}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {B}모듈과 증거의 연결}{22}{appendix.B}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {19}{\ignorespaces 모듈과 증거의 연결.}}{22}{figure.caption.20}\protected@file@percent }
+\bibcite{plutchik1980}{2}
+\bibcite{russell1980}{3}
+\bibcite{scherer2009}{4}
+\bibcite{gross1998}{5}
+\bibcite{picard1997}{6}
+\bibcite{rashkin2019}{7}
+\bibcite{zheng2023}{8}
+\bibcite{v2readme}{9}
+\bibcite{v3draft}{10}
+\bibcite{branchcollapse}{11}
+\bibcite{v31report}{12}
+\bibcite{v4summary}{13}
+\bibcite{targeted}{14}
+\@writefile{toc}{\contentsline {section}{\numberline {C}참고 자료}{23}{appendix.C}\protected@file@percent }
+\gdef \@abspage@last{23}

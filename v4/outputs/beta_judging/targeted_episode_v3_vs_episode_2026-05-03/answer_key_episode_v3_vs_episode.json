@@ -1,0 +1,1241 @@
+{
+  "seed": 20260504,
+  "conditions": [
+    "episode_trace",
+    "episode_trace_v3"
+  ],
+  "rows": [
+    {
+      "eval_id": "eval_00001",
+      "record_id": "s_000008",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00002",
+      "record_id": "s_000033",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00003",
+      "record_id": "s_000109",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00004",
+      "record_id": "s_000149",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00005",
+      "record_id": "s_000179",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00006",
+      "record_id": "s_000184",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00007",
+      "record_id": "s_000196",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00008",
+      "record_id": "s_000211",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00009",
+      "record_id": "s_000314",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00010",
+      "record_id": "s_000321",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00011",
+      "record_id": "s_000393",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00012",
+      "record_id": "s_000414",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00013",
+      "record_id": "s_000463",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00014",
+      "record_id": "s_000471",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00015",
+      "record_id": "s_000538",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00016",
+      "record_id": "s_000555",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00017",
+      "record_id": "s_000605",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00018",
+      "record_id": "s_000670",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00019",
+      "record_id": "s_000721",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00020",
+      "record_id": "s_000787",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00021",
+      "record_id": "s_000803",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00022",
+      "record_id": "s_000807",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00023",
+      "record_id": "s_000929",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00024",
+      "record_id": "s_001055",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00025",
+      "record_id": "s_001116",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00026",
+      "record_id": "s_001185",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00027",
+      "record_id": "s_001242",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00028",
+      "record_id": "s_001255",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00029",
+      "record_id": "s_001261",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00030",
+      "record_id": "s_001320",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00031",
+      "record_id": "s_001417",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00032",
+      "record_id": "s_001424",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00033",
+      "record_id": "s_001498",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00034",
+      "record_id": "s_001582",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00035",
+      "record_id": "s_001621",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00036",
+      "record_id": "s_001674",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00037",
+      "record_id": "s_001703",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00038",
+      "record_id": "s_001815",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00039",
+      "record_id": "s_001822",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00040",
+      "record_id": "s_001952",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00041",
+      "record_id": "s_001987",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00042",
+      "record_id": "s_001988",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00043",
+      "record_id": "s_001992",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00044",
+      "record_id": "s_002131",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00046",
+      "record_id": "s_002230",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00047",
+      "record_id": "s_002292",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00048",
+      "record_id": "s_002295",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00049",
+      "record_id": "s_002299",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00050",
+      "record_id": "s_002329",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00051",
+      "record_id": "s_002383",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00053",
+      "record_id": "s_002464",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00054",
+      "record_id": "s_002515",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00055",
+      "record_id": "s_002578",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00056",
+      "record_id": "s_002647",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00057",
+      "record_id": "s_002862",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00058",
+      "record_id": "s_003022",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00059",
+      "record_id": "s_003078",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00061",
+      "record_id": "s_003148",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00062",
+      "record_id": "s_003224",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00063",
+      "record_id": "s_003240",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00064",
+      "record_id": "s_003248",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00065",
+      "record_id": "s_003249",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00066",
+      "record_id": "s_003301",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00067",
+      "record_id": "s_003318",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00068",
+      "record_id": "s_003321",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00069",
+      "record_id": "s_003331",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00070",
+      "record_id": "s_003409",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00071",
+      "record_id": "s_003414",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00072",
+      "record_id": "s_003482",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00073",
+      "record_id": "s_003491",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00074",
+      "record_id": "s_003539",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00075",
+      "record_id": "s_003549",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00076",
+      "record_id": "s_003551",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00077",
+      "record_id": "s_003782",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00078",
+      "record_id": "s_003836",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00079",
+      "record_id": "s_003887",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        }
+      ]
+    },
+    {
+      "eval_id": "eval_00080",
+      "record_id": "s_003918",
+      "candidates": [
+        {
+          "label": "candidate_a",
+          "condition": "episode_trace",
+          "condition_group": "episode"
+        },
+        {
+          "label": "candidate_b",
+          "condition": "episode_trace_v3",
+          "condition_group": "episode"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "input": "outputs\\trace_causal_probe_set_neutralized_coherent_confirm10.csv",
+  "output": "outputs\\trace_causal_responses_neutralized_coherent_claude45haiku_confirm10.csv",
+  "rows": 90,
+  "ok_rows": 90,
+  "error_rows": 0,
+  "base_record_count": 10
+}

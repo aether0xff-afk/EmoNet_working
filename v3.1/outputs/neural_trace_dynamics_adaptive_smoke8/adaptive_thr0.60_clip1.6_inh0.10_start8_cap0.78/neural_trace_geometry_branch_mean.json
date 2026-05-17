@@ -1,0 +1,152 @@
+{
+  "summary_csv": "outputs\\neural_trace_dynamics_adaptive_smoke8\\adaptive_thr0.60_clip1.6_inh0.10_start8_cap0.78\\neural_trace_summary.csv",
+  "trace_dir": "outputs\\neural_trace_dynamics_adaptive_smoke8\\adaptive_thr0.60_clip1.6_inh0.10_start8_cap0.78\\traces_npz",
+  "feature_kind": "branch_mean",
+  "n": 8,
+  "feature_dim": 12,
+  "branch_health": {
+    "n": 8,
+    "mean_dominant_branch_len": 38.5,
+    "len1_count": 0,
+    "len1_ratio": 0.0,
+    "mean_activation_density": 0.696831
+  },
+  "value_counts": {
+    "valence": {
+      "negative": 8
+    },
+    "arousal": {
+      "high": 8
+    },
+    "target": {
+      "other": 8
+    },
+    "control_state": {
+      "mixed": 7,
+      "low": 1
+    },
+    "social_orientation": {
+      "defend": 6,
+      "approach": 2
+    },
+    "action_tendency_class": {
+      "confront": 5,
+      "defend": 3
+    },
+    "episode_family": {
+      "other_blame_boundary": 8
+    },
+    "appraisal_family": {
+      "other_directed_defense": 6,
+      "approach_or_repair": 2
+    }
+  },
+  "nearest_neighbor": {
+    "valence": {
+      "n": 8,
+      "nearest_neighbor_consistency": 1.0,
+      "majority_baseline": 1.0,
+      "lift": 0.0
+    },
+    "arousal": {
+      "n": 8,
+      "nearest_neighbor_consistency": 1.0,
+      "majority_baseline": 1.0,
+      "lift": 0.0
+    },
+    "target": {
+      "n": 8,
+      "nearest_neighbor_consistency": 1.0,
+      "majority_baseline": 1.0,
+      "lift": 0.0
+    },
+    "control_state": {
+      "n": 8,
+      "nearest_neighbor_consistency": 0.75,
+      "majority_baseline": 0.875,
+      "lift": -0.125
+    },
+    "social_orientation": {
+      "n": 8,
+      "nearest_neighbor_consistency": 0.5,
+      "majority_baseline": 0.75,
+      "lift": -0.25
+    },
+    "action_tendency_class": {
+      "n": 8,
+      "nearest_neighbor_consistency": 0.25,
+      "majority_baseline": 0.625,
+      "lift": -0.375
+    },
+    "episode_family": {
+      "n": 8,
+      "nearest_neighbor_consistency": 1.0,
+      "majority_baseline": 1.0,
+      "lift": 0.0
+    },
+    "appraisal_family": {
+      "n": 8,
+      "nearest_neighbor_consistency": 0.5,
+      "majority_baseline": 0.75,
+      "lift": -0.25
+    }
+  },
+  "group_distances": {
+    "valence": {
+      "intra_pairs": 28,
+      "inter_pairs": 0,
+      "mean_intra_distance": 1.405297,
+      "mean_inter_distance": 0.0,
+      "separation": -1.405297
+    },
+    "arousal": {
+      "intra_pairs": 28,
+      "inter_pairs": 0,
+      "mean_intra_distance": 1.405297,
+      "mean_inter_distance": 0.0,
+      "separation": -1.405297
+    },
+    "target": {
+      "intra_pairs": 28,
+      "inter_pairs": 0,
+      "mean_intra_distance": 1.405297,
+      "mean_inter_distance": 0.0,
+      "separation": -1.405297
+    },
+    "control_state": {
+      "intra_pairs": 21,
+      "inter_pairs": 7,
+      "mean_intra_distance": 1.404421,
+      "mean_inter_distance": 1.407924,
+      "separation": 0.003503
+    },
+    "social_orientation": {
+      "intra_pairs": 16,
+      "inter_pairs": 12,
+      "mean_intra_distance": 1.35898,
+      "mean_inter_distance": 1.467052,
+      "separation": 0.108072
+    },
+    "action_tendency_class": {
+      "intra_pairs": 13,
+      "inter_pairs": 15,
+      "mean_intra_distance": 1.390357,
+      "mean_inter_distance": 1.418244,
+      "separation": 0.027886
+    },
+    "episode_family": {
+      "intra_pairs": 28,
+      "inter_pairs": 0,
+      "mean_intra_distance": 1.405297,
+      "mean_inter_distance": 0.0,
+      "separation": -1.405297
+    },
+    "appraisal_family": {
+      "intra_pairs": 16,
+      "inter_pairs": 12,
+      "mean_intra_distance": 1.35898,
+      "mean_inter_distance": 1.467052,
+      "separation": 0.108072
+    }
+  }
+}

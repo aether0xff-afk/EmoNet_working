@@ -1,0 +1,221 @@
+{
+  "input_csv": "outputs\\z\\out_z_training_learned_extended40_calref_v1.csv",
+  "rows": 1800,
+  "style_profile": "extended40",
+  "style_axes": [
+    "verbosity",
+    "sentence_length",
+    "pace",
+    "fragmentation",
+    "repetition",
+    "rhythmicity",
+    "directness",
+    "explicitness",
+    "specificity",
+    "abstraction",
+    "certainty",
+    "logicality",
+    "warmth",
+    "distance",
+    "politeness",
+    "formality",
+    "cooperativeness",
+    "dominance",
+    "calmness",
+    "tension",
+    "positivity",
+    "heaviness",
+    "urgency",
+    "emotional_openness",
+    "softness",
+    "sharpness",
+    "playfulness",
+    "seriousness",
+    "metaphoricity",
+    "plainness",
+    "initiative",
+    "reflectiveness",
+    "hostility",
+    "resentment",
+    "despair",
+    "volatility",
+    "fearfulness",
+    "shame",
+    "relief",
+    "trust"
+  ],
+  "keep_summaries": [
+    {
+      "keep_column": "keep_sample",
+      "rows": 1717,
+      "rate": 0.953889,
+      "soft_bias_mean": 0.814818,
+      "negative_raw_mean": 0.003155,
+      "edge_mean": 0.103873,
+      "top_shifted_axes": [
+        {
+          "axis": "hostility",
+          "mean": 0.000291,
+          "distance_from_neutral": 0.499709
+        },
+        {
+          "axis": "resentment",
+          "mean": 0.000291,
+          "distance_from_neutral": 0.499709
+        },
+        {
+          "axis": "shame",
+          "mean": 0.001747,
+          "distance_from_neutral": 0.498253
+        },
+        {
+          "axis": "volatility",
+          "mean": 0.002184,
+          "distance_from_neutral": 0.497816
+        },
+        {
+          "axis": "despair",
+          "mean": 0.004368,
+          "distance_from_neutral": 0.495632
+        },
+        {
+          "axis": "fearfulness",
+          "mean": 0.010047,
+          "distance_from_neutral": 0.489953
+        },
+        {
+          "axis": "playfulness",
+          "mean": 0.014706,
+          "distance_from_neutral": 0.485294
+        },
+        {
+          "axis": "metaphoricity",
+          "mean": 0.022423,
+          "distance_from_neutral": 0.477577
+        },
+        {
+          "axis": "plainness",
+          "mean": 0.936372,
+          "distance_from_neutral": 0.436372
+        },
+        {
+          "axis": "sharpness",
+          "mean": 0.064065,
+          "distance_from_neutral": 0.435935
+        }
+      ],
+      "bucket_counts": {
+        "mixed": 1514,
+        "rare_raw": 111,
+        "edgy": 92
+      },
+      "keep_reason_counts": {
+        "consistent_nonsoft": 1536,
+        "rare_affect_rescue": 181
+      },
+      "focus_axes": {
+        "softness": 0.927635,
+        "calmness": 0.913221,
+        "cooperativeness": 0.92021,
+        "positivity": 0.905067,
+        "warmth": 0.75961,
+        "trust": 0.463162,
+        "sharpness": 0.064065,
+        "tension": 0.096243,
+        "hostility": 0.000291,
+        "resentment": 0.000291,
+        "despair": 0.004368,
+        "volatility": 0.002184,
+        "fearfulness": 0.010047,
+        "shame": 0.001747
+      }
+    },
+    {
+      "keep_column": "keep_sample_rebalanced",
+      "rows": 1800,
+      "rate": 1.0,
+      "soft_bias_mean": 0.819838,
+      "negative_raw_mean": 0.003009,
+      "edge_mean": 0.104944,
+      "top_shifted_axes": [
+        {
+          "axis": "hostility",
+          "mean": 0.000278,
+          "distance_from_neutral": 0.499722
+        },
+        {
+          "axis": "resentment",
+          "mean": 0.000278,
+          "distance_from_neutral": 0.499722
+        },
+        {
+          "axis": "shame",
+          "mean": 0.001667,
+          "distance_from_neutral": 0.498333
+        },
+        {
+          "axis": "volatility",
+          "mean": 0.002083,
+          "distance_from_neutral": 0.497917
+        },
+        {
+          "axis": "despair",
+          "mean": 0.004167,
+          "distance_from_neutral": 0.495833
+        },
+        {
+          "axis": "fearfulness",
+          "mean": 0.009583,
+          "distance_from_neutral": 0.490417
+        },
+        {
+          "axis": "playfulness",
+          "mean": 0.014583,
+          "distance_from_neutral": 0.485417
+        },
+        {
+          "axis": "metaphoricity",
+          "mean": 0.022639,
+          "distance_from_neutral": 0.477361
+        },
+        {
+          "axis": "plainness",
+          "mean": 0.937222,
+          "distance_from_neutral": 0.437222
+        },
+        {
+          "axis": "sharpness",
+          "mean": 0.063056,
+          "distance_from_neutral": 0.436944
+        }
+      ],
+      "bucket_counts": {
+        "mixed": 1514,
+        "rare_raw": 111,
+        "edgy": 92,
+        "soft_safe": 83
+      },
+      "keep_reason_counts": {
+        "consistent_nonsoft": 1536,
+        "rare_affect_rescue": 181,
+        "oversoft_trim": 83
+      },
+      "focus_axes": {
+        "softness": 0.929306,
+        "calmness": 0.917222,
+        "cooperativeness": 0.923889,
+        "positivity": 0.909306,
+        "warmth": 0.761806,
+        "trust": 0.4775,
+        "sharpness": 0.063056,
+        "tension": 0.095972,
+        "hostility": 0.000278,
+        "resentment": 0.000278,
+        "despair": 0.004167,
+        "volatility": 0.002083,
+        "fearfulness": 0.009583,
+        "shame": 0.001667
+      }
+    }
+  ]
+}

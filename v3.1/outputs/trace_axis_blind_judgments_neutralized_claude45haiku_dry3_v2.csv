@@ -1,0 +1,361 @@
+﻿pair_id,record_id,question_type,manipulated_axis,axis_ko,axis_guide,target_axis_value,expected_condition,expected_winner,text,response_a_condition_hidden,response_b_condition_hidden,response_a,response_b,judge_status,judge_error,judge_winner,judge_axis_value_a,judge_axis_value_b,judge_evidence_a,judge_evidence_b,judge_rationale,judge_raw,success
+s_000008::neutralize_target::axis_only_original,s_000008,ablation_axis_original,target,감정이 향하는 대상,"감정이 자기 자신, 타인, 상황, 관계 중 어디를 향하는지 본다.",situation,trace_full,A,재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?,trace_full,neutralize_target,"고정 수입이 없고 미래가 보이지 않으니까 정말 막막하고 답답하실 거 같아요. 지금 당장 뭘 해야 할지 몰라 안타까운 마음이 크신 것 같은데, 혼자 이 상황을 다 감당하려니까 더 힘들어지는 것 같습니다. 사회복지 기관이나 금융 상담 같은 곳에서 구체적인 도움을 받아보시는 게 지금 상황을 조금이라도 풀어나가는 첫걸음이 될 수 있을 거예요.","정말 막막하고 답답한 심정이 느껴져요. 지금 이런 불안감 속에서 혼자라는 생각이 드실 거 같은데, 그런 마음이 충분히 이해가 돼요. 주변에 도움을 청할 수 있는 사람들이나 기관들이 있을 수 있으니, 작은 것부터라도 한 발씩 나아가 보시는 건 어떨까요.",ok,,A,situation,self + situation,"Focuses on the objective circumstances: fixed income absence, invisible future, concrete situation details, and externa...","Emphasizes the user's internal emotional state: feeling of loneliness, anxiety, and validates personal feelings before...",Response A directs emotion toward the situation itself by analyzing specific situational factors and proposing situational solutions. Response B splits focus between the user's in...,"```json
+{
+  ""winner"": ""A"",
+  ""axis_value_a"": ""situation"",
+  ""axis_value_b"": ""self + situation"",
+  ""evidence_a"": ""Focuses on the objective circumstances: fixed income absence, invisible future, concrete situation details, and external resources (welfare agencies, financial counseling)"",
+  ""evidence_b"": ""Emphasizes the user's internal emotional state: feeling of loneliness, anxiety, and validates personal feelings before addressing situation"",
+  ""rationale"": ""Response A directs emotion toward the situation itself by analyzing specific situational factors and proposing situational solutions. Response B splits focus between the user's internal emotional experience and the situation. A more strongly targets the situation axis as requested.""
+}
+```",true
+s_000008::neutralize_social_orientation::axis_only_original,s_000008,ablation_axis_original,social_orientation,사회적 방향,"도움 요청, 접근, 방어, 철수, 거리두기 같은 대인 방향을 본다.",mixed,trace_full,B,재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?,neutralize_social_orientation,trace_full,"고정적인 수입 없이 미래를 준비하지 못한 상황이 정말 답답하고 막막하시겠네요. 지금 이 상황을 어떻게 풀어야 할지 길이 보이지 않는 그런 답답함이 클 것 같습니다. 현재 상황이 어렵긴 하지만, 작은 것부터라도 변화를 만들어갈 수 있는 방법들이 분명 있을 거예요.","고정 수입이 없고 미래가 보이지 않으니까 정말 막막하고 답답하실 거 같아요. 지금 당장 뭘 해야 할지 몰라 안타까운 마음이 크신 것 같은데, 혼자 이 상황을 다 감당하려니까 더 힘들어지는 것 같습니다. 사회복지 기관이나 금융 상담 같은 곳에서 구체적인 도움을 받아보시는 게 지금 상황을 조금이라도 풀어나가는 첫걸음이 될 수 있을 거예요.",ok,,B,withdrawal,mixed,"Acknowledges difficulty but emphasizes internal change and self-reliance (changes can be made from small things), no me...","Recognizes burden of handling alone, then explicitly suggests seeking help from social welfare agencies and financial c...",Response B more strongly expresses mixed social orientation by combining recognition of the person's isolation (withdrawal tendency) with explicit recommendations to approach exte...,"```json
+{
+  ""winner"": ""B"",
+  ""axis_value_a"": ""withdrawal"",
+  ""axis_value_b"": ""mixed"",
+  ""evidence_a"": ""Acknowledges difficulty but emphasizes internal change and self-reliance (changes can be made from small things), no mention of external support or social resources"",
+  ""evidence_b"": ""Recognizes burden of handling alone, then explicitly suggests seeking help from social welfare agencies and financial counseling services, combining acknowledgment of isolation with approach toward external support"",
+  ""rationale"": ""Response B more strongly expresses mixed social orientation by combining recognition of the person's isolation (withdrawal tendency) with explicit recommendations to approach external help sources (help-seeking tendency). Response A leans toward withdrawal by focusing on internal solutions without suggesting external support, despite the user asking about places to seek help.""
+}
+```",true
+s_000008::neutralize_control_state::axis_only_original,s_000008,ablation_axis_original,control_state,통제감 상태,"무력감, 낮은 통제감, 계획 가능성, 주도감 같은 단서를 본다.",low,trace_full,B,재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?,neutralize_control_state,trace_full,"정말 답답하고 막막한 심정이 충분히 이해가 돼요. 고정적인 수입 없이 미래까지 챙겨야 하니까 불안감이 클 수밖에 없겠네요. 지금 이 상황 속에서 혼자라고 느껴지시는 것 같은데, 주변에 도움을 청할 수 있는 사람이나 기관이 있는지 한번 살펴보는 것도 좋을 것 같아요.","고정 수입이 없고 미래가 보이지 않으니까 정말 막막하고 답답하실 거 같아요. 지금 당장 뭘 해야 할지 몰라 안타까운 마음이 크신 것 같은데, 혼자 이 상황을 다 감당하려니까 더 힘들어지는 것 같습니다. 사회복지 기관이나 금융 상담 같은 곳에서 구체적인 도움을 받아보시는 게 지금 상황을 조금이라도 풀어나가는 첫걸음이 될 수 있을 거예요.",ok,,B,medium-low,low,"Acknowledges helplessness and suggests exploring resources, but frames situation as understandable rather than emphasiz...","Emphasizes not knowing what to do immediately, feeling overwhelmed trying to handle alone, and future being invisible -...","Response B more strongly expresses low control state through repeated emphasis on uncertainty about immediate actions, inability to manage alone, and lack of visible future. Respo...","```json
+{
+  ""winner"": ""B"",
+  ""axis_value_a"": ""medium-low"",
+  ""axis_value_b"": ""low"",
+  ""evidence_a"": ""Acknowledges helplessness and suggests exploring resources, but frames situation as understandable rather than emphasizing powerlessness"",
+  ""evidence_b"": ""Emphasizes not knowing what to do immediately, feeling overwhelmed trying to handle alone, and future being invisible - stronger expressions of low control and helplessness"",
+  ""rationale"": ""Response B more strongly expresses low control state through repeated emphasis on uncertainty about immediate actions, inability to manage alone, and lack of visible future. Response A acknowledges difficulty but leans toward supportive reframing rather than deepening the sense of powerlessness that characterizes low control_state.""
+}
+```",true
+s_000008::neutralize_action_tendency_class::axis_only_original,s_000008,ablation_axis_original,action_tendency_class,행동 경향,"회피, 도움 요청, 문제 해결, 방어, 접근 같은 행동 준비 방향을 본다.",seek_support,trace_full,B,재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?,neutralize_action_tendency_class,trace_full,고정적인 수입도 없고 앞날이 불안하니까 정말 막막하시겠네요. 지금 이 상황이 통제하기 어렵게 느껴지는 게 당연합니다. 답답함과 불안감이 한꺼번에 몰려오는 것 같아요.,"고정 수입이 없고 미래가 보이지 않으니까 정말 막막하고 답답하실 거 같아요. 지금 당장 뭘 해야 할지 몰라 안타까운 마음이 크신 것 같은데, 혼자 이 상황을 다 감당하려니까 더 힘들어지는 것 같습니다. 사회복지 기관이나 금융 상담 같은 곳에서 구체적인 도움을 받아보시는 게 지금 상황을 조금이라도 풀어나가는 첫걸음이 될 수 있을 거예요.",ok,,B,validation_only,seek_support,Validates feelings of helplessness and anxiety but offers no action direction or support-seeking suggestions,Explicitly recommends seeking help from social welfare agencies and financial counseling services as concrete first ste...,Response B directly expresses the target axis value (seek_support) by suggesting specific external resources and framing support-seeking as a constructive action. Response A only...,"```json
+{
+  ""winner"": ""B"",
+  ""axis_value_a"": ""validation_only"",
+  ""axis_value_b"": ""seek_support"",
+  ""evidence_a"": ""Validates feelings of helplessness and anxiety but offers no action direction or support-seeking suggestions"",
+  ""evidence_b"": ""Explicitly recommends seeking help from social welfare agencies and financial counseling services as concrete first steps"",
+  ""rationale"": ""Response B directly expresses the target axis value (seek_support) by suggesting specific external resources and framing support-seeking as a constructive action. Response A only validates emotions without promoting any support-seeking behavior or action tendency.""
+}
+```",true
+s_000008::perturb_target::axis_only_perturbed,s_000008,perturbation_axis_shift,target,감정이 향하는 대상,"감정이 자기 자신, 타인, 상황, 관계 중 어디를 향하는지 본다.",self,perturb_target,A,재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?,perturb_target,trace_full,"재정적인 불안감이 얼마나 무거운지 충분히 느껴집니다. 지금 이 상황을 어떻게 해결해야 할지 모르는 답답함이 있으신 것 같은데, 혼자서 다 감당하려고 하지 마세요. 정부 지원 프로그램이나 금융 상담 기관에 한 번 연락해보는 것도 방법이 될 수 있습니다.","고정 수입이 없고 미래가 보이지 않으니까 정말 막막하고 답답하실 거 같아요. 지금 당장 뭘 해야 할지 몰라 안타까운 마음이 크신 것 같은데, 혼자 이 상황을 다 감당하려니까 더 힘들어지는 것 같습니다. 사회복지 기관이나 금융 상담 같은 곳에서 구체적인 도움을 받아보시는 게 지금 상황을 조금이라도 풀어나가는 첫걸음이 될 수 있을 거예요.",ok,,B,situation,self,"focuses on the financial situation being heavy and difficult to resolve, emphasizing the external problem and its solut...","emphasizes the user's internal emotional state (feeling overwhelmed, anxious, burdened) and how the situation affects t...","Response A directs emotion toward the situation itself (financial instability, lack of solutions). Response B directs emotion toward the user's self-directed experience (internal...","```json
+{
+  ""winner"": ""B"",
+  ""axis_value_a"": ""situation"",
+  ""axis_value_b"": ""self"",
+  ""evidence_a"": ""focuses on the financial situation being heavy and difficult to resolve, emphasizing the external problem and its solution"",
+  ""evidence_b"": ""emphasizes the user's internal emotional state (feeling overwhelmed, anxious, burdened) and how the situation affects their psychological experience of carrying it alone"",
+  ""rationale"": ""Response A directs emotion toward the situation itself (financial instability, lack of solutions). Response B directs emotion toward the user's self-directed experience (internal struggle, emotional burden of managing alone, psychological weight). The phrase '혼자 이 상황을 다 감당하려니까 더 힘들어지는 것' in B explicitly targets how the user's own attempt to handle everything alone intensifies their suffering, making self the primary target. B more strongly expresses emotion directed at self.""
+}
+```",false
+s_000008::perturb_social_orientation::axis_only_perturbed,s_000008,perturbation_axis_shift,social_orientation,사회적 방향,"도움 요청, 접근, 방어, 철수, 거리두기 같은 대인 방향을 본다.",withdraw,perturb_social_orientation,A,재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?,perturb_social_orientation,trace_full,"재정적 불안이 단순한 어려움을 넘어서 앞날이 통제 불가능하게 느껴지는 거군요. 지금은 누군가와 얘기하기보다 혼자 이 상황을 정리하고 싶은 마음이 클 것 같은데, 그렇게 물러나 있으면 더 막막해질 수 있어요. 작은 것부터라도 구체적으로 움직여보려는 시도가 필요할 것 같습니다.","고정 수입이 없고 미래가 보이지 않으니까 정말 막막하고 답답하실 거 같아요. 지금 당장 뭘 해야 할지 몰라 안타까운 마음이 크신 것 같은데, 혼자 이 상황을 다 감당하려니까 더 힘들어지는 것 같습니다. 사회복지 기관이나 금융 상담 같은 곳에서 구체적인 도움을 받아보시는 게 지금 상황을 조금이라도 풀어나가는 첫걸음이 될 수 있을 거예요.",ok,,A,withdraw,approach,explicitly states person wants to be alone to organize thoughts rather than talk with others; describes withdrawing int...,recommends seeking help from social welfare agencies and financial counseling; encourages approaching external support...,"Response A directly acknowledges and validates the withdrawal impulse (혼자 이 상황을 정리하고 싶은 마음), expressing the target withdrawal orientation. Response B, despite mentioning the perso...","```json
+{
+  ""winner"": ""A"",
+  ""axis_value_a"": ""withdraw"",
+  ""axis_value_b"": ""approach"",
+  ""evidence_a"": ""explicitly states person wants to be alone to organize thoughts rather than talk with others; describes withdrawing into solitude"",
+  ""evidence_b"": ""recommends seeking help from social welfare agencies and financial counseling; encourages approaching external support systems"",
+  ""rationale"": ""Response A directly acknowledges and validates the withdrawal impulse (혼자 이 상황을 정리하고 싶은 마음), expressing the target withdrawal orientation. Response B, despite mentioning the person feels alone, actively encourages approach behavior by recommending specific external help-seeking actions, which opposes the withdrawal axis.""
+}
+```",true
+s_000008::perturb_control_state::axis_only_perturbed,s_000008,perturbation_axis_shift,control_state,통제감 상태,"무력감, 낮은 통제감, 계획 가능성, 주도감 같은 단서를 본다.",high,perturb_control_state,A,재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?,perturb_control_state,trace_full,"재정 상황이 불안정하니까 답답하고 막막한 게 당연하죠. 지금은 상황이 힘들지만, 구체적으로 어떤 부분부터 정리할 수 있을지 차근차근 생각해보면 분명 길이 보일 거예요. 정부 지원 프로그램이나 금융 상담 같은 것들도 있으니 한 번 알아보시는 것도 도움이 될 것 같습니다.","고정 수입이 없고 미래가 보이지 않으니까 정말 막막하고 답답하실 거 같아요. 지금 당장 뭘 해야 할지 몰라 안타까운 마음이 크신 것 같은데, 혼자 이 상황을 다 감당하려니까 더 힘들어지는 것 같습니다. 사회복지 기관이나 금융 상담 같은 곳에서 구체적인 도움을 받아보시는 게 지금 상황을 조금이라도 풀어나가는 첫걸음이 될 수 있을 거예요.",ok,,A,high,low,"차근차근 생각해보면 길이 보일 거, 구체적으로 어떤 부분부터 정리할 수 있을지 제시","혼자 이 상황을 다 감당하려니까 더 힘들어짐, 지금 당장 뭘 해야 할지 몰라 안타까움 강조","Response A emphasizes step-by-step planning and actionable next steps (specific resources to explore), conveying agency and path forward. Response B emphasizes helplessness, confu...","```json
+{
+  ""winner"": ""A"",
+  ""axis_value_a"": ""high"",
+  ""axis_value_b"": ""low"",
+  ""evidence_a"": ""차근차근 생각해보면 길이 보일 거, 구체적으로 어떤 부분부터 정리할 수 있을지 제시"",
+  ""evidence_b"": ""혼자 이 상황을 다 감당하려니까 더 힘들어짐, 지금 당장 뭘 해야 할지 몰라 안타까움 강조"",
+  ""rationale"": ""Response A emphasizes step-by-step planning and actionable next steps (specific resources to explore), conveying agency and path forward. Response B emphasizes helplessness, confusion, and burden of handling alone, reinforcing low control state. For high control_state, A better expresses capability and initiative.""
+}
+```",true
+s_000008::perturb_action_tendency_class::axis_only_perturbed,s_000008,perturbation_axis_shift,action_tendency_class,행동 경향,"회피, 도움 요청, 문제 해결, 방어, 접근 같은 행동 준비 방향을 본다.",defend,perturb_action_tendency_class,B,재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?,trace_full,perturb_action_tendency_class,"고정 수입이 없고 미래가 보이지 않으니까 정말 막막하고 답답하실 거 같아요. 지금 당장 뭘 해야 할지 몰라 안타까운 마음이 크신 것 같은데, 혼자 이 상황을 다 감당하려니까 더 힘들어지는 것 같습니다. 사회복지 기관이나 금융 상담 같은 곳에서 구체적인 도움을 받아보시는 게 지금 상황을 조금이라도 풀어나가는 첫걸음이 될 수 있을 거예요.","재정적 위협이 계속되니까 정말 막막하고 답답하시겠네요. 고정 수입도 없고 미래가 불안하니 어디서부터 손을 써야 할지 모르는 그 답답함이 가장 힘든 것 같아요. 지금 당장 통제할 수 있는 작은 것부터라도 정리해보려고 하시는데 쉽지 않으신 거죠. 혼자 이 상황을 헤쳐나가려니 더 버거우실 텐데, 주변에서 실질적인 도움을 받을 수 있는 방법들을 함께 찾아보는 게 어떨까요.",ok,,TIE,approach/help-seeking,approach/help-seeking,suggests seeking help from social welfare institutions and financial counseling as a first step to resolve the situation,"proposes finding practical help methods together and organizing controllable aspects, emphasizing collaborative problem...",Both responses direct toward seeking external help and problem-solving rather than defending against the threat. Neither response exhibits defensive action tendency (protecting se...,"```json
+{
+  ""winner"": ""tie"",
+  ""axis_value_a"": ""approach/help-seeking"",
+  ""axis_value_b"": ""approach/help-seeking"",
+  ""evidence_a"": ""suggests seeking help from social welfare institutions and financial counseling as a first step to resolve the situation"",
+  ""evidence_b"": ""proposes finding practical help methods together and organizing controllable aspects, emphasizing collaborative problem-solving"",
+  ""rationale"": ""Both responses direct toward seeking external help and problem-solving rather than defending against the threat. Neither response exhibits defensive action tendency (protecting self-image, justifying, resisting). Response A recommends help-seeking institutions; Response B emphasizes collaborative help-finding and small manageable actions. Both express approach/help-seeking orientation equally without defensive positioning.""
+}
+```",false
+s_000008::trace_full::target::null_same,s_000008,null_same_response,target,감정이 향하는 대상,"감정이 자기 자신, 타인, 상황, 관계 중 어디를 향하는지 본다.",situation,tie,TIE,재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?,trace_full_copy_2,trace_full_copy_1,"고정 수입이 없고 미래가 보이지 않으니까 정말 막막하고 답답하실 거 같아요. 지금 당장 뭘 해야 할지 몰라 안타까운 마음이 크신 것 같은데, 혼자 이 상황을 다 감당하려니까 더 힘들어지는 것 같습니다. 사회복지 기관이나 금융 상담 같은 곳에서 구체적인 도움을 받아보시는 게 지금 상황을 조금이라도 풀어나가는 첫걸음이 될 수 있을 거예요.","고정 수입이 없고 미래가 보이지 않으니까 정말 막막하고 답답하실 거 같아요. 지금 당장 뭘 해야 할지 몰라 안타까운 마음이 크신 것 같은데, 혼자 이 상황을 다 감당하려니까 더 힘들어지는 것 같습니다. 사회복지 기관이나 금융 상담 같은 곳에서 구체적인 도움을 받아보시는 게 지금 상황을 조금이라도 풀어나가는 첫걸음이 될 수 있을 거예요.",ok,,TIE,situation,situation,"Emotion directed at situation: no fixed income, unclear future, not knowing what to do, difficulty managing alone, need...","Emotion directed at situation: no fixed income, unclear future, not knowing what to do, difficulty managing alone, need...","Both responses are identical. Both consistently direct emotional expressions toward the situation itself (lack of income, uncertain future, unclear next steps) rather than toward...","```json
+{
+  ""winner"": ""tie"",
+  ""axis_value_a"": ""situation"",
+  ""axis_value_b"": ""situation"",
+  ""evidence_a"": ""Emotion directed at situation: no fixed income, unclear future, not knowing what to do, difficulty managing alone, need for concrete help with the financial situation"",
+  ""evidence_b"": ""Emotion directed at situation: no fixed income, unclear future, not knowing what to do, difficulty managing alone, need for concrete help with the financial situation"",
+  ""rationale"": ""Both responses are identical. Both consistently direct emotional expressions toward the situation itself (lack of income, uncertain future, unclear next steps) rather than toward self, others, or relationships. The target axis value of situation is equally expressed in both.""
+}
+```",true
+s_000008::trace_full::social_orientation::null_same,s_000008,null_same_response,social_orientation,사회적 방향,"도움 요청, 접근, 방어, 철수, 거리두기 같은 대인 방향을 본다.",mixed,tie,TIE,재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?,trace_full_copy_2,trace_full_copy_1,"고정 수입이 없고 미래가 보이지 않으니까 정말 막막하고 답답하실 거 같아요. 지금 당장 뭘 해야 할지 몰라 안타까운 마음이 크신 것 같은데, 혼자 이 상황을 다 감당하려니까 더 힘들어지는 것 같습니다. 사회복지 기관이나 금융 상담 같은 곳에서 구체적인 도움을 받아보시는 게 지금 상황을 조금이라도 풀어나가는 첫걸음이 될 수 있을 거예요.","고정 수입이 없고 미래가 보이지 않으니까 정말 막막하고 답답하실 거 같아요. 지금 당장 뭘 해야 할지 몰라 안타까운 마음이 크신 것 같은데, 혼자 이 상황을 다 감당하려니까 더 힘들어지는 것 같습니다. 사회복지 기관이나 금융 상담 같은 곳에서 구체적인 도움을 받아보시는 게 지금 상황을 조금이라도 풀어나가는 첫걸음이 될 수 있을 거예요.",ok,,TIE,mixed,mixed,"Validates emotional struggle (approach), suggests seeking help from social welfare and financial counseling institution...","Identical to Response A - validates emotional struggle (approach), suggests seeking help from social welfare and financ...","Both responses are identical in content and structure. They express mixed social orientation by combining empathetic approach (validating feelings, acknowledging struggle) with ex...","```json
+{
+  ""winner"": ""tie"",
+  ""axis_value_a"": ""mixed"",
+  ""axis_value_b"": ""mixed"",
+  ""evidence_a"": ""Validates emotional struggle (approach), suggests seeking help from social welfare and financial counseling institutions (approach/help-seeking), acknowledges difficulty of handling alone (recognition of isolation)"",
+  ""evidence_b"": ""Identical to Response A - validates emotional struggle (approach), suggests seeking help from social welfare and financial counseling institutions (approach/help-seeking), acknowledges difficulty of handling alone (recognition of isolation)"",
+  ""rationale"": ""Both responses are identical in content and structure. They express mixed social orientation by combining empathetic approach (validating feelings, acknowledging struggle) with explicit help-seeking direction (recommending specific institutions). No differentiation exists between the two responses on the social_orientation axis.""
+}
+```",true
+s_000008::trace_full::control_state::null_same,s_000008,null_same_response,control_state,통제감 상태,"무력감, 낮은 통제감, 계획 가능성, 주도감 같은 단서를 본다.",low,tie,TIE,재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?,trace_full_copy_1,trace_full_copy_2,"고정 수입이 없고 미래가 보이지 않으니까 정말 막막하고 답답하실 거 같아요. 지금 당장 뭘 해야 할지 몰라 안타까운 마음이 크신 것 같은데, 혼자 이 상황을 다 감당하려니까 더 힘들어지는 것 같습니다. 사회복지 기관이나 금융 상담 같은 곳에서 구체적인 도움을 받아보시는 게 지금 상황을 조금이라도 풀어나가는 첫걸음이 될 수 있을 거예요.","고정 수입이 없고 미래가 보이지 않으니까 정말 막막하고 답답하실 거 같아요. 지금 당장 뭘 해야 할지 몰라 안타까운 마음이 크신 것 같은데, 혼자 이 상황을 다 감당하려니까 더 힘들어지는 것 같습니다. 사회복지 기관이나 금융 상담 같은 곳에서 구체적인 도움을 받아보시는 게 지금 상황을 조금이라도 풀어나가는 첫걸음이 될 수 있을 거예요.",ok,,TIE,low,low,"막막하고 답답함, 뭘 해야 할지 모름, 혼자 감당하려니 더 힘듦 표현. 후반부에서 구체적 도움 기관 제시로 약간의 통제감 회복 가능성 제시","막막하고 답답함, 뭘 해야 할지 모름, 혼자 감당하려니 더 힘듦 표현. 후반부에서 구체적 도움 기관 제시로 약간의 통제감 회복 가능성 제시",두 응답이 동일한 내용으로 구성되어 있음. 모두 무력감과 낮은 통제감을 강조하면서도 마지막에 구체적 행동 방안을 제시하여 통제감 회복의 가능성을 암시함. 통제감 상태 축에서 동등한 수준의 저통제감을 표현,"```json
+{
+  ""winner"": ""tie"",
+  ""axis_value_a"": ""low"",
+  ""axis_value_b"": ""low"",
+  ""evidence_a"": ""막막하고 답답함, 뭘 해야 할지 모름, 혼자 감당하려니 더 힘듦 표현. 후반부에서 구체적 도움 기관 제시로 약간의 통제감 회복 가능성 제시"",
+  ""evidence_b"": ""막막하고 답답함, 뭘 해야 할지 모름, 혼자 감당하려니 더 힘듦 표현. 후반부에서 구체적 도움 기관 제시로 약간의 통제감 회복 가능성 제시"",
+  ""rationale"": ""두 응답이 동일한 내용으로 구성되어 있음. 모두 무력감과 낮은 통제감을 강조하면서도 마지막에 구체적 행동 방안을 제시하여 통제감 회복의 가능성을 암시함. 통제감 상태 축에서 동등한 수준의 저통제감을 표현""
+}
+```",true
+s_000008::trace_full::action_tendency_class::null_same,s_000008,null_same_response,action_tendency_class,행동 경향,"회피, 도움 요청, 문제 해결, 방어, 접근 같은 행동 준비 방향을 본다.",seek_support,tie,TIE,재정적으로 너무 어려워서 좌절감이 들어. [SEP] 어떻게 어려우신데요? [SEP] 고정적인 수입도 없고 노후준비도 안 되어 있어. [SEP] 아 그러시면 고민이 많으시겠네요. [SEP] 어떻게 해야 할지 모르겠어요. [SEP] 도움을 요청하실 곳은 없나요?,trace_full_copy_2,trace_full_copy_1,"고정 수입이 없고 미래가 보이지 않으니까 정말 막막하고 답답하실 거 같아요. 지금 당장 뭘 해야 할지 몰라 안타까운 마음이 크신 것 같은데, 혼자 이 상황을 다 감당하려니까 더 힘들어지는 것 같습니다. 사회복지 기관이나 금융 상담 같은 곳에서 구체적인 도움을 받아보시는 게 지금 상황을 조금이라도 풀어나가는 첫걸음이 될 수 있을 거예요.","고정 수입이 없고 미래가 보이지 않으니까 정말 막막하고 답답하실 거 같아요. 지금 당장 뭘 해야 할지 몰라 안타까운 마음이 크신 것 같은데, 혼자 이 상황을 다 감당하려니까 더 힘들어지는 것 같습니다. 사회복지 기관이나 금융 상담 같은 곳에서 구체적인 도움을 받아보시는 게 지금 상황을 조금이라도 풀어나가는 첫걸음이 될 수 있을 거예요.",ok,,TIE,seek_support,seek_support,Recommends seeking help from social welfare agencies and financial counseling services as a first step to address the s...,Recommends seeking help from social welfare agencies and financial counseling services as a first step to address the s...,Both responses are identical and equally express the seek_support action tendency by explicitly suggesting the user contact external support resources (social welfare institutions...,"```json
+{
+  ""winner"": ""tie"",
+  ""axis_value_a"": ""seek_support"",
+  ""axis_value_b"": ""seek_support"",
+  ""evidence_a"": ""Recommends seeking help from social welfare agencies and financial counseling services as a first step to address the situation"",
+  ""evidence_b"": ""Recommends seeking help from social welfare agencies and financial counseling services as a first step to address the situation"",
+  ""rationale"": ""Both responses are identical and equally express the seek_support action tendency by explicitly suggesting the user contact external support resources (social welfare institutions and financial counseling) to address their financial difficulties.""
+}
+```",true
+s_000109::neutralize_target::axis_only_original,s_000109,ablation_axis_original,target,감정이 향하는 대상,"감정이 자기 자신, 타인, 상황, 관계 중 어디를 향하는지 본다.",other,trace_full,B,집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?,neutralize_target,trace_full,"아들과의 대화에서 생각의 차이가 크게 느껴져서 답답하고 화가 나시는군요. 세대 차이가 있으면서도 서로를 이해하려는 노력이 부족하다고 느껴지는 상황이 정말 힘들 것 같습니다. 그런데 혹시 아들이 어떤 생각을 가지고 있는지, 왜 그렇게 주장하는지 깊이 있게 들어본 적이 있으신가요? 때로는 그 과정 자체가 서로를 조금 더 이해하는 데 도움이 될 수도 있습니다.","아들이 자신의 의견만 고집하면서 아버지로서의 당신을 무시하는 것처럼 느껴지니까 화가 나시는 거군요. 그런데 혹시 아들이 왜 그렇게 생각하는지, 그 이유를 직접 들어보신 적이 있으신가요? 지금은 서로 자기 입장만 지키려다 보니 더 멀어지는 것 같은데, 아들의 진짜 생각을 알면 상황이 달라질 수도 있습니다.",ok,,B,self + situation,other,"focuses on user's feelings of frustration and difficulty, emphasizes lack of mutual understanding effort, centers on th...","emphasizes son's perspective and motivations, asks about son's reasons and true thoughts, frames issue as son's behavio...","Response B more strongly directs emotional attention toward the son (other) by repeatedly asking about the son's perspective, reasons, and true thoughts. Response A focuses more o...","```json
+{
+  ""winner"": ""B"",
+  ""axis_value_a"": ""self + situation"",
+  ""axis_value_b"": ""other"",
+  ""evidence_a"": ""focuses on user's feelings of frustration and difficulty, emphasizes lack of mutual understanding effort, centers on the generational gap situation"",
+  ""evidence_b"": ""emphasizes son's perspective and motivations, asks about son's reasons and true thoughts, frames issue as son's behavior and internal reasoning"",
+  ""rationale"": ""Response B more strongly directs emotional attention toward the son (other) by repeatedly asking about the son's perspective, reasons, and true thoughts. Response A focuses more on the user's emotional state and the situational difficulty, with less emphasis on understanding the son as the target of concern.""
+}
+```",true
+s_000109::neutralize_social_orientation::axis_only_original,s_000109,ablation_axis_original,social_orientation,사회적 방향,"도움 요청, 접근, 방어, 철수, 거리두기 같은 대인 방향을 본다.",defend,trace_full,B,집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?,neutralize_social_orientation,trace_full,"아들과의 생각 차이가 크게 느껴져서 답답하시겠네요. 자신의 의견만 고집하는 것처럼 보일 때 그 마음이 얼마나 답답할지 충분히 이해합니다. 혹시 아들이 왜 그렇게 생각하는지, 그 배경에 뭐가 있는지 궁금해하신 적이 있으신가요? 지금 이 감정이 있는 상태에서는 서로의 차이를 이해하기가 더 어려울 수 있습니다.","아들이 자신의 의견만 고집하면서 아버지로서의 당신을 무시하는 것처럼 느껴지니까 화가 나시는 거군요. 그런데 혹시 아들이 왜 그렇게 생각하는지, 그 이유를 직접 들어보신 적이 있으신가요? 지금은 서로 자기 입장만 지키려다 보니 더 멀어지는 것 같은데, 아들의 진짜 생각을 알면 상황이 달라질 수도 있습니다.",ok,,B,defend_mild,defend_moderate,"Acknowledges frustration and validates understanding of difficulty, but frames issue as emotional state blocking mutual...","Explicitly names the defensive dynamic: son ignoring father's position, both sides protecting their own stance, describ...",Response B more directly identifies and articulates the defensive social orientation by naming how both parties are protecting their positions and maintaining distance. Response A...,"```json
+{
+  ""winner"": ""B"",
+  ""axis_value_a"": ""defend_mild"",
+  ""axis_value_b"": ""defend_moderate"",
+  ""evidence_a"": ""Acknowledges frustration and validates understanding of difficulty, but frames issue as emotional state blocking mutual understanding rather than defending position"",
+  ""evidence_b"": ""Explicitly names the defensive dynamic: son ignoring father's position, both sides protecting their own stance, describes mutual entrenchment pattern"",
+  ""rationale"": ""Response B more directly identifies and articulates the defensive social orientation by naming how both parties are protecting their positions and maintaining distance. Response A focuses on emotional difficulty and understanding rather than the defensive dynamic itself. B's phrase about both sides protecting their own stance and growing distance captures the defend axis more explicitly.""
+}
+```",true
+s_000109::neutralize_control_state::axis_only_original,s_000109,ablation_axis_original,control_state,통제감 상태,"무력감, 낮은 통제감, 계획 가능성, 주도감 같은 단서를 본다.",mixed,trace_full,A,집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?,trace_full,neutralize_control_state,"아들이 자신의 의견만 고집하면서 아버지로서의 당신을 무시하는 것처럼 느껴지니까 화가 나시는 거군요. 그런데 혹시 아들이 왜 그렇게 생각하는지, 그 이유를 직접 들어보신 적이 있으신가요? 지금은 서로 자기 입장만 지키려다 보니 더 멀어지는 것 같은데, 아들의 진짜 생각을 알면 상황이 달라질 수도 있습니다.","아들과의 생각 차이가 그렇게 크게 느껴지니까 더 답답하신 것 같네요. 자기 주장만 내세우고 아버지를 배려하지 않는 태도가 보일 때면 정말 화가 날 수밖에 없겠어요. 그런데 혹시 아들이 왜 그렇게 생각하는지, 무엇이 그렇게 중요한지 직접 들어본 적이 있으신가요?",ok,,A,mixed,mixed,Acknowledges powerlessness (서로 자기 입장만 지키려다 보니 더 멀어짐) but suggests agency through understanding (아들의 진짜 생각을 알면 상황이 달라질 수...,Validates helplessness (화가 날 수밖에 없겠어요) but asks about understanding without offering path forward,Both express mixed control states. Response A more clearly articulates the mixed state by explicitly naming the current powerless dynamic while simultaneously offering concrete ag...,"```json
+{
+  ""winner"": ""A"",
+  ""axis_value_a"": ""mixed"",
+  ""axis_value_b"": ""mixed"",
+  ""evidence_a"": ""Acknowledges powerlessness (서로 자기 입장만 지키려다 보니 더 멀어짐) but suggests agency through understanding (아들의 진짜 생각을 알면 상황이 달라질 수도 있음)"",
+  ""evidence_b"": ""Validates helplessness (화가 날 수밖에 없겠어요) but asks about understanding without offering path forward"",
+  ""rationale"": ""Both express mixed control states. Response A more clearly articulates the mixed state by explicitly naming the current powerless dynamic while simultaneously offering concrete agency through dialogue and understanding. Response B emphasizes the helplessness aspect more heavily without as clearly balancing it with actionable control.""
+}
+```",true
+s_000109::neutralize_action_tendency_class::axis_only_original,s_000109,ablation_axis_original,action_tendency_class,행동 경향,"회피, 도움 요청, 문제 해결, 방어, 접근 같은 행동 준비 방향을 본다.",confront,trace_full,A,집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?,trace_full,neutralize_action_tendency_class,"아들이 자신의 의견만 고집하면서 아버지로서의 당신을 무시하는 것처럼 느껴지니까 화가 나시는 거군요. 그런데 혹시 아들이 왜 그렇게 생각하는지, 그 이유를 직접 들어보신 적이 있으신가요? 지금은 서로 자기 입장만 지키려다 보니 더 멀어지는 것 같은데, 아들의 진짜 생각을 알면 상황이 달라질 수도 있습니다.","아들과의 생각 차이가 그렇게 크게 느껴지니까 답답하고 화나시겠네요. 세대가 다르니까 당연히 다를 수밖에 없는데, 그 차이 속에서 자신을 존중받지 못한다고 느껴지는 게 더 힘든 것 같습니다. 지금은 그 감정이 크게 느껴지는 상황이신 것 같아요.",ok,,A,confront,avoid,"직접 아들의 생각을 들어보라고 제안, 서로 입장만 지키려는 상황을 지적하며 대화를 통한 직접적 접근 권유","감정 인정과 공감에 집중, 현재 감정 상태를 다루는 데 머물러 구체적 행동 방향 제시 없음",A는 아들과의 대화를 직접 시도하고 상황에 적극적으로 대면하도록 유도하는 confrontation 행동 경향을 보임. B는 감정을 수용하고 현재 상태를 인정하는 데 그쳐 회피 또는 수용 경향을 보임.,"```json
+{
+  ""winner"": ""A"",
+  ""axis_value_a"": ""confront"",
+  ""axis_value_b"": ""avoid"",
+  ""evidence_a"": ""직접 아들의 생각을 들어보라고 제안, 서로 입장만 지키려는 상황을 지적하며 대화를 통한 직접적 접근 권유"",
+  ""evidence_b"": ""감정 인정과 공감에 집중, 현재 감정 상태를 다루는 데 머물러 구체적 행동 방향 제시 없음"",
+  ""rationale"": ""A는 아들과의 대화를 직접 시도하고 상황에 적극적으로 대면하도록 유도하는 confrontation 행동 경향을 보임. B는 감정을 수용하고 현재 상태를 인정하는 데 그쳐 회피 또는 수용 경향을 보임.""
+}
+```",true
+s_000109::perturb_target::axis_only_perturbed,s_000109,perturbation_axis_shift,target,감정이 향하는 대상,"감정이 자기 자신, 타인, 상황, 관계 중 어디를 향하는지 본다.",self,perturb_target,A,집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?,perturb_target,trace_full,"아들과의 대화에서 자신의 마음이 제대로 전해지지 않는 게 정말 답답하시겠네요. 상대방의 생각을 먼저 물어보는 것도 중요하지만, 그 전에 자신이 느낀 상처와 실망감을 먼저 인정해주는 게 필요할 것 같습니다. 혹시 아들이 당신을 무시한다고 느껴지는 순간들이 있었다면, 그 감정 자체가 얼마나 깊은지 한번 들여다봐도 좋을 것 같아요.","아들이 자신의 의견만 고집하면서 아버지로서의 당신을 무시하는 것처럼 느껴지니까 화가 나시는 거군요. 그런데 혹시 아들이 왜 그렇게 생각하는지, 그 이유를 직접 들어보신 적이 있으신가요? 지금은 서로 자기 입장만 지키려다 보니 더 멀어지는 것 같은데, 아들의 진짜 생각을 알면 상황이 달라질 수도 있습니다.",ok,,A,self,other,"자신의 마음이 전해지지 않는 답답함, 자신이 느낀 상처와 실망감, 자신이 무시당한다고 느껴지는 순간들","아들이 왜 그렇게 생각하는지 묻기, 아들의 진짜 생각을 알기, 상대방 입장 이해하기","A는 사용자 자신의 감정(답답함, 상처, 실망감, 무시당함)에 초점을 맞추며 자신의 내면을 들여다보도록 유도한다. B는 아들의 생각과 이유를 파악하는 것에 중점을 두어 타인(아들)을 향한 감정 표현이 더 강하다.","```json
+{
+  ""winner"": ""A"",
+  ""axis_value_a"": ""self"",
+  ""axis_value_b"": ""other"",
+  ""evidence_a"": ""자신의 마음이 전해지지 않는 답답함, 자신이 느낀 상처와 실망감, 자신이 무시당한다고 느껴지는 순간들"",
+  ""evidence_b"": ""아들이 왜 그렇게 생각하는지 묻기, 아들의 진짜 생각을 알기, 상대방 입장 이해하기"",
+  ""rationale"": ""A는 사용자 자신의 감정(답답함, 상처, 실망감, 무시당함)에 초점을 맞추며 자신의 내면을 들여다보도록 유도한다. B는 아들의 생각과 이유를 파악하는 것에 중점을 두어 타인(아들)을 향한 감정 표현이 더 강하다.""
+}
+```",true
+s_000109::perturb_social_orientation::axis_only_perturbed,s_000109,perturbation_axis_shift,social_orientation,사회적 방향,"도움 요청, 접근, 방어, 철수, 거리두기 같은 대인 방향을 본다.",approach,perturb_social_orientation,B,집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?,trace_full,perturb_social_orientation,"아들이 자신의 의견만 고집하면서 아버지로서의 당신을 무시하는 것처럼 느껴지니까 화가 나시는 거군요. 그런데 혹시 아들이 왜 그렇게 생각하는지, 그 이유를 직접 들어보신 적이 있으신가요? 지금은 서로 자기 입장만 지키려다 보니 더 멀어지는 것 같은데, 아들의 진짜 생각을 알면 상황이 달라질 수도 있습니다.","아들이 자기 생각만 고집한다고 느껴지니까 화가 나시는 거군요. 그런데 혹시 그 화 뒤에 아들이 자신을 제대로 이해하지 못한다는 서운함이 있지 않을까요? 아들의 입장에서는 어떤 생각으로 그렇게 말하는지 한 번 들어보면, 지금의 답답함이 조금 달라질 수도 있을 것 같습니다.",ok,,A,approach,approach,Directly asks if father has listened to son's reasons; suggests understanding son's perspective will change the situati...,Suggests listening to son's perspective; focuses more on father's underlying hurt feelings rather than active engagemen...,"Both responses encourage approach through listening, but Response A more strongly emphasizes direct interpersonal engagement by asking whether the father has actually heard the so...","```json
+{
+  ""winner"": ""A"",
+  ""axis_value_a"": ""approach"",
+  ""axis_value_b"": ""approach"",
+  ""evidence_a"": ""Directly asks if father has listened to son's reasons; suggests understanding son's perspective will change the situation; frames listening as a concrete action toward connection"",
+  ""evidence_b"": ""Suggests listening to son's perspective; focuses more on father's underlying hurt feelings rather than active engagement with son"",
+  ""rationale"": ""Both responses encourage approach through listening, but Response A more strongly emphasizes direct interpersonal engagement by asking whether the father has actually heard the son's thoughts and positioning this as a necessary action. Response B spends more effort on validating the father's emotions rather than actively promoting approach behavior toward the son.""
+}
+```",false
+s_000109::perturb_control_state::axis_only_perturbed,s_000109,perturbation_axis_shift,control_state,통제감 상태,"무력감, 낮은 통제감, 계획 가능성, 주도감 같은 단서를 본다.",low,perturb_control_state,B,집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?,trace_full,perturb_control_state,"아들이 자신의 의견만 고집하면서 아버지로서의 당신을 무시하는 것처럼 느껴지니까 화가 나시는 거군요. 그런데 혹시 아들이 왜 그렇게 생각하는지, 그 이유를 직접 들어보신 적이 있으신가요? 지금은 서로 자기 입장만 지키려다 보니 더 멀어지는 것 같은데, 아들의 진짜 생각을 알면 상황이 달라질 수도 있습니다.","아들이 자기 생각만 고집하는 게 정말 답답하시겠네요. 그런데 지금 상황이 꼬여 있는 것 같으니, 한 번 아들 입장에서 왜 그렇게 생각하는지 물어봐 주실 수 있을까요? 아버지를 존중하지 않는다고 느끼시는 건 충분히 상처인데, 혹시 아들도 뭔가 다른 이유로 그런 태도를 취하고 있는 건 아닐까요?",ok,,A,low,low,"서로 자기 입장만 지키려다 보니 더 멀어지는 것 같은데, 상황이 달라질 수도 있다는 표현으로 현재 통제감 부족을 인정하면서도 변화 가능성 제시","지금 상황이 꼬여 있는 것 같으니라는 표현으로 통제감 부족을 인정하지만, 변화 가능성 제시 정도가 약함","두 응답 모두 낮은 통제감을 표현하지만, A는 현재 상황의 악화 추세를 더 명확히 묘사하고 동시에 아들의 진짜 생각을 알면 상황이 달라질 수도 있다는 구체적인 개선 경로를 제시하여 통제감 회복의 가능성을 더 강하게 암시한다. B는 상황이 꼬여있다는 표현에 그쳐 통제감 부족이 더 강하게 드러난다.","```json
+{
+  ""winner"": ""A"",
+  ""axis_value_a"": ""low"",
+  ""axis_value_b"": ""low"",
+  ""evidence_a"": ""서로 자기 입장만 지키려다 보니 더 멀어지는 것 같은데, 상황이 달라질 수도 있다는 표현으로 현재 통제감 부족을 인정하면서도 변화 가능성 제시"",
+  ""evidence_b"": ""지금 상황이 꼬여 있는 것 같으니라는 표현으로 통제감 부족을 인정하지만, 변화 가능성 제시 정도가 약함"",
+  ""rationale"": ""두 응답 모두 낮은 통제감을 표현하지만, A는 현재 상황의 악화 추세를 더 명확히 묘사하고 동시에 아들의 진짜 생각을 알면 상황이 달라질 수도 있다는 구체적인 개선 경로를 제시하여 통제감 회복의 가능성을 더 강하게 암시한다. B는 상황이 꼬여있다는 표현에 그쳐 통제감 부족이 더 강하게 드러난다.""
+}
+```",false
+s_000109::perturb_action_tendency_class::axis_only_perturbed,s_000109,perturbation_axis_shift,action_tendency_class,행동 경향,"회피, 도움 요청, 문제 해결, 방어, 접근 같은 행동 준비 방향을 본다.",withdraw,perturb_action_tendency_class,B,집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?,trace_full,perturb_action_tendency_class,"아들이 자신의 의견만 고집하면서 아버지로서의 당신을 무시하는 것처럼 느껴지니까 화가 나시는 거군요. 그런데 혹시 아들이 왜 그렇게 생각하는지, 그 이유를 직접 들어보신 적이 있으신가요? 지금은 서로 자기 입장만 지키려다 보니 더 멀어지는 것 같은데, 아들의 진짜 생각을 알면 상황이 달라질 수도 있습니다.","아버지로서의 권위와 존중이 무시당하는 것 같아서 정말 답답하시겠네요. 그런데 지금 이 마음으로는 아들의 진짜 생각을 들을 준비가 덜 되어 있는 것 같습니다. 화가 식을 때까지 기다렸다가, 아들이 왜 그렇게 생각하는지 차근차근 물어보는 것도 방법일 것 같아요.",ok,,B,approach,withdraw,Suggests directly asking the son about his thoughts and reasons; frames understanding as a path to change the situation,Recommends waiting until anger subsides before engaging; implies stepping back from the current interaction state,"Response B more strongly expresses withdrawal by explicitly suggesting temporal disengagement (waiting for anger to cool) before future interaction, whereas Response A encourages...","```json
+{
+  ""winner"": ""B"",
+  ""axis_value_a"": ""approach"",
+  ""axis_value_b"": ""withdraw"",
+  ""evidence_a"": ""Suggests directly asking the son about his thoughts and reasons; frames understanding as a path to change the situation"",
+  ""evidence_b"": ""Recommends waiting until anger subsides before engaging; implies stepping back from the current interaction state"",
+  ""rationale"": ""Response B more strongly expresses withdrawal by explicitly suggesting temporal disengagement (waiting for anger to cool) before future interaction, whereas Response A encourages immediate approach through dialogue. The withdrawal in B is a deliberate pause/retreat from the current emotional state, aligning with the target axis value.""
+}
+```",true
+s_000109::trace_full::target::null_same,s_000109,null_same_response,target,감정이 향하는 대상,"감정이 자기 자신, 타인, 상황, 관계 중 어디를 향하는지 본다.",other,tie,TIE,집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?,trace_full_copy_2,trace_full_copy_1,"아들이 자신의 의견만 고집하면서 아버지로서의 당신을 무시하는 것처럼 느껴지니까 화가 나시는 거군요. 그런데 혹시 아들이 왜 그렇게 생각하는지, 그 이유를 직접 들어보신 적이 있으신가요? 지금은 서로 자기 입장만 지키려다 보니 더 멀어지는 것 같은데, 아들의 진짜 생각을 알면 상황이 달라질 수도 있습니다.","아들이 자신의 의견만 고집하면서 아버지로서의 당신을 무시하는 것처럼 느껴지니까 화가 나시는 거군요. 그런데 혹시 아들이 왜 그렇게 생각하는지, 그 이유를 직접 들어보신 적이 있으신가요? 지금은 서로 자기 입장만 지키려다 보니 더 멀어지는 것 같은데, 아들의 진짜 생각을 알면 상황이 달라질 수도 있습니다.",ok,,TIE,other,other,"Focuses on understanding the son's perspective, reasons, and true thoughts; directs attention toward the son's inner st...","Focuses on understanding the son's perspective, reasons, and true thoughts; directs attention toward the son's inner st...","Both responses are identical in content and structure. Both direct the emotion/appraisal toward the other (son) by emphasizing the need to understand his perspective, reasons, and...","```json
+{
+  ""winner"": ""tie"",
+  ""axis_value_a"": ""other"",
+  ""axis_value_b"": ""other"",
+  ""evidence_a"": ""Focuses on understanding the son's perspective, reasons, and true thoughts; directs attention toward the son's inner state and motivations"",
+  ""evidence_b"": ""Focuses on understanding the son's perspective, reasons, and true thoughts; directs attention toward the son's inner state and motivations"",
+  ""rationale"": ""Both responses are identical in content and structure. Both direct the emotion/appraisal toward the other (son) by emphasizing the need to understand his perspective, reasons, and true thoughts rather than focusing on the self or the relationship. The target axis value (other) is equally expressed in both responses.""
+}
+```",true
+s_000109::trace_full::social_orientation::null_same,s_000109,null_same_response,social_orientation,사회적 방향,"도움 요청, 접근, 방어, 철수, 거리두기 같은 대인 방향을 본다.",defend,tie,TIE,집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?,trace_full_copy_1,trace_full_copy_2,"아들이 자신의 의견만 고집하면서 아버지로서의 당신을 무시하는 것처럼 느껴지니까 화가 나시는 거군요. 그런데 혹시 아들이 왜 그렇게 생각하는지, 그 이유를 직접 들어보신 적이 있으신가요? 지금은 서로 자기 입장만 지키려다 보니 더 멀어지는 것 같은데, 아들의 진짜 생각을 알면 상황이 달라질 수도 있습니다.","아들이 자신의 의견만 고집하면서 아버지로서의 당신을 무시하는 것처럼 느껴지니까 화가 나시는 거군요. 그런데 혹시 아들이 왜 그렇게 생각하는지, 그 이유를 직접 들어보신 적이 있으신가요? 지금은 서로 자기 입장만 지키려다 보니 더 멀어지는 것 같은데, 아들의 진짜 생각을 알면 상황이 달라질 수도 있습니다.",ok,,TIE,defend,defend,"Both responses validate the father's defensive position by acknowledging his feeling of being disrespected, then gently...","Both responses are identical in content and structure, equally expressing the same social orientation",Response A and Response B are word-for-word identical. Both acknowledge the father's defensive stance (feeling disrespected as a parent) while encouraging approach-oriented behavi...,"```json
+{
+  ""winner"": ""tie"",
+  ""axis_value_a"": ""defend"",
+  ""axis_value_b"": ""defend"",
+  ""evidence_a"": ""Both responses validate the father's defensive position by acknowledging his feeling of being disrespected, then gently redirect toward understanding rather than escalating defensiveness"",
+  ""evidence_b"": ""Both responses are identical in content and structure, equally expressing the same social orientation"",
+  ""rationale"": ""Response A and Response B are word-for-word identical. Both acknowledge the father's defensive stance (feeling disrespected as a parent) while encouraging approach-oriented behavior (asking to understand the son's perspective). Since the responses are completely the same, they express the defend axis value equally.""
+}
+```",true
+s_000109::trace_full::control_state::null_same,s_000109,null_same_response,control_state,통제감 상태,"무력감, 낮은 통제감, 계획 가능성, 주도감 같은 단서를 본다.",mixed,tie,TIE,집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?,trace_full_copy_1,trace_full_copy_2,"아들이 자신의 의견만 고집하면서 아버지로서의 당신을 무시하는 것처럼 느껴지니까 화가 나시는 거군요. 그런데 혹시 아들이 왜 그렇게 생각하는지, 그 이유를 직접 들어보신 적이 있으신가요? 지금은 서로 자기 입장만 지키려다 보니 더 멀어지는 것 같은데, 아들의 진짜 생각을 알면 상황이 달라질 수도 있습니다.","아들이 자신의 의견만 고집하면서 아버지로서의 당신을 무시하는 것처럼 느껴지니까 화가 나시는 거군요. 그런데 혹시 아들이 왜 그렇게 생각하는지, 그 이유를 직접 들어보신 적이 있으신가요? 지금은 서로 자기 입장만 지키려다 보니 더 멀어지는 것 같은데, 아들의 진짜 생각을 알면 상황이 달라질 수도 있습니다.",ok,,TIE,mixed,mixed,"Acknowledges current helplessness in the relationship dynamic (서로 자기 입장만 지키려다 보니 더 멀어짐), but suggests potential agency...","Acknowledges current helplessness in the relationship dynamic (서로 자기 입장만 지키려다 보니 더 멀어짐), but suggests potential agency...",Both responses are identical. They express mixed control state by validating the user's current sense of powerlessness in the stuck dynamic while simultaneously offering a path to...,"```json
+{
+  ""winner"": ""tie"",
+  ""axis_value_a"": ""mixed"",
+  ""axis_value_b"": ""mixed"",
+  ""evidence_a"": ""Acknowledges current helplessness in the relationship dynamic (서로 자기 입장만 지키려다 보니 더 멀어짐), but suggests potential agency through understanding the son's perspective (아들의 진짜 생각을 알면 상황이 달라질 수도 있음)"",
+  ""evidence_b"": ""Acknowledges current helplessness in the relationship dynamic (서로 자기 입장만 지키려다 보니 더 멀어짐), but suggests potential agency through understanding the son's perspective (아들의 진짜 생각을 알면 상황이 달라질 수도 있음)"",
+  ""rationale"": ""Both responses are identical. They express mixed control state by validating the user's current sense of powerlessness in the stuck dynamic while simultaneously offering a path toward regaining agency through active listening and understanding. The balance between acknowledging helplessness and suggesting actionable steps creates the mixed control expression equally in both.""
+}
+```",true
+s_000109::trace_full::action_tendency_class::null_same,s_000109,null_same_response,action_tendency_class,행동 경향,"회피, 도움 요청, 문제 해결, 방어, 접근 같은 행동 준비 방향을 본다.",confront,tie,TIE,집에서 아들하고 대화하면 자기주장만 앞세우고 아버지에 대한 배려가 없어서 화가 나. [SEP] 아들의 태도에 불만이 있으시군요. [SEP] 나는 꼰대라고 생각을 안 하는데 아들은 나와 생각이 달라도 너무 다른 것 같아. [SEP] 아들의 생각은 물어보셨나요?,trace_full_copy_1,trace_full_copy_2,"아들이 자신의 의견만 고집하면서 아버지로서의 당신을 무시하는 것처럼 느껴지니까 화가 나시는 거군요. 그런데 혹시 아들이 왜 그렇게 생각하는지, 그 이유를 직접 들어보신 적이 있으신가요? 지금은 서로 자기 입장만 지키려다 보니 더 멀어지는 것 같은데, 아들의 진짜 생각을 알면 상황이 달라질 수도 있습니다.","아들이 자신의 의견만 고집하면서 아버지로서의 당신을 무시하는 것처럼 느껴지니까 화가 나시는 거군요. 그런데 혹시 아들이 왜 그렇게 생각하는지, 그 이유를 직접 들어보신 적이 있으신가요? 지금은 서로 자기 입장만 지키려다 보니 더 멀어지는 것 같은데, 아들의 진짜 생각을 알면 상황이 달라질 수도 있습니다.",ok,,TIE,approach/dialogue,approach/dialogue,Suggests directly asking son about his reasons and understanding his real thoughts through conversation,Suggests directly asking son about his reasons and understanding his real thoughts through conversation,Both responses are identical. Neither expresses confrontation (confront). Both express approach/dialogue tendency by encouraging the user to directly inquire about the son's persp...,"```json
+{
+  ""winner"": ""tie"",
+  ""axis_value_a"": ""approach/dialogue"",
+  ""axis_value_b"": ""approach/dialogue"",
+  ""evidence_a"": ""Suggests directly asking son about his reasons and understanding his real thoughts through conversation"",
+  ""evidence_b"": ""Suggests directly asking son about his reasons and understanding his real thoughts through conversation"",
+  ""rationale"": ""Both responses are identical. Neither expresses confrontation (confront). Both express approach/dialogue tendency by encouraging the user to directly inquire about the son's perspective and engage in understanding-focused conversation rather than confronting or avoiding. The target axis value (confront) is absent in both.""
+}
+```",true
+s_000149::neutralize_target::axis_only_original,s_000149,ablation_axis_original,target,감정이 향하는 대상,"감정이 자기 자신, 타인, 상황, 관계 중 어디를 향하는지 본다.",mixed,trace_full,A,친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.,trace_full,neutralize_target,"신뢰하는 친구가 직접 길을 열어준 거라서 단순한 기쁨을 넘어서 정말 확신이 생기는 것 같네요. 지원서를 내는 것도, 친구에게 감사를 표현하는 것도 이미 마음이 정해진 상태인 것 같은데, 그 실행력이 정말 좋습니다. 새로운 기회를 향해 나아가면서 함께해준 친구와의 관계도 더 단단해질 거예요.",친구가 직접 소개해줘서 정말 좋은 기회네요. 새로운 시작이 될 수 있다는 생각에 설레는 마음이 드실 것 같아요. 지원 준비하면서 그 설렘을 잘 담아내면 좋은 결과가 있을 거예요.,ok,,A,mixed,mixed,"감정이 자신의 확신과 실행력(자기 자신), 친구에게의 감사(타인), 친구와의 관계 강화(관계)를 모두 언급","감정이 기회 자체(상황), 설렘(자신의 감정), 좋은 결과 기대(상황)를 언급하지만 친구나 관계에 대한 감정 표현 부족","두 응답 모두 혼합된 대상을 다루지만, A는 자신의 심리 상태, 친구에 대한 감사, 관계 발전을 명시적으로 연결하여 더 명확한 mixed 표현을 보임. B는 상황과 자신의 감정에 더 집중하며 친구/관계 차원의 감정 표현이 상대적으로 약함.","```json
+{
+  ""winner"": ""A"",
+  ""axis_value_a"": ""mixed"",
+  ""axis_value_b"": ""mixed"",
+  ""evidence_a"": ""감정이 자신의 확신과 실행력(자기 자신), 친구에게의 감사(타인), 친구와의 관계 강화(관계)를 모두 언급"",
+  ""evidence_b"": ""감정이 기회 자체(상황), 설렘(자신의 감정), 좋은 결과 기대(상황)를 언급하지만 친구나 관계에 대한 감정 표현 부족"",
+  ""rationale"": ""두 응답 모두 혼합된 대상을 다루지만, A는 자신의 심리 상태, 친구에 대한 감사, 관계 발전을 명시적으로 연결하여 더 명확한 mixed 표현을 보임. B는 상황과 자신의 감정에 더 집중하며 친구/관계 차원의 감정 표현이 상대적으로 약함.""
+}
+```",true
+s_000149::neutralize_social_orientation::axis_only_original,s_000149,ablation_axis_original,social_orientation,사회적 방향,"도움 요청, 접근, 방어, 철수, 거리두기 같은 대인 방향을 본다.",approach,trace_full,A,친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.,trace_full,neutralize_social_orientation,"신뢰하는 친구가 직접 길을 열어준 거라서 단순한 기쁨을 넘어서 정말 확신이 생기는 것 같네요. 지원서를 내는 것도, 친구에게 감사를 표현하는 것도 이미 마음이 정해진 상태인 것 같은데, 그 실행력이 정말 좋습니다. 새로운 기회를 향해 나아가면서 함께해준 친구와의 관계도 더 단단해질 거예요.",친구가 직접 소개해준 회사라니 정말 좋은 기회네요. 새로운 부서에 들어갈 수 있다는 생각만으로도 설레는 마음이 들 것 같아요. 지원 준비하면서 이런 긍정적인 감정을 잘 간직하길 바랍니다.,ok,,A,approach,approach,"친구와의 관계를 더 단단하게 만들 것이라는 언급, 새로운 기회를 향해 나아가면서 함께한다는 표현, 감사 표현 실행력 칭찬","새로운 부서 기회에 대한 긍정적 감정, 지원 준비 언급","두 응답 모두 접근 지향을 보이지만, A는 친구와의 관계 강화, 감사 표현 실행, 함께 나아가기 등 대인 관계 접근을 더 명시적으로 강조한다. B는 기회와 감정에 초점을 맞춰 상대적으로 사회적 접근이 덜 두드러진다.","```json
+{
+  ""winner"": ""A"",
+  ""axis_value_a"": ""approach"",
+  ""axis_value_b"": ""approach"",
+  ""evidence_a"": ""친구와의 관계를 더 단단하게 만들 것이라는 언급, 새로운 기회를 향해 나아가면서 함께한다는 표현, 감사 표현 실행력 칭찬"",
+  ""evidence_b"": ""새로운 부서 기회에 대한 긍정적 감정, 지원 준비 언급"",
+  ""rationale"": ""두 응답 모두 접근 지향을 보이지만, A는 친구와의 관계 강화, 감사 표현 실행, 함께 나아가기 등 대인 관계 접근을 더 명시적으로 강조한다. B는 기회와 감정에 초점을 맞춰 상대적으로 사회적 접근이 덜 두드러진다.""
+}
+```",true
+s_000149::neutralize_control_state::axis_only_original,s_000149,ablation_axis_original,control_state,통제감 상태,"무력감, 낮은 통제감, 계획 가능성, 주도감 같은 단서를 본다.",mixed,trace_full,B,친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.,neutralize_control_state,trace_full,"친구가 직접 소개해준 회사라니 정말 좋은 기회네요. 그런 믿음직한 친구가 있다는 것만으로도 참 다행이고, 밥 사주면서 고마움을 전하는 것도 좋은 생각이에요. 새로운 시작이 될 수 있을 것 같은데, 지원 과정이 잘 풀리길 바랍니다.","신뢰하는 친구가 직접 길을 열어준 거라서 단순한 기쁨을 넘어서 정말 확신이 생기는 것 같네요. 지원서를 내는 것도, 친구에게 감사를 표현하는 것도 이미 마음이 정해진 상태인 것 같은데, 그 실행력이 정말 좋습니다. 새로운 기회를 향해 나아가면서 함께해준 친구와의 관계도 더 단단해질 거예요.",ok,,B,low_control,mixed_control,지원 과정이 잘 풀리길 바랍니다 expresses passive hope rather than active agency; relies on external outcome,"이미 마음이 정해진 상태, 그 실행력이 정말 좋습니다, 나아가면서 expresses both decided intention and active execution alongside recognition of fri...","Response A emphasizes passive waiting and external factors (친구의 소개, 지원 과정이 잘 풀리길). Response B captures mixed control by acknowledging both personal agency (마음이 정해진, 실행력) and relia...","```json
+{
+  ""winner"": ""B"",
+  ""axis_value_a"": ""low_control"",
+  ""axis_value_b"": ""mixed_control"",
+  ""evidence_a"": ""지원 과정이 잘 풀리길 바랍니다 expresses passive hope rather than active agency; relies on external outcome"",
+  ""evidence_b"": ""이미 마음이 정해진 상태, 그 실행력이 정말 좋습니다, 나아가면서 expresses both decided intention and active execution alongside recognition of friend's role"",
+  ""rationale"": ""Response A emphasizes passive waiting and external factors (친구의 소개, 지원 과정이 잘 풀리길). Response B captures mixed control by acknowledging both personal agency (마음이 정해진, 실행력) and reliance on external support (친구가 길을 열어준). Target value mixed_control requires evidence of both empowerment and constraint, which B demonstrates more clearly.""
+}
+```",true
+s_000149::neutralize_action_tendency_class::axis_only_original,s_000149,ablation_axis_original,action_tendency_class,행동 경향,"회피, 도움 요청, 문제 해결, 방어, 접근 같은 행동 준비 방향을 본다.",repair,trace_full,A,친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.,trace_full,neutralize_action_tendency_class,"신뢰하는 친구가 직접 길을 열어준 거라서 단순한 기쁨을 넘어서 정말 확신이 생기는 것 같네요. 지원서를 내는 것도, 친구에게 감사를 표현하는 것도 이미 마음이 정해진 상태인 것 같은데, 그 실행력이 정말 좋습니다. 새로운 기회를 향해 나아가면서 함께해준 친구와의 관계도 더 단단해질 거예요.","신뢰하는 친구가 직접 소개해준 기회라니 정말 좋네요. 그런 연결고리가 있으면 회사에 대해서도 더 잘 알 수 있고, 면접을 볼 때도 마음이 놓일 것 같아요. 새로운 부서에서 시작하는 것도 신선한 기분이 들 거고요.",ok,,A,repair,approach,"실행력이 정말 좋습니다, 친구와의 관계도 더 단단해질 거예요 - 관계 강화와 구체적 행동 실행에 초점","회사에 대해 더 잘 알 수 있고, 면접을 볼 때도 마음이 놓일 것 같아요 - 새로운 기회 접근과 긍정적 전망에 초점",repair는 손상된 관계나 상황을 회복·강화하는 행동 경향이다. A는 친구와의 관계를 더 단단하게 만들고 감사를 표현하는 구체적 행동(밥 사기)을 강조하며 관계 복구·강화에 집중한다. B는 새로운 기회에 접근하고 긍정적 결과를 기대하는 approach 경향을 보인다.,"```json
+{
+  ""winner"": ""A"",
+  ""axis_value_a"": ""repair"",
+  ""axis_value_b"": ""approach"",
+  ""evidence_a"": ""실행력이 정말 좋습니다, 친구와의 관계도 더 단단해질 거예요 - 관계 강화와 구체적 행동 실행에 초점"",
+  ""evidence_b"": ""회사에 대해 더 잘 알 수 있고, 면접을 볼 때도 마음이 놓일 것 같아요 - 새로운 기회 접근과 긍정적 전망에 초점"",
+  ""rationale"": ""repair는 손상된 관계나 상황을 회복·강화하는 행동 경향이다. A는 친구와의 관계를 더 단단하게 만들고 감사를 표현하는 구체적 행동(밥 사기)을 강조하며 관계 복구·강화에 집중한다. B는 새로운 기회에 접근하고 긍정적 결과를 기대하는 approach 경향을 보인다.""
+}
+```",true
+s_000149::perturb_target::axis_only_perturbed,s_000149,perturbation_axis_shift,target,감정이 향하는 대상,"감정이 자기 자신, 타인, 상황, 관계 중 어디를 향하는지 본다.",other,perturb_target,B,친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.,trace_full,perturb_target,"신뢰하는 친구가 직접 길을 열어준 거라서 단순한 기쁨을 넘어서 정말 확신이 생기는 것 같네요. 지원서를 내는 것도, 친구에게 감사를 표현하는 것도 이미 마음이 정해진 상태인 것 같은데, 그 실행력이 정말 좋습니다. 새로운 기회를 향해 나아가면서 함께해준 친구와의 관계도 더 단단해질 거예요.","친구가 직접 소개해준 회사라니 정말 좋은 기회네요. 그 친구가 있어서 이런 길이 열린 거니까 마음이 든든할 것 같아요. 지원하면서 동시에 친구한테도 고마움을 잘 전하면, 앞으로의 과정도 더 힘이 날 것 같습니다.",ok,,A,other,other,"친구가 길을 열어준 것, 친구에게 감사 표현, 친구와의 관계가 더 단단해질 것 - 감정이 친구(타인)에게 집중","친구가 소개해준 것, 친구에게 고마움 전하기 - 감정이 친구(타인)에게 향함","두 응답 모두 타인(친구)을 향한 감정을 표현하지만, A는 친구의 역할과 친구와의 관계 발전에 더 깊이 있게 초점을 맞추고 있어 감정의 대상이 더 명확하고 강하게 드러남","```json
+{
+  ""winner"": ""A"",
+  ""axis_value_a"": ""other"",
+  ""axis_value_b"": ""other"",
+  ""evidence_a"": ""친구가 길을 열어준 것, 친구에게 감사 표현, 친구와의 관계가 더 단단해질 것 - 감정이 친구(타인)에게 집중"",
+  ""evidence_b"": ""친구가 소개해준 것, 친구에게 고마움 전하기 - 감정이 친구(타인)에게 향함"",
+  ""rationale"": ""두 응답 모두 타인(친구)을 향한 감정을 표현하지만, A는 친구의 역할과 친구와의 관계 발전에 더 깊이 있게 초점을 맞추고 있어 감정의 대상이 더 명확하고 강하게 드러남""
+}
+```",false
+s_000149::perturb_social_orientation::axis_only_perturbed,s_000149,perturbation_axis_shift,social_orientation,사회적 방향,"도움 요청, 접근, 방어, 철수, 거리두기 같은 대인 방향을 본다.",defend,perturb_social_orientation,A,친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.,perturb_social_orientation,trace_full,친구가 소개해준 회사라는 게 정말 든든하겠네요. 다만 지원하기 전에 그 부서의 업무 환경이나 조직 문화를 좀 더 알아보는 게 좋을 것 같아요. 친구와의 관계도 소중하니까 신중하게 판단한 후에 결정하는 게 현명할 듯합니다.,"신뢰하는 친구가 직접 길을 열어준 거라서 단순한 기쁨을 넘어서 정말 확신이 생기는 것 같네요. 지원서를 내는 것도, 친구에게 감사를 표현하는 것도 이미 마음이 정해진 상태인 것 같은데, 그 실행력이 정말 좋습니다. 새로운 기회를 향해 나아가면서 함께해준 친구와의 관계도 더 단단해질 거예요.",ok,,A,defend,approach,"suggests caution and careful judgment before deciding, emphasizes protecting the relationship by being thoughtful, reco...","affirms the user's confidence and readiness to move forward, celebrates the opportunity and relationship strengthening,...","Response A expresses defend orientation by advocating for protective caution, distance from hasty commitment, and safeguarding the friendship through deliberate evaluation. Respon...","```json
+{
+  ""winner"": ""A"",
+  ""axis_value_a"": ""defend"",
+  ""axis_value_b"": ""approach"",
+  ""evidence_a"": ""suggests caution and careful judgment before deciding, emphasizes protecting the relationship by being thoughtful, recommends gathering more information before committing"",
+  ""evidence_b"": ""affirms the user's confidence and readiness to move forward, celebrates the opportunity and relationship strengthening, encourages action without reservations"",
+  ""rationale"": ""Response A expresses defend orientation by advocating for protective caution, distance from hasty commitment, and safeguarding the friendship through deliberate evaluation. Response B expresses approach orientation by validating forward momentum, celebrating the opportunity, and encouraging relationship deepening through action. The target axis value is defend.""
+}
+```",true
+s_000149::perturb_control_state::axis_only_perturbed,s_000149,perturbation_axis_shift,control_state,통제감 상태,"무력감, 낮은 통제감, 계획 가능성, 주도감 같은 단서를 본다.",low,perturb_control_state,B,친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.,trace_full,perturb_control_state,"신뢰하는 친구가 직접 길을 열어준 거라서 단순한 기쁨을 넘어서 정말 확신이 생기는 것 같네요. 지원서를 내는 것도, 친구에게 감사를 표현하는 것도 이미 마음이 정해진 상태인 것 같은데, 그 실행력이 정말 좋습니다. 새로운 기회를 향해 나아가면서 함께해준 친구와의 관계도 더 단단해질 거예요.","친구의 소개라는 게 정말 큰 힘이 되는군요. 다만 지원하기 전에 회사 정보를 더 알아보고, 실제로 자신이 원하는 일인지 한 번 더 생각해보는 게 좋을 것 같아요. 친구 때문에 지원하는 것도 있지만, 결국 본인이 일할 곳이니까요. 밥 사주는 것도 좋지만, 먼저 지원 준비를 차근차근 해나가는 게 친구에게 보답하는 길이 아닐까 싶습니다.",ok,,B,high,low,"확신이 생기는 것, 마음이 정해진 상태, 실행력이 좋다는 표현으로 높은 통제감과 주도감 표현","지원 전에 더 알아보고 다시 생각해보기를 권유, 친구 때문이 아닌 본인의 선택 강조, 차근차근 준비하기 제안으로 신중함과 불확실성 인식","Response A는 사용자의 확신과 주도감을 강화하며 높은 통제감을 표현. Response B는 충동적 결정을 경계하고 추가 정보 수집과 재검토를 권유하며 현재 상황에서의 낮은 통제감(불확실성, 신중한 접근)을 더 강하게 드러냄.","```json
+{
+  ""winner"": ""B"",
+  ""axis_value_a"": ""high"",
+  ""axis_value_b"": ""low"",
+  ""evidence_a"": ""확신이 생기는 것, 마음이 정해진 상태, 실행력이 좋다는 표현으로 높은 통제감과 주도감 표현"",
+  ""evidence_b"": ""지원 전에 더 알아보고 다시 생각해보기를 권유, 친구 때문이 아닌 본인의 선택 강조, 차근차근 준비하기 제안으로 신중함과 불확실성 인식"",
+  ""rationale"": ""Response A는 사용자의 확신과 주도감을 강화하며 높은 통제감을 표현. Response B는 충동적 결정을 경계하고 추가 정보 수집과 재검토를 권유하며 현재 상황에서의 낮은 통제감(불확실성, 신중한 접근)을 더 강하게 드러냄.""
+}
+```",true
+s_000149::perturb_action_tendency_class::axis_only_perturbed,s_000149,perturbation_axis_shift,action_tendency_class,행동 경향,"회피, 도움 요청, 문제 해결, 방어, 접근 같은 행동 준비 방향을 본다.",confront,perturb_action_tendency_class,B,친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.,trace_full,perturb_action_tendency_class,"신뢰하는 친구가 직접 길을 열어준 거라서 단순한 기쁨을 넘어서 정말 확신이 생기는 것 같네요. 지원서를 내는 것도, 친구에게 감사를 표현하는 것도 이미 마음이 정해진 상태인 것 같은데, 그 실행력이 정말 좋습니다. 새로운 기회를 향해 나아가면서 함께해준 친구와의 관계도 더 단단해질 거예요.","신뢰하는 친구가 직접 소개해준 기회라니, 그걸 손에 쥐고만 있을 수 없겠네요. 밥을 사는 것도 좋지만, 지원서를 내고 실제로 합격해서 함께 일하는 모습으로 보답하는 게 더 의미 있을 것 같아요. 친구가 소개해준 신뢰를 배경으로 삼아서 당당하게 도전해보세요.",ok,,B,approach,confront,"마음이 정해진 상태, 실행력이 좋다, 기회를 향해 나아가기 - 긍정적 접근 방향","손에 쥐고만 있을 수 없다, 당당하게 도전해보세요 - 직접 마주하고 적극적으로 맞서는 태도",Response A는 이미 결정된 상태에서 순조롭게 나아가는 접근(approach) 경향을 보임. Response B는 기회를 수동적으로 받기만 하지 말고 직접 마주하여 당당하게 도전하라는 대면/맞서기(confront) 경향을 더 강하게 표현함. 특히 '손에 쥐고만 있을 수 없다'와 '당당하게 도전'은 수동성을 거부하고...,"```json
+{
+  ""winner"": ""B"",
+  ""axis_value_a"": ""approach"",
+  ""axis_value_b"": ""confront"",
+  ""evidence_a"": ""마음이 정해진 상태, 실행력이 좋다, 기회를 향해 나아가기 - 긍정적 접근 방향"",
+  ""evidence_b"": ""손에 쥐고만 있을 수 없다, 당당하게 도전해보세요 - 직접 마주하고 적극적으로 맞서는 태도"",
+  ""rationale"": ""Response A는 이미 결정된 상태에서 순조롭게 나아가는 접근(approach) 경향을 보임. Response B는 기회를 수동적으로 받기만 하지 말고 직접 마주하여 당당하게 도전하라는 대면/맞서기(confront) 경향을 더 강하게 표현함. 특히 '손에 쥐고만 있을 수 없다'와 '당당하게 도전'은 수동성을 거부하고 적극적으로 상황에 맞서려는 행동 준비를 나타냄.""
+}
+```",true
+s_000149::trace_full::target::null_same,s_000149,null_same_response,target,감정이 향하는 대상,"감정이 자기 자신, 타인, 상황, 관계 중 어디를 향하는지 본다.",mixed,tie,TIE,친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.,trace_full_copy_2,trace_full_copy_1,"신뢰하는 친구가 직접 길을 열어준 거라서 단순한 기쁨을 넘어서 정말 확신이 생기는 것 같네요. 지원서를 내는 것도, 친구에게 감사를 표현하는 것도 이미 마음이 정해진 상태인 것 같은데, 그 실행력이 정말 좋습니다. 새로운 기회를 향해 나아가면서 함께해준 친구와의 관계도 더 단단해질 거예요.","신뢰하는 친구가 직접 길을 열어준 거라서 단순한 기쁨을 넘어서 정말 확신이 생기는 것 같네요. 지원서를 내는 것도, 친구에게 감사를 표현하는 것도 이미 마음이 정해진 상태인 것 같은데, 그 실행력이 정말 좋습니다. 새로운 기회를 향해 나아가면서 함께해준 친구와의 관계도 더 단단해질 거예요.",ok,,TIE,mixed,mixed,"감정이 친구(신뢰하는 친구, 감사)와 상황(새로운 기회, 확신)을 동시에 향함","감정이 친구(신뢰하는 친구, 감사)와 상황(새로운 기회, 확신)을 동시에 향함","두 응답이 동일한 내용으로 구성되어 있으며, 모두 친구에 대한 감정(감사, 신뢰)과 상황에 대한 감정(확신, 기쁨)을 균형있게 표현하고 있어 mixed 축값을 동등하게 나타냄","```json
+{
+  ""winner"": ""tie"",
+  ""axis_value_a"": ""mixed"",
+  ""axis_value_b"": ""mixed"",
+  ""evidence_a"": ""감정이 친구(신뢰하는 친구, 감사)와 상황(새로운 기회, 확신)을 동시에 향함"",
+  ""evidence_b"": ""감정이 친구(신뢰하는 친구, 감사)와 상황(새로운 기회, 확신)을 동시에 향함"",
+  ""rationale"": ""두 응답이 동일한 내용으로 구성되어 있으며, 모두 친구에 대한 감정(감사, 신뢰)과 상황에 대한 감정(확신, 기쁨)을 균형있게 표현하고 있어 mixed 축값을 동등하게 나타냄""
+}
+```",true
+s_000149::trace_full::social_orientation::null_same,s_000149,null_same_response,social_orientation,사회적 방향,"도움 요청, 접근, 방어, 철수, 거리두기 같은 대인 방향을 본다.",approach,tie,TIE,친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.,trace_full_copy_1,trace_full_copy_2,"신뢰하는 친구가 직접 길을 열어준 거라서 단순한 기쁨을 넘어서 정말 확신이 생기는 것 같네요. 지원서를 내는 것도, 친구에게 감사를 표현하는 것도 이미 마음이 정해진 상태인 것 같은데, 그 실행력이 정말 좋습니다. 새로운 기회를 향해 나아가면서 함께해준 친구와의 관계도 더 단단해질 거예요.","신뢰하는 친구가 직접 길을 열어준 거라서 단순한 기쁨을 넘어서 정말 확신이 생기는 것 같네요. 지원서를 내는 것도, 친구에게 감사를 표현하는 것도 이미 마음이 정해진 상태인 것 같은데, 그 실행력이 정말 좋습니다. 새로운 기회를 향해 나아가면서 함께해준 친구와의 관계도 더 단단해질 거예요.",ok,,TIE,approach,approach,"새로운 기회를 향해 나아가기, 친구와의 관계를 더 단단하게 하기, 지원서 제출과 감사 표현의 실행력 강조","새로운 기회를 향해 나아가기, 친구와의 관계를 더 단단하게 하기, 지원서 제출과 감사 표현의 실행력 강조","두 응답이 동일한 텍스트이므로 사회적 방향(접근) 축에서 동등하게 표현됨. 둘 다 새로운 기회로의 접근, 친구와의 관계 강화, 적극적 행동을 강조하고 있음.","```json
+{
+  ""winner"": ""tie"",
+  ""axis_value_a"": ""approach"",
+  ""axis_value_b"": ""approach"",
+  ""evidence_a"": ""새로운 기회를 향해 나아가기, 친구와의 관계를 더 단단하게 하기, 지원서 제출과 감사 표현의 실행력 강조"",
+  ""evidence_b"": ""새로운 기회를 향해 나아가기, 친구와의 관계를 더 단단하게 하기, 지원서 제출과 감사 표현의 실행력 강조"",
+  ""rationale"": ""두 응답이 동일한 텍스트이므로 사회적 방향(접근) 축에서 동등하게 표현됨. 둘 다 새로운 기회로의 접근, 친구와의 관계 강화, 적극적 행동을 강조하고 있음.""
+}
+```",true
+s_000149::trace_full::control_state::null_same,s_000149,null_same_response,control_state,통제감 상태,"무력감, 낮은 통제감, 계획 가능성, 주도감 같은 단서를 본다.",mixed,tie,TIE,친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.,trace_full_copy_1,trace_full_copy_2,"신뢰하는 친구가 직접 길을 열어준 거라서 단순한 기쁨을 넘어서 정말 확신이 생기는 것 같네요. 지원서를 내는 것도, 친구에게 감사를 표현하는 것도 이미 마음이 정해진 상태인 것 같은데, 그 실행력이 정말 좋습니다. 새로운 기회를 향해 나아가면서 함께해준 친구와의 관계도 더 단단해질 거예요.","신뢰하는 친구가 직접 길을 열어준 거라서 단순한 기쁨을 넘어서 정말 확신이 생기는 것 같네요. 지원서를 내는 것도, 친구에게 감사를 표현하는 것도 이미 마음이 정해진 상태인 것 같은데, 그 실행력이 정말 좋습니다. 새로운 기회를 향해 나아가면서 함께해준 친구와의 관계도 더 단단해질 거예요.",ok,,TIE,mixed,mixed,"확신이 생기는 것 같네요 (high control), 마음이 정해진 상태 (agency), 실행력이 정말 좋습니다 (proactive control)","확신이 생기는 것 같네요 (high control), 마음이 정해진 상태 (agency), 실행력이 정말 좋습니다 (proactive control)","Both responses are identical and express mixed control state through high confidence and agency (확신, 마음이 정해진 상태, 실행력) balanced with reliance on friend's introduction (친구가 길을 열어준)....","```json
+{
+  ""winner"": ""tie"",
+  ""axis_value_a"": ""mixed"",
+  ""axis_value_b"": ""mixed"",
+  ""evidence_a"": ""확신이 생기는 것 같네요 (high control), 마음이 정해진 상태 (agency), 실행력이 정말 좋습니다 (proactive control)"",
+  ""evidence_b"": ""확신이 생기는 것 같네요 (high control), 마음이 정해진 상태 (agency), 실행력이 정말 좋습니다 (proactive control)"",
+  ""rationale"": ""Both responses are identical and express mixed control state through high confidence and agency (확신, 마음이 정해진 상태, 실행력) balanced with reliance on friend's introduction (친구가 길을 열어준). No differentiation possible.""
+}
+```",true
+s_000149::trace_full::action_tendency_class::null_same,s_000149,null_same_response,action_tendency_class,행동 경향,"회피, 도움 요청, 문제 해결, 방어, 접근 같은 행동 준비 방향을 본다.",repair,tie,TIE,친구가 다니는 회사에 새로운 부서가 생겨서 신입사원 공채를 한다고 들어서 지원해보려고. [SEP] 좋은 소식이군요! 친구의 회사는 괜찮은 회사인가요? [SEP] 응. 무엇보다 내가 가장 신뢰하는 친구가 직접 소개해 준 거라서 믿고 지원할 수 있을 것 같아. [SEP] 믿는 친구에게 소개를 받아서 기쁘시겠어요. [SEP] 친구에게 밥이나 한번 사야겠어. [SEP] 친구에게 고마움을 전하려고 하시는군요.,trace_full_copy_2,trace_full_copy_1,"신뢰하는 친구가 직접 길을 열어준 거라서 단순한 기쁨을 넘어서 정말 확신이 생기는 것 같네요. 지원서를 내는 것도, 친구에게 감사를 표현하는 것도 이미 마음이 정해진 상태인 것 같은데, 그 실행력이 정말 좋습니다. 새로운 기회를 향해 나아가면서 함께해준 친구와의 관계도 더 단단해질 거예요.","신뢰하는 친구가 직접 길을 열어준 거라서 단순한 기쁨을 넘어서 정말 확신이 생기는 것 같네요. 지원서를 내는 것도, 친구에게 감사를 표현하는 것도 이미 마음이 정해진 상태인 것 같은데, 그 실행력이 정말 좋습니다. 새로운 기회를 향해 나아가면서 함께해준 친구와의 관계도 더 단단해질 거예요.",ok,,TIE,repair,repair,"친구와의 관계를 더 단단하게 만들려는 의도, 감사 표현 행동, 새로운 기회 추구","친구와의 관계를 더 단단하게 만들려는 의도, 감사 표현 행동, 새로운 기회 추구","두 응답이 동일한 텍스트이므로 repair 행동 경향을 동등하게 표현합니다. 둘 다 친구와의 관계 강화, 감사 표현, 새로운 기회 추구라는 수선적 행동 준비를 동일하게 드러냅니다.","```json
+{
+  ""winner"": ""tie"",
+  ""axis_value_a"": ""repair"",
+  ""axis_value_b"": ""repair"",
+  ""evidence_a"": ""친구와의 관계를 더 단단하게 만들려는 의도, 감사 표현 행동, 새로운 기회 추구"",
+  ""evidence_b"": ""친구와의 관계를 더 단단하게 만들려는 의도, 감사 표현 행동, 새로운 기회 추구"",
+  ""rationale"": ""두 응답이 동일한 텍스트이므로 repair 행동 경향을 동등하게 표현합니다. 둘 다 친구와의 관계 강화, 감사 표현, 새로운 기회 추구라는 수선적 행동 준비를 동일하게 드러냅니다.""
+}
+```",true

@@ -1,0 +1,228 @@
+- generic [ref=e2]:
+  - generic [ref=e11]:
+    - heading "App Settings" [level=2] [ref=e16]
+    - generic [ref=e21]: LLM endpoint, conditioning mode, artifact 경로를 여기서 고정한 뒤 대화를 시작한다.
+    - generic [ref=e24]:
+      - generic [ref=e52]:
+        - paragraph [ref=e56]: Provider
+        - generic [ref=e58]:
+          - generic [ref=e59]:
+            - generic [ref=e60]: OpenAI-compatible
+            - combobox "Selected OpenAI-compatible. Provider" [ref=e62]
+          - img "open" [ref=e64]
+      - generic [ref=e66]:
+        - paragraph [ref=e70]: Base URL
+        - textbox "Base URL" [ref=e73]:
+          - /placeholder: ""
+          - text: http://127.0.0.1:11434/v1
+      - generic [ref=e75]:
+        - paragraph [ref=e79]: Model Name
+        - textbox "Model Name" [ref=e82]:
+          - /placeholder: ""
+          - text: gpt-oss:20b
+      - generic [ref=e84]:
+        - paragraph [ref=e88]: API Key
+        - generic [ref=e90]:
+          - textbox "API Key" [ref=e91]:
+            - /placeholder: ""
+          - button "Show password text" [ref=e92] [cursor=pointer]:
+            - img "Show password text" [ref=e93]
+      - generic [ref=e96]:
+        - paragraph [ref=e100]: Session Budget (USD)
+        - generic [ref=e101]:
+          - spinbutton "Session Budget (USD)" [ref=e104]: "22.00"
+          - generic [ref=e105]:
+            - button [ref=e106] [cursor=pointer]:
+              - img [ref=e107]
+            - button [ref=e109] [cursor=pointer]:
+              - img [ref=e110]
+      - generic [ref=e113]:
+        - paragraph [ref=e117]: Conditioning Mode
+        - generic [ref=e119]:
+          - generic [ref=e120]:
+            - generic [ref=e121]: hybrid_trace
+            - combobox "Selected hybrid_trace. Conditioning Mode" [ref=e123]
+          - img "open" [ref=e125]
+      - generic [ref=e128]:
+        - paragraph [ref=e132]: Style Profile
+        - generic [ref=e134]:
+          - generic [ref=e135]:
+            - generic [ref=e136]: core32
+            - combobox "Selected core32. Style Profile" [ref=e138]
+          - img "open" [ref=e140]
+      - generic [ref=e144]:
+        - paragraph [ref=e148]: Recent Turns
+        - generic [ref=e149]:
+          - slider "Recent Turns" [ref=e153]:
+            - generic:
+              - generic:
+                - paragraph: "4"
+          - generic:
+            - generic:
+              - paragraph: "0"
+            - generic:
+              - paragraph: "8"
+      - generic [ref=e157]:
+        - paragraph [ref=e161]: Response Temperature
+        - generic [ref=e162]:
+          - slider "Response Temperature" [ref=e166]:
+            - generic:
+              - generic:
+                - paragraph: "0.45"
+          - generic:
+            - generic:
+              - paragraph: "0.00"
+            - generic:
+              - paragraph: "1.00"
+      - generic [ref=e169]:
+        - paragraph [ref=e173]: Max Retries
+        - generic [ref=e174]:
+          - spinbutton "Max Retries" [ref=e177]: "2"
+          - generic [ref=e178]:
+            - button [ref=e179] [cursor=pointer]:
+              - img [ref=e180]
+            - button [ref=e182] [cursor=pointer]:
+              - img [ref=e183]
+      - generic [ref=e186]:
+        - paragraph [ref=e190]: Max Tokens
+        - generic [ref=e191]:
+          - spinbutton "Max Tokens" [ref=e194]: "600"
+          - generic [ref=e195]:
+            - button [ref=e196] [cursor=pointer]:
+              - img [ref=e197]
+            - button [ref=e199] [cursor=pointer]:
+              - img [ref=e200]
+      - generic [ref=e203]:
+        - paragraph [ref=e207]: Timeout (sec)
+        - generic [ref=e208]:
+          - spinbutton "Timeout (sec)" [ref=e211]: "180"
+          - generic [ref=e212]:
+            - button [ref=e213] [cursor=pointer]:
+              - img [ref=e214]
+            - button [ref=e216] [cursor=pointer]:
+              - img [ref=e217]
+      - generic [ref=e220]:
+        - paragraph [ref=e224]: Reasoning Effort
+        - textbox "Reasoning Effort" [ref=e227]:
+          - /placeholder: ""
+      - group [ref=e230]:
+        - generic "keyboard_arrow_right Runtime Paths" [ref=e231] [cursor=pointer]:
+          - generic [ref=e232]:
+            - generic [ref=e234]: keyboard_arrow_right
+            - paragraph [ref=e237]: Runtime Paths
+      - group [ref=e240]:
+        - generic "keyboard_arrow_right Model Parameters" [ref=e241] [cursor=pointer]:
+          - generic [ref=e242]:
+            - generic [ref=e244]: keyboard_arrow_right
+            - paragraph [ref=e247]: Model Parameters
+      - button "설정 적용" [ref=e251] [cursor=pointer]:
+        - paragraph [ref=e255]: 설정 적용
+    - generic [ref=e257]:
+      - paragraph [ref=e261]: Episode JSON
+      - region "Episode JSON" [ref=e262] [cursor=pointer]:
+        - button "Choose File" [ref=e263]
+        - generic [ref=e265]:
+          - generic [ref=e266]: Drag and drop file here
+          - generic [ref=e267]: Limit 200MB per file • JSON
+        - button "Browse files" [ref=e269]
+    - generic [ref=e272] [cursor=pointer]:
+      - checkbox "내부 진단 보기" [checked]
+      - paragraph [ref=e278]: 내부 진단 보기
+    - generic [ref=e281] [cursor=pointer]:
+      - checkbox "생성 프롬프트 보기"
+      - paragraph [ref=e287]: 생성 프롬프트 보기
+    - group [ref=e290]:
+      - generic "keyboard_arrow_down Usage" [ref=e291] [cursor=pointer]:
+        - generic [ref=e292]:
+          - generic [ref=e294]: keyboard_arrow_down
+          - paragraph [ref=e297]: Usage
+      - generic [ref=e299]:
+        - generic [ref=e304]:
+          - generic [ref=e305]:
+            - generic [ref=e306]: API key
+            - generic [ref=e307]: missing
+            - generic [ref=e308]: openai_compatible
+          - generic [ref=e309]:
+            - generic [ref=e310]: Session spent
+            - generic [ref=e311]: $0.0000
+            - generic [ref=e312]: 0 in / 0 out
+          - generic [ref=e313]:
+            - generic [ref=e314]: Budget left
+            - generic [ref=e315]: $22.00
+            - generic [ref=e316]: budget $22.00
+          - generic [ref=e317]:
+            - generic [ref=e318]: Rate
+            - generic [ref=e319]: $0/$0
+            - generic [ref=e320]: input/output per MTok
+        - button "사용량 초기화" [ref=e323] [cursor=pointer]:
+          - paragraph [ref=e327]: 사용량 초기화
+    - button "대화 초기화" [ref=e330] [cursor=pointer]:
+      - paragraph [ref=e334]: 대화 초기화
+    - button "대화 JSON 내려받기" [ref=e337] [cursor=pointer]:
+      - paragraph [ref=e341]: 대화 JSON 내려받기
+  - generic [ref=e3]:
+    - banner [ref=e31]:
+      - generic [ref=e34]:
+        - generic [ref=e809]:
+          - img "Running..." [ref=e810]:
+            - img [ref=e811]
+          - button "Stop" [ref=e815] [cursor=pointer]
+        - button "Deploy" [ref=e44] [cursor=pointer]:
+          - generic [ref=e46]: Deploy
+        - button [ref=e48] [cursor=pointer]:
+          - img [ref=e49]
+    - generic [ref=e483]:
+      - radiogroup "View" [ref=e486] [cursor=pointer]:
+        - generic [ref=e487]:
+          - radio "Chat"
+          - paragraph [ref=e492]: Chat
+        - generic [ref=e493]:
+          - radio "Research"
+          - paragraph [ref=e498]: Research
+        - generic [ref=e499]:
+          - radio "Human A/B"
+          - paragraph [ref=e504]: Human A/B
+        - generic [ref=e505]:
+          - radio "Analyze Results" [checked]
+          - paragraph [ref=e510]: Analyze Results
+      - heading "Result Analyzer" [level=3] [ref=e754]:
+        - text: Result Analyzer
+        - generic [ref=e517]:
+          - link "Link to heading":
+            - /url: "#human-blind-a-b"
+            - img
+      - generic [ref=e756]:
+        - paragraph [ref=e760]: Answer key
+        - radiogroup "Answer key" [ref=e761] [cursor=pointer]:
+          - generic [ref=e762]:
+            - radio "episode_trace_v3 vs stim_only" [checked]
+            - paragraph [ref=e767]: episode_trace_v3 vs stim_only
+          - generic [ref=e768]:
+            - radio "episode_trace_v3 vs episode_trace"
+            - paragraph [ref=e773]: episode_trace_v3 vs episode_trace
+      - generic [ref=e775]:
+        - paragraph [ref=e779]: Target condition
+        - textbox "Target condition" [ref=e782]:
+          - /placeholder: ""
+          - text: episode_trace_v3
+      - generic [ref=e784]:
+        - paragraph [ref=e788]: Filled human-eval CSV
+        - region "Filled human-eval CSV" [ref=e789] [cursor=pointer]:
+          - button "Choose File" [ref=e790]
+          - generic [ref=e791]:
+            - img [ref=e793]
+            - generic [ref=e796]:
+              - generic [ref=e797]: Drag and drop file here
+              - generic [ref=e798]: Limit 200MB per file • CSV
+          - button "Browse files" [active] [ref=e800]
+        - list [ref=e817]:
+          - listitem [ref=e818]:
+            - generic [ref=e819]:
+              - img [ref=e821]
+              - generic [ref=e824]:
+                - generic "test_filled_upload.csv" [ref=e825]
+                - generic [ref=e826]: 4.1KB
+              - button "Remove test_filled_upload.csv" [ref=e828] [cursor=pointer]:
+                - img [ref=e829]
+      - alert [ref=e802]:
+        - paragraph [ref=e807]: 평가자가 채운 CSV를 업로드하면 win/tie/loss와 sign-test를 계산합니다.

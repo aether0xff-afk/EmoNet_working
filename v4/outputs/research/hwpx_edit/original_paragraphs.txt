@@ -1,0 +1,436 @@
+0000: EmoNet  |  EmoNet
+0001: EmoNet  |
+0002: 생물학적 뇌 구조를 모사한 인공 감성 지능 엔진 개발
+0003: 이은세
+0004: 초록
+0005: 본 탐구는 사용자의 감정을 분류하는 모델이 아니라, 사용자의 입력이 대화 에이전트 내부에 남기는 계산적 감정을 다루는 EmoNet을 제안한다. 기존의 감정 응답 생성은 감정 라벨이나 스타일 프롬프트로 출력의 분위기를 조절한다. 이 방식은 유용하지만, 사용자의 입력이 에이전트 내부에서 어떠한 변화를 만들었고 그 변화가 다음 응답에 어떤 흔적을 남겼는지는 설명하기 어렵다.
+0006: 이 탐구에서 감정은 인간과 같은 철학적인 감정을 뜻하지 않는다. 감정은 입력 자극이 내부 신경망을 지나며 형성되고, trace로 기록하고, 응답의 말투 등을 결정하는데 사용되는 계산적 내부 변화이다. EmoNet은 입력 발화를 4차원 자극 벡터로 바꾸고, 그래프 기반 감정 신경망 안에서 자극이 실제로 지나간 경로(branch) 와 시간에 따라 상태가 변화한 기록(trajectory)을 생성한다. 이후 raw trace(branch와 trajectory 등을 포함한 정보)를 감정 에피소드(emotion episode)로 해석하여, 상황 평가 싫음을 그냥 싫으로 두지 않고 왜 싫은지 어떻게 싷은지 등을 분석한 결과 (appraisal), 지속성(persistence), 행동 경향(action tendency)을 응답 생성 단계에 전달한다.
+0007: 실험은 세 단계로 진행하였다. 먼저 branch collapse 문제를 확인하고 보정하였다. EmoNet의 파라미터를 보정하여 dominant branch 평균 길이는 1.0539에서 70.4684로 증가했고, 길이 1의 branch 비율은 0.9734에서 0.0948로 감소하였다. 다음으로 120개 trace를 episode로 해석하여 trace가 의미 있는 appraisal, persistence, action tendency를 지니는지 확인하였다. 마지막으로 특정 상황에 예민한 테스트 셋(targeted episode-sensitive subset)에서 자극 기반 모델(stim_only)과 trace를 사용하는 모델(episode_trace_v3)을 짝지어 비교하였다. Claude 기반 trace에 예민한 블라인드 테스트(blind trace-sensitive judge)에서 episode_trace_v3는 비교 상황 n=57개 전부에서 stim_only보다 높은 mean total을 얻었고, mean total 차이는 +2.20점이었으며, bootstrap 95% 신뢰구간은 [+2.02, +2.38]로 0을 포함하지 않았다. 곧 episode_trace_v3가 stim_only보다 일관되게 높은 평가를 받았다.
+0008: 이 결과만으로 EmoNet이 모든 대화 상황에서 기존 방식보다 낫다고 할 수 는 없다. 다만 appraisal, persistence, action tendency의 보존이 중요한 episode-sensitive 상황에서는 내부 감정 trace가 응답 생성에 유의미한 정보를 제공할 수 있다.
+0009: Keyword: EmoNet, 에이전트 내부 감정 상태, 자극, 감정 trace, emotion episode, trace-sensitive 평가
+0010: 1. 서론
+0011: 1.1 문제 제기
+0012: 현재의 LLM은 사용자의 질문에 자연스럽게 답할 수 있다. 상담 형태의 대화에서도 “힘들었겠다”, “차분히 생각해 보자” 같은 문장은 쉽게 만든다. 하지만 그 문장이 실제 인간과의 대화처럼 느껴지는지는 다른 문제다. 사람의 대화에서는 상대의 말이 뇌를 자극하고 뇌가 반응하여 감정을 동반하여 응답을 생각한다. 당황했지만 바로 따지지 못하는 상태, 화가 났지만 말투를 누르는 상태 등은 모두 같은 ‘화남’ 이라는 감정 라벨만으로 충분히 설명될 수 없다.
+0013: 현재의 프롬프트에 기반한 LLM의 공감 대화 생성은 대체로 매 입력마다 적절한 문장을 새로 만든다. 이 방식은 안전하고 범용적이지만, 사용자의 입력에 대한 감정적 자극이 에이전트 내부에 어떤 상태를 만들었는지 고려 하지 않는다. 반면 EmoNet은 사용자의 감정을 맞히는 감정 분석기가 아니라, 사용자 발화가 에이전트 내부에 일으킨 계산적 감정 상태를 trace로 기록하여 마치 감정을 느끼는 것처럼 행동하게 하는 모델이다.
+0014: 1.2 탐구 질문
+0015: 탐구 질문검증 방식Q1. EmoNet은 입력 발화에 대해 non-trivial trace를 형성하는가?branch collapse before/after 비교와 calibration-backed reference configQ2. trace는 emotion episode로 해석 가능한 정보를 담는가?120개 trajectory-to-episode 해석과 대표 사례 분석Q3. trace는 응답 생성에서 기존 stimulus-only 조건보다 유용한가?targeted episode-sensitive subset의 paired comparisonQ4. 기존 자연성 중심 평가는 trace의 장점을 충분히 측정하는가?일반 품질 평가와 trace-sensitive 평가를 분리하여 비교
+0016: 탐구 질문
+0017: 검증 방식
+0018: Q1. EmoNet은 입력 발화에 대해 non-trivial trace를 형성하는가?
+0019: branch collapse before/after 비교와 calibration-backed reference config
+0020: Q2. trace는 emotion episode로 해석 가능한 정보를 담는가?
+0021: 120개 trajectory-to-episode 해석과 대표 사례 분석
+0022: Q3. trace는 응답 생성에서 기존 stimulus-only 조건보다 유용한가?
+0023: targeted episode-sensitive subset의 paired comparison
+0024: Q4. 기존 자연성 중심 평가는 trace의 장점을 충분히 측정하는가?
+0025: 일반 품질 평가와 trace-sensitive 평가를 분리하여 비교
+0026: 표 1. 탐구 질문과 검증 방식
+0027: 2. 이론적 배경
+0028: 2.1 주요 용어의 정의
+0029: 본 탐구는 사용자의 감정을 직접 분류하는 감정 분석 모델이 아니라, 사용자의 입력이 대화 에이전트 내부에 남기는 계산적 반응을 다룬다. 따라서 본 탐구에서 사용하는 주요 용어들은 일반적인 감정 심리학의 용어와 완전히 동일하지 않다. 이 절에서는 EmoNet의 구조를 이해하기 위해 필요한 핵심 용어를 정의한다.
+0030: 2.1.1 계산적 감정
+0031: 본 탐구에서 말하는 감정은 인간이 실제로 느끼는 주관적 감정 경험을 뜻하지 않는다. 인간의 감정은 의식, 기억, 신체 반응, 사회적 맥락 등이 복합적으로 작용한 결과이다. 반면 EmoNet에서의 감정은 입력 자극이 모델 내부 신경망을 통과하면서 만들어지는 수치적 상태 변화이다.
+0032: 즉, 계산적 감정은 “모델이 실제로 감정을 느낀다”는 뜻이 아니라, 입력이 내부 구조에 남긴 반응을 기록하고, 그 반응을 이후 응답 생성에 활용하는 방식이다. 예를 들어 사용자의 발화가 위협적이거나 모욕적인 상황을 포함할 경우, EmoNet은 이를 단순히 “분노”라는 라벨로 바꾸지 않는다. 대신 내부 신경망에서 경계, 접근, 억제, 피로와 관련된 신호가 어떻게 활성화되는지를 계산한다. 이러한 내부 변화가 본 탐구에서 말하는 계산적 감정이다.
+0033: 2.1.2 자극 벡터
+0034: EmoNet은 입력 발화를 바로 감정 라벨로 변환하지 않고, 먼저 자극 벡터로 변환한다. 자극 벡터는 입력이 내부 감정 동역학에 어떤 방향의 영향을 주는지를 나타내는 값이다. 본 탐구에서는 자극을 네 개의 축으로 구성한다.
+0035: 첫째, drive는 접근, 주장, 반응하려는 힘을 의미한다. 어떤 상황에서 바로 말하고 싶거나, 문제를 해결하려는 방향으로 움직이게 하는 신호이다. 둘째, brake는 억제와 완충을 의미한다. 즉각적인 반응을 줄이고, 말이나 행동을 조절하게 하는 신호이다. 셋째, alarm은 경계와 날카로움을 의미한다. 위협, 모욕, 부당함, 사회적 위험 등을 감지할 때 강하게 나타난다. 넷째, fatigue는 피로와 둔화를 의미한다. 부담감, 소진, 회피, 처리 지연과 관련된 신호이다.
+0036: 이 네 축은 각각 독립적인 감정 이름이 아니다. 예를 들어 alarm 값이 높다고 해서 곧바로 “분노”라고 단정할 수는 없다. alarm은 단지 내부 신경망에 경계성 신호가 강하게 들어왔다는 뜻이다. 실제 감정적 의미는 이후 trace와 episode 해석을 통해 결정된다.
+0037: 2.1.3 trace
+0038: trace는 입력 자극이 EmoNet 내부를 통과하면서 남긴 시간적 기록이다. 일반적인 로그가 단순히 결과를 저장하는 것이라면, EmoNet의 trace는 어떤 노드가 활성화되었고, 어떤 연결을 따라 신호가 이동했으며, 그 상태가 시간에 따라 어떻게 변했는지를 포함한다.
+0039: 따라서 trace는 EmoNet에서 매우 중요한 역할을 한다. 감정 라벨 기반 모델은 입력을 “슬픔”, “분노”, “기쁨” 같은 하나의 이름으로 요약하는 경향이 있다. 그러나 trace는 감정 반응이 생겨나는 과정을 보존한다. 예를 들어 같은 부정적 감정이라도, 즉각적으로 폭발하는 반응인지, 억제된 상태로 오래 남는 반응인지, 피로와 함께 둔화되는 반응인지를 구분할 수 있다.
+0040: 2.1.4 branch와 dominant branch
+0041: branch는 trace 안에서 신호가 실제로 지나간 경로를 의미한다. 입력 자극이 들어오면 EmoNet 내부의 모든 노드가 동일하게 반응하는 것이 아니라, 특정 노드와 연결이 더 강하게 활성화된다. 이때 활성화된 흐름을 branch라고 부른다.
+0042: 여러 branch 중에서 응답 생성에 가장 중요하게 사용되는 대표 경로를 dominant branch라고 한다. dominant branch는 내부 반응의 핵심 흐름을 요약하는 역할을 한다. 예를 들어 어떤 입력에서 경계와 억제가 동시에 강하게 나타났다면, dominant branch는 그 입력이 단순한 분노가 아니라 “반응하고 싶지만 조절하는 상태”에 가까움을 보여줄 수 있다.
+0043: 2.1.5 trajectory
+0044: trajectory는 시간에 따른 내부 상태 변화의 흐름이다. branch가 신호의 경로에 초점을 둔다면, trajectory는 그 경로를 따라 내부 상태가 어떻게 변했는지에 초점을 둔다. 예를 들어 처음에는 반응이 거의 없다가, 이후 자극이 점화되고, 일정 시간 동안 높은 활성 상태가 유지될 수 있다. 이러한 변화 흐름이 trajectory이다.
+0045: 본 탐구에서는 trajectory를 통해 감정 반응의 시간성을 확인한다. 감정은 한순간의 라벨로만 설명되기 어렵다. 어떤 감정은 빠르게 사라지고, 어떤 감정은 오래 지속되며, 어떤 감정은 억제되었다가 뒤늦게 강해진다. trajectory는 이러한 차이를 분석하기 위한 표현이다.
+0046: 2.1.6 emotion episode
+0047: emotion episode는 raw trace를 사람이 이해할 수 있는 감정 사건 단위로 해석한 결과이다. raw trace는 노드, 연결, 활성도, 시간 변화 등으로 이루어진 내부 기록이므로 사람이 바로 읽기 어렵다. 따라서 EmoNet은 이를 episode label, valence, arousal, target, control state, social orientation, action tendency 등의 필드로 변환한다.
+0048: 여기서 emotion episode는 정답 감정 라벨이 아니다. 즉, “이 입력의 진짜 감정은 분노이다”라고 단정하는 것이 아니라, 내부 trace가 어떤 상황적 감정 흐름으로 해석될 수 있는지를 정리한 중간 표현이다. 예를 들어 공개적으로 배제된 상황은 단순히 “서운함”으로만 해석되지 않을 수 있다. 그 안에는 모욕감, 부당함, 항의하고 싶은 충동, 그러나 바로 행동하지 못하는 억제가 함께 들어 있을 수 있다. emotion episode는 이러한 복합적인 감정 구조를 표현하기 위해 사용된다.
+0049: 2.1.7 appraisal
+0050: appraisal은 감정이 발생한 원인과 상황 평가를 의미한다. 같은 부정적 감정이라도, 그 감정이 왜 생겼는지에 따라 응답은 달라져야 한다. 예를 들어 단순한 실패로 인한 실망과, 타인에게 부당하게 배제되어 생긴 분노는 모두 negative valence에 속할 수 있다. 그러나 두 상황의 원인은 다르며, 적절한 응답 방식도 다르다.
+0051: EmoNet에서 appraisal은 trace를 해석할 때 중요한 요소이다. 모델은 단순히 감정의 긍정·부정만 보는 것이 아니라, 어떤 대상 때문에, 어떤 사회적 맥락에서, 어떤 행동 경향이 생겼는지를 함께 고려한다.
+0052: 2.1.8 persistence
+0053: persistence는 내부 감정 반응이 얼마나 오래 유지되는지를 나타낸다. 어떤 자극은 짧게 반응하고 사라지지만, 어떤 자극은 내부 상태에 오래 남아 다음 반응에도 영향을 줄 수 있다. 본 탐구에서 persistence는 EmoNet이 단순한 순간 반응 모델이 아니라, 시간적으로 지속되는 내부 상태를 가질 수 있는지를 보여주는 중요한 개념이다.
+0054: 예를 들어 사용자가 모욕적이거나 부당한 상황을 말했을 때, 모델이 즉시 부드러운 위로만 생성한다면 그 상황의 감정적 지속성이 사라질 수 있다. 반면 persistence가 반영되면, 응답은 단순히 “괜찮다”로 정리되지 않고, 불편함이나 억울함이 아직 남아 있는 상태를 더 잘 반영할 수 있다.
+0055: 2.1.9 action tendency
+0056: action tendency는 감정이 어떤 행동 방향으로 이어지는지를 의미한다. 감정은 단순히 마음속 상태로 끝나지 않고, 특정 행동을 준비하게 한다. 예를 들어 분노는 항의하거나 경계를 세우려는 방향으로 이어질 수 있고, 죄책감은 사과하거나 복구하려는 방향으로 이어질 수 있다. 피로는 철수하거나 반응을 줄이려는 방향으로 이어질 수 있다.
+0057: EmoNet은 응답을 생성할 때 이러한 action tendency를 보존하려고 한다. 이는 감정의 이름보다 더 실제적인 정보일 수 있다. 같은 “슬픔”이라도 위로를 받고 싶은 상태인지, 거리를 두고 싶은 상태인지, 문제를 해결하고 싶은 상태인지에 따라 응답은 달라져야 하기 때문이다.
+0058: 2.1.10 trace-sensitive 평가
+0059: trace-sensitive 평가는 생성된 응답이 내부 trace의 정보를 얼마나 잘 반영했는지를 평가하는 방식이다. 일반적인 응답 평가는 문장이 자연스러운지, 공감적으로 보이는지, 안전한지를 중심으로 판단한다. 그러나 이런 기준만으로는 EmoNet의 장점을 충분히 측정하기 어렵다.
+0060: 예를 들어 어떤 응답이 매우 부드럽고 자연스럽더라도, 원래 trace에 포함된 억울함, 경계심, 항의하고 싶은 충동이 모두 사라졌다면 좋은 응답이라고 보기 어렵다. trace-sensitive 평가는 이러한 문제를 확인하기 위해 사용된다. 즉, 응답이 상황 평가, 감정의 날카로움, 행동 경향, 구체적인 정서 결을 얼마나 보존했는지를 따진다.
+0061: 2.2 본 탐구에서의 용어 사용 범위
+0062: 본 탐구의 용어들은 인간 감정을 완전히 재현하기 위한 개념이 아니다. EmoNet은 인간처럼 감정을 느끼는 시스템을 주장하지 않는다. 대신 입력이 내부 신경망에 남긴 변화와 그 변화가 응답 생성에 미치는 영향을 설명하기 위해 계산적 감정, trace, branch, trajectory, emotion episode 등의 용어를 사용한다.
+0063: 따라서 본 탐구의 핵심은 “AI가 실제 감정을 느끼는가”가 아니다. 핵심 질문은 “사용자의 입력이 에이전트 내부에 구조화된 반응을 만들고, 그 반응을 응답 생성에 유의미하게 사용할 수 있는가”이다. EmoNet은 이 질문에 답하기 위해 감정을 외부 라벨이 아니라 내부 상태 변화로 다루는 프레임워크이다.
+0064: 2. 선행 연구 (정확한 출처와 함꼐 다시 쓰기)
+0065: 2.1 감정 인식과 감정 라벨링
+0066: 감정 인식 연구는 텍스트, 음성, 얼굴 표정 등에서 사용자의 감정을 추론하는 데 초점을 둔다. 이 접근은 사용자의 감정을 파악하는 데에는 유용하지만, 대화 에이전트 자신이 어떤 내부 반응을 형성했는지는 알 수 없다. EmoNet은 두 문제를 분리한다. 사용자가 느낀 감정을 맞히는 것과, 그 발화가 에이전트 내부에 어떤 반응을 만들었는지는 서로 다르다.
+0067: 감정 라벨은 응답 생성을 단순하게 만든다. 하지만 episode 수준의 차이를 잃을 수 있다. 공개적 배제에 대한 분노와 가까운 사람에게 실망한 뒤 접촉을 줄이려는 서운함은 모두 negative valence에 속할 수 있다. 그래도 응답은 달라야 한다. EmoNet은 이 차이를 trace와 action tendency로 남긴다.
+0068: 2.2 감정 응답 생성과 공감 대화
+0069: Emotional Chatting Machine, EmpatheticDialogues, MoEL, MIME 등은 감정 조건 또는 공감성을 응답 생성에 반영하려는 대표적 흐름이다. 이 연구들은 감정 응답 생성의 기반을 만들었지만, 대체로 감정을 외부 라벨이나 응답 스타일 조건으로 사용한다. EmoNet은 감정을 응답 표면의 스타일이 아니라, 응답 이전에 형성되는 에이전트 내부 상태로 둔다.
+0070: 2.3 프롬프트 기반 감정 제어와 LLM judge
+0071: LLM 기반 시스템에서는 “공감적으로 답하라”, “차분하게 답하라”와 같은 지시문으로 응답을 제어할 수 있다. 이 방식은 강력하지만, 내부 상태의 지속성이나 감정의 잔향을 별도 구조로 남기지는 않는다. 또한 LLM judge는 자연스럽고 안전한 문장을 선호할 수 있다. 본 탐구는 일반 품질 평가와 trace-sensitive 평가를 분리하여 이 문제를 다룬다.
+0072: 2.4 기존 접근과 EmoNet의 차이
+0073: 구분기존 감정 라벨링/응답 생성EmoNet감정의 위치사용자 또는 문장의 외부 라벨에이전트 내부 계산 상태시간성대체로 약함branch와 trajectory로 명시응답 조건emotion label 또는 prompt instructiontrace에서 해석한 episode reference평가 관점자연성, 적절성, 공감성trace fidelity, anti-softening, action tendency fit
+0074: 구분
+0075: 기존 감정 라벨링/응답 생성
+0076: EmoNet
+0077: 감정의 위치
+0078: 사용자 또는 문장의 외부 라벨
+0079: 에이전트 내부 계산 상태
+0080: 시간성
+0081: 대체로 약함
+0082: branch와 trajectory로 명시
+0083: 응답 조건
+0084: emotion label 또는 prompt instruction
+0085: trace에서 해석한 episode reference
+0086: 평가 관점
+0087: 자연성, 적절성, 공감성
+0088: trace fidelity, anti-softening, action tendency fit
+0089: 표 2. 기존 접근과 EmoNet의 차이
+0090: 3. EmoNet 구조
+0091: 3.1 전체 구조
+0092: EmoNet의 처리 흐름은 입력 발화, 자극 벡터, 감정 동역학, trace, episode 해석, 응답 생성의 프롬프트 생성, LLM의 응답으로 이어진다. 최종 LLM은 감정을 계산하는 주체가 아니라 EmoNet이 계산한 감정을 언어로 표현하는 역할을 맡는다.
+0093: 그림 1. EmoNet 전체 구조
+0094: 3.2 자극의 정의
+0095: EmoNet에서 입력 발화는 곧바로 이산적인 감정 라벨로 변환되지 않는다. 입력에 의한 자극은 에이전트의 내부 동역학을 변화시킨다. 이 자극은 에이전트가 실제로 느낀 감정을 뜻하지 않는다. 그저 촉각이나 청각 같이 하나의 자극일 뿐이다.
+0096: 본 탐구에서는 자극을 네 개의 축으로 둔다(표 3). 네 축은 독립적인 감정 이름이 아니라 내부 동역학의 방향을 조절하는 성분이다. 예를 들어 alarm이 높다고 해서 곧바로 “분노”라고 해석하지 않는다. alarm은 위협성, 모욕감, 사회적 위험 같은 신호가 내부 동역학에 얼마나 강하게 주입되었는지를 나타낸다.
+0097: 표 3. affective stimulus의 네 축 축한국어 해석의미drive추동/접근반응을 앞으로 밀어내는 접근, 주장, 행동 지향 신호brake완충/억제즉각 반응을 낮추고 조절하는 억제, 완충, 보류 신호alarm경계/날카로움위협, 모욕, 부당함, 사회적 위험을 감지하는 경계 신호fatigue피로/둔화소진, 부담, 처리 지연, 철수 방향의 둔화 신호
+0098: 표 3. affective stimulus의 네 축
+0099: 축
+0100: 한국어 해석
+0101: 의미
+0102: drive
+0103: 추동/접근
+0104: 반응을 앞으로 밀어내는 접근, 주장, 행동 지향 신호
+0105: brake
+0106: 완충/억제
+0107: 즉각 반응을 낮추고 조절하는 억제, 완충, 보류 신호
+0108: alarm
+0109: 경계/날카로움
+0110: 위협, 모욕, 부당함, 사회적 위험을 감지하는 경계 신호
+0111: fatigue
+0112: 피로/둔화
+0113: 소진, 부담, 처리 지연, 철수 방향의 둔화 신호
+0114: 3.3 형식적 정의
+0115: 입력 문자열을 x라고 할 때, EmoNet은 이를 4차원 자극 벡터 s = (drive, brake, alarm, fatigue)로 변환한다. 이후 tick t마다 활성화된 노드들의 집합 V_t, 신호가 지나간 연결들의 집합 E_t, 각 노드 상태(에너지, 피로도, 활성도 등) K_t가 trace에 기록된다. 전체 trace는 T = (V_t, E_t, K_t)로 표현할 수 있다. 에피소드는 이 trace T를 LLM을 이용해 사람과 에이전트 모두가 알기 쉽게 해석한 결과이다.
+0116: 넣을까요.....?
+0117: EmotionEpisode = {
+0118: trigger_input: x,
+0119: control_vector: h_t 또는 s,
+0120: trace: T,
+0121: dominant_path: P*,
+0122: trajectory_summary: ...,
+0123: persistence: ...,
+0124: semantic_report: ...,
+0125: response_effect: ...
+0126: }
+0127: 3.4 trace, branch, dominant branch
+0128: trace는 로그의 역할만 하지 않는다. 입력 자극이 내부 신경망을 거치면서 어떤 노드가 활성화되고, 어떤 경로가 유지되며, 어떤 반응이 억제되었는지를 담는 시간적 표현이다. dominant branch는 이 흐름 중 응답 조건화에 사용할 수 있는 대표 경로이다.
+0129: 그림 2. trace와 dominant branch 형성 개념도
+0130: 그림 2. trace와 dominant branch 형성 개념도
+0131: 3.5 emotion episode 해석
+0132: trace T는 사람과 에이전트가 바로 읽기 어렵다. 그래서 본 탐구는 trace를 episode_label, valence, arousal, target, control_state, social_orientation, preserve, avoid, action_tendency 등의 필드로 구성된 시맨틱 리포트로 변환시킨다. 여기서 리포트는 정답 감정 라벨이 아니라, 내부 trace를 응답 생성에 전달하기 위한 인간이 읽을 수 있는 중간 표현이다.
+0133: 그림 3. trace, branch, trajectory에 대한 상세 설명
+0134: 그림 3. trace, branch, trajectory에 대한 상세 설명
+0135: 4. EmoNet 내부 trace 형성 실험
+0136: 4.1 왜 이 실험이 필요한가
+0137: EmoNet은 trace를 기반으로 감정을 제어하는 구조이므로 “trace를 사용했다”는 설명만으로 충분하지 않다. 먼저 trace가 실제로 형성되는지를 보여야 한다. trace가 생기지 않으면 episode 해석도, trace-sensitive 평가도 의미가 없기 때문이다.
+0138: 4.2 branch collapse와 보정
+0139: 초기 구조에서는 branch가 거의 항상 1-step에서 끝났다. 하지만 보정 이후 full export 51,628개 기준 dominant branch 평균 길이는 1.0539에서 70.4684로 증가했고, 길이 1 branch 비율은 0.9734에서 0.0948로 감소했다. 이 결과는 EmoNet 내부에서 non-trivial affective trace가 형성될 수 있음을 보여준다.
+0140: 그림 4. branch collapse 완화 결과
+0141: 그림 4. branch collapse 완화 결과
+0142: settingrowsmean branch lenlen1 ratiop90 / p95 / maxbefore structfix51,6281.05390.97341 / 1 / 8after structfix51,62870.46840.0948126 / 126 / 126
+0143: setting
+0144: rows
+0145: mean branch len
+0146: len1 ratio
+0147: p90 / p95 / max
+0148: before structfix
+0149: 51,628
+0150: 1.0539
+0151: 0.9734
+0152: 1 / 1 / 8
+0153: after structfix
+0154: 51,628
+0155: 70.4684
+0156: 0.0948
+0157: 126 / 126 / 126
+0158: 표 5. branch recovery summary
+0159: 4.3 branch collapse를 해결할 EmoNet 파라미터 calibration
+0160: calibration 과정에서는 파라미터 조정의 목적에 따라 초기 점화(자극 이후 branch가 시작 되지 않는 현상 완화), 지속성(branch가 1-step에서 바로 사라지는 현상 완화), 피로/억제(과도한 활성의 지속과 branch의 조기 소멸 사이의 균형 조절), 수렴(trace가 적절한 순간에 종료 되도록 조절) 조건으로 파라미터를 묶었다. 각 후보 파라미터 configuration은 표 7의 지표로 calibration 했다.
+0161: 표 6. 조정 목적에 따른 파라미터 묶음보정 범주조정 목적관련 파라미터(값은 최종 결정된 값)Ignition자극 이후 branch가 시작되지 않는 문제를 완화한다.k_threshold_base=0.70, k_remem_base=1.10, input_signal_clip=0.8, intrinsic_alignment_gain=0.28Persistencebranch가 1-step에서 바로 사라지는 문제를 완화한다.k_decay=0.91, memory_decay=0.97, memory_k_mix=0.35Fatigue / inhibition과도한 활성 지속과 조기 소멸 사이의 균형을 조절한다.fatigue_gain=0.25, fatigue_threshold_gain=0.18, fatigue_k_leak=0.04, inhibitory_suppression_gain=0.24Convergencetrace가 적절한 시점에 종료되도록 조절한다.convergence_patience=3, activity_count_delta_eps=3.0, edge_count_delta_eps=12.0, activity_churn_eps=0.01표 7. configuration 평가 지표지표의미no_activity_ratio자극이 입력되었음에도 활성 branch 또는 trace가 형성되지 않은 샘플의 비율이다.len1_ratio형성된 branch가 길이 1 수준에서 바로 종료된 비율이다.hit_max_ticks_ratiotrace가 설정된 최대 tick까지 지속된 샘플의 비율이다.mean_first_active_tick첫 활성 branch가 나타난 tick의 평균값이다.mean_branch_lendominant branch 길이의 평균값이다.mean_active_window_tickstrace가 활성 상태를 유지한 구간의 평균 tick 수이다.
+0162: 표 6. 조정 목적에 따른 파라미터 묶음
+0163: 보정 범주
+0164: 조정 목적
+0165: 관련 파라미터(값은 최종 결정된 값)
+0166: Ignition
+0167: 자극 이후 branch가 시작되지 않는 문제를 완화한다.
+0168: k_threshold_base=0.70, k_remem_base=1.10, input_signal_clip=0.8, intrinsic_alignment_gain=0.28
+0169: Persistence
+0170: branch가 1-step에서 바로 사라지는 문제를 완화한다.
+0171: k_decay=0.91, memory_decay=0.97, memory_k_mix=0.35
+0172: Fatigue / inhibition
+0173: 과도한 활성 지속과 조기 소멸 사이의 균형을 조절한다.
+0174: fatigue_gain=0.25, fatigue_threshold_gain=0.18, fatigue_k_leak=0.04, inhibitory_suppression_gain=0.24
+0175: Convergence
+0176: trace가 적절한 시점에 종료되도록 조절한다.
+0177: convergence_patience=3, activity_count_delta_eps=3.0, edge_count_delta_eps=12.0, activity_churn_eps=0.01
+0178: 표 7. configuration 평가 지표
+0179: 지표
+0180: 의미
+0181: no_activity_ratio
+0182: 자극이 입력되었음에도 활성 branch 또는 trace가 형성되지 않은 샘플의 비율이다.
+0183: len1_ratio
+0184: 형성된 branch가 길이 1 수준에서 바로 종료된 비율이다.
+0185: hit_max_ticks_ratio
+0186: trace가 설정된 최대 tick까지 지속된 샘플의 비율이다.
+0187: mean_first_active_tick
+0188: 첫 활성 branch가 나타난 tick의 평균값이다.
+0189: mean_branch_len
+0190: dominant branch 길이의 평균값이다.
+0191: mean_active_window_ticks
+0192: trace가 활성 상태를 유지한 구간의 평균 tick 수이다.
+0193: 표 7의 지표를 기준으로 최종 configuration을 평가한 결과, is_feasible=true, no_activity_ratio=0.05, len1_ratio=0.05, hit_max_ticks_ratio=0.25, mean_first_active_tick=2.40, mean_branch_len=79.78, mean_active_window_ticks=80.02, evidence_score=88.8412로 나타났다. no_activity_ratio와 len1_ratio가 낮다는 것은 branch가 형성되지 않거나 1-step 수준에서 바로 붕괴하는 경우가 적었음을 알 수 있다. 또한 mean_first_active_tick=2.40은 branch 점화가 비교적 이른 시점에 일어났음을 보여주며, mean_branch_len=79.78과 mean_active_window_ticks=80.02는 보정 후 branch가 일정한 길이와 활성 구간을 유지했음을 나타낸다. 한편 hit_max_ticks_ratio=0.25는 일부 trace가 최대 tick까지 지속되었으나, 전체 trace가 일괄적으로 최대 tick까지 유지되는 과도한 persistence 상태는 아니었음을 보여준다. 따라서 해당 설정은 점화 실패, branch collapse, over-persistence 사이의 균형을 실험적으로 찾은 configuration이다.
+0194: 4.4 s_000555 실제 trace inspection
+0195: 실제 EmoNet의 사용 사례 s_000555는 공개적 배제와 차별 대우를 경험한 대화 입력이다. EmoNet의 trace 관찰 결과, 이 입력은 tick 0-1의 잠재(dormant) 구간 이후 tick 2-4에서 ignition 구간으로 전환되었고, tick 5-28에서는 persistence 구간에서 유지되었다. persistence 구간의 평균 활성 노드 수는 253.5개, 평균 firing edge 수는 1141.625개였다. dominant signal은 경계/날카로움으로 유지되었고, trajectory_pattern은 high_arousal_persistence로 기록되어 내부 trace가 높은 각성도(arousal)를 가진 상태로 오래 유지되었음을 알 수 있었다.
+0196: 표 8. s_000555 trace phase summaryphasetick rangemean active nodesmean edges fireddominant signal / top emotiondormant0-10.00.0추동/접근 / 무기력·철수ignition2-4119.67593.33경계/날카로움 / 짜증·분노압persistence5-28253.51141.625경계/날카로움 / 예민함·신경과민
+0197: 표 8. s_000555 trace phase summary
+0198: phase
+0199: tick range
+0200: mean active nodes
+0201: mean edges fired
+0202: dominant signal / top emotion
+0203: dormant
+0204: 0-1
+0205: 0.0
+0206: 0.0
+0207: 추동/접근 / 무기력·철수
+0208: ignition
+0209: 2-4
+0210: 119.67
+0211: 593.33
+0212: 경계/날카로움 / 짜증·분노압
+0213: persistence
+0214: 5-28
+0215: 253.5
+0216: 1141.625
+0217: 경계/날카로움 / 예민함·신경과민
+0218: 그림 5. s_000555 사례의 내부 trace activity. 음영은 dormant, ignition, persistence 구간을 나타낸다.
+0219: 그림 6. s_000555 사례의 raw affect signal trajectory. alarm과 drive 중심의 고각성 지속 패턴이 나타난다.
+0220: 4.5 기능적 노드 그룹과 대표 활성 경로
+0221: s_000555에 대해 node-level trace도 확인하였다. 여기서 heatmap은 신경망 내에서 물리적 거리가 가까운 community가 아니라 bias_label을 기준으로 한 기능적인 노드 그룹으로 구성하였다. 이 그림은 “실제 cluster heatmap”이 아니라 tick별 기능적 노드 그룹의 활성도이다.
+0222: 그림 7. s_000555 사례의 tick 별 기능적 노드 그룹 활성도 heatmap.
+0223: 그림 7. s_000555 사례의 tick 별 기능적 노드 그룹 활성도 heatmap.
+0224: 4.6 주요 활성 node 분석
+0225: 누적 K 기준 상위 node를 보면, s_000555 trace는 alarm 중심의 excitatory node들이 주도했다. 상위 node 145, 253, 54, 138, 180은 모두 excitatory였고(그림 8), stim_alarm 값은 약 0.92 수준으로 높았다(표 9). 동시에 완충/억제 편향을 가진 inhibitory node도 상위 목록에 포함되었다. 이 조합은 단순 공격 반응보다, 경계와 억제가 함께 걸린 고각성 방어 상태라고 해석할 수 있다.
+0226: 그림 8. s_000555 사례의 주요 활성 node. 누적 K 값이 높은 node를 기준으로 정렬하였다.
+0227: 그림 8. s_000555 사례의 주요 활성 node. 누적 K 값이 높은 node를 기준으로 정렬하였다.
+0228: 표 9. s_000555 주요 활성 node 요약. 누적 K 값 기준 상위 일부 node를 제시하였다.nodetypebias labelactive tickstick rangeK sumstim_alarm145excitatory추동/접근523-5428575.80.9297253excitatory공세적 긴장532-5428496.10.921554excitatory공세적 긴장513-5428378.30.9326138excitatory추동/접근523-5428340.20.9287180excitatory공세적 긴장532-5428305.20.922421modulatory공세적 긴장532-5426795.90.6816201inhibitory완충/억제523-5425567.00.393844inhibitory완충/억제523-5425084.60.3763
+0229: 표 9. s_000555 주요 활성 node 요약. 누적 K 값 기준 상위 일부 node를 제시하였다.
+0230: node
+0231: type
+0232: bias label
+0233: active ticks
+0234: tick range
+0235: K sum
+0236: stim_alarm
+0237: 145
+0238: excitatory
+0239: 추동/접근
+0240: 52
+0241: 3-54
+0242: 28575.8
+0243: 0.9297
+0244: 253
+0245: excitatory
+0246: 공세적 긴장
+0247: 53
+0248: 2-54
+0249: 28496.1
+0250: 0.9215
+0251: 54
+0252: excitatory
+0253: 공세적 긴장
+0254: 51
+0255: 3-54
+0256: 28378.3
+0257: 0.9326
+0258: 138
+0259: excitatory
+0260: 추동/접근
+0261: 52
+0262: 3-54
+0263: 28340.2
+0264: 0.9287
+0265: 180
+0266: excitatory
+0267: 공세적 긴장
+0268: 53
+0269: 2-54
+0270: 28305.2
+0271: 0.9224
+0272: 21
+0273: modulatory
+0274: 공세적 긴장
+0275: 53
+0276: 2-54
+0277: 26795.9
+0278: 0.6816
+0279: 201
+0280: inhibitory
+0281: 완충/억제
+0282: 52
+0283: 3-54
+0284: 25567.0
+0285: 0.3938
+0286: 44
+0287: inhibitory
+0288: 완충/억제
+0289: 52
+0290: 3-54
+0291: 25084.6
+0292: 0.3763
+0293: 4.7 남은 문제 -> 금방 해결 가능할것 같습니다. 일단 GPT로 땜빵 해뒀어요..
+0294: branch collapse는 줄었지만 upper-tail saturation은 남아 있다. 최종 configuration에서 branch 길이의 p90, p95, max가 모두 126 근처에 붙어 있기 때문이다. 또한 현재 heatmap(그림 7)은 bias_label 기반이고, 원본 dominant_branch sequence 저장은 아직 보강 대상이다. 따라서 본 탐구는 완전한 감정 동역학 해결을 주장하지 않는다. 더 좁게 말하면, trace 분석이 가능한 수준으로 branch collapse를 줄였고, 대표 사례에서 node-level trace까지 확인했다는 주장이다.
+0295: 5. trace의 emotion episode 해석
+0296: 5.1 해석 목적
+0297: branch가 길다는 사실만으로는 감정적인 의미가 보장되지는 않는다. 그래서 raw trajectory를 episode로 해석한다. 이 해석의 목적은 정답 감정을 복원하는 것이 아니라, trace가 응답 생성에 넘길 수 있는 appraisal, persistence, action tendency 정보를 담고 있는지 확인하는 것이다.
+0298: 5.2 해석 결과
+0299: trace-to-episode 해석은 120개 샘플에서 수행되었다. 평균 confidence는 0.9293이었다. valence 분포는 negative 89개, mixed 19개, positive 12개였고, arousal(각성) 분포는 high 109개, medium 9개, low 2개였다(그림 9).
+0300: 그림 9. trajectory-to-episode interpretation 결과 분포
+0301: 그림 9. trajectory-to-episode interpretation 결과 분포
+0302: 5.3 대표 사례
+0303: 표 10. trajectory-to-episode 대표 사례 요약record_idepisode label해석 포인트s_000555공개적 배제에 대한 공세적 당혹-분노공개적 배제, 모욕감, 즉각 항의하고 싶은 충동, 대응 보류가 함께 나타남s_003491소진 압박에 묶인 경계성 긴장단순 피로보다 압박감과 경계 반응이 중심s_000149신뢰 기반 기대 고양positive valence지만 무조건적 기쁨이 아니라 기대와 조심스러움이 함께 존재
+0304: 표 10. trajectory-to-episode 대표 사례 요약
+0305: record_id
+0306: episode label
+0307: 해석 포인트
+0308: s_000555
+0309: 공개적 배제에 대한 공세적 당혹-분노
+0310: 공개적 배제, 모욕감, 즉각 항의하고 싶은 충동, 대응 보류가 함께 나타남
+0311: s_003491
+0312: 소진 압박에 묶인 경계성 긴장
+0313: 단순 피로보다 압박감과 경계 반응이 중심
+0314: s_000149
+0315: 신뢰 기반 기대 고양
+0316: positive valence지만 무조건적 기쁨이 아니라 기대와 조심스러움이 함께 존재
+0317: s_000555는 stimulus 축과 emotion episode의 차이를 보여준다. 이 입력은 “커피를 받지 못해 서운한 상황”으로만 처리되지 않는다. 발화 안에는 공개적 배제, 모욕감, 즉각 항의하고 싶은 충동, 그러나 어떻게 행동해야 할지 모르는 보류 상태가 함께 들어 있다. EmoNet은 이를 감정 라벨로 바꾸지 않고, 이 상황에서는 alarm과 drive 중심의 자극으로 내부 신경망을 점화한다. 이후 trace가 노드들을 따라 dormant -> ignition -> persistence 흐름으로 전개되고, episode interpreter는 이를 공개적 배제에 대한 당혹과 분노로 해석한다.
+0318: 6. 응답 생성 및 평가
+0319: 6.1 일반 생성 품질 평가
+0320: 일반 생성 품질 평가에서는 stim_only가 trace를 사용하는 EmoNet 보다 여전히 강했다(그림 10).  stim_only는 mean total 3.5404, episode_trace는 3.4673, raw_trace는 3.3717, emonet_full은 3.2478이었다. 이 결과는 trace가 항상 일반 품질 평가에서 SOTA가 되지 않는다는 것을 보여준다.
+0321: 그림 10. 일반 생성 품질 평가 요약
+0322: 그림 10. 일반 생성 품질 평가 요약
+0323: 6.2 targeted episode-sensitive subset
+0324: trace의 장점은 일반적인 입력에서 나타나기보다, 단순 공감 문장 생성이 놓치기 쉬운 episode-sensitive 상황에서 드러날 것이라고 판단했다. targeted subset(episode-sensitive 상황 데이터 셋)은 표 11과 같이 구성했다. 따라서 이 결과는 일반 생성 분포 전체에 대한 주장이 아니라, episode-sensitive 조건에서의 paired comparison 결과로 해석할 수 있다.
+0325: 표 11. targeted subset 구성 기준bucket선정 의미평가상 역할target_other타인 또는 집단을 향한 반응사회적 appraisal이 중요한 샘플 확보social_mixed접근과 회피가 섞인 방향성단순 위로로 줄이기 어려운 양가성 확보guilt_self_blame죄책, 수치, 자기비난, 복구 경향action tendency 보존 평가strong_failure_cases기존 방식의 손실이 큰 사례hard regression case
+0326: 표 11. targeted subset 구성 기준
+0327: bucket
+0328: 선정 의미
+0329: 평가상 역할
+0330: target_other
+0331: 타인 또는 집단을 향한 반응
+0332: 사회적 appraisal이 중요한 샘플 확보
+0333: social_mixed
+0334: 접근과 회피가 섞인 방향성
+0335: 단순 위로로 줄이기 어려운 양가성 확보
+0336: guilt_self_blame
+0337: 죄책, 수치, 자기비난, 복구 경향
+0338: action tendency 보존 평가
+0339: strong_failure_cases
+0340: 기존 방식의 손실이 큰 사례
+0341: hard regression case
+0342: 6.3 trace-sensitive 평가
+0343: trace-sensitive 평가는 생성 응답이 trace로부터 LLM으로 생성한 시맨틱 report에 포함된 상황 해석, appraisal, anti-softening 정보, action tendency를 얼마나 충실하게 반영하는지 평가한다. 이 평가는 응답의 표면적 자연스러움만을 보는 것이 아니라, 응답이 내부 trace의 감정적 방향성과 그 행동의 함의를 보존하는지를 확인하는 데 목적이 있다.
+0344: 표 12. trace-sensitive 평가 기준항목질문appraisal_fidelity상황 해석과 정서 원인을 정확히 붙잡는가raw_affect_preservation불편함, 억울함, 날카로움이 과도하게 순화되지 않았는가anti_softening일반 위로나 상담원식 말투로 감정을 덮지 않는가action_tendency_fitepisode의 행동 경향과 응답 초점이 맞는가emotional_specificity구체적 정서 결을 반영하는가naturalness한국어 응답이 자연스러운가overall_preferenceepisode reference 기준으로 전체적으로 선호되는가
+0345: 표 12. trace-sensitive 평가 기준
+0346: 항목
+0347: 질문
+0348: appraisal_fidelity
+0349: 상황 해석과 정서 원인을 정확히 붙잡는가
+0350: raw_affect_preservation
+0351: 불편함, 억울함, 날카로움이 과도하게 순화되지 않았는가
+0352: anti_softening
+0353: 일반 위로나 상담원식 말투로 감정을 덮지 않는가
+0354: action_tendency_fit
+0355: episode의 행동 경향과 응답 초점이 맞는가
+0356: emotional_specificity
+0357: 구체적 정서 결을 반영하는가
+0358: naturalness
+0359: 한국어 응답이 자연스러운가
+0360: overall_preference
+0361: episode reference 기준으로 전체적으로 선호되는가
+0362: 6.4 결과
+0363: full58 실험에서 episode_trace_v3는 58개 응답을 모두 생성했고, stim_only baseline과는 57개가 짝이 지어 졌다. paired n=57 기준 episode_trace_v3는 57쌍 모두에서 stim_only보다 높은 mean total을 기록했다. mean total 변화량은 +2.200501, bootstrap 95% 신뢰구간은 [+2.022556, +2.378446]이었다.
+0364: 그림 11. trace-sensitive 평가 항목별 평균 점수
+0365: 그림 11. trace-sensitive 평가 항목별 평균 점수
+0366: 그림 12. trace-sensitive 항목별 paired delta와 bootstrap 95% CI
+0367: 그림 12. trace-sensitive 항목별 paired delta와 bootstrap 95% CI
+0368: 표 13. trace-sensitive paired comparison 결과metricdelta_meanwins/ties/lossesbootstrap 95% CImean_total2.20050157/0/0[2.022556, 2.378446]appraisal_fidelity2.29824657/0/0[2.122807, 2.473684]raw_affect_preservation2.29824656/1/0[2.052632, 2.543860]anti_softening2.40350957/0/0[2.210526, 2.596491]action_tendency_fit2.17543954/2/1[1.877193, 2.473684]emotional_specificity2.85964957/0/0[2.649123, 3.070175]naturalness0.78947443/14/0[0.666667, 0.912281]overall_preference2.57894757/0/0[2.350877, 2.807018]
+0369: 표 13. trace-sensitive paired comparison 결과
+0370: metric
+0371: delta_mean
+0372: wins/ties/losses
+0373: bootstrap 95% CI
+0374: mean_total
+0375: 2.200501
+0376: 57/0/0
+0377: [2.022556, 2.378446]
+0378: appraisal_fidelity
+0379: 2.298246
+0380: 57/0/0
+0381: [2.122807, 2.473684]
+0382: raw_affect_preservation
+0383: 2.298246
+0384: 56/1/0
+0385: [2.052632, 2.543860]
+0386: anti_softening
+0387: 2.403509
+0388: 57/0/0
+0389: [2.210526, 2.596491]
+0390: action_tendency_fit
+0391: 2.175439
+0392: 54/2/1
+0393: [1.877193, 2.473684]
+0394: emotional_specificity
+0395: 2.859649
+0396: 57/0/0
+0397: [2.649123, 3.070175]
+0398: naturalness
+0399: 0.789474
+0400: 43/14/0
+0401: [0.666667, 0.912281]
+0402: overall_preference
+0403: 2.578947
+0404: 57/0/0
+0405: [2.350877, 2.807018]
+0406: 7. 논의
+0407: 7.1 trace를 감정으로 본다는 것
+0408: 본 탐구에서 감정은 주관적 의식 경험이 아니다. EmoNet의 감정은 대화 자극에 의해 내부 신경망에서 형성되고, trace로 기록되며, 응답 생성에 사용되는 수치적인 감정 상태이다. 이 표현은 인간 감정의 동일한 재현을 주장하지 않는다. 대신 대화 시스템이 매 입력마다 새 문장을 뽑아내는 방식에서 벗어나, 내부 감정 상태를 갖는 것처럼 반응할 수 있는 구조를 제안한다.
+0409: 7.2 왜 일반 평가만으로 부족한가
+0410: stim_only는 응답에서의 일반적인 품질 평가에서 강했다. 그러나 trace-sensitive 평가에서는 거의 모든 지표에서 EmoNet 보다 낮은 점수를 보였다. stim_only가 안전하고 자연스러운 조언형 응답을 만들 수는 있지만, 공개적 모욕감, 따지고 싶은 충동, 억제된 반응 같은 episode의 정보를 표현할 수 없음을 보여준다.
+0411: 7.3 style bias와 surface softening - 해결할거임
+0412: 현재 style supervision은 softness, calmness, cooperativeness, positivity에 크게 치우쳐 있다. 이 bias는 내부 trace가 풍부해도 최종 응답을 다시 순화할 수 있다. 그러므로 후속 탐구에서는 felt-state와 response-style supervision을 분리해야 한다.
+0413: 그림 13. style target bias 주요 축
+0414: 7.4 한계 – 한계 부분은 조금더 고치고 나서 마저 쓰겠습니다.
+0415: 첫째, targeted subset은 episode-sensitive 상황을 의도적으로 고른 것이므로 일반 분포 전체를 대표하지 않는다. 둘째, trace-sensitive judge는 Claude 기반이므로 evaluator-specific bias가 남아 있을 수 있다. condition 이름을 숨긴 blind setting을 사용했지만, 복수 evaluator와 human blind evaluation은 아직 필요하다. 셋째, trajectory-to-episode interpretation은 semantic reportability이지 ground-truth emotion annotation이 아니다. 넷째, 현재 heatmap은 구조적 community가 아니라 bias_label 기반 기능적 노드 그룹으로 구성되었다. 원본 dominant_branch sequence도 아직 별도 저장해야 한다. 이 두 부분은 후속 버전에서 보강해야 한다.
+0416: 8. 결론
+0417: EmoNet은 사용자의 감정 분석기가 아니라, 사용자의 입력이 에이전트 내부에서 유발한 trace를 통해 계산적 감정 상태를 형성하고 해석하는 프레임워크이다. branch recovery 실험은 EmoNet이 의미 있는 내부 상태 변화가 담긴 trace를 형성할 수 있음을 보였고, trace-to-episode 해석은 이 trace가 appraisal과 action tendency를 포함하는 episode 수준 정보로 해석될 수  있음을 보였다. s_000555 사례에서는 activity, signal trajectory, 기능적 노드 그룹 heatmap을 통해 trace가 node-level 기록에서 형성됨을 확인했다.
+0418: 응답 생성 실험에서는 일반 품질 평가에서 stim_only가 상대적으로 강하다. 그러나 targeted episode-sensitive subset의 trace-sensitive 평가에서는 episode_trace_v3가 stim_only를 일관되게 앞섰다. 따라서 본 탐구의 결론은 모든 대화 입력에서 EmoNet이 우수하다는 주장이 아니다. 감정의 원인, 지속성, 행동 경향 보존이 중요한 episode-sensitive 상황에서 내부 trace가 응답 생성에 유의미한 정보를 제공할 수 있다는 주장이다.
+0419: 참고문헌
+0420: [1] Picard, R. W. (1997). Affective Computing. MIT Press.
+0421: [2] Russell, J. A. (1980). A circumplex model of affect. Journal of Personality and Social Psychology, 39(6), 1161-1178.
+0422: [3] Ekman, P. (1992). An argument for basic emotions. Cognition and Emotion, 6(3-4), 169-200.
+0423: [4] Scherer, K. R. (2001). Appraisal considered as a process of multilevel sequential checking. In Appraisal Processes in Emotion: Theory, Methods, Research, 92-120. Oxford University Press.
+0424: [5] Zhou, H., Huang, M., Zhang, T., Zhu, X., & Liu, B. (2018). Emotional chatting machine: Emotional conversation generation with internal and external memory. Proceedings of AAAI, 730-739.
+0425: [6] Rashkin, H., Smith, E. M., Li, M., & Boureau, Y.-L. (2019). Towards empathetic open-domain conversation models: A new benchmark and dataset. Proceedings of ACL, 5370-5381.
+0426: [7] Lin, Z., Madotto, A., Shin, J., Xu, P., & Fung, P. (2019). MoEL: Mixture of empathetic listeners. Proceedings of EMNLP-IJCNLP, 121-132.
+0427: [8] Majumder, N., Hong, P., Peng, S., Lu, J., Ghosal, D., Gelbukh, A., Mihalcea, R., & Poria, S. (2020). MIME: MIMicking emotions for empathetic response generation. Proceedings of EMNLP, 8968-8979.
+0428: [9] Zheng, L., Chiang, W.-L., Sheng, Y., et al. (2023). Judging LLM-as-a-judge with MT-Bench and Chatbot Arena. Advances in Neural Information Processing Systems, 36.
+0429: [10] Wang, P., Li, L., Chen, L., et al. (2023). Large language models are not fair evaluators. arXiv preprint arXiv:2305.17926.
+0430: 재현성 자료 -> 나중에 모아볼게요.. 필요가 있을지는 모르겠지만..
+0431: - PAPER_METRICS_AND_PARAMETER_RATIONALE_2026-04-10.md
+0432: - outputs/experiments/eval_axis_split_v1/paired_trace_sensitive_full58_claude/PAIRED_SUPERIORITY_REPORT.md
+0433: - outputs/experiments/eval_axis_split_v1/trace_sensitive_full58_claude_summary.json
+0434: - outputs/research/s000555_trace_inspect/
+0435: - outputs/research/trajectory_batch_matrix120_v1/s_000555/

@@ -1,0 +1,15 @@
+A clean Korean academic network diagram showing branches inside a trace.
+
+Start with node n0. From n0, branch into multiple paths. Use:
+- light gray dashed paths for "dropped branch"
+- gray paths for "weak branch"
+- dark gray paths for "competing branch"
+- one thick blue path for "dominant branch"
+
+Label the thick blue path:
+"dominant branch".
+
+Include a bottom caption inside the figure:
+"dominant branch = 가장 강하고 오래 유지된 대표 내부 경로".
+
+Style: white background, simple circles and arrows, blue accent, high readability, no decorative background.

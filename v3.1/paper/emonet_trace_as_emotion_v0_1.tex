@@ -1,0 +1,869 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{kotex}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{enumitem}
+
+\geometry{margin=25mm}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  citecolor=blue,
+  urlcolor=blue
+}
+\setlist{nosep}
+\emergencystretch=3em
+
+\title{\textbf{EmoNet v3.1: 신경 활성 추적을 감정 상태 표현으로 보는 동역학 기반 감정 모델}\\
+\large 초심자 설명을 포함한 확장 Working Draft}
+\author{Working Draft}
+\date{2026년 5월 3일}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+본 논문은 EmoNet v3.1의 핵심 가설, 즉 감정이 단일 라벨이나 응답 생성용 메타데이터가 아니라 자극이 신경망 내부를 통과하며 만든 활성 추적(trace)이라는 관점을 제안한다. 기존 감정 인식 시스템은 주로 텍스트나 생체 신호를 입력으로 받아 감정 라벨, 차원값, 혹은 생성 프롬프트 조건을 산출한다. 반면 본 연구는 자극 벡터가 네트워크 안에서 만드는 tick-by-tick activation, dominant branch, branch tensor, trace embedding을 감정 상태 표현 후보로 정의하고, 외부 appraisal/action label은 그 표현을 검증하기 위한 probe로만 사용한다.
+
+이 확장 초안은 EmoNet을 처음 보는 독자를 위해 시스템의 목적, 용어, 데이터 흐름, 실험 이유를 단계별로 설명한다. 핵심 질문은 ``생성된 답변이 좋아졌는가''가 아니라 ``네트워크 내부 trace가 감정 공간처럼 구조화되는가''이다. 이를 위해 v3.1은 trace export, feature probe, capacity ablation, dynamics stabilization, adaptive density control, causal manipulation 준비라는 일련의 실험선을 구성한다. 현재 v3.1은 완성된 확정 모델이 아니라 working research line이다. 그럼에도 초기 실험은 세 가지 중요한 중간 결론을 제공한다. 첫째, 단순 잠재벡터 \(z\)보다 branch tensor 기반 표현, 특히 \texttt{branch\_mean}이 valence, appraisal family, social orientation, action tendency 계열에서 더 안정적인 구조 신호를 보인다. 둘째, 뉴런 수를 256에서 512 및 1024로 늘리는 것만으로는 branch collapse나 emotion geometry 문제가 자동 해결되지 않는다. 셋째, late density control을 포함한 adaptive dynamics는 n=80 confirm에서 branch collapse 제거, 중간 activation density, tracked axes 전체의 class-balanced representation lift를 동시에 만족했다. 본 논문은 이러한 결과를 바탕으로 trace-as-emotion 가설의 형식화, 검증 프로토콜, 현재 증거, 한계, 후속 실험 계획을 정리한다.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{서론}
+
+감정을 모델링하는 전통적인 계산 접근은 대체로 두 갈래로 나뉜다. 하나는 감정을 기쁨, 분노, 슬픔 같은 범주 라벨로 분류하는 접근이고, 다른 하나는 valence--arousal 같은 저차원 연속 공간으로 투영하는 접근이다. 생성형 언어 모델이 널리 쓰이기 시작한 뒤에는 감정 정보가 응답 생성을 위한 조건, 설명, 혹은 프롬프트 payload로 사용되는 경우도 많아졌다. 그러나 이러한 방식은 감정을 ``어떤 이름을 붙일 것인가'' 또는 ``어떤 말투로 출력할 것인가''의 문제로 축소하기 쉽다.
+
+EmoNet v3.1은 다른 질문에서 출발한다.
+
+\begin{quote}
+감정은 라벨인가, 아니면 자극이 내부 네트워크 안에서 만든 경로와 활성의 흔적인가?
+\end{quote}
+
+\subsection{처음 읽는 독자를 위한 문제 배경}
+
+이 논문을 이해하려면 먼저 EmoNet이 해결하려는 문제를 일반적인 감정 분류 문제와 구분해야 한다. 일반적인 감정 분류기는 어떤 문장을 입력받고 ``분노'', ``슬픔'', ``불안'' 같은 라벨을 출력한다. 예를 들어 ``친구가 약속을 또 어겼다''라는 문장을 보면 모델은 분노나 실망을 예측할 수 있다. 이런 방식은 간단하고 평가하기 쉽지만, 감정의 내부 구조를 많이 잃어버린다. 같은 분노라도 상대를 비난하고 싶은 분노, 관계를 회복하고 싶은 분노, 상황을 피하고 싶은 분노는 서로 다르다. 같은 슬픔이라도 내가 잘못했다는 죄책감, 통제할 수 없다는 무력감, 타인에게 버려졌다는 상실감은 다른 반응을 만든다.
+
+EmoNet의 출발점은 이 차이를 하나의 라벨보다 더 풍부한 내부 상태로 표현하려는 것이다. v4 계열에서는 이런 내부 상태가 주로 응답 생성에 쓰였다. 즉 trace를 LLM에게 넘겨주면 사용자의 감정에 더 맞는 답변을 만들 수 있는지 보는 방식이었다. 그러나 v3.1은 한 단계 더 들어간다. trace가 단지 좋은 답변을 만들기 위한 설명문인지, 아니면 그 자체가 감정 상태를 표현하는 계산적 객체인지 묻는다.
+
+직관적으로 말하면, EmoNet v3.1은 다음 비유에 가깝다. 감정 라벨은 최종 진단명이고, trace는 진단명에 이르기까지의 생리 신호, 판단 과정, 반응 준비 상태의 기록이다. 이 논문은 진단명만 보는 대신 그 기록 자체가 감정을 설명할 수 있는지를 확인하려는 시도다.
+
+\subsection{왜 ``trace''가 중요한가}
+
+감정은 순간적으로 하나의 값으로 찍히지 않는다. 어떤 자극이 들어오면 먼저 그 자극이 위험한지, 나와 관련 있는지, 통제 가능한지, 타인이 관련되어 있는지, 내가 접근해야 하는지 피해야 하는지 같은 평가가 일어난다. 그 평가는 다시 각성, 억제, 회복, 행동 준비에 영향을 준다. 이 과정은 시간적으로 펼쳐진다. 따라서 감정을 상태 하나가 아니라 경로로 보는 것이 자연스럽다.
+
+v3.1에서 trace는 바로 이 경로를 계산적으로 저장한 것이다. 중요한 점은 trace가 사람이 직접 써 넣은 감정 설명문이 아니라는 것이다. v3.1의 corrected definition에서 trace는 다음 과정을 뜻한다.
+
+\[
+\begin{aligned}
+\mathrm{stimulus\ vector}
+&\rightarrow \mathrm{network\ propagation} \\
+&\rightarrow \mathrm{activation\ trajectory} \\
+&\rightarrow \mathrm{branch\ tensor} \\
+&\rightarrow \mathrm{emotion\ state\ candidate}.
+\end{aligned}
+\]
+
+따라서 \texttt{target}, \texttt{control\_state}, \texttt{action\_tendency} 같은 symbolic field는 trace 자체가 아니다. 이들은 trace가 감정 구조를 담고 있는지 확인하기 위한 외부 label이다. 이 구분이 v3.1에서 가장 중요하다.
+
+이 논문에서 제안하는 작업 가설은 다음과 같다. 감정은 단일 라벨이 아니라 appraisal, target, control, social orientation, action tendency가 시간에 따라 형성하는 동역학적 trace이다. 더 강하게 말하면, EmoNet에서 emotion state는 자극 벡터가 네트워크를 통과하며 만든 activation trajectory, branch tensor, dominant path, 그리고 이들로부터 압축된 표현의 조합이다.
+
+v3.1은 이전 버전의 엔지니어링 목표와 구분된다. v4 계열은 episode trace가 응답 생성의 품질을 높이는지를 묻는다. 반면 v3.1은 trace space 자체가 감정 공간처럼 행동하는지를 묻는다. 따라서 증거도 두 층으로 나뉜다. 첫째는 representation evidence로, 유사한 감정 상황이 trace space에서 가까운지, 서로 다른 appraisal/action pattern이 분리되는지를 확인한다. 둘째는 causal/generation evidence로, trace를 제거하거나 교란했을 때 응답의 감정 해석이 예측 가능하게 변하는지를 확인한다.
+
+본 논문의 기여는 다음과 같다.
+
+\begin{enumerate}
+  \item EmoNet v3.1의 trace-as-emotion 가설을 신경 활성 동역학의 관점에서 형식화한다.
+  \item symbolic appraisal label을 감정 자체가 아니라 neural trace를 검증하는 외부 probe로 재배치한다.
+  \item branch collapse, activation density, trace geometry를 동시에 평가하는 실험 프로토콜을 제안한다.
+  \item 현재 산출된 v3.1 결과를 working evidence로 정리하고, 확정 주장과 아직 보류해야 할 주장을 분리한다.
+\end{enumerate}
+
+\subsection{논문의 읽는 순서}
+
+이 논문은 완성된 제품 설명서가 아니라 연구 초안이다. 따라서 독자는 다음 순서로 읽는 것이 좋다.
+
+\begin{enumerate}
+  \item 먼저 Section 3에서 trace, branch, collapse, density 같은 용어를 이해한다.
+  \item Section 4에서 EmoNet이 입력 문장을 어떻게 neural trace로 바꾸는지 본다.
+  \item Section 5에서 왜 nearest-neighbor, group-distance, branch health를 보는지 이해한다.
+  \item Section 6에서 각 실험이 어떤 실패를 발견했고 어떤 다음 실험으로 이어졌는지 추적한다.
+  \item Section 7 이후에서는 현재 무엇을 주장할 수 있고 무엇을 아직 주장하면 안 되는지 확인한다.
+\end{enumerate}
+
+\section{관련 연구}
+
+\subsection{감정의 차원적 표현}
+
+Russell의 core affect 이론은 감정을 valence와 arousal 같은 기초 정동 차원에서 설명하려는 대표적 접근이다~\cite{russell2003core}. 이 관점은 범주 라벨보다 연속적이고 계산 가능한 표현을 제공한다는 장점이 있다. EmoNet도 valence와 arousal을 평가 축으로 사용하지만, 이 논문은 저차원 affect 값이 감정 상태 전체를 충분히 설명한다고 보지 않는다. valence가 같더라도 self-blame, other-directed anger, low-control sadness는 서로 다른 target, control, action tendency를 갖기 때문이다.
+
+\subsection{Appraisal와 action tendency}
+
+Lazarus의 appraisal 이론은 감정을 환경과 개인 사이의 관계적 의미 평가로 본다~\cite{lazarus1991emotion}. Scherer의 component process model 역시 감정을 여러 하위 구성요소의 순차적이고 동적인 과정으로 설명한다~\cite{scherer2001appraisal}. Frijda는 감정과 action tendency 사이의 관계를 강조했다~\cite{frijda1987action}. EmoNet v3.1의 평가 label인 target, control state, social orientation, action tendency class는 이러한 이론적 전통과 맞닿아 있다. 다만 본 연구의 핵심은 appraisal field 자체를 감정 표현으로 고정하는 것이 아니라, neural trace가 이러한 appraisal/action label을 얼마나 잘 보존하는지 검증하는 것이다.
+
+\subsection{Affective computing과 생성형 응답 제어}
+
+Picard의 affective computing은 컴퓨터가 정동 신호를 인식하고 처리하며 표현할 수 있어야 한다는 연구 영역을 정식화했다~\cite{picard1997affective}. 최근 생성형 시스템에서는 감정 정보가 응답의 tone, stance, safety, empathy를 조절하는 조건으로 쓰인다. 그러나 이러한 접근은 감정 표현이 실제 내부 동역학을 갖는지보다 출력 품질에 초점을 맞추는 경향이 있다. v3.1은 출력 개선 이전에 representation-level proof를 먼저 요구한다.
+
+\subsection{신경 동역학으로서의 감정}
+
+LeDoux는 emotion label과 underlying survival circuit, conscious feeling을 구분해야 한다고 주장했다~\cite{ledoux2012rethinking}. Barrett의 constructed emotion 관점 또한 감정을 고정된 본질이라기보다 상황, 예측, 개념화가 결합된 구성 과정으로 본다~\cite{barrett2017constructed}. EmoNet v3.1은 이러한 ``과정으로서의 감정'' 관점을 계산 모델로 옮겨, 감정을 네트워크 내부 활성 경로의 구조로 다룬다.
+
+\section{문제 정의}
+
+\subsection{핵심 용어}
+
+본 절에서는 이후 실험을 이해하는 데 필요한 용어를 먼저 정의한다.
+
+\begin{description}
+  \item[Stimulus] 모델에 들어오는 자극이다. 현재 작업선에서는 주로 episode-sensitive text record에서 출발한다. 실제 구현에서는 이 텍스트가 4차원 stimulus vector 또는 control vector로 변환된다.
+  \item[Neuron] EmoNet 내부의 계산 단위이다. 생물학적 뉴런을 그대로 모사한 것은 아니며, 자극 신호를 받아 threshold를 넘으면 다음 tick 또는 다음 연결로 신호를 전달하는 추상 노드이다.
+  \item[Tick] 네트워크 propagation의 시간 단계이다. 한 tick에서 활성화된 뉴런이 다음 tick의 후보 뉴런에 영향을 준다. 감정이 순간 값이 아니라 시간 경로라는 가정을 구현하기 위해 tick-by-tick 기록을 저장한다.
+  \item[Activation] 특정 tick에서 특정 뉴런이 얼마나 켜졌는지를 나타내는 값이다. 전체 activation matrix는 \(T \times N\) 크기를 갖는다. 여기서 \(T\)는 tick 수, \(N\)은 뉴런 수이다.
+  \item[Branch] 자극이 네트워크 안에서 만든 경로 후보이다. 직관적으로는 ``이 자극이 어떤 뉴런들을 거쳐 감정 상태로 퍼져 나갔는가''를 나타낸다.
+  \item[Dominant branch] 여러 branch 중 가장 대표성이 높다고 선택된 경로이다. v3.1에서는 이 dominant branch의 길이와 tensor 요약이 중요한 representation 후보가 된다.
+  \item[Branch tensor] branch의 단순 id 목록이 아니라, branch 과정에서 생긴 여러 수치 feature를 담은 tensor이다. 현재 결과에서는 route id 자체보다 branch tensor의 평균/시간 요약이 더 강한 신호를 보인다.
+  \item[Trace] 이 논문에서 가장 중요한 용어다. trace는 symbolic label 묶음이 아니라 activation matrix, branch tensor, dominant route, latent embedding 등 자극이 네트워크를 통과하며 남긴 계산적 흔적 전체를 뜻한다.
+  \item[Branch collapse] dominant branch가 길이 1 이하로 끝나는 현상이다. 이는 자극이 네트워크 안에서 충분히 흐르지 못했다는 뜻이다. collapse가 많으면 감정 경로를 분석할 수 없다.
+  \item[Activation density] 한 sample에서 전체 뉴런 중 얼마나 많은 뉴런이 활성화되었는지를 나타내는 비율이다. 너무 낮으면 trace가 죽고, 너무 높으면 거의 모든 뉴런이 켜져 감정별 차이가 흐려질 수 있다.
+\end{description}
+
+\subsection{EmoNet이 일반 LLM 프롬프트와 다른 점}
+
+일반적인 LLM 기반 감정 응답 시스템은 대개 다음과 같이 동작한다.
+
+\[
+\mathrm{text}
+\rightarrow
+\mathrm{emotion\ label\ or\ prompt}
+\rightarrow
+\mathrm{LLM\ response}.
+\]
+
+이 경우 감정 표현은 LLM에게 전달되는 문장 조건이다. 예를 들어 ``사용자는 분노하고 있으며, 공감적으로 답하라'' 같은 prompt가 감정 정보를 대표한다. 이 방식은 실용적이지만, 감정이 모델 내부에서 어떤 계산 상태로 존재하는지는 별도로 검증하지 않는다.
+
+EmoNet v3.1은 다음 구조를 목표로 한다.
+
+\[
+\mathrm{text}
+\rightarrow
+\mathrm{control\ vector}
+\rightarrow
+\mathrm{neural\ propagation}
+\rightarrow
+\mathrm{trace}
+\rightarrow
+\mathrm{emotion\ state\ representation}.
+\]
+
+여기서 LLM 응답은 최종 응용일 수 있지만, v3.1의 1차 연구 대상은 응답이 아니라 trace이다. 즉 ``좋은 답변을 만들었는가''보다 ``trace가 감정 상태 공간으로서 구조를 가지는가''가 먼저다.
+
+\subsection{기본 객체}
+
+입력 자극을 \(x\), 장기 성향 벡터를 \(p\), 입력 인코더를 \(E_{\mathrm{ctrl}}\)라 하자. EmoNet의 제어 신호는 다음과 같이 정의된다.
+
+\[
+h_t = E_{\mathrm{ctrl}}(x,p), \qquad h_t \in \mathbb{R}^{4}.
+\]
+
+현재 설계에서 네 축은 dopamine-like approach, serotonin-like stability, norepinephrine-like vigilance, melatonin-like slowdown 신호로 해석된다. 이 \(h_t\)가 네트워크 \(\mathcal{N}\)에 주입되면 tick별 활성 행렬과 branch 구조가 생성된다.
+
+\[
+x \rightarrow h_t \rightarrow \mathcal{N}(h_t,p) \rightarrow
+\{A, B, r, z\}.
+\]
+
+여기서 \(A \in \mathbb{R}^{T \times N}\)은 tick-by-tick activation, \(B\)는 branch tensor, \(r\)은 dominant branch route, \(z\)는 trace encoder가 압축한 latent vector이다.
+
+각 객체의 직관적 의미는 다음과 같다. \(A\)는 어느 시점에 어느 뉴런이 켜졌는지 보여주는 전체 활동 기록이다. \(B\)는 대표 경로가 어떤 강도와 형태를 가졌는지 요약한 branch-level 기록이다. \(r\)은 경로의 id sequence이며, ``몇 번 뉴런에서 몇 번 뉴런으로 이동했는가''를 기록한다. \(z\)는 이 모든 trace 정보를 더 작은 벡터로 압축하려는 시도이다. 현재 실험에서는 \(z\)보다 \(B\)에서 뽑은 feature가 더 강한 감정 구조 신호를 보였다.
+
+\subsection{Trace-as-emotion 가설}
+
+본 연구의 강한 가설은 다음과 같다.
+
+\[
+\mathrm{EmotionState}(x) \approx \Phi(A, B, r, z).
+\]
+
+즉 감정 상태는 stimulus text에서 직접 산출한 라벨이 아니라, 자극이 네트워크 안에서 어떤 뉴런을 켜고, 어떤 경로를 만들고, 어떤 branch를 남겼는지의 함수이다.
+
+이 가설이 맞다면 다음 현상이 나타나야 한다.
+
+\begin{enumerate}
+  \item 비슷한 감정 상황은 비슷한 activation 또는 branch trace를 만들어야 한다.
+  \item 같은 negative valence라도 self-blame, other-blame, low-control distress는 trace space에서 구분되어야 한다.
+  \item trace feature만 보고도 target, control, social orientation, action tendency 같은 외부 label을 chance보다 잘 회복할 수 있어야 한다.
+  \item trace의 일부를 제거하거나 바꾸면 생성 응답의 감정 방향도 예측 가능하게 바뀌어야 한다.
+\end{enumerate}
+
+현재 v3.1은 1--3번을 representation evidence로 먼저 검토하고 있으며, 4번은 causal proof pipeline을 준비하는 단계이다.
+
+\subsection{검증 label의 역할}
+
+v3.1에서 symbolic label은 감정 상태 자체가 아니다. label은 trace 표현을 검증하기 위한 외부 probe이다. 현재 사용되는 주요 probe axis는 다음과 같다.
+
+\begin{itemize}
+  \item \texttt{valence}
+  \item \texttt{arousal}
+  \item \texttt{target}
+  \item \texttt{control\_state}
+  \item \texttt{social\_orientation}
+  \item \texttt{action\_tendency\_class}
+  \item \texttt{episode\_family}
+  \item \texttt{appraisal\_family}
+\end{itemize}
+
+좋은 neural trace representation이라면 같은 label을 공유하는 샘플끼리는 가까워야 하며, 서로 다른 appraisal/action label을 가진 샘플은 멀어져야 한다. 단, label imbalance가 크기 때문에 majority baseline과 class-balanced baseline을 분리해 해석해야 한다.
+
+\subsection{Probe axis의 의미}
+
+각 probe axis는 trace가 어떤 감정 정보를 담고 있는지 확인하기 위한 렌즈이다.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{0.25\linewidth}p{0.63\linewidth}}
+\toprule
+Axis & 질문 \\
+\midrule
+\texttt{valence} & 상황이 긍정적, 부정적, 혼합적인 정서 방향을 갖는가? \\
+\texttt{arousal} & 감정이 높은 각성/긴장 상태인가, 낮은 각성 상태인가? \\
+\texttt{target} & 감정의 대상이 자기 자신, 타인, 상황, 또는 혼합 대상인가? \\
+\texttt{control\_state} & 사용자가 상황을 통제 가능하다고 느끼는가, 무력하다고 느끼는가? \\
+\texttt{social\_orientation} & 반응 방향이 접근, 방어, 철수, 관계 회복 중 어디에 가까운가? \\
+\texttt{action\_tendency} & 감정이 어떤 행동 준비 상태로 이어지는가? 예: confront, withdraw, repair. \\
+\texttt{appraisal\_family} & 여러 appraisal 축을 묶었을 때 어떤 큰 정서 해석군에 속하는가? \\
+\bottomrule
+\end{tabular}
+\caption{v3.1에서 neural trace를 평가하는 외부 probe axis.}
+\end{table}
+
+\section{방법}
+
+\subsection{전체 파이프라인}
+
+현재 v3.1의 실험 파이프라인은 다섯 단계로 나눌 수 있다.
+
+\begin{enumerate}
+  \item \textbf{Record selection}: targeted emotional episode record를 선택한다. 각 record에는 텍스트와 외부 probe label이 포함된다.
+  \item \textbf{Stimulus construction}: 텍스트를 EmoNet 네트워크에 넣을 수 있는 stimulus vector로 변환한다. 현재 일부 run은 learned encoder가 아니라 fallback stimulus vector를 사용했다.
+  \item \textbf{Network propagation}: stimulus vector를 EmoNet network에 흘려 tick별 activation과 branch를 만든다.
+  \item \textbf{Trace feature extraction}: activation, branch tensor, route, \(z\)에서 비교 가능한 feature vector를 만든다.
+  \item \textbf{Geometry and health evaluation}: feature space가 감정 label과 정렬되는지, branch가 collapse되지 않았는지, activation density가 적정한지 평가한다.
+\end{enumerate}
+
+이 순서가 중요한 이유는, trace-as-emotion 가설이 단순히 classifier accuracy를 보는 문제가 아니기 때문이다. 만약 trace가 충분히 펼쳐지지 않았다면 feature가 약하게 나오는 것은 당연하다. 반대로 trace가 너무 넓게 퍼져 모든 뉴런이 켜진다면 feature가 비슷해져서 감정별 차이가 사라질 수 있다. 따라서 representation metric과 dynamics health metric을 함께 봐야 한다.
+
+\subsection{Trace export}
+
+v3.1의 \texttt{export\_neural\_activation\_traces.py}는 각 sample에 대해 다음 산출물을 저장한다.
+
+\begin{itemize}
+  \item \texttt{activation}: tick \(\times\) neuron activation matrix
+  \item \texttt{branch\_tensor}: dominant branch의 feature tensor
+  \item \texttt{z}: trace embedding
+  \item \texttt{stim\_vec}: 원래 4D stimulus vector
+  \item \texttt{dominant\_branch\_ids}: dominant route neuron id sequence
+  \item \texttt{active\_counts}: tick별 active neuron 수
+\end{itemize}
+
+이 산출물은 representation probe와 dynamics sweep에서 공통으로 사용된다.
+
+여기서 \texttt{activation}과 \texttt{branch\_tensor}의 차이를 명확히 해야 한다. \texttt{activation}은 전체 네트워크의 활동 지도이다. 특정 감정 자극이 들어왔을 때 어떤 뉴런들이 어떤 tick에서 켜졌는지 모두 포함한다. 반면 \texttt{branch\_tensor}는 그 활동 중 대표 branch의 구조를 중심으로 요약한 표현이다. 현재 실험에서 \texttt{branch\_mean}이 좋은 결과를 낸다는 것은, 전체 활성 평균보다 대표 경로의 구조가 감정 label과 더 잘 정렬될 수 있음을 시사한다.
+
+\subsection{Fallback stimulus vector의 의미와 한계}
+
+현재 초기 neural trace probe는 환경 제약으로 인해 원래 v3 ridge text encoder를 완전히 사용하지 못했고, fallback stimulus vector를 사용했다. 이는 텍스트와 label 기반 휴리스틱으로 4차원 stimulus vector를 만든 뒤, 그 벡터를 EmoNet network에 흘리는 방식이다.
+
+이 점은 해석에서 매우 중요하다. 현재 결과는 ``EmoNet의 최종 learned text encoder가 감정 trace를 잘 만든다''는 증거가 아니다. 더 좁게 말하면, ``현재 network propagation과 branch extraction pipeline이 trace-like representation을 만들 수 있으며, 그 중 일부 feature가 emotion probe label과 약하게 정렬된다''는 증거이다. 따라서 최종 논문 버전에서는 learned stimulus encoder 기반 confirmatory run이 필요하다.
+
+\subsection{Feature families}
+
+현재 비교된 주요 feature family는 다음과 같다.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{p{0.28\linewidth}p{0.60\linewidth}}
+\toprule
+Feature & 의미 \\
+\midrule
+\texttt{z} & trace encoder가 산출한 latent vector \\
+\texttt{activation\_meanmax} & activation matrix의 평균 및 최대값 요약 \\
+\texttt{branch\_mean} & branch tensor의 평균/최대 계열 요약 \\
+\texttt{activation\_temporal} & activation을 시간 구간으로 나누어 pooling \\
+\texttt{branch\_temporal} & branch tensor를 시간 구간으로 나누어 pooling \\
+\texttt{route\_histogram} & dominant route neuron id histogram \\
+\texttt{transition\_hash} & route transition을 fixed-bin hash로 요약 \\
+\texttt{branch\_plus\_temporal} & branch, temporal, route, active stats의 결합 feature \\
+\bottomrule
+\end{tabular}
+\caption{v3.1에서 비교한 neural trace feature family.}
+\end{table}
+
+각 feature family는 서로 다른 가설을 테스트한다.
+
+\begin{itemize}
+  \item \texttt{z}가 잘 되면, trace encoder가 emotion state를 작은 latent vector로 압축하는 데 성공했다는 뜻이다.
+  \item \texttt{activation\_meanmax}가 잘 되면, 전체 뉴런의 평균적 활성 패턴만으로도 감정 구조가 보존된다는 뜻이다.
+  \item \texttt{branch\_mean}이 잘 되면, 대표 branch의 수치 구조가 감정 정보를 담고 있다는 뜻이다.
+  \item \texttt{branch\_temporal}이 잘 되면, branch가 언제 어떻게 변했는지의 시간 정보가 중요하다는 뜻이다.
+  \item \texttt{route\_histogram}이나 \texttt{transition\_hash}가 잘 되면, 특정 뉴런 id 경로 자체가 감정별로 재사용된다는 뜻이다.
+\end{itemize}
+
+현재 결과는 이 중 \texttt{branch\_mean} 가설을 가장 강하게 지지하고, route-only 가설과 \(z\)-only 가설은 약하게 만든다.
+
+\subsection{Representation metrics}
+
+Representation evidence는 두 종류의 metric으로 측정한다.
+
+첫째, nearest-neighbor consistency이다. 각 sample의 feature vector에서 가장 가까운 이웃을 찾고, 두 sample이 같은 label을 공유하는지 측정한다. 이 값은 majority baseline 및 class-balanced baseline과 비교한다.
+
+nearest-neighbor consistency의 장점은 직관적이라는 점이다. 예를 들어 어떤 record의 가장 가까운 trace neighbor도 같은 \texttt{social\_orientation}을 갖는다면, trace space가 적어도 그 축에서는 감정 구조를 일부 보존한다고 볼 수 있다. 그러나 이 metric은 label imbalance에 취약하다. 전체 sample의 대부분이 negative라면 아무 모델 없이 항상 negative라고 해도 높은 consistency가 나올 수 있다. 그래서 majority baseline보다 얼마나 좋아졌는지, 즉 lift를 함께 봐야 한다.
+
+둘째, group-distance separation이다. 같은 label group 안의 평균 거리와 서로 다른 label group 사이의 평균 거리를 비교한다.
+
+\[
+\mathrm{separation}(y) =
+\mathbb{E}[d(f_i,f_j) \mid y_i \neq y_j] -
+\mathbb{E}[d(f_i,f_j) \mid y_i = y_j].
+\]
+
+양수 separation은 같은 label 내부의 거리가 label 간 거리보다 작다는 뜻이다.
+
+group-distance separation은 nearest-neighbor보다 전역적인 구조를 본다. nearest-neighbor는 가장 가까운 한 점만 보지만, separation은 같은 group 전체와 다른 group 전체의 평균 거리를 비교한다. 따라서 label별 cluster가 넓고 흐릿해도 전체적으로 같은 label끼리 더 가깝다면 양수 separation이 나온다. 현재 v3.1 결과에서는 nearest-neighbor lift보다 group-distance separation이 더 안정적인 양수 신호를 보이는 경우가 많다.
+
+\subsection{Dynamics health metrics}
+
+Trace가 emotion geometry를 만들기 위해서는 activation이 너무 빨리 죽어서도 안 되고, 거의 모든 뉴런이 켜지는 전역 과활성이 되어도 안 된다. 따라서 다음 health metric을 함께 본다.
+
+\begin{itemize}
+  \item \texttt{mean\_dominant\_branch\_len}: dominant branch 평균 길이
+  \item \texttt{len1\_ratio}: 길이 1 이하 dominant branch 비율
+  \item \texttt{mean\_activation\_density}: 전체 뉴런 중 활성화된 비율의 평균
+\end{itemize}
+
+현재 working acceptance target은 다음이다.
+
+\[
+\texttt{len1\_ratio} \leq 0.10, \qquad
+0.55 \leq \texttt{mean\_activation\_density} \leq 0.80.
+\]
+
+이 target은 이론적으로 확정된 값이 아니라 현재 실험선의 working criterion이다. \texttt{len1\_ratio}가 0.10 이하라는 것은 대부분의 sample에서 branch가 최소한의 경로를 형성해야 한다는 뜻이다. density 0.55--0.80은 너무 sparse하지도 않고 너무 saturated하지도 않은 중간 활성 상태를 목표로 한다. 실제 최종 기준은 더 큰 dataset과 human evaluation을 거쳐 조정될 수 있다.
+
+\subsection{Causal proof pipeline}
+
+Representation evidence만으로는 trace가 감정 상태를 ``표현한다''고 말할 수는 있어도, trace가 감정 방향을 ``제어한다''고 말하기는 어렵다. 따라서 v3.1은 causal proof도 별도로 설계한다. 기본 아이디어는 같은 stimulus를 유지한 채 trace field를 제거하거나 바꾸고, 생성 응답의 감정 방향이 예측 가능하게 변하는지 확인하는 것이다.
+
+각 base record는 다음 조건으로 확장된다.
+
+\begin{itemize}
+  \item \texttt{trace\_full}: 원래 trace를 모두 보존한 control condition
+  \item \texttt{ablate\_target}: 감정 target 정보를 제거
+  \item \texttt{ablate\_social\_orientation}: social orientation 정보를 제거
+  \item \texttt{ablate\_control\_state}: control/agency 정보를 제거
+  \item \texttt{ablate\_action\_tendency\_class}: action tendency 정보를 제거
+  \item \texttt{perturb\_*}: 해당 축을 contrast value로 바꾼 조건
+\end{itemize}
+
+초기 dry run은 3개 base record에서 27개 causal row를 생성하는 데 성공했다. 실패한 부분은 generation이 아니라 judge였다. 한 응답에 대해 8개 metric을 한 번에 점수화하도록 요구한 local judge가 형식을 안정적으로 따르지 못했다. 따라서 후속 설계는 pairwise A/B judge로 단순화되었다. 예를 들어 ``trace full 응답과 target ablation 응답 중 어느 쪽이 blame direction을 더 잘 보존하는가''처럼 한 번에 하나의 질문만 묻는다.
+
+\section{실험}
+
+\subsection{실험 설계의 전체 논리}
+
+v3.1의 실험은 단번에 최종 성능을 증명하려는 구조가 아니다. 각 실험은 하나의 병목을 찾고, 다음 실험은 그 병목을 겨냥한다. 전체 흐름은 다음과 같다.
+
+\begin{enumerate}
+  \item 먼저 neural trace를 실제로 export할 수 있는지 확인한다.
+  \item export된 trace feature 중 어떤 것이 감정 label과 가장 잘 정렬되는지 본다.
+  \item trace geometry가 약하다면, capacity가 부족한지 확인하기 위해 뉴런 수를 늘려 본다.
+  \item capacity 증가만으로 해결되지 않으면, propagation dynamics를 조정해 branch collapse를 줄인다.
+  \item collapse를 줄였을 때 과활성이 생기면, late density control로 중간 density를 유지한다.
+  \item 마지막으로 trace 조작이 응답 방향을 바꾸는지 causal proof를 준비한다.
+\end{enumerate}
+
+이 흐름은 실패를 숨기지 않는다는 점에서 중요하다. 예를 들어 \(z\) embedding이 약했다는 결과는 모델 실패라기보다 다음 설계 결정을 위한 정보다. route id가 약했다는 결과도 마찬가지다. 현재 시스템에서는 ``어떤 뉴런 id를 지났는가''보다 ``branch tensor가 어떤 수치 구조를 가졌는가''가 더 중요해 보인다.
+
+\subsection{실험 1: feature probe}
+
+첫 번째 실험은 full80 trace set에서 feature family별 emotion geometry signal을 비교했다. 핵심 결과는 Table~\ref{tab:feature-probe}와 같다.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{llrrrr}
+\toprule
+Dataset & Feature & len1 ratio & density & lift mean & sep. mean \\
+\midrule
+baseline & \texttt{branch\_mean} & 0.4625 & 0.4947 & +0.0675 & +0.2063 \\
+baseline & \texttt{branch\_temporal} & 0.4625 & 0.4947 & +0.0250 & +0.1593 \\
+baseline & \texttt{z} & 0.4625 & 0.4947 & -0.0475 & +0.0090 \\
+best full80 & \texttt{branch\_mean} & 0.0000 & 0.9470 & +0.0750 & +0.2631 \\
+best full80 & \texttt{branch\_temporal} & 0.0000 & 0.9470 & +0.0450 & +0.2400 \\
+best full80 & \texttt{z} & 0.0000 & 0.9470 & -0.1200 & -0.0132 \\
+\bottomrule
+\end{tabular}
+\caption{Neural trace feature probe 요약. lift mean과 separation mean은 tracked axes 기준이다.}
+\label{tab:feature-probe}
+\end{table}
+
+결과는 명확하다. 현재 가장 방어 가능한 representation feature는 branch tensor의 평균 계열 요약이다. \texttt{branch\_temporal}은 보조 신호를 보이지만 주 feature로 삼기에는 약하다. \texttt{z}는 현재 구현에서는 emotion state를 충분히 보존한다고 보기 어렵다. route-only feature도 아직 감정별 reusable route를 안정적으로 보여주지 못한다.
+
+이 결과를 처음 보는 독자에게 더 자세히 풀면 다음과 같다. 만약 \(z\)가 좋은 emotion state embedding이라면, \(z\)만으로도 비슷한 감정 record끼리 가까워져야 한다. 그러나 현재 \(z\)는 tracked axes 평균에서 좋은 lift를 보이지 않았다. 반대로 \texttt{branch\_mean}은 여러 축에서 양수 lift와 양수 separation을 보였다. 이는 감정 정보가 trace encoder가 압축한 최종 벡터보다, branch tensor의 더 직접적인 통계에 남아 있음을 의미한다.
+
+또 하나 중요한 점은 temporal feature의 위치다. \texttt{branch\_temporal}은 \texttt{branch\_mean}보다 약하지만 같은 방향의 신호를 보였다. 이는 감정 구조가 단순 평균값에만 있는 것이 아니라 branch trajectory의 시간적 전개에도 일부 남아 있을 가능성을 시사한다. 다만 현재 feature 설계에서는 temporal 정보를 충분히 잘 쓰지 못하고 있을 수 있다.
+
+반대로 route-only feature가 약했다는 점은 조심스럽게 해석해야 한다. 이것은 ``경로가 중요하지 않다''는 뜻이 아니다. 현재 dominant route id sequence가 감정별 reusable path를 충분히 안정적으로 만들지 못했거나, route id 자체보다 경로 위의 activation value와 branch feature가 더 중요하다는 뜻이다. 따라서 후속 실험에서는 raw route id보다 transition intensity, phase shift, cluster-level route 같은 feature가 필요하다.
+
+\subsection{실험 2: capacity ablation}
+
+두 번째 실험은 뉴런 수 증가가 trace geometry를 자동 개선하는지 확인했다. 256, 512, 1024 뉴런 설정을 first40 sample에서 비교했다.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{rrrrr}
+\toprule
+Neurons & mean branch len & len1 count & len1 ratio & density \\
+\midrule
+256 & 10.275 & 20 & 0.500 & 0.4484 \\
+512 & 20.050 & 20 & 0.500 & 0.4635 \\
+1024 & 24.900 & 20 & 0.500 & 0.4630 \\
+\bottomrule
+\end{tabular}
+\caption{Capacity ablation의 branch health 결과.}
+\label{tab:capacity}
+\end{table}
+
+뉴런 수가 늘면 살아남은 branch의 평균 길이는 증가했다. 그러나 \texttt{len1\_ratio}는 0.5로 유지되었다. 즉 capacity 증가는 죽지 않은 trace를 길게 만들 수는 있지만, branch collapse 자체를 해결하지는 못했다. emotion geometry lift 역시 일관되게 개선되지 않았다. 따라서 v3.1의 다음 목표는 ``더 많은 뉴런''이 아니라 ``더 안정적인 trace dynamics''로 설정되었다.
+
+이 실험의 직관은 간단하다. 처음에는 ``뉴런 수가 부족해서 감정 구조가 잘 안 생기는 것 아닐까''라는 가설을 세울 수 있다. 만약 이 가설이 맞다면 256보다 512, 1024에서 collapse가 줄고 geometry metric이 안정적으로 좋아져야 한다. 하지만 실제 결과는 달랐다. 평균 branch length는 늘었지만, branch가 길이 1 이하로 끝나는 sample 수는 줄지 않았다. 즉 네트워크가 더 커졌을 때 이미 살아난 trace는 더 멀리 갈 수 있었지만, 처음부터 죽는 trace를 살리는 데는 실패했다.
+
+이 결과는 ``capacity보다 dynamics가 먼저''라는 결론으로 이어진다. 감정 경로가 형성되려면 충분한 노드 수도 필요하지만, 더 먼저 필요한 것은 신호가 threshold를 넘고, 너무 빨리 fatigue되지 않고, inhibition에 의해 초기에 꺼지지 않는 propagation rule이다.
+
+\subsection{실험 3: dynamics stabilization}
+
+세 번째 실험은 threshold, input gain, inhibition, fatigue, persistence를 조정하여 branch collapse를 줄이는지 확인했다. first40 sweep에서 \texttt{persistent\_less\_inhibition} 설정은 \texttt{len1\_ratio=0.0}을 달성했고, full80에서도 collapse 제거에 성공했다.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+Setting & mean branch len & len1 count & len1 ratio & density \\
+\midrule
+baseline full80 & 19.1875 & 37 & 0.4625 & 0.4947 \\
+persistent less inhibition & 37.9625 & 0 & 0.0000 & 0.9470 \\
+\bottomrule
+\end{tabular}
+\caption{Dynamics stabilization full80 결과.}
+\label{tab:stabilization}
+\end{table}
+
+이 결과는 branch collapse를 dynamics 조정으로 제거할 수 있음을 보여준다. 그러나 density가 0.9470까지 올라가 전역 과활성 위험이 생겼다. 따라서 이 설정은 최종 모델이 아니라 중요한 진단 결과로 해석해야 한다.
+
+여기서 중요한 tradeoff가 드러난다. branch collapse를 줄이려면 신호를 오래 살려야 한다. threshold를 낮추고, fatigue를 줄이고, inhibition을 약하게 만들면 더 많은 branch가 살아난다. 하지만 그 결과 거의 모든 뉴런이 켜지면 감정별 특이성이 사라질 수 있다. density 0.9470은 256개 뉴런 중 대부분이 활성화된다는 뜻이다. 이런 상태에서는 branch length가 길어도 그것이 정교한 emotion-specific path인지, 단순한 전역 과활성인지는 의심해야 한다.
+
+따라서 dynamics stabilization 실험은 성공과 실패를 동시에 보여준다. 성공은 collapse를 제거할 수 있다는 점이다. 실패 또는 미완성 지점은 collapse 제거만으로는 충분하지 않고 density control이 필요하다는 점이다.
+
+\subsection{실험 4: adaptive late density control}
+
+네 번째 실험은 early ignition과 late density control을 분리했다. 지정 tick 이전에는 개입하지 않고, 이후 활성 후보 density가 target을 넘을 때 soft leak과 hard cap을 적용한다. n=40 adaptive sweep의 주요 결과는 Table~\ref{tab:adaptive}와 같다.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lrrrrr}
+\toprule
+Config & n & len1 & density & branch len & combined sep. \\
+\midrule
+\texttt{thr0.63 clip1.6 inh0.10 start8 cap0.76} & 40 & 0.000 & 0.6864 & 48.95 & 0.2046 \\
+\texttt{thr0.63 clip1.8 inh0.12 start10 cap0.80} & 40 & 0.000 & 0.7415 & 44.15 & 0.1901 \\
+\texttt{thr0.66 clip1.6 inh0.12 start8 cap0.76} & 40 & 0.000 & 0.6769 & 46.63 & 0.1733 \\
+\texttt{thr0.60 clip1.6 inh0.10 start8 cap0.78} & 40 & 0.000 & 0.7138 & 45.55 & 0.1671 \\
+\bottomrule
+\end{tabular}
+\caption{Adaptive late density control sweep 요약.}
+\label{tab:adaptive}
+\end{table}
+
+가장 좋은 후보는 \texttt{adaptive\_thr0.63\_clip1.6\_inh0.10\_start8\_cap0.76}이었다. 이 설정은 \texttt{len1\_ratio=0.0}, density 0.6864를 달성했고, tracked group-distance separation이 모든 주요 축에서 양수였다. class-balanced nearest-neighbor lift 역시 action tendency class를 제외한 tracked axes에서 양수였다. 다만 majority-baseline nearest-neighbor lift는 아직 약하다.
+
+이 후보를 같은 설정으로 n=80 confirm에 다시 올린 결과는 Table~\ref{tab:adaptive-confirm}과 같다.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{p{0.30\linewidth}p{0.48\linewidth}}
+\toprule
+Metric & Value \\
+\midrule
+config & \texttt{thr0.63 clip1.6 inh0.10 start8 cap0.76} \\
+n & 80 \\
+len1 ratio & 0.000 \\
+activation density & 0.7094 \\
+mean branch length & 50.48 \\
+combined balanced lift & 0.1364 \\
+combined separation & 0.2385 \\
+\bottomrule
+\end{tabular}
+\caption{Best adaptive config의 n=80 confirm 결과.}
+\label{tab:adaptive-confirm}
+\end{table}
+
+n=80 confirm에서는 collapse 제거와 density target뿐 아니라 tracked axes 전체의 class-balanced nearest-neighbor lift가 양수로 확인되었다. 축별 balanced lift는 valence 0.2585, social orientation 0.1197, action tendency class 0.0179, appraisal family 0.0787, control state 0.1756이었다. 축별 group-distance separation도 valence 0.6108, social orientation 0.1130, action tendency class 0.2069, appraisal family 0.0930, control state 0.2066으로 모두 양수였다. 따라서 adaptive dynamics는 n=80 기준에서 v3.1의 현재 best dynamics candidate로 고정할 수 있다.
+
+adaptive control의 핵심 아이디어는 ``처음부터 억제하지 말고, 나중에 과활성만 조절하자''이다. 감정 trace가 형성되려면 초반 ignition이 필요하다. 초반부터 density를 강하게 제한하면 branch가 다시 짧게 죽을 수 있다. 반대로 후반에도 아무 제한이 없으면 모든 뉴런이 켜질 수 있다. 그래서 adaptive controller는 일정 tick 이후에만 개입한다. 먼저 trace가 충분히 시작되도록 두고, 이후 density가 target high를 넘으면 soft leak으로 후보 수를 줄이며, hard cap을 넘으면 margin이 높은 후보만 남긴다.
+
+이 접근은 v3.1에서 처음으로 collapse와 density를 동시에 만족하는 후보를 만들었다는 점에서 중요하다. n=80 confirm에서도 같은 방향이 유지되었으므로 dynamics gate는 통과 후보로 볼 수 있다. 다만 full targeted set, causal judge, 사람 평가가 아직 없으므로 strong causal claim은 보류한다.
+
+\subsection{실험 5: causal dry run과 Claude pairwise judge}
+
+Representation metric은 trace space가 감정 label과 정렬되는지 보여준다. 그러나 감정 상태 표현이라고 주장하려면 trace가 응답의 감정 방향에 영향을 주는지도 봐야 한다. 이를 위해 v3.1은 trace causal proof pipeline을 준비했다.
+
+초기 dry run은 3개 base record를 9개 조건으로 확장했다. 조건은 \texttt{trace\_full}, 네 종류의 ablation, 네 종류의 perturbation으로 구성된다. 총 27개 row에서 응답 생성은 모두 성공했다. 따라서 같은 stimulus에서 trace payload만 다르게 주고 조건별 응답을 만드는 pipeline 자체는 작동한다.
+
+문제는 judge였다. 초기 judge는 각 응답에 대해 appraisal fidelity, target fit, social orientation fit, control state fit, action tendency fit, raw affect preservation, naturalness 등 여러 metric을 한 번에 점수화하도록 요구했다. local LLM은 이 복잡한 출력 형식을 안정적으로 지키지 못했고, 27개 중 24개 judge row가 형식 실패를 냈다.
+
+이 실패의 의미는 분명히 구분해야 한다. causal generation이 실패한 것이 아니다. trace 조작이 효과가 없다는 증거도 아니다. 실패한 것은 평가기 출력 형식이다. 따라서 후속 judge는 다음처럼 단순화된다.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.36\linewidth}>{\raggedright\arraybackslash}p{0.50\linewidth}}
+\toprule
+Pair & Judge question \\
+\midrule
+\texttt{trace\_full} vs \texttt{ablate\_target} & 어느 응답이 target 또는 blame direction을 더 잘 보존하는가? \\
+\texttt{full} vs \texttt{ablate\_social} & 어느 응답이 defend/approach/withdraw 방향을 더 잘 보존하는가? \\
+\texttt{full} vs \texttt{ablate\_control} & 어느 응답이 helplessness, agency, planning tone을 더 잘 반영하는가? \\
+\texttt{full} vs \texttt{ablate\_action} & 어느 응답이 행동 경향을 더 잘 반영하는가? \\
+\texttt{perturb\_*} condition & 응답이 원래 방향보다 perturb된 새 방향으로 이동했는가? \\
+\bottomrule
+\end{tabular}
+\caption{후속 causal proof를 위한 pairwise judge 설계.}
+\end{table}
+
+출력도 복잡한 8개 점수가 아니라 \texttt{A}, \texttt{B}, \texttt{tie}, confidence, 짧은 rationale 정도로 제한했다. 이 설계는 Claude Haiku 4.5 judge에서 정상 작동했다. \texttt{claude-3-5-haiku-latest}와 \texttt{claude-3-5-haiku-20241022}는 현재 API 환경에서 404를 반환했으므로, 실제 실행은 \texttt{claude-haiku-4-5-20251001}로 수행했다. 또한 기본 \texttt{max\_output\_tokens=90}은 JSON 응답을 중간에 자를 수 있어 \texttt{240}으로 올렸다.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lrrr}
+\toprule
+Scope & n & success & success rate \\
+\midrule
+Overall & 24 & 14 & 0.5833 \\
+Ablation preservation & 12 & 4 & 0.3333 \\
+Perturbation shift & 12 & 10 & 0.8333 \\
+\bottomrule
+\end{tabular}
+\caption{Claude Haiku 4.5 pairwise judge dry3 결과.}
+\label{tab:causal-judge}
+\end{table}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lrrr}
+\toprule
+Axis & n & success & success rate \\
+\midrule
+action tendency class & 6 & 5 & 0.8333 \\
+control state & 6 & 3 & 0.5000 \\
+social orientation & 6 & 4 & 0.6667 \\
+target & 6 & 2 & 0.3333 \\
+\bottomrule
+\end{tabular}
+\caption{Claude Haiku 4.5 pairwise judge의 axis별 결과.}
+\label{tab:causal-axis}
+\end{table}
+
+이 pilot 결과는 양면적이다. Perturbation pair에서는 10/12가 예상 방향으로 판정되어 trace 조작이 응답의 감정 방향을 이동시킨다는 신호가 강했다. 반면 ablation preservation에서는 4/12만 성공했다. 즉 현재 ablation은 원본 trace를 제거했을 때 응답이 충분히 약해지는 대비를 안정적으로 만들지 못했다. 따라서 v3.1의 causal evidence는 ``perturbation steering은 유망하다''까지는 말할 수 있지만, ``trace ablation이 원본 감정 보존성을 일관되게 손상한다''는 강한 주장은 아직 방어할 수 없다.
+
+다만 이 결과가 단순히 ``더 좋은 답변''을 고른 것일 수 있다는 우려가 있다. 이를 줄이기 위해 추가로 axis-only blind judge를 실행했다. 이 판정에서는 조건명과 A/B 순서를 숨기고, helpfulness, warmth, politeness, fluency, empathy, overall answer quality를 보지 말라고 명시했다. 또한 같은 응답을 A/B에 넣은 null pair를 추가하여 judge가 억지로 한쪽을 고르는지 확인했다. 결과는 Table~\ref{tab:axis-blind}와 같다.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lrrr}
+\toprule
+Scope & n & success rate & tie rate \\
+\midrule
+Axis-only overall & 36 & 0.7222 & 0.4444 \\
+Axis-only ablation & 12 & 0.3333 & 0.2500 \\
+Axis-only perturbation & 12 & 0.8333 & 0.0833 \\
+Null same response & 12 & 1.0000 & 1.0000 \\
+\bottomrule
+\end{tabular}
+\caption{좋은 답변 품질을 배제한 axis-only blind judge 결과.}
+\label{tab:axis-blind}
+\end{table}
+
+이 재평가는 두 가지를 보여준다. 첫째, 응답 품질 판정을 금지해도 perturbation 신호는 10/12로 유지된다. 둘째, 동일 응답 null pair가 모두 tie로 판정되었으므로 judge가 무조건 A/B 중 하나를 고르는 강한 편향은 보이지 않는다. 그러나 ablation은 여전히 4/12에 머물러, 정보 제거 실험은 더 강한 중립화 방식으로 재설계해야 한다.
+
+이에 따라 단순 field removal 대신 strong neutralization ablation을 추가했다. 이 조건에서는 해당 axis field만 비우지 않고, \texttt{preserve}, \texttt{avoid}, \texttt{action\_tendency} 안에 남아 있는 같은 축 단서도 중립화했다. 예를 들어 target 중립화에서는 감정이 향하는 대상이나 책임 방향을 특정하지 않도록 하고, control state 중립화에서는 무력감이나 주도감 단서를 모두 제거했다. 이 강한 중립화 조건은 Table~\ref{tab:neutralized-ablation}처럼 기존 ablation 약점을 상당히 보강했다.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lrr}
+\toprule
+Condition & n & success rate \\
+\midrule
+Simple ablation, axis-only blind & 12 & 0.3333 \\
+Strong neutralization ablation, axis-only blind & 12 & 0.8333 \\
+Null same response & 12 & 1.0000 \\
+\bottomrule
+\end{tabular}
+\caption{단순 제거와 강한 정보 중립화 ablation 비교.}
+\label{tab:neutralized-ablation}
+\end{table}
+
+이후 같은 생성 조건에서 두 효과를 동시에 확인하기 위해 confirm10 run을 실행했다. 이 실행은 10개 base record에서 90개 response를 생성하고, 120개 axis-only blind pair를 평가했다. Generator와 judge는 모두 \texttt{claude-haiku-4-5-20251001}로 고정했고, ablation은 strong neutralization, perturbation은 coherent perturbation으로 구성했다. 결과는 Table~\ref{tab:confirm10-causal}과 같다.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lrrr}
+\toprule
+Scope & n & success rate & tie rate \\
+\midrule
+Overall & 120 & 0.9167 & 0.3583 \\
+Strong neutralization & 40 & 0.9750 & 0.0250 \\
+Coherent perturbation & 40 & 0.7750 & 0.0500 \\
+Null same response & 40 & 1.0000 & 1.0000 \\
+\bottomrule
+\end{tabular}
+\caption{confirm10 통합 causal run 결과.}
+\label{tab:confirm10-causal}
+\end{table}
+
+confirm10 결과는 v3.1의 causal evidence를 pilot에서 1차 confirmatory evidence로 격상시킨다. 같은 생성 조건에서 정보 중립화와 방향 교란이 모두 사전 기준을 넘었고, 동일 응답 null pair는 40/40 tie로 판정되었다. 다만 생성기와 판정기가 같은 Claude Haiku 4.5 계열이라는 점은 남은 한계다. 따라서 최종 제출판에서는 독립 judge 또는 사람 평가를 후속 검증으로 남긴다.
+
+\section{논의}
+
+\subsection{현재 방어 가능한 주장}
+
+현재 v3.1 결과로 방어 가능한 주장은 다음이다.
+
+\begin{enumerate}
+  \item Neural trace export pipeline은 작동한다.
+  \item 감정 관련 구조 신호는 현재 \(z\)보다 branch tensor에 더 많이 남아 있다.
+  \item \texttt{branch\_mean}은 valence, appraisal family, social orientation, action tendency 계열에서 weak-to-moderate geometry signal을 보인다.
+  \item 단순 capacity 증가는 branch collapse 문제를 해결하지 못한다.
+  \item adaptive late density control은 n=80 confirm에서 collapse 제거, 중간 density, tracked axes 전체의 class-balanced lift를 동시에 만족했다.
+\end{enumerate}
+
+이 주장들은 모두 제한된 범위의 주장이다. 예를 들어 ``branch tensor에 감정 관련 구조 신호가 있다''는 말은 ``branch tensor만으로 사람 수준의 감정 이해가 가능하다''는 뜻이 아니다. 또한 ``adaptive dynamics가 유망하다''는 말은 ``adaptive dynamics가 최종 모델이다''라는 뜻이 아니다. 현재 결과는 연구 방향을 선택할 만큼의 중간 evidence이지, 최종 acceptance evidence는 아니다.
+
+\subsection{아직 방어하면 안 되는 주장}
+
+반대로 다음 주장은 아직 이르다.
+
+\begin{enumerate}
+  \item \(z\) embedding이 emotion state를 충분히 보존한다고 말하기 어렵다.
+  \item dominant route id 자체가 감정별 reusable neural path를 형성한다고 보기 어렵다.
+  \item majority-baseline 기준 nearest-neighbor lift가 충분히 강하다고 말하기 어렵다.
+  \item causal/generation evidence는 axis-only blind judge에서도 perturbation pair가 강하며, 단순 ablation의 약점은 strong neutralization으로 보강된다.
+  \item v3.1 모델이 완성되었다고 말할 수 없다.
+\end{enumerate}
+
+특히 \(z\) embedding에 대해서는 신중해야 한다. 일반적으로 논문에서는 최종 latent vector가 가장 중요한 representation이라고 말하고 싶어지지만, 현재 v3.1 결과는 그 방향을 지지하지 않는다. \(z\)가 약하다는 것은 trace-as-emotion 가설 자체가 틀렸다는 뜻은 아니다. 오히려 현재 trace encoder가 activation과 branch 정보를 충분히 좋은 방식으로 압축하지 못한다는 뜻일 가능성이 크다. 후속 연구에서는 \(z\) encoder를 바꾸거나, branch tensor를 직접 사용하는 downstream representation을 설계해야 한다.
+
+\subsection{해석}
+
+v3.1의 핵심 발견은 trace-as-emotion 가설이 완전히 증명되었다는 것이 아니다. 더 정확한 결론은 다음이다. 감정 관련 정보는 neural trace 안에 일부 구조화되어 있으며, 그 신호는 현재 latent vector \(z\)보다 branch tensor에 더 많이 남아 있다. 그러나 이 구조는 dynamics에 강하게 의존한다. trace가 너무 빨리 죽으면 branch collapse가 발생하고, trace를 억지로 살리면 전역 과활성이 된다. 따라서 emotion geometry는 표현 추출 문제이면서 동시에 propagation dynamics 문제이다.
+
+이 점은 EmoNet의 연구 방향을 분명히 한다. 모델을 키우는 것보다 먼저, 자극이 네트워크 안에서 충분히 오래 흐르되 모든 뉴런을 켜지는 않도록 하는 균형 동역학이 필요하다. adaptive late density control은 현재 n=80 기준에서 이 균형을 가장 잘 만족한 후보이다.
+
+\subsection{Trace-as-emotion 가설의 현재 위치}
+
+현재 v3.1은 trace-as-emotion 가설을 완전히 증명한 단계가 아니라, 가설을 실험 가능한 형태로 바꾼 단계에 가깝다. 이 차이는 중요하다. 처음에는 ``감정은 trace다''라는 문장이 철학적 주장처럼 보일 수 있다. 그러나 v3.1은 이 주장을 다음과 같은 측정 가능한 질문으로 바꾼다.
+
+\begin{enumerate}
+  \item trace feature space에서 같은 appraisal/action label을 가진 sample이 가까운가?
+  \item branch collapse를 줄이면 trace geometry가 개선되는가?
+  \item capacity 증가와 dynamics 조정 중 어느 쪽이 trace geometry에 더 중요한가?
+  \item trace를 제거하거나 교란하면 생성 응답의 감정 방향이 바뀌는가?
+\end{enumerate}
+
+이렇게 바꾸면 가설은 반증 가능해진다. 예를 들어 full confirmatory run에서 branch tensor가 어떤 label과도 정렬되지 않고, causal perturbation도 응답 방향을 바꾸지 못한다면 trace-as-emotion 가설은 약해진다. 반대로 label-balanced geometry, stable clusters, causal shift가 모두 확인된다면 가설은 강해진다.
+
+\subsection{왜 label imbalance가 큰 문제인가}
+
+현재 targeted dataset은 negative, high arousal, mixed target/control 계열이 많다. 이런 불균형은 nearest-neighbor metric을 해석하기 어렵게 만든다. 예를 들어 전체 sample의 80\%가 negative라면, 아무 의미 없는 feature space에서도 nearest neighbor가 negative일 확률이 높다. 따라서 raw consistency가 높아도 그것만으로는 좋은 representation이라고 볼 수 없다.
+
+이 문제를 해결하려면 적어도 세 가지 보강이 필요하다. 첫째, majority baseline 대비 lift를 항상 보고해야 한다. 둘째, class-balanced nearest-neighbor metric을 추가해야 한다. 셋째, 가능하면 balanced subset을 새로 구성하여 각 label group의 sample 수를 맞춰야 한다. v3.1의 adaptive report에서 majority baseline lift는 약하지만 class-balanced lift가 일부 양수로 나타난 것은 이 문제가 실제로 중요함을 보여준다.
+
+\subsection{실제 응용과 연구 증명의 차이}
+
+EmoNet이 최종적으로는 LLM 응답 생성에 쓰일 수 있더라도, v3.1 논문은 응용 성능보다 표현 검증을 우선한다. 이 구분은 논문 설계에서 중요하다. 생성 응답이 좋아지는 이유는 여러 가지일 수 있다. prompt가 더 자세해서 좋아졌을 수도 있고, trace field가 단순히 label 설명문 역할을 했을 수도 있다. 그러나 trace-as-emotion 가설은 그보다 강한 주장이다. trace 자체가 감정 상태 공간으로 작동해야 한다.
+
+따라서 최종 논문은 두 종류의 결과를 분리해 보고해야 한다.
+
+\begin{itemize}
+  \item \textbf{Representation proof}: neural trace가 감정 label과 구조적으로 정렬되는가?
+  \item \textbf{Generation proof}: trace를 조건으로 준 응답이 appraisal fidelity와 raw affect preservation에서 좋아지는가?
+  \item \textbf{Causal proof}: trace를 제거하거나 바꾸면 응답 방향이 예측 가능하게 변하는가?
+\end{itemize}
+
+이 세 증거가 모두 모여야 강한 버전의 EmoNet 주장을 할 수 있다.
+
+\section{한계}
+
+본 논문은 working draft이며 다음 한계를 가진다.
+
+\begin{enumerate}
+  \item 실험 규모가 아직 작다. 주요 adaptive 결과는 n=80 confirm까지 통과했지만, full targeted set과 외부 데이터셋 검증은 아직 없다.
+  \item label imbalance가 크다. negative/high/mixed 계열이 많아 majority baseline이 nearest-neighbor lift 해석을 어렵게 한다.
+  \item 현재 stimulus vector와 trace feature extraction이 최종 설계가 아니다.
+  \item \(z\) encoder는 아직 주 representation으로 기능하지 못한다.
+  \item causal pair judge는 Claude Haiku 4.5 dry3 pilot까지 완료했지만, 단일 judge와 작은 sample에 의존한다.
+  \item confirm10은 같은 생성 조건에서 통과했지만, 생성기와 판정기가 같은 Claude Haiku 4.5 계열이다.
+  \item 사람 평가가 아직 없다.
+\end{enumerate}
+
+이 한계들은 단순한 부록 사항이 아니라 현재 주장 강도를 결정한다. 특히 learned encoder 부재와 causal judge 미완성은 최종 논문에서 반드시 해결해야 한다. 현재 결과는 network propagation과 branch feature의 가능성을 보여주지만, end-to-end text-to-trace-to-response 모델 전체를 증명하지는 않는다.
+
+\subsection{위협 요인}
+
+추가로 다음 threat to validity가 있다.
+
+\begin{enumerate}
+  \item \textbf{Feature engineering bias}: \texttt{branch\_mean}이 좋은 이유가 실제 감정 구조 때문인지, 특정 label distribution과 우연히 맞는 통계 때문인지 더 검증해야 한다.
+  \item \textbf{Small sample instability}: n=40 또는 n=80 결과는 bootstrap에 따라 달라질 수 있다.
+  \item \textbf{Judge dependence}: causal proof가 LLM judge에 의존하면 judge model의 bias가 결과에 들어갈 수 있다.
+  \item \textbf{Symbolic label noise}: 외부 appraisal label이 완벽하지 않다면 좋은 neural trace도 낮은 metric을 받을 수 있다.
+  \item \textbf{Overactivation ambiguity}: density가 높을 때 좋은 separation이 나와도, 그것이 감정 특이적 구조인지 전역 활성 artifact인지 구분이 필요하다.
+\end{enumerate}
+
+\section{향후 연구}
+
+후속 작업은 네 방향으로 정리된다.
+
+\begin{enumerate}
+  \item \textbf{Full targeted dynamics run}: n=80에서 통과한 adaptive best config를 full targeted set에서 재검증한다.
+  \item \textbf{Balanced representation metric}: majority baseline 외에 class-balanced nearest-neighbor, stratified subset, bootstrap stability를 추가한다.
+  \item \textbf{Trace feature 개선}: branch slope, early/mid/late phase shift, transition intensity, cluster-level route representation을 추가한다.
+  \item \textbf{Causal proof}: perturbation 중심 실험을 확장하고, ablation은 stronger masking 또는 counterfactual neutralization으로 재설계한다.
+\end{enumerate}
+
+실행 우선순위는 다음과 같다. 첫째, adaptive best config로 full80 confirmatory run을 먼저 수행한다. 둘째, 같은 결과에 대해 \texttt{branch\_mean}, \texttt{branch\_temporal}, phase-aware feature를 함께 비교한다. 셋째, balanced subset을 구성하여 majority baseline 문제를 줄인다. 넷째, causal pair judge smoke를 통과시킨 뒤 full 24-record pair set을 평가한다. 다섯째, learned stimulus encoder를 복구하거나 대체 encoder를 도입해 fallback stimulus 한계를 제거한다.
+
+장기적으로는 symbolic appraisal field를 수동 probe로만 쓰는 단계를 넘어, neural trace에서 appraisal/action axis가 직접 예측되거나 조작되는지를 확인해야 한다. 그때 비로소 EmoNet은 ``trace가 감정 상태 표현이다''라는 강한 주장을 더 엄밀하게 제시할 수 있다.
+
+\section{결론}
+
+EmoNet v3.1은 감정을 라벨이나 생성 조건이 아니라 자극이 신경망 내부를 통과하며 남긴 활성 추적으로 보는 연구선이다. 현재 결과는 완성된 증명이 아니라 방향을 잡아주는 중간 증거다. branch tensor 기반 feature는 emotion-like geometry를 일부 보이며, 특히 \texttt{branch\_mean}은 현재 가장 안정적인 representation 후보이다. 반면 \(z\) embedding과 route-only feature는 아직 약하다. 뉴런 수 증가는 trace 길이를 늘릴 수 있지만 collapse를 해결하지 못했고, adaptive late density control은 n=80 confirm에서 collapse 제거, density 제어, class-balanced representation lift를 동시에 만족했다.
+
+따라서 v3.1의 현재 결론은 신중하지만 이전보다 강해졌다. neural trace는 감정 상태 표현이 될 가능성이 있으며, 그 가능성은 branch dynamics와 density control에 의해 좌우된다. Claude judge pilot은 trace perturbation이 응답 방향을 이동시킬 수 있음을 시사하며, 이 신호는 좋은 답변 품질을 배제한 axis-only blind judge에서도 유지되었다. 단순 ablation은 약했지만, strong neutralization은 정보 제거 대비를 크게 개선했다. confirm10에서는 같은 생성 조건에서 strong neutralization과 coherent perturbation이 동시에 기준을 넘었다. 다음 단계는 full targeted set, 독립 judge 또는 사람 평가를 통해 representation evidence와 generation evidence를 더 크게 확정하는 것이다.
+
+\appendix
+
+\section{부록 A: 초심자용 용어집}
+
+\begin{description}
+  \item[감정 라벨] 분노, 슬픔, 불안 같은 이름표이다. 간단하지만 감정의 내부 구조를 많이 압축한다.
+  \item[Appraisal] 어떤 사건이 나에게 어떤 의미인지 평가하는 과정이다. 예를 들어 ``내 잘못인가'', ``상대가 나를 공격했는가'', ``내가 통제할 수 있는가'' 같은 판단이 포함된다.
+  \item[Action tendency] 감정이 준비시키는 행동 방향이다. 예를 들어 confront, withdraw, repair, seek support 등이 있다.
+  \item[Trace] EmoNet에서 자극이 네트워크를 통과하며 남긴 활성 기록이다. 이 논문에서는 감정 상태 표현 후보이다.
+  \item[Branch] trace 안에서 대표적으로 살아남은 경로이다. 하나의 감정 자극이 어떤 내부 경로로 전개되었는지 나타낸다.
+  \item[Collapse] branch가 거의 형성되지 않고 바로 끝나는 현상이다. 감정 경로가 펼쳐지지 못했기 때문에 representation evidence가 약해질 수 있다.
+  \item[Density] 뉴런이 얼마나 많이 켜졌는지의 비율이다. 너무 낮으면 정보가 부족하고, 너무 높으면 모든 sample이 비슷해질 수 있다.
+  \item[Nearest-neighbor lift] 가장 가까운 trace neighbor가 같은 label을 갖는 비율이 majority baseline보다 얼마나 높은지 나타내는 값이다.
+  \item[Group-distance separation] 같은 label끼리의 거리가 다른 label끼리의 거리보다 얼마나 작은지 측정한다. 양수이면 좋은 신호다.
+\end{description}
+
+\section{부록 B: 현재 재현 가능한 주요 명령}
+
+현재 작업선에서 사용한 주요 명령은 다음 형태이다. 실제 경로와 환경변수는 로컬 환경에 맞게 조정해야 한다.
+
+\begin{verbatim}
+cd .\v3.1
+
+python .\scripts\export_neural_activation_traces.py `
+  --output-dir outputs\neural_trace_probe_v1_full80
+
+python .\scripts\probe_neural_trace_geometry.py `
+  --summary-csv outputs\neural_trace_probe_v1_full80\neural_trace_summary.csv `
+  --trace-dir outputs\neural_trace_probe_v1_full80\traces_npz `
+  --feature-kind branch_mean
+
+python .\scripts\tune_neural_trace_dynamics.py `
+  --grid-mode adaptive `
+  --limit 40 `
+  --max-configs 2 `
+  --output-dir outputs\neural_trace_dynamics_adaptive_sweep_v1 `
+  --resume
+\end{verbatim}
+
+논문 PDF는 다음 명령으로 빌드했다.
+
+\begin{verbatim}
+cd .\v3.1\paper
+xelatex -interaction=nonstopmode -halt-on-error `
+  -output-directory=build emonet_trace_as_emotion_v0_1.tex
+xelatex -interaction=nonstopmode -halt-on-error `
+  -output-directory=build emonet_trace_as_emotion_v0_1.tex
+\end{verbatim}
+
+\section{부록 C: 최종 논문화 전 체크리스트}
+
+\begin{enumerate}
+  \item full80 또는 더 큰 targeted set에서 adaptive best config를 재현한다.
+  \item \texttt{branch\_mean} 결과를 bootstrap confidence interval과 함께 보고한다.
+  \item label-balanced subset 실험을 추가한다.
+  \item learned stimulus encoder 기반 trace export를 수행한다.
+  \item pairwise A/B judge smoke를 통과시킨다.
+  \item full causal pair set에서 trace full 승률과 perturbation direction shift를 보고한다.
+  \item 가능하면 blind human evaluation을 추가한다.
+  \item 최종 논문에서는 working draft 표현을 줄이고, 확정 결과와 exploratory result를 명확히 분리한다.
+\end{enumerate}
+
+\begin{thebibliography}{9}
+
+\bibitem{barrett2017constructed}
+Barrett, L. F. (2017).
+\textit{How Emotions Are Made: The Secret Life of the Brain}.
+Houghton Mifflin Harcourt.
+
+\bibitem{frijda1987action}
+Frijda, N. H. (1987).
+Emotion, cognitive structure, and action tendency.
+\textit{Cognition and Emotion}, 1(2), 115--143.
+
+\bibitem{lazarus1991emotion}
+Lazarus, R. S. (1991).
+\textit{Emotion and Adaptation}.
+Oxford University Press.
+
+\bibitem{ledoux2012rethinking}
+LeDoux, J. (2012).
+Rethinking the emotional brain.
+\textit{Neuron}, 73(4), 653--676.
+
+\bibitem{picard1997affective}
+Picard, R. W. (1997).
+\textit{Affective Computing}.
+MIT Press.
+
+\bibitem{russell2003core}
+Russell, J. A. (2003).
+Core affect and the psychological construction of emotion.
+\textit{Psychological Review}, 110(1), 145--172.
+
+\bibitem{scherer2001appraisal}
+Scherer, K. R. (2001).
+Appraisal considered as a process of multilevel sequential checking.
+In K. R. Scherer, A. Schorr, \& T. Johnstone (Eds.),
+\textit{Appraisal Processes in Emotion: Theory, Methods, Research}
+(pp. 92--120). Oxford University Press.
+
+\end{thebibliography}
+
+\end{document}

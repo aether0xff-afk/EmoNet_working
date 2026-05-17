@@ -1,191 +1,281 @@
 from __future__ import annotations
 
 import html
-import json
-from pathlib import Path
+import os
+from typing import Any
 
 import streamlit as st
 
-from emonet.chat_service import (
-    CONDITIONING_MODES,
-    ChatGenerationConfig,
-    ChatRuntimeConfig,
-    available_style_profiles,
-    build_chat_runtime,
-    generate_chat_turn,
-    parse_episode_payload_text,
+from emonet.chat_service import ChatGenerationConfig, ChatRuntimeConfig, build_chat_runtime, generate_chat_turn
+
+
+st.set_page_config(page_title="EmoNet", layout="wide", initial_sidebar_state="expanded")
+
+MESSAGES_KEY = "emonet_messages"
+ERROR_KEY = "emonet_error"
+USAGE_KEY = "emonet_usage"
+
+CLAUDE_MODEL = "claude-haiku-4-5-20251001"
+CLAUDE_BASE_URL = "https://api.anthropic.com"
+CLAUDE_INPUT_PRICE = 1.0
+CLAUDE_OUTPUT_PRICE = 5.0
+
+SIGNAL_LABELS = (
+    ("dopamine", "Dopamine"),
+    ("serotonin", "Serotonin"),
+    ("norepinephrine", "Norepinephrine"),
+    ("melatonin", "Melatonin"),
 )
 
 
-st.set_page_config(
-    page_title="EmoNet Chat",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
-
-SETTINGS_KEY = "emonet_chat_settings"
-MESSAGES_KEY = "emonet_chat_messages"
-ERROR_KEY = "emonet_chat_error"
-SHOW_DIAGNOSTICS_KEY = "emonet_chat_show_diagnostics"
-SHOW_PROMPT_KEY = "emonet_chat_show_prompt"
-
-
-def _default_settings() -> dict[str, object]:
-    runtime = ChatRuntimeConfig()
-    generation = ChatGenerationConfig()
-    return {
-        "dataset_csv": str(runtime.dataset_csv),
-        "benchmark_csv": str(runtime.benchmark_csv),
-        "model_cache_path": str(runtime.model_cache_path),
-        "z_encoder_path": str(runtime.z_encoder_path),
-        "zs_model_path": str(runtime.zs_model_path),
-        "seed": int(runtime.seed),
-        "z_dim": int(runtime.z_dim),
-        "z_encoder_mode": str(runtime.z_encoder_mode),
-        "prompt_template": str(generation.prompt_template),
-        "base_url": str(generation.base_url),
-        "model_name": str(generation.model_name),
-        "api_key": "",
-        "style_profile": str(generation.style_profile),
-        "conditioning_mode": str(generation.conditioning_mode),
-        "response_temperature": float(generation.response_temperature),
-        "response_max_retries": int(generation.response_max_retries),
-        "max_tokens": int(generation.max_tokens),
-        "timeout_sec": int(generation.timeout_sec),
-        "reasoning_effort": "",
-        "history_turns": int(generation.history_turns),
-    }
-
-
-def _init_session_state() -> None:
-    if SETTINGS_KEY not in st.session_state:
-        st.session_state[SETTINGS_KEY] = _default_settings()
+def _init_state() -> None:
     if MESSAGES_KEY not in st.session_state:
         st.session_state[MESSAGES_KEY] = []
     if ERROR_KEY not in st.session_state:
         st.session_state[ERROR_KEY] = ""
-    if SHOW_DIAGNOSTICS_KEY not in st.session_state:
-        st.session_state[SHOW_DIAGNOSTICS_KEY] = True
-    if SHOW_PROMPT_KEY not in st.session_state:
-        st.session_state[SHOW_PROMPT_KEY] = False
-
-
-@st.cache_resource(show_spinner="EmoNet 자산을 불러오는 중입니다...")
-def _load_runtime(
-    dataset_csv: str,
-    benchmark_csv: str,
-    model_cache_path: str,
-    z_encoder_path: str,
-    zs_model_path: str,
-    seed: int,
-    z_dim: int,
-    z_encoder_mode: str,
-):
-    return build_chat_runtime(
-        ChatRuntimeConfig(
-            dataset_csv=Path(dataset_csv),
-            benchmark_csv=Path(benchmark_csv),
-            model_cache_path=Path(model_cache_path),
-            z_encoder_path=Path(z_encoder_path),
-            zs_model_path=Path(zs_model_path),
-            seed=int(seed),
-            z_dim=int(z_dim),
-            z_encoder_mode=str(z_encoder_mode),
-        )
-    )
+    if USAGE_KEY not in st.session_state:
+        st.session_state[USAGE_KEY] = {"input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0}
 
 
 def _inject_css() -> None:
     st.markdown(
         """
 <style>
+    :root {
+        --bg: #0f1318;
+        --panel: #151b22;
+        --panel-soft: #19212a;
+        --panel-muted: #11171d;
+        --border: rgba(154, 166, 184, 0.16);
+        --border-strong: rgba(154, 166, 184, 0.24);
+        --text: #edf2f7;
+        --muted: #aab6c5;
+        --faint: #7f8b9a;
+        --accent: #78b88a;
+        --accent-soft: rgba(120, 184, 138, 0.13);
+        --user: #1f3f35;
+    }
+
     .stApp {
-        background:
-            radial-gradient(circle at top left, rgba(43, 138, 90, 0.14), transparent 34%),
-            radial-gradient(circle at top right, rgba(190, 151, 92, 0.12), transparent 28%),
-            linear-gradient(180deg, #0c1117 0%, #121923 55%, #171f2a 100%);
-        color: #edf2f7;
+        background: var(--bg);
+        color: var(--text);
     }
+
+    .block-container {
+        max-width: 1040px;
+        padding-top: 1.25rem;
+        padding-bottom: 6rem;
+    }
+
     section[data-testid="stSidebar"] {
-        background:
-            linear-gradient(180deg, rgba(11, 17, 24, 0.96) 0%, rgba(15, 24, 34, 0.96) 100%);
-        border-right: 1px solid rgba(151, 165, 184, 0.16);
+        background: var(--panel);
+        border-right: 1px solid var(--border);
     }
-    .app-shell {
-        max-width: 980px;
-        margin: 0 auto 1.25rem auto;
+
+    section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
+    section[data-testid="stSidebar"] label {
+        color: var(--muted);
     }
-    .hero-card {
-        padding: 1.2rem 1.3rem 1rem 1.3rem;
-        border-radius: 24px;
-        border: 1px solid rgba(164, 178, 198, 0.14);
-        background: linear-gradient(135deg, rgba(13, 19, 27, 0.94), rgba(22, 30, 41, 0.9));
-        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.24);
+
+    .app-header {
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 1rem;
         margin-bottom: 1rem;
     }
-    .hero-title {
-        font-size: 2rem;
-        font-weight: 700;
-        line-height: 1.1;
-        margin-bottom: 0.35rem;
-        letter-spacing: -0.02em;
+
+    .app-title-row {
+        align-items: flex-end;
+        display: flex;
+        gap: 0.8rem;
+        justify-content: space-between;
+        flex-wrap: wrap;
     }
-    .hero-subtitle {
-        color: #b7c3d3;
+
+    .app-title {
+        font-size: 2rem;
+        font-weight: 650;
+        letter-spacing: 0;
+        line-height: 1.1;
+        margin: 0;
+    }
+
+    .app-subtitle {
+        color: var(--muted);
         font-size: 0.98rem;
         line-height: 1.55;
-        margin-bottom: 0.85rem;
+        margin: 0.42rem 0 0 0;
+        max-width: 720px;
     }
-    .hero-badges {
+
+    .status-row {
         display: flex;
         flex-wrap: wrap;
         gap: 0.45rem;
+        margin-top: 0.85rem;
     }
-    .hero-badge {
-        border-radius: 999px;
-        padding: 0.38rem 0.72rem;
-        border: 1px solid rgba(123, 211, 137, 0.18);
-        background: rgba(39, 84, 61, 0.24);
-        color: #d5f5dc;
+
+    .status-pill {
+        background: var(--panel-soft);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: #d8e1ea;
         font-size: 0.82rem;
+        line-height: 1.2;
+        padding: 0.38rem 0.6rem;
+        white-space: normal;
     }
-    .chat-bubble {
-        padding: 0.95rem 1rem;
-        border-radius: 22px;
-        border: 1px solid rgba(167, 180, 196, 0.12);
-        line-height: 1.72;
-        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.14);
+
+    .usage-wrap {
+        margin: 0.25rem 0 1.1rem 0;
     }
-    .chat-bubble.user {
-        background: linear-gradient(135deg, rgba(31, 66, 54, 0.95), rgba(37, 95, 71, 0.88));
-        color: #f2f9f4;
+
+    div[data-testid="stMetric"] {
+        background: var(--panel-muted);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        min-height: 86px;
+        padding: 0.85rem 0.95rem;
     }
-    .chat-bubble.assistant {
-        background: linear-gradient(135deg, rgba(24, 31, 40, 0.96), rgba(35, 45, 58, 0.92));
-        color: #edf2f7;
+
+    div[data-testid="stMetric"] label,
+    div[data-testid="stMetric"] [data-testid="stMetricLabel"] {
+        color: var(--muted);
     }
-    .suggestion-card {
-        border-radius: 18px;
-        border: 1px solid rgba(167, 180, 196, 0.14);
-        background: rgba(17, 24, 33, 0.84);
+
+    div[data-testid="stMetricValue"] {
+        color: var(--text);
+        font-size: 1.28rem;
+        letter-spacing: 0;
+    }
+
+    .bubble {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        line-height: 1.68;
+        margin-bottom: 0.45rem;
         padding: 0.9rem 1rem;
-        min-height: 132px;
+        overflow-wrap: anywhere;
+        word-break: keep-all;
     }
-    .suggestion-title {
-        font-size: 0.94rem;
-        color: #f3f6fa;
-        margin-bottom: 0.4rem;
-        font-weight: 600;
+
+    .bubble.user {
+        background: var(--user);
+        color: #f5fbf7;
     }
-    .suggestion-body {
-        font-size: 0.88rem;
-        color: #aeb8c6;
+
+    .bubble.assistant {
+        background: var(--panel-soft);
+        color: var(--text);
+    }
+
+    .signal-grid {
+        display: grid;
+        gap: 0.55rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin: 0.35rem 0 0.8rem 0;
+    }
+
+    .signal-row {
+        background: var(--panel-muted);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.65rem 0.7rem;
+    }
+
+    .signal-head {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        gap: 0.65rem;
+        margin-bottom: 0.45rem;
+    }
+
+    .signal-name {
+        color: #d9e2eb;
+        font-size: 0.86rem;
+        font-weight: 580;
+    }
+
+    .signal-value {
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .signal-track {
+        background: rgba(154, 166, 184, 0.14);
+        border-radius: 999px;
+        height: 6px;
+        overflow: hidden;
+    }
+
+    .signal-fill {
+        background: var(--accent);
+        border-radius: 999px;
+        height: 6px;
+    }
+
+    .detail-line {
+        color: var(--muted);
+        font-size: 0.9rem;
         line-height: 1.55;
+        margin: 0.18rem 0;
+        overflow-wrap: anywhere;
     }
-    .sidebar-note {
-        color: #9eabba;
-        font-size: 0.84rem;
-        line-height: 1.55;
+
+    .empty-state {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--muted);
+        margin: 1rem 0;
+        padding: 0.85rem 0.95rem;
+    }
+
+    .stButton > button {
+        background: var(--panel-soft);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text);
+        min-height: 3.15rem;
+        white-space: normal;
+    }
+
+    .stButton > button:hover {
+        background: #1d2731;
+        border-color: var(--border-strong);
+        color: var(--text);
+    }
+
+    div[data-testid="stExpander"] {
+        background: transparent;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin-bottom: 0.8rem;
+    }
+
+    div[data-testid="stExpander"] summary {
+        color: #d9e2eb;
+    }
+
+    div[data-testid="stChatInput"] textarea {
+        background: var(--panel);
+        border-color: var(--border);
+        color: var(--text);
+    }
+
+    @media (max-width: 720px) {
+        .block-container {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+
+        .app-title {
+            font-size: 1.7rem;
+        }
+
+        .signal-grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
         """,
@@ -193,325 +283,227 @@ def _inject_css() -> None:
     )
 
 
-def _render_header(settings: dict[str, object]) -> None:
+def _api_key_from_input(raw: str) -> str:
+    return str(raw or "").strip() or os.environ.get("ANTHROPIC_API_KEY", "").strip()
+
+
+def _estimate_cost(input_tokens: int, output_tokens: int) -> float:
+    return (input_tokens * CLAUDE_INPUT_PRICE + output_tokens * CLAUDE_OUTPUT_PRICE) / 1_000_000.0
+
+
+def _usage_metrics(budget_usd: float) -> None:
+    usage = st.session_state[USAGE_KEY]
+    spent = float(usage.get("cost_usd", 0.0) or 0.0)
+    input_tokens = int(usage.get("input_tokens", 0) or 0)
+    output_tokens = int(usage.get("output_tokens", 0) or 0)
+    st.markdown("<div class='usage-wrap'>", unsafe_allow_html=True)
+    cols = st.columns(3)
+    cols[0].metric("Session spent", f"${spent:.4f}")
+    cols[1].metric("Budget left", f"${max(0.0, budget_usd - spent):.2f}")
+    cols[2].metric("Tokens", f"{input_tokens} in / {output_tokens} out")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+@st.cache_resource(show_spinner="Loading EmoNet runtime...")
+def _load_runtime() -> Any:
+    return build_chat_runtime(ChatRuntimeConfig())
+
+
+def _generation_config(api_key: str) -> ChatGenerationConfig:
+    return ChatGenerationConfig(
+        provider="anthropic",
+        base_url=CLAUDE_BASE_URL,
+        model_name=CLAUDE_MODEL,
+        api_key=api_key,
+        style_profile="extended40",
+        conditioning_mode="hybrid_trace",
+        response_temperature=0.45,
+        response_max_retries=1,
+        max_tokens=600,
+        timeout_sec=180,
+        history_turns=4,
+    )
+
+
+def _render_header() -> None:
     st.markdown(
-        (
-            "<div class='app-shell'>"
-            "<div class='hero-card'>"
-            "<div class='hero-title'>EmoNet Chat</div>"
-            "<div class='hero-subtitle'>"
-            "입력 문장을 EmoNet branch dynamics로 먼저 읽고, 그 결과를 OpenAI-compatible 모델에 condition하여 "
-            "대화형 답변을 만드는 Streamlit 인터페이스다."
-            "</div>"
-            "<div class='hero-badges'>"
-            f"<span class='hero-badge'>mode: {html.escape(str(settings['conditioning_mode']))}</span>"
-            f"<span class='hero-badge'>style: {html.escape(str(settings['style_profile']))}</span>"
-            f"<span class='hero-badge'>llm: {html.escape(str(settings['model_name']))}</span>"
-            "</div>"
-            "</div>"
-            "</div>"
-        ),
+        """
+<header class="app-header">
+  <div class="app-title-row">
+    <h1 class="app-title">EmoNet</h1>
+  </div>
+  <p class="app-subtitle">감정의 결을 낮추지 않고 읽어, 지금 상황에 맞는 한국어 응답을 만듭니다.</p>
+  <div class="status-row">
+    <span class="status-pill">Claude Haiku 4.5</span>
+    <span class="status-pill">hybrid_trace</span>
+    <span class="status-pill">extended40</span>
+  </div>
+</header>
+        """,
         unsafe_allow_html=True,
     )
 
 
-def _render_suggestions() -> str | None:
-    examples = [
-        ("공개적 무시", "회의에서 또 나만 공개적으로 무시당했어. 바로 따지고 싶을 정도로 거슬려."),
-        ("소진과 피로", "이번 주 내내 야근이라 머리가 멍하고 다 놓아버리고 싶어."),
-        ("양가감정", "잘된 일인데도 이상하게 기쁘기보다 불안하고 예민해."),
-    ]
-    prompt = None
-    st.markdown("<div class='app-shell'>", unsafe_allow_html=True)
-    cols = st.columns(len(examples))
-    for idx, (title, example) in enumerate(examples):
-        with cols[idx]:
-            st.markdown(
-                (
-                    "<div class='suggestion-card'>"
-                    f"<div class='suggestion-title'>{html.escape(title)}</div>"
-                    f"<div class='suggestion-body'>{html.escape(example)}</div>"
-                    "</div>"
-                ),
-                unsafe_allow_html=True,
-            )
-            if st.button("이 예시로 시작", key=f"example_{idx}", use_container_width=True):
-                prompt = example
-    st.markdown("</div>", unsafe_allow_html=True)
-    return prompt
+def _safe_html_text(content: object) -> str:
+    return html.escape(str(content or "")).replace("\n", "<br>")
 
 
-def _render_message(role: str, content: str) -> None:
-    css_class = "user" if role == "user" else "assistant"
+def _render_message(role: str, content: str, record: dict[str, Any] | None = None) -> None:
+    css_role = "user" if role == "user" else "assistant"
     with st.chat_message(role):
+        st.markdown(f"<div class='bubble {css_role}'>{_safe_html_text(content)}</div>", unsafe_allow_html=True)
+        if css_role == "assistant" and record:
+            _render_signal_summary(record)
+
+
+def _clamped_signal(value: object) -> float:
+    try:
+        return max(0.0, min(1.0, float(value)))
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _render_signal_grid(stim_vec: list[float]) -> None:
+    rows: list[str] = []
+    for idx, (_key, label) in enumerate(SIGNAL_LABELS):
+        value = _clamped_signal(stim_vec[idx] if idx < len(stim_vec) else 0.0)
+        rows.append(
+            f"""
+<div class="signal-row">
+  <div class="signal-head">
+    <span class="signal-name">{html.escape(label)}</span>
+    <span class="signal-value">{value:.2f}</span>
+  </div>
+  <div class="signal-track"><div class="signal-fill" style="width: {value * 100:.1f}%"></div></div>
+</div>
+            """
+        )
+    st.markdown(f"<div class='signal-grid'>{''.join(rows)}</div>", unsafe_allow_html=True)
+
+
+def _render_signal_summary(record: dict[str, Any]) -> None:
+    with st.expander("Signal summary", expanded=False):
+        stim_vec = list(record.get("stim_vec", []) or [])
+        _render_signal_grid(stim_vec)
+
+        style_tags = [str(tag) for tag in record.get("style_tags", []) if str(tag).strip()]
+        style_text = ", ".join(style_tags[:8]) if style_tags else "No style tags"
+        branch_len = int(record.get("dominant_branch_len", 0) or 0)
+        termination = str(record.get("termination_reason", "") or "unknown")
+        retry_count = int(record.get("response_retry_count", 0) or 0)
+
         st.markdown(
-            f"<div class='chat-bubble {css_class}'>{html.escape(content).replace(chr(10), '<br>')}</div>",
+            "\n".join(
+                [
+                    f"<p class='detail-line'><b>Style</b>: {html.escape(style_text)}</p>",
+                    f"<p class='detail-line'><b>Dominant branch</b>: {branch_len}</p>",
+                    f"<p class='detail-line'><b>Termination</b>: {html.escape(termination)}</p>",
+                    f"<p class='detail-line'><b>Retries</b>: {retry_count}</p>",
+                ]
+            ),
             unsafe_allow_html=True,
         )
 
 
-def _render_assistant_details(message: dict[str, object], show_prompt: bool) -> None:
-    record = message.get("record")
-    if not isinstance(record, dict):
-        return
-    with st.expander("감정 진단", expanded=False):
-        top_cols = st.columns(3)
-        top_cols[0].metric("Dominant Branch", int(record.get("dominant_branch_len", 0)))
-        top_cols[1].metric("Ticks", int(record.get("ticks_run", 0)))
-        top_cols[2].metric("Retries", int(record.get("response_retry_count", 0)))
-        if record.get("style_tags"):
-            st.caption("Style tags")
-            st.write(", ".join(str(tag) for tag in record["style_tags"]))
-        if record.get("style_summary_text"):
-            st.caption("Style summary")
-            st.write(str(record["style_summary_text"]))
-        if record.get("expression_cues_text"):
-            st.caption("Expression cues")
-            st.write(str(record["expression_cues_text"]))
-        if record.get("trace_summary_text"):
-            st.caption("Trace summary")
-            st.write(str(record["trace_summary_text"]))
-        if record.get("appraisal_summary_text"):
-            st.caption("Appraisal summary")
-            st.write(str(record["appraisal_summary_text"]))
-        if record.get("episode_summary_text"):
-            st.caption("Episode summary")
-            st.write(str(record["episode_summary_text"]))
-        details = {
-            "stim_vec": record.get("stim_vec", []),
-            "termination_reason": record.get("termination_reason", ""),
-            "anti_softening_rules": record.get("anti_softening_rules", []),
-            "grounding_rules": record.get("grounding_rules", []),
-            "response_validation_errors": record.get("response_validation_errors", []),
-        }
-        st.json(details, expanded=False)
-    if show_prompt:
-        with st.expander("생성 프롬프트", expanded=False):
-            st.code(str(record.get("generation_prompt", "")), language="markdown")
+def _generate_reply(prompt: str, api_key: str) -> None:
+    if not api_key:
+        raise ValueError("Claude API key가 필요합니다. 왼쪽 sidebar에 입력하거나 ANTHROPIC_API_KEY 환경변수를 설정하세요.")
 
-
-def _build_runtime_config(settings: dict[str, object]) -> ChatRuntimeConfig:
-    return ChatRuntimeConfig(
-        dataset_csv=Path(str(settings["dataset_csv"])),
-        benchmark_csv=Path(str(settings["benchmark_csv"])),
-        model_cache_path=Path(str(settings["model_cache_path"])),
-        z_encoder_path=Path(str(settings["z_encoder_path"])),
-        zs_model_path=Path(str(settings["zs_model_path"])),
-        seed=int(settings["seed"]),
-        z_dim=int(settings["z_dim"]),
-        z_encoder_mode=str(settings["z_encoder_mode"]),
-    )
-
-
-def _build_generation_config(settings: dict[str, object]) -> ChatGenerationConfig:
-    reasoning_effort = str(settings.get("reasoning_effort", "") or "").strip() or None
-    api_key = str(settings.get("api_key", "") or "").strip() or None
-    return ChatGenerationConfig(
-        base_url=str(settings["base_url"]),
-        model_name=str(settings["model_name"]),
-        api_key=api_key,
-        prompt_template=Path(str(settings["prompt_template"])),
-        style_profile=str(settings["style_profile"]),
-        conditioning_mode=str(settings["conditioning_mode"]),
-        response_temperature=float(settings["response_temperature"]),
-        response_max_retries=int(settings["response_max_retries"]),
-        max_tokens=int(settings["max_tokens"]),
-        timeout_sec=int(settings["timeout_sec"]),
-        reasoning_effort=reasoning_effort,
-        history_turns=int(settings["history_turns"]),
-    )
-
-
-def _transcript_json(settings: dict[str, object], messages: list[dict[str, object]]) -> str:
-    payload = {"settings": settings, "messages": messages}
-    return json.dumps(payload, ensure_ascii=False, indent=2)
-
-
-def _render_sidebar(settings: dict[str, object]) -> tuple[dict[str, object], dict[str, object] | None]:
-    active_settings = dict(settings)
-    episode_payload = None
-    with st.sidebar:
-        st.markdown("## App Settings")
-        st.markdown(
-            "<div class='sidebar-note'>"
-            "LLM endpoint, conditioning mode, artifact 경로를 여기서 고정한 뒤 대화를 시작한다."
-            "</div>",
-            unsafe_allow_html=True,
-        )
-        with st.form("settings_form"):
-            base_url = st.text_input("Base URL", value=str(active_settings["base_url"]))
-            model_name = st.text_input("Model Name", value=str(active_settings["model_name"]))
-            api_key = st.text_input("API Key", value=str(active_settings["api_key"]), type="password")
-            conditioning_mode = st.selectbox(
-                "Conditioning Mode",
-                options=list(CONDITIONING_MODES),
-                index=list(CONDITIONING_MODES).index(str(active_settings["conditioning_mode"])),
-            )
-            style_profiles = list(available_style_profiles())
-            style_profile = st.selectbox(
-                "Style Profile",
-                options=style_profiles,
-                index=style_profiles.index(str(active_settings["style_profile"])),
-            )
-            history_turns = st.slider("Recent Turns", min_value=0, max_value=8, value=int(active_settings["history_turns"]))
-            response_temperature = st.slider(
-                "Response Temperature",
-                min_value=0.0,
-                max_value=1.0,
-                value=float(active_settings["response_temperature"]),
-                step=0.05,
-            )
-            response_max_retries = st.number_input(
-                "Max Retries",
-                min_value=0,
-                max_value=6,
-                value=int(active_settings["response_max_retries"]),
-                step=1,
-            )
-            max_tokens = st.number_input(
-                "Max Tokens",
-                min_value=64,
-                max_value=4096,
-                value=int(active_settings["max_tokens"]),
-                step=64,
-            )
-            timeout_sec = st.number_input(
-                "Timeout (sec)",
-                min_value=10,
-                max_value=600,
-                value=int(active_settings["timeout_sec"]),
-                step=10,
-            )
-            reasoning_effort = st.text_input("Reasoning Effort", value=str(active_settings["reasoning_effort"]))
-            with st.expander("Runtime Paths", expanded=False):
-                dataset_csv = st.text_input("Dataset CSV", value=str(active_settings["dataset_csv"]))
-                benchmark_csv = st.text_input("Benchmark CSV", value=str(active_settings["benchmark_csv"]))
-                model_cache_path = st.text_input("Stim Cache Path", value=str(active_settings["model_cache_path"]))
-                z_encoder_path = st.text_input("Z Encoder Path", value=str(active_settings["z_encoder_path"]))
-                zs_model_path = st.text_input("ZS Decoder Path", value=str(active_settings["zs_model_path"]))
-                prompt_template = st.text_input("Prompt Template", value=str(active_settings["prompt_template"]))
-            with st.expander("Model Parameters", expanded=False):
-                seed = st.number_input("Seed", min_value=0, max_value=999999, value=int(active_settings["seed"]), step=1)
-                z_dim = st.number_input("Z Dimension", min_value=8, max_value=256, value=int(active_settings["z_dim"]), step=8)
-                z_encoder_mode = st.selectbox(
-                    "Z Encoder Mode",
-                    options=["auto", "stat", "transformer"],
-                    index=["auto", "stat", "transformer"].index(str(active_settings["z_encoder_mode"])),
-                )
-            submitted = st.form_submit_button("설정 적용", use_container_width=True)
-        if submitted:
-            active_settings = {
-                "base_url": base_url,
-                "model_name": model_name,
-                "api_key": api_key,
-                "conditioning_mode": conditioning_mode,
-                "style_profile": style_profile,
-                "history_turns": int(history_turns),
-                "response_temperature": float(response_temperature),
-                "response_max_retries": int(response_max_retries),
-                "max_tokens": int(max_tokens),
-                "timeout_sec": int(timeout_sec),
-                "reasoning_effort": reasoning_effort,
-                "dataset_csv": dataset_csv,
-                "benchmark_csv": benchmark_csv,
-                "model_cache_path": model_cache_path,
-                "z_encoder_path": z_encoder_path,
-                "zs_model_path": zs_model_path,
-                "prompt_template": prompt_template,
-                "seed": int(seed),
-                "z_dim": int(z_dim),
-                "z_encoder_mode": z_encoder_mode,
-            }
-            st.session_state[SETTINGS_KEY] = active_settings
-            st.session_state[ERROR_KEY] = ""
-            st.rerun()
-        episode_file = st.file_uploader("Episode JSON", type=["json"])
-        if episode_file is not None:
-            try:
-                episode_payload = parse_episode_payload_text(episode_file.getvalue().decode("utf-8"))
-                st.success("episode payload loaded")
-            except Exception as exc:
-                st.error(f"episode payload error: {exc}")
-        st.toggle("내부 진단 보기", key=SHOW_DIAGNOSTICS_KEY)
-        st.toggle("생성 프롬프트 보기", key=SHOW_PROMPT_KEY)
-        if st.button("대화 초기화", use_container_width=True):
-            st.session_state[MESSAGES_KEY] = []
-            st.session_state[ERROR_KEY] = ""
-            st.rerun()
-        st.download_button(
-            "대화 JSON 내려받기",
-            data=_transcript_json(active_settings, st.session_state[MESSAGES_KEY]),
-            file_name="emonet_chat_transcript.json",
-            mime="application/json",
-            use_container_width=True,
-        )
-    return active_settings, episode_payload
-
-
-def _process_prompt(prompt: str, settings: dict[str, object], episode_payload: dict[str, object] | None) -> None:
     history = [
         {"role": str(message.get("role", "")), "content": str(message.get("content", ""))}
         for message in st.session_state[MESSAGES_KEY]
     ]
     st.session_state[MESSAGES_KEY].append({"role": "user", "content": prompt})
-    runtime_config = _build_runtime_config(settings)
-    generation_config = _build_generation_config(settings)
-    with st.spinner("응답을 생성하는 중입니다..."):
-        runtime = _load_runtime(
-            dataset_csv=str(runtime_config.dataset_csv),
-            benchmark_csv=str(runtime_config.benchmark_csv),
-            model_cache_path=str(runtime_config.model_cache_path),
-            z_encoder_path=str(runtime_config.z_encoder_path),
-            zs_model_path=str(runtime_config.zs_model_path),
-            seed=int(runtime_config.seed),
-            z_dim=int(runtime_config.z_dim),
-            z_encoder_mode=str(runtime_config.z_encoder_mode),
-        )
-        result = generate_chat_turn(
-            runtime=runtime,
-            generation_config=generation_config,
-            input_text=prompt,
-            history=history,
-            episode_payload=episode_payload,
-        )
+
+    runtime = _load_runtime()
+    result = generate_chat_turn(
+        runtime=runtime,
+        generation_config=_generation_config(api_key),
+        input_text=prompt,
+        history=history,
+    )
     st.session_state[MESSAGES_KEY].append(
-        {
-            "role": "assistant",
-            "content": result.assistant_text,
-            "record": result.record,
-        }
+        {"role": "assistant", "content": result.assistant_text, "record": result.record}
     )
 
+    usage = dict(result.record.get("llm_usage", {}))
+    input_tokens = int(usage.get("input_tokens", 0) or 0)
+    output_tokens = int(usage.get("output_tokens", 0) or 0)
+    total = dict(st.session_state[USAGE_KEY])
+    total["input_tokens"] = int(total.get("input_tokens", 0) or 0) + input_tokens
+    total["output_tokens"] = int(total.get("output_tokens", 0) or 0) + output_tokens
+    total["cost_usd"] = float(total.get("cost_usd", 0.0) or 0.0) + _estimate_cost(input_tokens, output_tokens)
+    st.session_state[USAGE_KEY] = total
 
-def main() -> None:
-    _init_session_state()
-    _inject_css()
-    settings, episode_payload = _render_sidebar(st.session_state[SETTINGS_KEY])
-    _render_header(settings)
+
+def _submit_prompt(prompt: str, api_key: str) -> None:
+    try:
+        st.session_state[ERROR_KEY] = ""
+        _generate_reply(prompt.strip(), api_key)
+    except Exception as exc:
+        st.session_state[ERROR_KEY] = str(exc)
+
+
+def _render_examples(api_key: str) -> None:
+    examples = [
+        "회의에서 또 나만 공개적으로 무시당했어. 바로 따지고 싶을 정도로 거슬려.",
+        "이번 주 내내 야근이라 머리가 멍하고 다 놓아버리고 싶어.",
+        "잘된 일인데도 이상하게 기쁘기보다 불안하고 예민해.",
+    ]
+    cols = st.columns(3)
+    for idx, example in enumerate(examples):
+        if cols[idx].button(example, use_container_width=True):
+            _submit_prompt(example, api_key)
+            st.rerun()
+
+
+def _render_chat(api_key: str, budget_usd: float) -> None:
+    _render_header()
+    _usage_metrics(budget_usd)
+
     if st.session_state[ERROR_KEY]:
         st.error(st.session_state[ERROR_KEY])
 
-    starter_prompt = None
     if not st.session_state[MESSAGES_KEY]:
-        starter_prompt = _render_suggestions()
+        st.markdown(
+            "<div class='empty-state'>아래 예시를 누르거나, 지금 감정이 생긴 상황을 직접 적어보세요.</div>",
+            unsafe_allow_html=True,
+        )
+        _render_examples(api_key)
 
-    st.markdown("<div class='app-shell'>", unsafe_allow_html=True)
     for message in st.session_state[MESSAGES_KEY]:
-        _render_message(str(message.get("role", "")), str(message.get("content", "")))
-        if str(message.get("role", "")) == "assistant" and bool(st.session_state[SHOW_DIAGNOSTICS_KEY]):
-            _render_assistant_details(message, bool(st.session_state[SHOW_PROMPT_KEY]))
-    st.markdown("</div>", unsafe_allow_html=True)
+        record = message.get("record") if isinstance(message.get("record"), dict) else None
+        _render_message(str(message.get("role", "")), str(message.get("content", "")), record)
 
-    prompt = st.chat_input("메시지를 입력하세요")
-    active_prompt = starter_prompt or prompt
-    if not active_prompt:
-        return
-    try:
-        st.session_state[ERROR_KEY] = ""
-        _process_prompt(str(active_prompt).strip(), settings, episode_payload)
-    except Exception as exc:
-        st.session_state[ERROR_KEY] = str(exc)
-    st.rerun()
+    prompt = st.chat_input("지금 감정이 생긴 상황을 적어보세요")
+    if prompt:
+        _submit_prompt(prompt, api_key)
+        st.rerun()
+
+
+def _render_sidebar() -> tuple[str, float]:
+    with st.sidebar:
+        st.header("Claude")
+        api_key = _api_key_from_input(st.text_input("API key", type="password"))
+        budget = st.number_input("Budget", min_value=0.0, max_value=1000.0, value=22.0, step=0.5)
+        st.caption("API key는 파일에 저장하지 않습니다.")
+
+        st.divider()
+        if st.button("Clear chat", use_container_width=True):
+            st.session_state[MESSAGES_KEY] = []
+            st.session_state[ERROR_KEY] = ""
+            st.rerun()
+        if st.button("Reset usage", use_container_width=True):
+            st.session_state[USAGE_KEY] = {"input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0}
+            st.rerun()
+    return api_key, float(budget)
+
+
+def main() -> None:
+    _init_state()
+    _inject_css()
+    api_key, budget = _render_sidebar()
+    _render_chat(api_key, budget)
 
 
 if __name__ == "__main__":

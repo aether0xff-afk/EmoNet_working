@@ -1,0 +1,17 @@
+{
+  "rows": 2,
+  "ok_rows": 0,
+  "pending_rows": 2,
+  "error_rows": 0,
+  "overall": {
+    "n": 0,
+    "non_tie_n": 0,
+    "winner_counts": {},
+    "success_count": 0,
+    "success_rate": 0.0,
+    "non_tie_success_rate": 0.0
+  },
+  "overall_non_tie_success_rate": 0.0,
+  "by_question_type": {},
+  "by_axis": {}
+}

@@ -1,0 +1,7 @@
+{
+  "source_csv": "outputs\\experiments\\eval_axis_split_v1\\targeted_records.csv",
+  "output_csv": "outputs\\experiments\\eval_axis_split_v1\\targeted_records_pilot10.csv",
+  "rows": 10,
+  "seed": 42,
+  "note": "Downsampled pilot set from targeted_records.csv because build_targeted_superiority_set.py uses fixed bucket counts before target_size."
+}

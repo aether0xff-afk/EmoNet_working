@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="560" viewBox="0 0 1100 560">
+<style>
+text { font-family: 'Malgun Gothic', 'Segoe UI', sans-serif; fill: #1f2937; }
+.title { font-size: 24px; font-weight: 700; }
+.subtitle { font-size: 13px; fill: #6b7280; }
+.axis { font-size: 12px; fill: #4b5563; }
+.label { font-size: 12px; }
+.small { font-size: 11px; fill: #4b5563; }
+.value { font-size: 11px; font-weight: 600; }
+.grid { stroke: #e5e7eb; stroke-width: 1; }
+.axis-line { stroke: #9ca3af; stroke-width: 1.2; }
+.note { font-size: 12px; fill: #374151; }
+</style>
+<rect x="0" y="0" width="100%" height="100%" fill="#ffffff"/>
+<text class="title" x="40" y="42">Dominant Branch Length Distribution</text>
+<text class="subtitle" x="40" y="66">Structfix export, binned percentages across dominant-branch ranges</text>
+<line class="grid" x1="90" y1="110.00" x2="1060" y2="110.00"/>
+<text class="axis" x="82" y="114.00" text-anchor="end">25</text>
+<line class="grid" x1="90" y1="181.00" x2="1060" y2="181.00"/>
+<text class="axis" x="82" y="185.00" text-anchor="end">20</text>
+<line class="grid" x1="90" y1="252.00" x2="1060" y2="252.00"/>
+<text class="axis" x="82" y="256.00" text-anchor="end">15</text>
+<line class="grid" x1="90" y1="323.00" x2="1060" y2="323.00"/>
+<text class="axis" x="82" y="327.00" text-anchor="end">10</text>
+<line class="grid" x1="90" y1="394.00" x2="1060" y2="394.00"/>
+<text class="axis" x="82" y="398.00" text-anchor="end">5</text>
+<line class="grid" x1="90" y1="465.00" x2="1060" y2="465.00"/>
+<text class="axis" x="82" y="469.00" text-anchor="end">0</text>
+<line class="axis-line" x1="90" y1="465" x2="1060" y2="465"/>
+<line class="axis-line" x1="90" y1="110" x2="90" y2="465"/>
+<rect x="115.89" y="330.34" width="56.00" height="134.66" rx="6" fill="#2563eb"/>
+<text class="value" x="143.89" y="322.34" text-anchor="middle">9.48</text>
+<text class="label" x="143.89" y="485.00" text-anchor="middle">1</text>
+<rect x="223.67" y="452.82" width="56.00" height="12.18" rx="6" fill="#93c5fd"/>
+<text class="value" x="251.67" y="444.82" text-anchor="middle">0.86</text>
+<text class="label" x="251.67" y="485.00" text-anchor="middle">2-10</text>
+<rect x="331.44" y="387.66" width="56.00" height="77.34" rx="6" fill="#93c5fd"/>
+<text class="value" x="359.44" y="379.66" text-anchor="middle">5.45</text>
+<text class="label" x="359.44" y="485.00" text-anchor="middle">11-20</text>
+<rect x="439.22" y="271.95" width="56.00" height="193.05" rx="6" fill="#93c5fd"/>
+<text class="value" x="467.22" y="263.95" text-anchor="middle">13.60</text>
+<text class="label" x="467.22" y="485.00" text-anchor="middle">21-40</text>
+<rect x="547.00" y="259.98" width="56.00" height="205.02" rx="6" fill="#93c5fd"/>
+<text class="value" x="575.00" y="251.98" text-anchor="middle">14.44</text>
+<text class="label" x="575.00" y="485.00" text-anchor="middle">41-60</text>
+<rect x="654.78" y="275.58" width="56.00" height="189.42" rx="6" fill="#93c5fd"/>
+<text class="value" x="682.78" y="267.58" text-anchor="middle">13.34</text>
+<text class="label" x="682.78" y="485.00" text-anchor="middle">61-80</text>
+<rect x="762.56" y="311.66" width="56.00" height="153.34" rx="6" fill="#93c5fd"/>
+<text class="value" x="790.56" y="303.66" text-anchor="middle">10.80</text>
+<text class="label" x="790.56" y="485.00" text-anchor="middle">81-100</text>
+<rect x="870.33" y="346.32" width="56.00" height="118.68" rx="6" fill="#93c5fd"/>
+<text class="value" x="898.33" y="338.32" text-anchor="middle">8.36</text>
+<text class="label" x="898.33" y="485.00" text-anchor="middle">101-120</text>
+<rect x="978.11" y="128.70" width="56.00" height="336.30" rx="6" fill="#1d4ed8"/>
+<text class="value" x="1006.11" y="120.70" text-anchor="middle">23.68</text>
+<text class="label" x="1006.11" y="485.00" text-anchor="middle">121-126</text>
+<text class="axis" x="32" y="94" text-anchor="start">sample percentage (%)</text>
+<text class="note" x="40" y="536">Bins are used because 123 distinct branch lengths make per-length bars unreadable. Collapse is reduced, but the 121-126 tail remains large.</text>
+</svg>

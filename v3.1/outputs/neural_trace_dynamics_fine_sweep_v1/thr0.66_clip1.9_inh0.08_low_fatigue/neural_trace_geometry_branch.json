@@ -1,0 +1,173 @@
+{
+  "summary_csv": "outputs\\neural_trace_dynamics_fine_sweep_v1\\thr0.66_clip1.9_inh0.08_low_fatigue\\neural_trace_summary.csv",
+  "trace_dir": "outputs\\neural_trace_dynamics_fine_sweep_v1\\thr0.66_clip1.9_inh0.08_low_fatigue\\traces_npz",
+  "feature_kind": "branch_mean",
+  "n": 40,
+  "feature_dim": 12,
+  "branch_health": {
+    "n": 40,
+    "mean_dominant_branch_len": 35.325,
+    "len1_count": 0,
+    "len1_ratio": 0.0,
+    "mean_activation_density": 0.934996
+  },
+  "value_counts": {
+    "valence": {
+      "negative": 34,
+      "mixed": 6
+    },
+    "arousal": {
+      "high": 38,
+      "medium": 2
+    },
+    "target": {
+      "mixed": 24,
+      "other": 12,
+      "situation": 3,
+      "self": 1
+    },
+    "control_state": {
+      "mixed": 31,
+      "low": 9
+    },
+    "social_orientation": {
+      "mixed": 20,
+      "defend": 11,
+      "approach": 8,
+      "withdraw": 1
+    },
+    "action_tendency_class": {
+      "defend": 13,
+      "confront": 8,
+      "seek_support": 5,
+      "plan": 5,
+      "approach": 3,
+      "withdraw": 2,
+      "repair": 2,
+      "inhibit": 1,
+      "other_action": 1
+    },
+    "episode_family": {
+      "other_blame_boundary": 31,
+      "threat_anxiety": 5,
+      "other_episode": 2,
+      "self_blame_guilt": 2
+    },
+    "appraisal_family": {
+      "mixed_appraisal": 15,
+      "other_directed_defense": 8,
+      "low_control_distress": 8,
+      "approach_or_repair": 7,
+      "situation_focused_coping": 1,
+      "self_directed_evaluation": 1
+    }
+  },
+  "nearest_neighbor": {
+    "valence": {
+      "n": 40,
+      "nearest_neighbor_consistency": 0.875,
+      "majority_baseline": 0.85,
+      "lift": 0.025
+    },
+    "arousal": {
+      "n": 40,
+      "nearest_neighbor_consistency": 0.875,
+      "majority_baseline": 0.95,
+      "lift": -0.075
+    },
+    "target": {
+      "n": 40,
+      "nearest_neighbor_consistency": 0.55,
+      "majority_baseline": 0.6,
+      "lift": -0.05
+    },
+    "control_state": {
+      "n": 40,
+      "nearest_neighbor_consistency": 0.65,
+      "majority_baseline": 0.775,
+      "lift": -0.125
+    },
+    "social_orientation": {
+      "n": 40,
+      "nearest_neighbor_consistency": 0.55,
+      "majority_baseline": 0.5,
+      "lift": 0.05
+    },
+    "action_tendency_class": {
+      "n": 40,
+      "nearest_neighbor_consistency": 0.25,
+      "majority_baseline": 0.325,
+      "lift": -0.075
+    },
+    "episode_family": {
+      "n": 40,
+      "nearest_neighbor_consistency": 0.55,
+      "majority_baseline": 0.775,
+      "lift": -0.225
+    },
+    "appraisal_family": {
+      "n": 40,
+      "nearest_neighbor_consistency": 0.275,
+      "majority_baseline": 0.375,
+      "lift": -0.1
+    }
+  },
+  "group_distances": {
+    "valence": {
+      "intra_pairs": 576,
+      "inter_pairs": 204,
+      "mean_intra_distance": 1.174519,
+      "mean_inter_distance": 1.636139,
+      "separation": 0.46162
+    },
+    "arousal": {
+      "intra_pairs": 704,
+      "inter_pairs": 76,
+      "mean_intra_distance": 1.272555,
+      "mean_inter_distance": 1.505477,
+      "separation": 0.232922
+    },
+    "target": {
+      "intra_pairs": 345,
+      "inter_pairs": 435,
+      "mean_intra_distance": 1.28385,
+      "mean_inter_distance": 1.304292,
+      "separation": 0.020441
+    },
+    "control_state": {
+      "intra_pairs": 501,
+      "inter_pairs": 279,
+      "mean_intra_distance": 1.211809,
+      "mean_inter_distance": 1.445086,
+      "separation": 0.233278
+    },
+    "social_orientation": {
+      "intra_pairs": 273,
+      "inter_pairs": 507,
+      "mean_intra_distance": 1.27447,
+      "mean_inter_distance": 1.30644,
+      "separation": 0.03197
+    },
+    "action_tendency_class": {
+      "intra_pairs": 131,
+      "inter_pairs": 649,
+      "mean_intra_distance": 0.950973,
+      "mean_inter_distance": 1.364742,
+      "separation": 0.413769
+    },
+    "episode_family": {
+      "intra_pairs": 477,
+      "inter_pairs": 303,
+      "mean_intra_distance": 1.313924,
+      "mean_inter_distance": 1.265853,
+      "separation": -0.048071
+    },
+    "appraisal_family": {
+      "intra_pairs": 182,
+      "inter_pairs": 598,
+      "mean_intra_distance": 1.258658,
+      "mean_inter_distance": 1.306387,
+      "separation": 0.04773
+    }
+  }
+}

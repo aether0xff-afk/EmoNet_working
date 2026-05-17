@@ -1,0 +1,66 @@
+{
+  "name": "final_dynamics_v1",
+  "selected_from": "outputs/neural_trace_dynamics_sparse_sweep_v1/sparse_dynamics_sweep_summary.csv",
+  "validation_output": "outputs/neural_trace_final_candidate_thr064_topk2_clip15_inh018_full80",
+  "trace_definition": "stimulus vector -> EmoNet neural dynamics -> tick-by-tick neuron activation trajectory -> branch tensor/z summary",
+  "selection_reason": [
+    "Passes the collapse constraint on the full 80-sample validation set: len1_ratio = 0.0875.",
+    "Reduces overactivation relative to persistent_less_inhibition: density 0.839878 vs 0.947035.",
+    "Keeps a long enough recurrent trace: mean_dominant_branch_len = 33.2375.",
+    "Retains positive branch_mean geometry on valence, social_orientation, action_tendency_class, and appraisal_family.",
+    "Chosen over thr0.70_topk3_clip1.2_inh0.18 because that candidate has lower density but fails the collapse target: len1_ratio = 0.1125."
+  ],
+  "n_neurons": 256,
+  "seed": 42,
+  "stim_source": "auto",
+  "z_encoder_mode": "stat",
+  "dynamics": {
+    "k_threshold_base": 0.64,
+    "k_remem_base": 0.82,
+    "k_decay": 0.99,
+    "refractory_ticks": 1,
+    "input_topk": 2,
+    "input_signal_clip": 1.5,
+    "intrinsic_alignment_gain": 0.24,
+    "fatigue_gain": 0.18,
+    "fatigue_threshold_gain": 0.1,
+    "fatigue_k_leak": 0.05,
+    "inhibitory_suppression_gain": 0.18,
+    "ne_thresh_reduce_gain": 0.25,
+    "ne_remem_reduce_gain": 0.25,
+    "activity_churn_eps": 0.02
+  },
+  "full80_metrics": {
+    "n": 80,
+    "mean_dominant_branch_len": 33.2375,
+    "len1_count": 7,
+    "len1_ratio": 0.0875,
+    "mean_activation_density": 0.839878,
+    "branch_mean_nearest_neighbor_lift": {
+      "valence": 0.1625,
+      "arousal": -0.075,
+      "target": -0.1,
+      "control_state": -0.075,
+      "social_orientation": 0.0125,
+      "action_tendency_class": 0.0125,
+      "episode_family": -0.125,
+      "appraisal_family": 0.05
+    },
+    "branch_mean_group_separation": {
+      "valence": 0.654461,
+      "arousal": 0.542097,
+      "target": -0.138016,
+      "control_state": 0.25633,
+      "social_orientation": 0.082022,
+      "action_tendency_class": 0.391383,
+      "episode_family": 0.383633,
+      "appraisal_family": -0.0332
+    }
+  },
+  "known_limitations": [
+    "The current runtime does not provide scikit-learn, so the exporter used the stat/fallback stimulus vector path rather than the learned text encoder path.",
+    "The z summary remains weak; branch_mean is the stronger probe representation.",
+    "Target/blame direction is not yet robustly encoded.",
+    "Density is improved but still slightly above the preferred sparse target of 0.80."
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "input": "outputs\\targeted_records_trace_normalized.csv",
+  "output_dir": "outputs\\neural_trace_dynamics_fine_sweep_v1\\thr0.66_clip1.9_inh0.08_mid_fatigue",
+  "trace_dir": "outputs\\neural_trace_dynamics_fine_sweep_v1\\thr0.66_clip1.9_inh0.08_mid_fatigue\\traces_npz",
+  "summary_csv": "outputs\\neural_trace_dynamics_fine_sweep_v1\\thr0.66_clip1.9_inh0.08_mid_fatigue\\neural_trace_summary.csv",
+  "requested_rows": 40,
+  "ok_rows": 40,
+  "error_rows": 0,
+  "n_neurons": 256,
+  "seed": 42,
+  "z_encoder_mode": "stat",
+  "stim_source": "auto",
+  "sklearn_available": false,
+  "dynamics": {
+    "k_threshold_base": 0.66,
+    "k_remem_base": 0.8400000000000001,
+    "k_decay": 0.99,
+    "refractory_ticks": 1,
+    "input_topk": 4,
+    "input_signal_clip": 1.9,
+    "intrinsic_alignment_gain": 0.24,
+    "fatigue_gain": 0.16,
+    "fatigue_threshold_gain": 0.08,
+    "fatigue_k_leak": 0.035,
+    "inhibitory_suppression_gain": 0.08,
+    "ne_thresh_reduce_gain": 0.25,
+    "ne_remem_reduce_gain": 0.25,
+    "activity_churn_eps": 0.02
+  },
+  "errors": []
+}

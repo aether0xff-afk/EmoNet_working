@@ -1,0 +1,31 @@
+{
+  "input": "outputs\\targeted_records_trace_normalized.csv",
+  "output_dir": "outputs\\neural_trace_dynamics_sparse_sweep_v1\\thr0.64_topk2_clip1.2_inh0.12_midfat",
+  "trace_dir": "outputs\\neural_trace_dynamics_sparse_sweep_v1\\thr0.64_topk2_clip1.2_inh0.12_midfat\\traces_npz",
+  "summary_csv": "outputs\\neural_trace_dynamics_sparse_sweep_v1\\thr0.64_topk2_clip1.2_inh0.12_midfat\\neural_trace_summary.csv",
+  "requested_rows": 24,
+  "ok_rows": 24,
+  "error_rows": 0,
+  "n_neurons": 256,
+  "seed": 42,
+  "z_encoder_mode": "stat",
+  "stim_source": "auto",
+  "sklearn_available": false,
+  "dynamics": {
+    "k_threshold_base": 0.64,
+    "k_remem_base": 0.8200000000000001,
+    "k_decay": 0.99,
+    "refractory_ticks": 1,
+    "input_topk": 2,
+    "input_signal_clip": 1.2,
+    "intrinsic_alignment_gain": 0.24,
+    "fatigue_gain": 0.18,
+    "fatigue_threshold_gain": 0.1,
+    "fatigue_k_leak": 0.05,
+    "inhibitory_suppression_gain": 0.12,
+    "ne_thresh_reduce_gain": 0.25,
+    "ne_remem_reduce_gain": 0.25,
+    "activity_churn_eps": 0.02
+  },
+  "errors": []
+}

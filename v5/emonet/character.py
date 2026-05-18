@@ -36,6 +36,7 @@ CHARACTER_RESPONSE_FORBIDDEN_TERMS = (
     "내부 활성",
 )
 
+#action patterns가 있으면 안됨
 UNTAGGED_ACTION_PATTERNS = (
     "말을 잇지 못하고",
     "한 발 물러선다",
@@ -371,6 +372,7 @@ def build_character_context_prompt(
             "- 한국어 평문으로만 1~5문장 이내로 답한다.",
         ]
     )
+#base prompt 부분에서 답변길이 조절을 할필요가 있을까? raw를 지향하는데?
 
 
 def validate_character_response_text(response: str, plain_validator: Any) -> str:
@@ -399,8 +401,9 @@ def validate_character_response_text(response: str, plain_validator: Any) -> str
 
 
 def _normalize_action_token_lines(response: str) -> str:
+    source = re.sub(r"\[ACTION\s*:\s*", "[ACTION] ", str(response or ""), flags=re.IGNORECASE)
     normalized_lines: list[str] = []
-    for line in str(response or "").splitlines():
+    for line in source.splitlines():
         pending = line.strip()
         if not pending:
             normalized_lines.append(line)
@@ -460,7 +463,7 @@ def _compact_text(value: object, limit: int = 120) -> str:
         return text
     return text[: max(0, limit - 1)].rstrip() + "..."
 
-
+# 이거 뭐야
 def _looks_memory_worthy(text: str) -> bool:
     markers = ("나는", "제가", "내가", "내 ", "저는", "요즘", "항상", "싫어", "좋아", "무서", "불안", "화가")
     return any(marker in text for marker in markers)
@@ -496,6 +499,7 @@ def _score(mapping: Mapping[str, Any], key: str) -> float:
     return _float_or_zero(mapping.get(key, 0.0))
 
 
+#이것도 raw를 지향하는 거 치고 이런걸 정해 놔도 되는거야?
 def _infer_emotion_label(
     *,
     tendency: str,

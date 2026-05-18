@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from emonet.character import CharacterSessionState, load_character_card
+from emonet.character import CharacterSessionState, load_character_card, validate_character_response_text
 from emonet.chat_service import ChatGenerationConfig, ChatRuntimeConfig, build_chat_runtime, generate_chat_turn
 from emonet.legacy_cli import validate_plain_response_text
 from emonet.llm_api import request_plain_text_response
@@ -150,6 +150,90 @@ def _generate_ai_user_message(*, api_key: str, scenario: str, turn_index: int) -
     return text, usage
 
 
+def _plain_llm_response(*, api_key: str, message: str) -> tuple[str, dict[str, Any]]:
+    text, _raw, meta = request_plain_text_response(
+        base_url=CLAUDE_BASE_URL,
+        model_name=CLAUDE_MODEL,
+        prompt="\n".join(
+            [
+                "[USER_INPUT]",
+                message,
+                "",
+                "[INSTRUCTIONS]",
+                "- 자연스러운 한국어 대화 응답만 출력한다.",
+                "- 캐릭터 설정, EmoNet, 내부 상태는 사용하지 않는다.",
+                "- 1~4문장 이내.",
+            ]
+        ),
+        temperature=0.55,
+        max_tokens=360,
+        timeout_sec=120,
+        max_retries=1,
+        validator=validate_plain_response_text,
+        retry_instruction="자연스러운 한국어 평문 대화 응답만 다시 출력하라.",
+        system_prompt="Return a plain Korean conversational response only.",
+        api_key=api_key,
+        provider="anthropic",
+    )
+    return text, dict(meta.get("usage", {}))
+
+
+def _ruca_prompt_only_response(*, api_key: str, message: str) -> tuple[str, dict[str, Any]]:
+    card = load_character_card()
+    prompt = "\n".join(
+        [
+            "[ROLE]",
+            "너는 아래 캐릭터 설정만 사용해 한국어로 답하는 캐릭터 대화 모델이다. EmoNet, raw signal, trace, 내부 상태는 사용하지 않는다.",
+            "",
+            "[CHARACTER]",
+            f"name: {card.name}",
+            f"persona: {card.persona}",
+            f"speech_style: {card.speech_style}",
+            f"relationship: {card.relationship_defaults}",
+            f"world: {card.world_state}",
+            "temperament: " + json.dumps(card.temperament, ensure_ascii=False, sort_keys=True),
+            "trigger_map: " + json.dumps(card.trigger_map, ensure_ascii=False, sort_keys=True),
+            "boundary_rules:",
+            "\n".join(f"- {item}" for item in card.boundary_rules),
+            "",
+            "[RECENT_DIALOGUE]",
+            _recent_dialogue_for_ai(max_messages=8),
+            "",
+            "[USER_INPUT]",
+            message,
+            "",
+            "[INSTRUCTIONS]",
+            "- Ruca의 말과 행동만 출력한다.",
+            "- 행동은 필요할 때만 별도 줄에서 [ACTION]으로 시작한다.",
+            "- 내부 시스템, trace, raw signal, EmoNet을 언급하지 않는다.",
+            "- 1~5문장 이내.",
+        ]
+    )
+    text, _raw, meta = request_plain_text_response(
+        base_url=CLAUDE_BASE_URL,
+        model_name=CLAUDE_MODEL,
+        prompt=prompt,
+        temperature=0.55,
+        max_tokens=420,
+        timeout_sec=120,
+        max_retries=1,
+        validator=lambda raw: validate_character_response_text(raw, validate_plain_response_text),
+        retry_instruction="Ruca의 자연스러운 한국어 대사와 필요한 [ACTION] 줄만 다시 출력하라.",
+        system_prompt="Return only Ruca's Korean character response.",
+        api_key=api_key,
+        provider="anthropic",
+    )
+    return text, dict(meta.get("usage", {}))
+
+
+def _add_usage(usage: dict[str, Any]) -> None:
+    input_tokens = int(usage.get("input_tokens", 0) or 0)
+    output_tokens = int(usage.get("output_tokens", 0) or 0)
+    _usage["input_tokens"] += input_tokens
+    _usage["output_tokens"] += output_tokens
+    _usage["cost_usd"] += _estimate_cost(input_tokens, output_tokens)
+
+
 def _state_payload() -> dict[str, Any]:
     card = load_character_card()
     runtime_config = asdict(ChatRuntimeConfig())
@@ -238,6 +322,10 @@ APP_HTML = r"""<!doctype html>
     .process-step { border: 1px solid rgba(174,184,192,.22); background: rgba(5,8,10,.25); border-radius: 7px; padding: 10px; }
     .process-step .step-name { color: var(--accent); font-size: 12px; font-weight: 800; text-transform: uppercase; }
     .process-step pre { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); font-size: 12px; line-height: 1.45; }
+    .compare-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+    .compare-card { border: 1px solid rgba(174,184,192,.24); border-radius: 8px; background: #10161a; padding: 12px; min-height: 160px; }
+    .compare-card h3 { margin-top: 0; color: var(--accent); }
+    .compare-card pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; margin: 0; }
     .section-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0; }
     .section-toggle h2 { margin: 0; }
     .ghost { background: transparent; border-color: var(--line); color: var(--muted); }
@@ -314,6 +402,19 @@ APP_HTML = r"""<!doctype html>
 
       <div id="chatError" class="error hidden"></div>
       <div id="chatlog" class="chatlog"></div>
+      <section class="card">
+        <div class="section-toggle">
+          <h2>Compare Outputs</h2>
+          <button id="toggleCompare" class="ghost" type="button" aria-expanded="false">Show</button>
+        </div>
+        <div id="compareBody" class="collapsible-body hidden">
+          <div class="sub">같은 입력을 쌩 LLM, Ruca 프롬프트만, Ruca + EmoNet/felt_self로 동시에 비교합니다. 현재 채팅 세션에는 추가하지 않습니다.</div>
+          <label for="compareMessage">Input</label>
+          <textarea id="compareMessage" placeholder="비교할 메시지를 입력하세요"></textarea>
+          <button id="runCompare" class="primary">Run comparison</button>
+          <div id="compareResult" class="compare-grid hidden"></div>
+        </div>
+      </section>
       <section class="card">
         <div class="section-toggle">
           <h2>AI Dialogue Test</h2>
@@ -555,15 +656,71 @@ async function runAiDialogue() {
   }
 }
 
+async function runCompare() {
+  const prompt = String($("compareMessage").value || $("message").value || "").trim();
+  if (!prompt) return;
+  $("chatError").classList.add("hidden");
+  $("runCompare").disabled = true;
+  $("compareResult").classList.remove("hidden");
+  $("compareResult").innerHTML = `
+    <div class="compare-card"><h3>Plain LLM</h3><pre>running...</pre></div>
+    <div class="compare-card"><h3>Ruca Prompt Only</h3><pre>running...</pre></div>
+    <div class="compare-card"><h3>Ruca + EmoNet</h3><pre>running...</pre></div>`;
+  try {
+    const payload = await api("/api/compare", {
+      message: prompt,
+      api_key: $("apiKey").value,
+      affect_input_mode: $("llmPerception").checked ? "llm_raw_signal" : "encoder",
+      raw_signal_policy: $("rawPolicy").value
+    });
+    usage = payload.usage || usage;
+    const results = payload.results || {};
+    const fullRecord = (results.full_ruca || {}).record || {};
+    $("compareResult").innerHTML = `
+      <div class="compare-card">
+        <h3>Plain LLM</h3>
+        <pre>${esc((results.plain_llm || {}).text || "")}</pre>
+      </div>
+      <div class="compare-card">
+        <h3>Ruca Prompt Only</h3>
+        <pre>${esc((results.ruca_prompt_only || {}).text || "")}</pre>
+      </div>
+      <div class="compare-card">
+        <h3>Ruca + EmoNet</h3>
+        <pre>${esc((results.full_ruca || {}).text || "")}</pre>
+        <div class="small">${esc(compact(JSON.stringify({
+          raw_policy: fullRecord.raw_signal_policy,
+          felt_self: fullRecord.felt_self,
+          drive: fullRecord.drive,
+          mode: (fullRecord.translation_surface || {}).mode
+        }), ""))}</div>
+      </div>`;
+  } catch (err) {
+    $("chatError").textContent = err.message;
+    $("chatError").classList.remove("hidden");
+  } finally {
+    $("runCompare").disabled = false;
+    renderUsage();
+  }
+}
+
 function setAiTestOpen(open) {
   $("aiTestBody").classList.toggle("hidden", !open);
   $("toggleAiTest").textContent = open ? "Hide" : "Show";
   $("toggleAiTest").setAttribute("aria-expanded", open ? "true" : "false");
 }
 
+function setCompareOpen(open) {
+  $("compareBody").classList.toggle("hidden", !open);
+  $("toggleCompare").textContent = open ? "Hide" : "Show";
+  $("toggleCompare").setAttribute("aria-expanded", open ? "true" : "false");
+}
+
 $("send").onclick = () => sendMessage($("message").value);
 $("runAi").onclick = () => runAiDialogue();
+$("runCompare").onclick = () => runCompare();
 $("toggleAiTest").onclick = () => setAiTestOpen($("aiTestBody").classList.contains("hidden"));
+$("toggleCompare").onclick = () => setCompareOpen($("compareBody").classList.contains("hidden"));
 $("message").addEventListener("keydown", ev => {
   if (ev.key === "Enter" && (ev.ctrlKey || ev.metaKey)) sendMessage($("message").value);
 });
@@ -649,6 +806,49 @@ class LocalGuiHandler(BaseHTTPRequestHandler):
                     _messages.append({"role": "assistant", "content": result.assistant_text, "record": result.record})
                     _append_usage_from_record(result.record)
                     response = _state_payload()
+                self._json(HTTPStatus.OK, response)
+            elif parsed.path == "/api/compare":
+                payload = _read_json(self)
+                api_key = str(payload.get("api_key") or os.environ.get("ANTHROPIC_API_KEY") or "").strip()
+                message = str(payload.get("message") or "").strip()
+                affect_input_mode = str(payload.get("affect_input_mode") or "encoder").strip()
+                raw_signal_policy = str(payload.get("raw_signal_policy") or "event_annotated").strip()
+                if not api_key:
+                    self._error(HTTPStatus.BAD_REQUEST, "Claude API key가 필요합니다. 왼쪽에 입력하거나 ANTHROPIC_API_KEY를 설정하세요.")
+                    return
+                if not message:
+                    self._error(HTTPStatus.BAD_REQUEST, "message is empty")
+                    return
+                with _history_lock:
+                    card = load_character_card()
+                    plain_text, plain_usage = _plain_llm_response(api_key=api_key, message=message)
+                    prompt_text, prompt_usage = _ruca_prompt_only_response(api_key=api_key, message=message)
+                    full_result = generate_chat_turn(
+                        runtime=_runtime_cached(),
+                        generation_config=_chat_config(
+                            api_key,
+                            affect_input_mode=affect_input_mode,
+                            raw_signal_policy=raw_signal_policy,
+                        ),
+                        input_text=message,
+                        history=list(_messages),
+                        character_card=card,
+                        character_session=_character_session,
+                    )
+                    _add_usage(plain_usage)
+                    _add_usage(prompt_usage)
+                    _append_usage_from_record(full_result.record)
+                    response = {
+                        "results": {
+                            "plain_llm": {"text": plain_text, "usage": plain_usage},
+                            "ruca_prompt_only": {"text": prompt_text, "usage": prompt_usage},
+                            "full_ruca": {
+                                "text": full_result.assistant_text,
+                                "record": full_result.record,
+                            },
+                        },
+                        "usage": dict(_usage),
+                    }
                 self._json(HTTPStatus.OK, response)
             elif parsed.path == "/api/ai-dialogue/run":
                 payload = _read_json(self)

@@ -453,7 +453,7 @@ class SafeTruncatedSVD:
         self.fit(X, y)
         return self.transform(X)
 
-
+# 힌트를 주면 연구 목적이랑 철학에 맞지 않잖아!!!!
 class StimEncoder:
     POSITIVE_HINTS = {
         "good",

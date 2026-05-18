@@ -1140,39 +1140,63 @@ def _build_emotion_memory(
     max_items: int = 6,
 ) -> tuple[dict[str, Any], ...]:
     carried: list[dict[str, Any]] = []
-    for item in previous_memory or ():
+    for index, item in enumerate(previous_memory or ()):
         if not isinstance(item, Mapping):
             continue
-        remaining = int(item.get("decay_turns", 0) or 0) - 1
-        if remaining <= 0:
-            continue
         copied = dict(item)
-        copied["decay_turns"] = remaining
-        residue = dict(copied.get("residue", {}) if isinstance(copied.get("residue"), Mapping) else {})
-        copied["residue"] = {key: round(_clamp01(value) * 0.78, 4) for key, value in residue.items()}
+        copied["age_turns"] = int(copied.get("age_turns", 0) or 0) + 1
+        copied["memory_index"] = int(index)
         carried.append(copied)
 
+    trace_profile = dict(profile.get("trace_profile", {}) if isinstance(profile.get("trace_profile"), Mapping) else {})
+    trace_lines = _string_list(profile.get("trace_lines", []))
+    phase_k = [_extract_phase_k(line) for line in trace_lines]
+    branch_len = int(profile.get("dominant_branch_len", trace_profile.get("dominant_branch_len", 0)) or 0)
+    ticks_run = max(0.0, float(trace_profile.get("ticks_run", profile.get("ticks_run", 0)) or 0.0))
+    active_window = max(0.0, float(trace_profile.get("active_window_ticks", 0) or 0.0))
+    mean_active = max(0.0, float(trace_profile.get("mean_active_nodes", 0.0) or 0.0))
+    max_active = max(0.0, float(trace_profile.get("max_active_nodes", 0.0) or 0.0))
+    mean_edges = max(0.0, float(trace_profile.get("mean_edges_fired", 0.0) or 0.0))
+    max_edges = max(0.0, float(trace_profile.get("max_edges_fired", 0.0) or 0.0))
+    k_peak = max(phase_k) if phase_k else 0.0
+    k_mean = float(sum(phase_k) / len(phase_k)) if phase_k else 0.0
+    k_end = phase_k[-1] if phase_k else 0.0
+    k_start = phase_k[0] if phase_k else 0.0
+    k_delta = k_end - k_start
     pressure = _clamp01(felt_self.get("felt_pressure"))
     attachment = _clamp01(felt_self.get("attachment_residue"))
     boundary = _clamp01(felt_self.get("boundary_residue"))
     trust = _clamp01(felt_self.get("trust_shift"))
-    if max(pressure, attachment, boundary) >= 0.22:
-        event = _compact_text(user_text, limit=90)
-        carried.append(
-            {
-                "event": event,
-                "felt_after": str(felt_self.get("unresolved_phrase", "")),
-                "body_after": str(felt_self.get("body_bias", "")),
-                "residue": {
-                    "attachment": round(float(attachment), 4),
-                    "boundary": round(float(boundary), 4),
-                    "trust": round(float(trust), 4),
-                    "pressure": round(float(pressure), 4),
-                },
-                "surface_mode": str((profile.get("translation_surface", {}) or {}).get("mode", "")),
-                "decay_turns": 4 if pressure >= 0.45 or boundary >= 0.35 else 2,
-            }
-        )
+    carried.append(
+        {
+            "event": "k_residue",
+            "age_turns": 0,
+            "k_residue": {
+                "dominant_branch_len": branch_len,
+                "ticks_run": round(float(ticks_run), 4),
+                "active_window_ticks": round(float(active_window), 4),
+                "mean_active_nodes": round(float(mean_active), 4),
+                "max_active_nodes": round(float(max_active), 4),
+                "mean_edges_fired": round(float(mean_edges), 4),
+                "max_edges_fired": round(float(max_edges), 4),
+                "phase_k_start": round(float(k_start), 4),
+                "phase_k_end": round(float(k_end), 4),
+                "phase_k_mean": round(float(k_mean), 4),
+                "phase_k_peak": round(float(k_peak), 4),
+                "phase_k_delta": round(float(k_delta), 4),
+                "termination_reason": str(trace_profile.get("termination_reason", profile.get("termination_reason", ""))),
+            },
+            "felt_after": str(felt_self.get("unresolved_phrase", "")),
+            "body_after": str(felt_self.get("body_bias", "")),
+            "residue": {
+                "attachment": round(float(attachment), 4),
+                "boundary": round(float(boundary), 4),
+                "trust": round(float(trust), 4),
+                "pressure": round(float(pressure), 4),
+            },
+            "surface_mode": str((profile.get("translation_surface", {}) or {}).get("mode", "")),
+        }
+    )
     return tuple(carried[-max(1, int(max_items)) :])
 
 

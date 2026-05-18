@@ -36,22 +36,6 @@ CHARACTER_RESPONSE_FORBIDDEN_TERMS = (
     "내부 활성",
 )
 
-#action patterns가 있으면 안됨
-UNTAGGED_ACTION_PATTERNS = (
-    "말을 잇지 못하고",
-    "한 발 물러선다",
-    "고개를 ",
-    "숨을 ",
-    "눈을 ",
-    "입술을 ",
-    "손을 ",
-    "몸을 ",
-    "돌아선다",
-    "다가선다",
-    "물러선다",
-    "바라본다",
-)
-
 BROKEN_KOREAN_ENDING_PATTERNS = (
     re.compile(r"(?:알아|기억해|생각해)\s*두[.!?。]*$"),
     re.compile(r"(?:알아|기억해|생각해)\s*둬야[.!?。]*$"),
@@ -185,11 +169,7 @@ def update_character_session_state(
     drive: Mapping[str, Any] | None = None,
     max_memory_items: int = 8,
 ) -> CharacterSessionState:
-    memory = list(state.user_memory)
-    compact_user = _compact_text(user_text, limit=120)
-    if compact_user and _looks_memory_worthy(compact_user) and compact_user not in memory:
-        memory.append(compact_user)
-    memory = memory[-max(1, int(max_memory_items)) :]
+    memory = list(state.user_memory)[-max(1, int(max_memory_items)) :]
     relationship = state.relationship_state or "사용자가 개인적인 정서를 꺼냈고, 캐릭터는 조심스럽게 신뢰를 쌓는 중이다."
     scene = state.scene_state or "조용한 1:1 대화. 캐릭터는 사용자의 말에 즉각 반응한다."
     if assistant_text:
@@ -369,10 +349,9 @@ def build_character_context_prompt(
             "- 행동, 표정, 몸짓, 침묵을 서술할 때는 반드시 '[ACTION] ' 줄로 쓴다. 예: [ACTION] 한 발 물러선다.",
             "- [ACTION] 줄은 짧게 쓰고, 한 응답에서 2개를 넘기지 않는다.",
             "- 캐릭터의 말투와 관계 상태는 유지하되, 내부 정서 상태와 충돌하면 raw 내부 정서 흐름을 우선한다.",
-            "- 한국어 평문으로만 1~5문장 이내로 답한다.",
+            "- 한국어 평문으로 답한다. 길이는 내부 흐름에 맞기되, 반복 설명이나 장황한 해설은 피한다.",
         ]
     )
-#base prompt 부분에서 답변길이 조절을 할필요가 있을까? raw를 지향하는데?
 
 
 def validate_character_response_text(response: str, plain_validator: Any) -> str:
@@ -463,12 +442,6 @@ def _compact_text(value: object, limit: int = 120) -> str:
         return text
     return text[: max(0, limit - 1)].rstrip() + "..."
 
-# 이거 뭐야
-def _looks_memory_worthy(text: str) -> bool:
-    markers = ("나는", "제가", "내가", "내 ", "저는", "요즘", "항상", "싫어", "좋아", "무서", "불안", "화가")
-    return any(marker in text for marker in markers)
-
-
 def _float_values(value: object) -> list[float]:
     if not isinstance(value, (list, tuple)):
         return []
@@ -499,22 +472,30 @@ def _score(mapping: Mapping[str, Any], key: str) -> float:
     return _float_or_zero(mapping.get(key, 0.0))
 
 
-#이것도 raw를 지향하는 거 치고 이런걸 정해 놔도 되는거야?
 def _infer_emotion_label(
     *,
     tendency: str,
     appraisal_scores: Mapping[str, Any],
     style_summary: Mapping[str, Any],
 ) -> str:
-    if _score(appraisal_scores, "injustice") >= 0.5 or "대치" in tendency:
-        return "분노/대치"
-    if _score(appraisal_scores, "threat") >= 0.5 or "경계" in tendency:
-        return "불안/경계"
-    if _score(appraisal_scores, "exhaustion") >= 0.45 or "후퇴" in tendency:
-        return "소진/후퇴"
-    if _score(style_summary, "warmth") >= 0.7 and _score(style_summary, "tension") <= 0.2:
-        return "가벼운 접촉"
-    return "정리/수습"
+    raw_tendency = str(tendency or "").strip()
+    if raw_tendency:
+        return raw_tendency
+    scored = [
+        (str(key).replace("_", " "), _float_or_zero(value))
+        for key, value in style_summary.items()
+        if _float_or_zero(value) > 0.0
+    ]
+    if scored:
+        return max(scored, key=lambda item: item[1])[0]
+    appraisal = [
+        (str(key).replace("_", " "), _float_or_zero(value))
+        for key, value in appraisal_scores.items()
+        if _float_or_zero(value) > 0.0
+    ]
+    if appraisal:
+        return max(appraisal, key=lambda item: item[1])[0]
+    return "raw trace quiet"
 
 
 def _infer_intensity(

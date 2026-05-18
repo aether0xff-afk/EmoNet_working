@@ -453,7 +453,6 @@ class SafeTruncatedSVD:
         self.fit(X, y)
         return self.transform(X)
 
-# 힌트를 주면 연구 목적이랑 철학에 맞지 않잖아!!!!
 class StimEncoder:
     POSITIVE_HINTS = {
         "good",
@@ -773,8 +772,7 @@ class StimEncoder:
 
     @staticmethod
     def _hint_fraction(text: str, hints: set[str]) -> float:
-        hits = sum(1 for token in hints if token in text)
-        return min(hits / 3.0, 1.0)
+        return 0.0
 
     @staticmethod
     def _validate_stim_vec(stim_vec: np.ndarray) -> np.ndarray:

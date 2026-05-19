@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 # Ruca/Rookie MVP Engine
 
 `v6`는 Ruca/Rookie 통합 설계 문서를 실제로 움직이는 최소 엔진으로 옮긴 작업선이다.
@@ -73,3 +74,116 @@ $env:OPENAI_API_KEY='...'
 ```powershell
 & 'C:\Users\remote\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' -m ruca_engine.cli "Ruca처럼 짧게 답해줘" --llm --base-url http://localhost:11434/v1 --model-name gpt-oss:20b --debug
 ```
+=======
+# EmoNet v6
+
+`v6` is the Ruca & Rookie autonomous character runtime line. It starts from the
+`v5` character-chat MVP, then extends it toward characters that keep an
+internal emotional life across time, including no-reply ticks, internal voice,
+spontaneous response gates, relationship drift, and a Rookie-ready story layer.
+
+The core theme is:
+
+```text
+event or silence
+  -> EmoNet character tick
+  -> memory and relationship update
+  -> internal voice
+  -> response gate
+  -> character message, silence, or internal-only state change
+```
+
+`v6` should keep the `v5` principle that the LLM is only the final expression
+layer. EmoNet, memory, relationship state, and scene state decide what the
+character is carrying before the LLM turns it into dialogue.
+
+## MVP Scope
+
+The first `v6` milestone is Ruca as a single autonomous character:
+
+- user input events and no-reply events are both treated as character events.
+- Ruca's internal state can tick even when the user says nothing.
+- internal voice is generated as private intermediate state, not shown directly
+  to the user.
+- a response gate decides between `send_message`, `stay_silent`, and
+  `internal_only`.
+- emotional memory stores compressed interpretation and deltas, not full raw
+  inner monologue.
+- Rookie remains a lightweight `scene_state` provider until the autonomous
+  Ruca loop is stable.
+
+## Active Code
+
+- `emonet/chat_service.py`: combines EmoNet trace, character context, session
+  state, and the LLM call.
+- `emonet/character.py`: character card, session memory, felt-state helpers,
+  and response validation.
+- `local_gui.py`: local browser GUI for character chat and AI dialogue tests.
+- `data/characters/default_luca_like.json`: default character card.
+
+## Planned v6 Modules
+
+- `Event Scheduler`: converts user messages, silence, time gaps, and scene
+  events into normalized character events.
+- `EmoNet Tick Engine`: updates Ruca's affect state from the event, memories,
+  traits, relationship state, and scene state.
+- `Internal Voice Generator`: creates short private interpretation material
+  from the current trace and relationship context.
+- `Response Gate`: decides whether Ruca should speak, stay silent, or only
+  update internally.
+- `Memory Manager`: stores raw conversation references, semantic summaries,
+  emotional memories, relationship effects, and slow trait updates.
+- `Rookie Plot Manager`: later manages arcs, scenes, conflicts, and
+  multi-character coordination without directly forcing character emotions.
+
+## Default LLM
+
+The local GUI defaults to the local Ollama OpenAI-compatible endpoint:
+
+- provider: `openai_compatible`
+- endpoint: `http://127.0.0.1:11434/v1`
+- model: `gpt-oss:120b-cloud`
+- API key: normally empty
+
+You can override the defaults with environment variables:
+
+```powershell
+$env:EMONET_LLM_PROVIDER = "openai_compatible"
+$env:EMONET_LLM_BASE_URL = "http://127.0.0.1:11434/v1"
+$env:EMONET_LLM_MODEL = "gpt-oss:120b-cloud"
+$env:EMONET_LLM_API_KEY = ""
+```
+
+Check local Ollama models:
+
+```powershell
+ollama list
+```
+
+## Run
+
+From the repository root, with the Codex bundled Python:
+
+```powershell
+$PY = "$env:USERPROFILE\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe"
+cd .\v6
+& $PY -m unittest discover -s tests -v
+& $PY .\local_gui.py
+```
+
+The GUI opens at:
+
+```text
+http://127.0.0.1:8788/
+```
+
+## Notes
+
+`v6` does not train a new LLM. The LLM is only the final expression layer. The
+EmoNet trace, character card, session state, and relationship memory are built
+locally and passed into the generation prompt.
+
+For now, most code is inherited from `v5`. New work should land in small
+vertical slices: first event/no-reply state, then response gate, then private
+internal voice, then Rookie and multi-character expansion.
+>>>>>>> Stashed changes

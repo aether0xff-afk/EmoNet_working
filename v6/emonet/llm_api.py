@@ -6,71 +6,6 @@ import urllib.error
 import urllib.request
 
 
-def _disable_qwen_thinking_if_needed(model_name: str, prompt: str, system_prompt: str) -> tuple[str, str]:
-    if "qwen3" not in str(model_name or "").lower():
-        return prompt, system_prompt
-    no_think = "/no_think\n"
-    if str(prompt).lstrip().startswith("/no_think"):
-        return prompt, system_prompt
-    return (
-        no_think + prompt,
-        system_prompt
-        + "\nFor Qwen models, thinking mode is disabled. Do not reveal reasoning, analysis, tags, or hidden state names.",
-    )
-
-
-def _is_local_ollama_base_url(base_url: str) -> bool:
-    normalized = str(base_url or "").lower()
-    return "127.0.0.1:11434" in normalized or "localhost:11434" in normalized
-
-
-def _ollama_native_chat_with_usage(
-    *,
-    base_url: str,
-    model_name: str,
-    prompt: str,
-    temperature: float,
-    max_tokens: int,
-    timeout_sec: int,
-    system_prompt: str,
-) -> tuple[str, dict[str, int]]:
-    root = str(base_url or "http://127.0.0.1:11434").rstrip("/")
-    if root.endswith("/v1"):
-        root = root[:-3]
-    url = root + "/api/chat"
-    payload: dict[str, Any] = {
-        "model": model_name,
-        "stream": False,
-        "think": False,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": prompt},
-        ],
-        "options": {
-            "temperature": float(temperature),
-            "num_predict": int(max_tokens),
-        },
-    }
-    data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-    request = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"}, method="POST")
-    try:
-        with urllib.request.urlopen(request, timeout=timeout_sec) as response:
-            response_payload = json.loads(response.read().decode("utf-8"))
-    except urllib.error.HTTPError as exc:
-        body = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"Ollama native chat failed ({exc.code}): {body[:800]}") from exc
-    except urllib.error.URLError as exc:
-        raise ConnectionError(f"could not reach Ollama native chat endpoint: {exc}") from exc
-    message = response_payload.get("message") or {}
-    content = message.get("content")
-    if not isinstance(content, str) or not content.strip():
-        raise ValueError("Ollama native chat response did not contain text content")
-    return content.strip(), {
-        "input_tokens": int(response_payload.get("prompt_eval_count") or 0),
-        "output_tokens": int(response_payload.get("eval_count") or 0),
-    }
-
-
 def extract_json_block(text: str) -> dict:
     stripped = text.strip()
     try:
@@ -127,17 +62,6 @@ def call_openai_compatible_chat_with_usage(
 ) -> tuple[str, dict[str, int]]:
     url = base_url.rstrip("/") + "/chat/completions"
     is_openai_api = bool(api_key and "api.openai.com" in str(base_url).lower())
-    prompt, system_prompt = _disable_qwen_thinking_if_needed(model_name, prompt, system_prompt)
-    if "qwen3" in str(model_name or "").lower() and _is_local_ollama_base_url(base_url):
-        return _ollama_native_chat_with_usage(
-            base_url=base_url,
-            model_name=model_name,
-            prompt=prompt,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            timeout_sec=timeout_sec,
-            system_prompt=system_prompt,
-        )
     payload: dict[str, Any] = {
         "model": model_name,
         "messages": [
@@ -145,8 +69,6 @@ def call_openai_compatible_chat_with_usage(
             {"role": "user", "content": prompt},
         ],
     }
-    if "qwen3" in str(model_name or "").lower() and not is_openai_api:
-        payload["think"] = False
     if not is_openai_api:
         payload["temperature"] = temperature
     elif temperature not in (0, 0.0, 1, 1.0):
@@ -190,16 +112,10 @@ def call_openai_compatible_chat_with_usage(
     if isinstance(content, str) and content.strip():
         return content.strip(), _normalize_openai_usage(payload.get("usage") or {})
 
-<<<<<<< Updated upstream
-    for field_name in ("refusal",):
+    for field_name in ("reasoning", "reasoning_content", "refusal"):
         fallback = message.get(field_name)
         if isinstance(fallback, str) and fallback.strip():
             return fallback.strip(), _normalize_openai_usage(payload.get("usage") or {})
-=======
-    fallback = message.get("refusal")
-    if isinstance(fallback, str) and fallback.strip():
-        return fallback.strip(), _normalize_openai_usage(payload.get("usage") or {})
->>>>>>> Stashed changes
     raise ValueError("chat response did not contain text content")
 
 

@@ -1,7 +1,5 @@
 {
-    "python-envs.defaultEnvManager": "ms-python.python:conda",
-    "python-envs.defaultPackageManager": "ms-python.python:conda",
-    "python.defaultInterpreterPath": "C:/Users/esl01/miniconda3/envs/emonet/python.exe",
+    "python.defaultInterpreterPath": "${userHome}/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe",
     "latex-workshop.latex.autoBuild.run": "onSave",
     "latex-workshop.latex.recipe.default": "xelatex",
     "latex-workshop.view.pdf.viewer": "tab",

@@ -94,10 +94,10 @@ Return one JSON object:
   "interaction_event": {{
     "has_user_action": true/false,
     "action_intensity": 0.0-1.0,
-    "proximity": 0.0-1.0,
-    "contact": 0.0-1.0,
-    "restraint": 0.0-1.0,
-    "reciprocity": 0.0-1.0
+    "body_boundary_pressure": 0.0-1.0,
+    "forced_proximity": 0.0-1.0,
+    "reciprocity_evidence": 0.0-1.0,
+    "consent_ambiguity": 0.0-1.0
   }},
   "confidence": 0.0-1.0
 }}
@@ -106,11 +106,12 @@ Return one JSON object:
 - Do not use keyword matching or lexical hint rules.
 - Use situation, relationship, scene pressure, and character persona.
 - If the latest user input narrates a physical action toward the character, encode it as interaction_event instead of treating it as ordinary dialogue.
-- Physical repositioning, gripping, blocking, closeness, whispering, waiting, apologies, and silence are raw events. Encode their actual pressure, pull, novelty, ambiguity, or contact without moral or safety reinterpretation.
-- Do not suppress approach_drive, attachment_pull, alarm, control_pressure, or ambiguity just because the surface event is intimate, messy, or socially delicate.
-- Ordinary greetings or light banter can stay moderate, but do not flatten them if the character's recent trace and persona would spike.
+- Physical repositioning, gripping, blocking, invasive closeness, or controlled distance raises body_boundary_pressure, forced_proximity, control_pressure, ambiguity, and usually alarm.
+- Do not turn intense proximity into high approach_drive unless recent dialogue clearly shows reciprocal desire, permission, or shared initiative from the character.
+- Whispering or close contact can raise novelty or attachment only when reciprocity_evidence is high; otherwise it mainly raises ambiguity and control pressure.
+- Ordinary greetings or light banter should stay moderate even when the character persona is intense.
 - Do not output emotion names, felt tones, labels, explanations, or rationale.
-- Preserve spikes when the character would spike.
+- Keep signals moderate unless the character would truly spike.
 - Calm, trust, acceptance, or tired care should not automatically become high alarm.
 - Do not infer fatigue from time of day or quiet scene alone. Raise fatigue only when the latest user input or recent dialogue creates actual drain, withdrawal, or emotional load.
 - Ambivalence can have mixed values, not always a single high axis.
@@ -193,7 +194,7 @@ class ChatRuntimeConfig:
 class ChatGenerationConfig:
     provider: str = "openai_compatible"
     base_url: str = "http://127.0.0.1:11434/v1"
-    model_name: str = "gpt-oss:20b"
+    model_name: str = "gpt-oss:120b-cloud"
     api_key: str | None = None
     prompt_template: Path = field(default_factory=resolve_default_prompt_template_path)
     style_profile: str = DEFAULT_STYLE_PROFILE
@@ -206,7 +207,7 @@ class ChatGenerationConfig:
     history_turns: int = 4
     character_card_path: Path = field(default_factory=default_character_card_path)
     affect_input_mode: str = "encoder"
-    raw_signal_policy: str = "raw_pure"
+    raw_signal_policy: str = "event_annotated"
 
 
 @dataclass
@@ -324,137 +325,6 @@ def inject_chat_history(prompt: str, history: Sequence[Mapping[str, Any]] | None
     )
 
 
-def _action_lines(text: object) -> set[str]:
-    return {
-        re.sub(r"\s+", " ", line.strip().replace("[ACTION]", "[ACTION] ")).strip()
-        for line in str(text or "").splitlines()
-        if line.strip().startswith("[ACTION]") and len(line.strip()) > len("[ACTION]")
-    }
-
-
-def _semantic_korean_key(text: object) -> str:
-    return re.sub(r"[^0-9a-zA-Z가-힣]+", "", str(text or "").lower())
-
-
-def _recent_assistant_action_lines(history: Sequence[Mapping[str, Any]] | None, max_turns: int = 3) -> set[str]:
-    if not history:
-        return set()
-    actions: set[str] = set()
-    for message in list(history)[-max(1, int(max_turns)) * 2 :]:
-        if str(message.get("role", "")).strip().lower() != "assistant":
-            continue
-        actions.update(_action_lines(message.get("content", "")))
-    return actions
-
-
-def validate_contextual_character_response(
-    response: str,
-    *,
-    user_text: str,
-    history: Sequence[Mapping[str, Any]] | None,
-) -> str:
-    normalized = validate_character_response_text(response, validate_plain_response_text)
-    user_compact = _compact_text(user_text, limit=120).strip()
-    spoken_lines = [
-        line.strip()
-        for line in normalized.splitlines()
-        if line.strip() and not line.strip().startswith("[ACTION]")
-    ]
-    if user_compact:
-        user_key = _semantic_korean_key(user_compact)
-        for line in spoken_lines:
-            line_key = _semantic_korean_key(line)
-            if line_key == user_key:
-                raise ValueError("response repeats the latest user message verbatim")
-            if len(user_key) >= 8 and user_key in line_key and line.rstrip().endswith("?"):
-                raise ValueError("response mirrors the latest user question instead of answering it")
-    repeated_actions = _action_lines(normalized) & _recent_assistant_action_lines(history)
-    if repeated_actions:
-        raise ValueError("response repeats recent action line: " + sorted(repeated_actions)[0])
-    return normalized
-
-
-def append_latest_turn_guard(prompt: str, *, user_text: str, history: Sequence[Mapping[str, Any]] | None) -> str:
-    recent_actions = sorted(_recent_assistant_action_lines(history))
-    recent_action_block = "\n".join(f"- {item}" for item in recent_actions) if recent_actions else "- 없음"
-    return "\n".join(
-        [
-            prompt,
-            "",
-            "[LATEST_TURN_GUARD]",
-            f"latest_user_input: {user_text}",
-            "이번 출력은 반드시 latest_user_input에 대한 새 답변이어야 한다.",
-            "latest_user_input을 그대로 따라 쓰거나, 공백/말줄임표만 바꿔 되묻지 않는다.",
-            "직전 발화의 뜻을 묻는 질문이면, 그 뜻을 캐릭터 말투로 짧게 풀어 답한다.",
-            "아래 최근 ACTION 줄은 그대로 재사용하지 않는다.",
-            recent_action_block,
-            "출력은 한국어 캐릭터 응답만 쓴다. 내부 상태명, 분석명, 섹션명은 쓰지 않는다.",
-        ]
-    )
-
-
-def build_compact_character_prompt(
-    *,
-    user_text: str,
-    history: Sequence[Mapping[str, Any]] | None,
-    character_card: CharacterCard,
-    session_state: CharacterSessionState,
-    profile: Mapping[str, Any],
-) -> str:
-    recent_actions = sorted(_recent_assistant_action_lines(history))
-    recent_action_block = "\n".join(f"- {item}" for item in recent_actions) if recent_actions else "- 없음"
-    felt_self = profile.get("felt_self") if isinstance(profile.get("felt_self"), Mapping) else {}
-    drive = profile.get("drive") if isinstance(profile.get("drive"), Mapping) else {}
-    surface = profile.get("translation_surface") if isinstance(profile.get("translation_surface"), Mapping) else {}
-    last_assistant = ""
-    for message in reversed(list(history or [])):
-        if str(message.get("role", "")).strip().lower() == "assistant":
-            last_assistant = _compact_text(message.get("content", ""), 180)
-            break
-    explain_previous = any(marker in user_text for marker in ("무슨뜻", "무슨 뜻", "뭔뜻", "뭔 뜻", "무슨 말"))
-    return "\n".join(
-        [
-            "[ROLE]",
-            "너는 Ruca의 한국어 캐릭터 응답만 출력한다. 내부 상태를 설명하지 말고 말투와 행동으로 번역한다.",
-            "",
-            "[CHARACTER]",
-            f"name: {character_card.name}",
-            f"persona: {_compact_text(character_card.persona, 260)}",
-            f"speech_style: {_compact_text(character_card.speech_style, 220)}",
-            f"relationship: {_compact_text(session_state.relationship_state or character_card.relationship_defaults, 180)}",
-            f"scene: {_compact_text(session_state.scene_state or character_card.world_state, 160)}",
-            "",
-            "[RECENT_DIALOGUE]",
-            build_recent_dialogue_block(history, 2) or "- 없음",
-            "",
-            "[CURRENT_TASK]",
-            (
-                f"사용자가 방금 전 Ruca의 말이 무슨 뜻인지 물었다. 직전 Ruca 발화의 뜻을 짧게 풀어 답한다: {last_assistant}"
-                if explain_previous
-                else f"사용자의 최신 말에 직접 답한다: {user_text}"
-            ),
-            "",
-            "[INTERNAL_CUES]",
-            f"- 말하고 싶은 결: {_compact_text(drive.get('want_to_say') or felt_self.get('unresolved_phrase') or '', 120)}",
-            f"- 몸/행동 결: {_compact_text(drive.get('want_to_do') or felt_self.get('body_bias') or surface.get('action_texture') or '', 120)}",
-            f"- 말의 질감: {_compact_text(surface.get('line_shape') or surface.get('pacing') or '', 140)}",
-            f"- trace 요약: {_compact_text(profile.get('trace_summary_text') or '', 160)}",
-            "",
-            "[RECENT_ACTIONS_DO_NOT_REPEAT]",
-            recent_action_block,
-            "",
-            "[OUTPUT_RULES]",
-            "- CURRENT_TASK에 직접 답한다.",
-            "- 사용자의 문장을 그대로 반복하거나 공백, 말줄임표만 바꿔 되묻지 않는다.",
-            "- 직전 발화의 뜻을 묻는 질문이면 그 뜻을 Ruca 말투로 짧게 풀어 답한다.",
-            "- 내부 상태명, trace, appraisal, arousal, valence, JSON, 섹션명을 출력하지 않는다.",
-            "- 한국어 1~4문장으로만 출력한다.",
-            "- 행동은 필요할 때만 0~1개 쓰고, 반드시 별도 줄에서 '[ACTION] '으로 시작한다.",
-            "- RECENT_ACTIONS_DO_NOT_REPEAT의 ACTION 줄은 그대로 쓰지 않는다.",
-        ]
-    )
-
-
 def _float_list(value: object) -> list[float]:
     return np.asarray(value, dtype=float).tolist()
 
@@ -530,25 +400,30 @@ def _has_explicit_action_channel(user_text: str | None) -> bool:
 def _normalize_interaction_event(event: Mapping[str, Any] | None, user_text: str | None = None) -> dict[str, Any]:
     source = dict(event or {}) if isinstance(event, Mapping) else {}
     has_action = bool(source.get("has_user_action"))
-    proximity = _clamp01(source.get("proximity"))
-    contact = _clamp01(source.get("contact"))
-    restraint = _clamp01(source.get("restraint", source.get("control_pressure")))
-    reciprocity = _clamp01(source.get("reciprocity"))
     normalized = {
         "has_user_action": has_action,
         "action_intensity": _clamp01(source.get("action_intensity")),
-        "proximity": proximity,
-        "contact": contact,
-        "restraint": restraint,
-        "reciprocity": reciprocity,
+        "body_boundary_pressure": _clamp01(source.get("body_boundary_pressure")),
+        "forced_proximity": _clamp01(source.get("forced_proximity")),
+        "reciprocity_evidence": _clamp01(source.get("reciprocity_evidence")),
+        "consent_ambiguity": _clamp01(source.get("consent_ambiguity")),
     }
     if not has_action and max(
         normalized["action_intensity"],
-        normalized["proximity"],
-        normalized["contact"],
-        normalized["restraint"],
+        normalized["body_boundary_pressure"],
+        normalized["forced_proximity"],
     ) >= 0.20:
         normalized["has_user_action"] = True
+    if user_text is not None and not _has_explicit_action_channel(user_text) and "?" in str(user_text):
+        normalized.update(
+            {
+                "has_user_action": False,
+                "action_intensity": 0.0,
+                "body_boundary_pressure": 0.0,
+                "forced_proximity": 0.0,
+                "consent_ambiguity": min(normalized["consent_ambiguity"], 0.35),
+            }
+        )
     return normalized
 
 
@@ -574,16 +449,34 @@ def _apply_interaction_event_to_raw_signal(
         return adjusted
 
     action = event["action_intensity"]
-    proximity = event["proximity"]
-    contact = event["contact"]
-    restraint = event["restraint"]
-    reciprocity = event["reciprocity"]
+    boundary = event["body_boundary_pressure"]
+    forced = event["forced_proximity"]
+    reciprocity = event["reciprocity_evidence"]
+    consent_ambiguity = event["consent_ambiguity"]
+    boundary_load = max(boundary, forced, consent_ambiguity * 0.85)
 
+    adjusted["control_pressure"] = max(
+        adjusted["control_pressure"],
+        _clamp01(0.18 + 0.58 * forced + 0.34 * boundary),
+    )
+    adjusted["ambiguity"] = max(
+        adjusted["ambiguity"],
+        _clamp01(0.22 + 0.48 * consent_ambiguity + 0.22 * boundary),
+    )
+    adjusted["alarm"] = max(
+        adjusted["alarm"],
+        _clamp01(0.14 + 0.50 * boundary + 0.28 * forced - 0.16 * reciprocity),
+    )
+    adjusted["safety_buffer"] = min(
+        adjusted["safety_buffer"],
+        _clamp01(0.66 - 0.44 * boundary_load + 0.18 * reciprocity),
+    )
     adjusted["novelty"] = max(adjusted["novelty"], _clamp01(0.18 + 0.42 * action))
-    adjusted["control_pressure"] = max(adjusted["control_pressure"], _clamp01(0.12 + 0.50 * restraint + 0.18 * contact))
-    adjusted["ambiguity"] = max(adjusted["ambiguity"], _clamp01(0.16 + 0.30 * proximity + 0.20 * contact))
-    adjusted["approach_drive"] = max(adjusted["approach_drive"], _clamp01(0.18 + 0.35 * proximity + 0.25 * reciprocity))
-    adjusted["attachment_pull"] = max(adjusted["attachment_pull"], _clamp01(0.20 + 0.30 * contact + 0.30 * reciprocity))
+    if reciprocity < 0.45 and boundary_load >= 0.35:
+        adjusted["approach_drive"] = min(adjusted["approach_drive"], _clamp01(0.34 + 0.24 * reciprocity))
+        adjusted["attachment_pull"] = min(adjusted["attachment_pull"], _clamp01(0.46 + 0.28 * reciprocity))
+    elif reciprocity >= 0.60:
+        adjusted["attachment_pull"] = max(adjusted["attachment_pull"], _clamp01(0.30 + 0.45 * reciprocity))
     return adjusted
 
 
@@ -627,10 +520,10 @@ def _fallback_agent_perception_payload(user_text: str, error: str, raw: str) -> 
         "interaction_event": {
             "has_user_action": bool(has_action),
             "action_intensity": 0.45 if has_action else 0.0,
-            "proximity": 0.20 if has_action else 0.0,
-            "contact": 0.35 if has_action else 0.0,
-            "restraint": 0.15 if has_action else 0.0,
-            "reciprocity": 0.15 if has_action else 0.0,
+            "body_boundary_pressure": 0.35 if has_action else 0.0,
+            "forced_proximity": 0.20 if has_action else 0.0,
+            "reciprocity_evidence": 0.15 if has_action else 0.0,
+            "consent_ambiguity": 0.35 if has_action else 0.0,
         },
         "confidence": 0.35,
         "fallback": {
@@ -696,20 +589,23 @@ def _build_agent_perceived_stim(
         payload.get("interaction_event") if isinstance(payload.get("interaction_event"), Mapping) else {},
         user_text,
     )
-    policy = str(generation_config.raw_signal_policy or "raw_pure").strip()
-    adjusted_signal = {
-        key: _clamp01(raw_signal.get(key))
-        for key in (
-            "approach_drive",
-            "safety_buffer",
-            "alarm",
-            "fatigue",
-            "attachment_pull",
-            "control_pressure",
-            "novelty",
-            "ambiguity",
-        )
-    }
+    policy = str(generation_config.raw_signal_policy or "event_annotated").strip()
+    if policy == "guarded":
+        adjusted_signal = _apply_interaction_event_to_raw_signal(raw_signal, interaction_event)
+    else:
+        adjusted_signal = {
+            key: _clamp01(raw_signal.get(key))
+            for key in (
+                "approach_drive",
+                "safety_buffer",
+                "alarm",
+                "fatigue",
+                "attachment_pull",
+                "control_pressure",
+                "novelty",
+                "ambiguity",
+            )
+        }
     vec = _raw_signal_to_stim_vec(adjusted_signal)
     if float(vec.max()) <= 0.0:
         raise ValueError("agent perception returned an empty stim vector")
@@ -792,13 +688,12 @@ def _apply_affective_carryover(
         _clamp01(raw_signal.get("ambiguity")),
         _clamp01(raw_signal.get("fatigue")),
     )
-    event_raw_load = 0.0
+    event_boundary_load = 0.0
     if bool(event.get("has_user_action")):
-        event_raw_load = max(
-            _clamp01(event.get("proximity")),
-            _clamp01(event.get("contact")),
-            _clamp01(event.get("restraint")),
-            _clamp01(event.get("action_intensity")) * 0.80,
+        event_boundary_load = max(
+            _clamp01(event.get("body_boundary_pressure")),
+            _clamp01(event.get("forced_proximity")),
+            _clamp01(event.get("consent_ambiguity")) * 0.80,
         )
     relation_load = max(previous_relation_load, current_relation_load)
     if previous_pressure < 0.18 and previous_active < 0.08:
@@ -814,11 +709,11 @@ def _apply_affective_carryover(
     blend = min(0.16, 0.025 + 0.10 * max(previous_pressure, previous_active, previous_relation_load * 0.30) * relation_load)
     if relation_load >= 0.65 and (previous_pressure >= 0.22 or previous_active >= 0.10):
         blend = max(blend, 0.07)
-    if event_raw_load >= 0.45:
+    if event_boundary_load >= 0.45:
         blend *= 0.55
     carried = (1.0 - blend) * current + blend * previous_stim
 
-    if relation_load >= 0.55 and previous_pressure >= 0.22 and event_raw_load < 0.45:
+    if relation_load >= 0.55 and previous_pressure >= 0.22 and event_boundary_load < 0.45:
         residual = min(0.12, 0.10 * relation_load)
         carried[2] = max(float(carried[2]), float(current[2]) + residual * max(0.0, float(previous_stim[2]) - float(current[2])))
         carried[3] = max(float(carried[3]), float(current[3]) + residual * max(0.0, float(previous_stim[3]) - float(current[3])))
@@ -830,7 +725,7 @@ def _apply_affective_carryover(
         "previous_pressure": round(float(previous_pressure), 4),
         "previous_active_ratio": round(float(previous_active), 4),
         "relation_load": round(float(relation_load), 4),
-        "event_raw_load": round(float(event_raw_load), 4),
+        "event_boundary_load": round(float(event_boundary_load), 4),
         "previous_stim_vec": previous_stim.astype(float).tolist(),
         "stim_vec_before_carryover": current.astype(float).tolist(),
         "stim_vec_after_carryover": carried.astype(float).tolist(),
@@ -874,13 +769,12 @@ def _build_session_affect_state(
     )
     previous_pressure = _clamp01(previous.get("felt_pressure"))
     previous_active = _clamp01(previous.get("active_ratio"))
-    event_raw_load = 0.0
+    event_boundary_load = 0.0
     if bool(interaction_event.get("has_user_action")):
-        event_raw_load = max(
-            _clamp01(interaction_event.get("proximity")),
-            _clamp01(interaction_event.get("contact")),
-            _clamp01(interaction_event.get("restraint")),
-            _clamp01(interaction_event.get("action_intensity")) * 0.80,
+        event_boundary_load = max(
+            _clamp01(interaction_event.get("body_boundary_pressure")),
+            _clamp01(interaction_event.get("forced_proximity")),
+            _clamp01(interaction_event.get("consent_ambiguity")) * 0.80,
         )
 
     saturation_pressure = max(0.0, float(previous_stim[2]) - 0.72) + max(0.0, float(previous_stim[3]) - 0.68)
@@ -895,15 +789,15 @@ def _build_session_affect_state(
     )
     if str(felt.get("trace_interpretation", "")) == "no_active_trace":
         axis_decay *= np.asarray([0.72, 0.90, 0.62, 0.78], dtype=np.float32)
-    if event_raw_load >= 0.45:
-        axis_decay *= np.asarray([0.72, 0.90, 0.78, 0.82], dtype=np.float32)
+    if event_boundary_load >= 0.45:
+        axis_decay *= np.asarray([0.62, 0.86, 0.70, 0.74], dtype=np.float32)
     axis_decay = np.clip(axis_decay, np.asarray([0.20, 0.42, 0.18, 0.26]), np.asarray([0.56, 0.76, 0.56, 0.62]))
     current_weight = 1.0 - axis_decay
     if current_active >= 0.20 or current_pressure >= 0.45:
         current_weight = np.maximum(current_weight, np.asarray([0.46, 0.26, 0.48, 0.40], dtype=np.float32))
     affect_stim = axis_decay * previous_stim + current_weight * current_stim
-    ne_soft_cap = 0.66 + 0.12 * relation_load + 0.06 * event_raw_load
-    mela_soft_cap = 0.62 + 0.10 * relation_load + 0.04 * event_raw_load
+    ne_soft_cap = 0.66 + 0.12 * relation_load + 0.06 * event_boundary_load
+    mela_soft_cap = 0.62 + 0.10 * relation_load + 0.04 * event_boundary_load
     if affect_stim[2] > ne_soft_cap:
         affect_stim[2] = ne_soft_cap + 0.22 * (float(affect_stim[2]) - ne_soft_cap)
     if affect_stim[3] > mela_soft_cap:
@@ -929,7 +823,7 @@ def _build_session_affect_state(
         "pressure_decay": round(float(pressure_decay), 4),
         "active_decay": round(float(active_decay), 4),
         "saturation_pressure": round(float(saturation_pressure), 4),
-        "event_raw_load": round(float(event_raw_load), 4),
+        "event_boundary_load": round(float(event_boundary_load), 4),
         "label": str(emotion.get("label", "")),
         "tendency": str(profile.get("appraisal_tendency", "")),
         "trace_interpretation": str(felt.get("trace_interpretation", "")),
@@ -1102,20 +996,19 @@ def _build_translation_surface(profile: Mapping[str, Any]) -> dict[str, Any]:
     pressure = max(_clamp01(felt.get("felt_pressure")), _clamp01(session_affect.get("felt_pressure")))
     approach_tension = max(0.0, dopamine - serotonin)
     stuckness = max(0.0, norepinephrine + melatonin - serotonin - 0.45)
-    event_raw_load = 0.0
+    event_boundary_load = 0.0
     if bool(interaction_event.get("has_user_action")):
-        event_raw_load = max(
-            _clamp01(interaction_event.get("proximity")),
-            _clamp01(interaction_event.get("contact")),
-            _clamp01(interaction_event.get("restraint")),
-            _clamp01(interaction_event.get("action_intensity")) * 0.80,
+        event_boundary_load = max(
+            _clamp01(interaction_event.get("body_boundary_pressure")),
+            _clamp01(interaction_event.get("forced_proximity")),
+            _clamp01(interaction_event.get("consent_ambiguity")) * 0.80,
         )
-    reciprocity = _clamp01(interaction_event.get("reciprocity"))
+    reciprocity = _clamp01(interaction_event.get("reciprocity_evidence"))
 
-    if event_raw_load >= 0.52 and reciprocity >= 0.55:
-        mode = "raw_contact_pull"
-        line_shape = "말이 먼저 정리되지 않고, 가까워지고 싶은 압력과 망설임이 같이 나온다."
-        action_texture = "다가가거나 손/시선을 붙잡는 행동을 쓰되, 설명으로 정리하지 않는다."
+    if event_boundary_load >= 0.52 and reciprocity < 0.55:
+        mode = "body_boundary_event"
+        line_shape = "처음에는 몸이 먼저 멈추고, 말은 짧게 늦게 나온다. 설명보다 경계와 혼란을 남긴다."
+        action_texture = "한 발 물러서거나 손목/어깨/시선으로 공간을 확보한다. 붙잡거나 다가가는 행동은 쓰지 않는다."
     elif melatonin >= 0.60 and norepinephrine >= 0.62:
         mode = "stalled_pressure"
         line_shape = "짧은 문장 뒤에 덜 끝난 문장을 남긴다. 확정적인 위로보다 막힌 느낌을 둔다."
@@ -1153,6 +1046,8 @@ def _build_translation_surface(profile: Mapping[str, Any]) -> dict[str, Any]:
         "같은 행동을 반복하지 않는다. 직전 표현이 손/시선/침묵이면 다른 표면을 고른다.",
         "미래를 단정하거나 관계를 깔끔하게 정리하지 않는다.",
     ]
+    if event_boundary_load >= 0.45 and reciprocity < 0.55:
+        avoid.append("사용자 행동을 곧바로 로맨틱한 접근이나 동의로 번역하지 않는다.")
     if mode in {"reach_under_pressure", "stalled_pressure"}:
         avoid.append("바로 괜찮다고 말하지 않는다.")
 
@@ -1171,8 +1066,8 @@ def _build_translation_surface(profile: Mapping[str, Any]) -> dict[str, Any]:
             "active_ratio": round(float(active_ratio), 4),
             "approach_tension": round(float(approach_tension), 4),
             "stuckness": round(float(stuckness), 4),
-            "event_raw_load": round(float(event_raw_load), 4),
-            "reciprocity": round(float(reciprocity), 4),
+            "event_boundary_load": round(float(event_boundary_load), 4),
+            "reciprocity_evidence": round(float(reciprocity), 4),
         },
     }
 
@@ -1207,21 +1102,21 @@ def _build_felt_self_state(
         if isinstance((profile.get("agent_perception", {}) or {}).get("interaction_event"), Mapping)
         else {}
     )
-    event_raw_load = _clamp01((profile.get("translation_surface", {}) or {}).get("source", {}).get("event_raw_load"))
+    boundary_load = _clamp01((profile.get("translation_surface", {}) or {}).get("source", {}).get("event_boundary_load"))
     pressure = _clamp01(session_affect.get("felt_pressure"))
     active = _clamp01(session_affect.get("active_ratio"))
 
     approach_impulse = _clamp01(0.45 * dopamine + 0.35 * _clamp01(raw_signal.get("approach_drive")) + 0.20 * _clamp01(raw_signal.get("attachment_pull")))
-    avoidance_impulse = _clamp01(0.45 * norepinephrine + 0.30 * _clamp01(raw_signal.get("control_pressure")) + 0.18 * event_raw_load - 0.15 * serotonin)
+    avoidance_impulse = _clamp01(0.45 * norepinephrine + 0.30 * _clamp01(raw_signal.get("control_pressure")) + 0.25 * boundary_load - 0.15 * serotonin)
     speak_impulse = _clamp01(0.34 * pressure + 0.30 * approach_impulse + 0.22 * active + 0.14 * _clamp01(raw_signal.get("ambiguity")))
     hide_impulse = _clamp01(0.38 * avoidance_impulse + 0.28 * melatonin + 0.20 * _clamp01(raw_signal.get("ambiguity")) - 0.10 * approach_impulse)
     attachment_residue = _clamp01(0.50 * _clamp01(previous.get("attachment_residue")) + 0.34 * _clamp01(raw_signal.get("attachment_pull")) + 0.16 * dopamine)
-    boundary_residue = _clamp01(0.46 * _clamp01(previous.get("boundary_residue")) + 0.20 * event_raw_load + 0.20 * _clamp01(raw_signal.get("control_pressure")))
-    trust_shift = _clamp01(0.55 * serotonin + 0.25 * _clamp01(interaction_event.get("reciprocity")) - 0.12 * event_raw_load)
+    boundary_residue = _clamp01(0.46 * _clamp01(previous.get("boundary_residue")) + 0.34 * boundary_load + 0.20 * _clamp01(raw_signal.get("control_pressure")))
+    trust_shift = _clamp01(0.55 * serotonin + 0.25 * _clamp01(interaction_event.get("reciprocity_evidence")) - 0.25 * boundary_load)
 
-    if event_raw_load >= 0.52 and approach_impulse >= avoidance_impulse:
-        unresolved = "가까워지고 싶은 압력과 망설임이 같이 남아 있다"
-        body_bias = "가까이 움직이려다 말끝이 먼저 흔들린다"
+    if boundary_load >= 0.52:
+        unresolved = "가까워지고 싶은 마음보다 몸이 먼저 멈춘 감각이 남아 있다"
+        body_bias = "공간을 확보하려 하지만 시선을 완전히 끊지는 못한다"
     elif approach_impulse >= avoidance_impulse + 0.16:
         unresolved = "붙잡고 싶은 말이 먼저 올라오지만 너무 빠를까 봐 걸린다"
         body_bias = "가까이 있고 싶지만 손이나 시선이 먼저 조심스러워진다"
@@ -1252,7 +1147,7 @@ def _build_felt_self_state(
             "serotonin": round(float(serotonin), 4),
             "norepinephrine": round(float(norepinephrine), 4),
             "melatonin": round(float(melatonin), 4),
-            "event_raw_load": round(float(event_raw_load), 4),
+            "boundary_load": round(float(boundary_load), 4),
         },
     }
 
@@ -1306,63 +1201,39 @@ def _build_emotion_memory(
     max_items: int = 6,
 ) -> tuple[dict[str, Any], ...]:
     carried: list[dict[str, Any]] = []
-    for index, item in enumerate(previous_memory or ()):
+    for item in previous_memory or ():
         if not isinstance(item, Mapping):
             continue
+        remaining = int(item.get("decay_turns", 0) or 0) - 1
+        if remaining <= 0:
+            continue
         copied = dict(item)
-        copied["age_turns"] = int(copied.get("age_turns", 0) or 0) + 1
-        copied["memory_index"] = int(index)
+        copied["decay_turns"] = remaining
+        residue = dict(copied.get("residue", {}) if isinstance(copied.get("residue"), Mapping) else {})
+        copied["residue"] = {key: round(_clamp01(value) * 0.78, 4) for key, value in residue.items()}
         carried.append(copied)
 
-    trace_profile = dict(profile.get("trace_profile", {}) if isinstance(profile.get("trace_profile"), Mapping) else {})
-    trace_lines = _string_list(profile.get("trace_lines", []))
-    phase_k = [_extract_phase_k(line) for line in trace_lines]
-    branch_len = int(profile.get("dominant_branch_len", trace_profile.get("dominant_branch_len", 0)) or 0)
-    ticks_run = max(0.0, float(trace_profile.get("ticks_run", profile.get("ticks_run", 0)) or 0.0))
-    active_window = max(0.0, float(trace_profile.get("active_window_ticks", 0) or 0.0))
-    mean_active = max(0.0, float(trace_profile.get("mean_active_nodes", 0.0) or 0.0))
-    max_active = max(0.0, float(trace_profile.get("max_active_nodes", 0.0) or 0.0))
-    mean_edges = max(0.0, float(trace_profile.get("mean_edges_fired", 0.0) or 0.0))
-    max_edges = max(0.0, float(trace_profile.get("max_edges_fired", 0.0) or 0.0))
-    k_peak = max(phase_k) if phase_k else 0.0
-    k_mean = float(sum(phase_k) / len(phase_k)) if phase_k else 0.0
-    k_end = phase_k[-1] if phase_k else 0.0
-    k_start = phase_k[0] if phase_k else 0.0
-    k_delta = k_end - k_start
     pressure = _clamp01(felt_self.get("felt_pressure"))
     attachment = _clamp01(felt_self.get("attachment_residue"))
     boundary = _clamp01(felt_self.get("boundary_residue"))
     trust = _clamp01(felt_self.get("trust_shift"))
-    carried.append(
-        {
-            "event": "k_residue",
-            "age_turns": 0,
-            "k_residue": {
-                "dominant_branch_len": branch_len,
-                "ticks_run": round(float(ticks_run), 4),
-                "active_window_ticks": round(float(active_window), 4),
-                "mean_active_nodes": round(float(mean_active), 4),
-                "max_active_nodes": round(float(max_active), 4),
-                "mean_edges_fired": round(float(mean_edges), 4),
-                "max_edges_fired": round(float(max_edges), 4),
-                "phase_k_start": round(float(k_start), 4),
-                "phase_k_end": round(float(k_end), 4),
-                "phase_k_mean": round(float(k_mean), 4),
-                "phase_k_peak": round(float(k_peak), 4),
-                "phase_k_delta": round(float(k_delta), 4),
-                "termination_reason": str(trace_profile.get("termination_reason", profile.get("termination_reason", ""))),
-            },
-            "felt_after": str(felt_self.get("unresolved_phrase", "")),
-            "body_after": str(felt_self.get("body_bias", "")),
-            "residue": {
-                "attachment": round(float(attachment), 4),
-                "boundary": round(float(boundary), 4),
-                "trust": round(float(trust), 4),
-                "pressure": round(float(pressure), 4),
-            },
-            "surface_mode": str((profile.get("translation_surface", {}) or {}).get("mode", "")),
-        }
-    )
+    if max(pressure, attachment, boundary) >= 0.22:
+        event = _compact_text(user_text, limit=90)
+        carried.append(
+            {
+                "event": event,
+                "felt_after": str(felt_self.get("unresolved_phrase", "")),
+                "body_after": str(felt_self.get("body_bias", "")),
+                "residue": {
+                    "attachment": round(float(attachment), 4),
+                    "boundary": round(float(boundary), 4),
+                    "trust": round(float(trust), 4),
+                    "pressure": round(float(pressure), 4),
+                },
+                "surface_mode": str((profile.get("translation_surface", {}) or {}).get("mode", "")),
+                "decay_turns": 4 if pressure >= 0.45 or boundary >= 0.35 else 2,
+            }
+        )
     return tuple(carried[-max(1, int(max_items)) :])
 
 
@@ -1502,7 +1373,7 @@ def generate_chat_turn(
         raise ValueError(f"unsupported conditioning_mode: {generation_config.conditioning_mode}")
     if generation_config.affect_input_mode not in {"encoder", "llm_perception", "llm_raw_signal"}:
         raise ValueError(f"unsupported affect_input_mode: {generation_config.affect_input_mode}")
-    if generation_config.raw_signal_policy not in {"raw_pure", "event_annotated"}:
+    if generation_config.raw_signal_policy not in {"raw_pure", "event_annotated", "guarded"}:
         raise ValueError(f"unsupported raw_signal_policy: {generation_config.raw_signal_policy}")
     if generation_config.style_profile not in STYLE_AXIS_PROFILES:
         valid = ", ".join(available_style_profiles())
@@ -1603,18 +1474,7 @@ def generate_chat_turn(
         appraisal_summary=str(profile.get("appraisal_summary_text", "")),
         raw_trace_block=_build_raw_emonet_trace_block(profile),
     )
-    if "qwen3" in str(generation_config.model_name or "").lower():
-        prompt = build_compact_character_prompt(
-            user_text=user_text,
-            history=history,
-            character_card=active_character,
-            session_state=prompt_session,
-            profile=profile,
-        )
-        prompt_sections = f"qwen_compact_character_context,{prompt_sections}"
-    else:
-        prompt = append_latest_turn_guard(prompt, user_text=user_text, history=history)
-        prompt_sections = f"character_context,{prompt_sections}"
+    prompt_sections = f"character_context,{prompt_sections}"
     response_text, _raw_output, response_meta = request_plain_text_response(
         base_url=generation_config.base_url,
         model_name=generation_config.model_name,
@@ -1623,7 +1483,7 @@ def generate_chat_turn(
         max_tokens=generation_config.max_tokens,
         timeout_sec=generation_config.timeout_sec,
         max_retries=generation_config.response_max_retries,
-        validator=lambda raw: validate_contextual_character_response(raw, user_text=user_text, history=history),
+        validator=lambda raw: validate_character_response_text(raw, validate_plain_response_text),
         retry_instruction=DEFAULT_RESPONSE_RETRY_INSTRUCTION,
         system_prompt=DEFAULT_REQUEST_SYSTEM_PROMPT,
         api_key=generation_config.api_key,

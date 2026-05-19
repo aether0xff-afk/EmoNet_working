@@ -1,0 +1,6 @@
+artifacts/zs/
+__pycache__/
+**/__pycache__/
+*.pyc
+tmp_v5_gui_*.txt
+tmp_v5_gui_*.log

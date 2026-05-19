@@ -1,3 +1,41 @@
 __pycache__/
 *.py[cod]
+*$py.class
+
+# Python environments and test caches
+.venv/
+venv/
+env/
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local editor/runtime state
+.playwright-cli/
+.streamlit/
+
+# Temporary workspaces and generated scratch files
+tmp/
+temp/
+*.tmp
+*.log
+
+# Generated experiment outputs. Existing tracked artifacts stay tracked;
+# these rules stop accidental new bulk outputs from being added.
+outputs/
+output/
+**/outputs/
+**/output/
+
+# Large generated bundles and model artifacts
+*.zip
+*.npz
+*.pt
+*.pth
+*.joblib
+
+# OS/editor noise
+.DS_Store
+Thumbs.db

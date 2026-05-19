@@ -33,7 +33,7 @@ class CharacterChatTests(unittest.TestCase):
         self.assertGreater(len(card.response_rules), 0)
         self.assertTrue(card.temperament)
         self.assertTrue(card.trigger_map)
-        self.assertEqual(len(card.boundary_rules), 0)
+        self.assertGreater(len(card.boundary_rules), 0)
         self.assertTrue(card.relationship_stages)
 
     def test_character_context_prompt_includes_v31_trace_as_emotion_principle(self) -> None:

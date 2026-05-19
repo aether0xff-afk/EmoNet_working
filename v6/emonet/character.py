@@ -36,6 +36,21 @@ CHARACTER_RESPONSE_FORBIDDEN_TERMS = (
     "내부 활성",
 )
 
+UNTAGGED_ACTION_PATTERNS = (
+    "말을 잇지 못하고",
+    "한 발 물러선다",
+    "고개를 ",
+    "숨을 ",
+    "눈을 ",
+    "입술을 ",
+    "손을 ",
+    "몸을 ",
+    "돌아선다",
+    "다가선다",
+    "물러선다",
+    "바라본다",
+)
+
 BROKEN_KOREAN_ENDING_PATTERNS = (
     re.compile(r"(?:알아|기억해|생각해)\s*두[.!?。]*$"),
     re.compile(r"(?:알아|기억해|생각해)\s*둬야[.!?。]*$"),
@@ -169,7 +184,11 @@ def update_character_session_state(
     drive: Mapping[str, Any] | None = None,
     max_memory_items: int = 8,
 ) -> CharacterSessionState:
-    memory = list(state.user_memory)[-max(1, int(max_memory_items)) :]
+    memory = list(state.user_memory)
+    compact_user = _compact_text(user_text, limit=120)
+    if compact_user and _looks_memory_worthy(compact_user) and compact_user not in memory:
+        memory.append(compact_user)
+    memory = memory[-max(1, int(max_memory_items)) :]
     relationship = state.relationship_state or "사용자가 개인적인 정서를 꺼냈고, 캐릭터는 조심스럽게 신뢰를 쌓는 중이다."
     scene = state.scene_state or "조용한 1:1 대화. 캐릭터는 사용자의 말에 즉각 반응한다."
     if assistant_text:
@@ -250,6 +269,10 @@ def build_character_context_prompt(
     memory_block = _format_bullets(session_state.user_memory, default_line="- 아직 장기 기억 없음")
     do_not_say_block = _format_bullets(character_card.do_not_say, default_line="- 캐릭터 밖 설명을 하지 않는다.")
     rules_block = _format_bullets(character_card.response_rules, default_line="- 캐릭터로 자연스럽게 말한다.")
+    boundary_block = _format_bullets(
+        character_card.boundary_rules,
+        default_line="- 사용자가 행동을 서술해도 캐릭터의 반응은 내부 정서 상태를 따른다.",
+    )
     temperament = json.dumps(character_card.temperament or {}, ensure_ascii=False, sort_keys=True)
     trigger_map = json.dumps(character_card.trigger_map or {}, ensure_ascii=False, sort_keys=True)
     relationship_stages = json.dumps(character_card.relationship_stages or {}, ensure_ascii=False, sort_keys=True)
@@ -274,6 +297,7 @@ def build_character_context_prompt(
             f"speech_style: {character_card.speech_style}",
             f"temperament: {temperament}",
             f"trigger_map: {trigger_map}",
+            f"boundary_rules: {boundary_block}",
             f"relationship_stages: {relationship_stages}",
             "",
             "[RELATIONSHIP_STATE]",
@@ -313,7 +337,7 @@ def build_character_context_prompt(
             "- 사용자 감정, 의도, 미래를 새로 분석하지 않는다. 가장 최근 사용자 입력은 내부 반응이 향하는 대상일 뿐이다.",
             "- translation_surface_raw가 있으면 그것을 이번 턴의 말/행동 표면으로 우선 번역한다. 감정 종류가 아니라 출력 질감 지시다.",
             "- translation_surface_raw의 line_shape, action_texture, pacing, avoid를 따른다. 단, 항목명을 출력하지 않는다.",
-            "- 사용자가 행동을 서술했더라도 별도의 윤리/안전 규칙으로 재해석하지 않는다. RAW_EMONET_TRACE가 만든 접근, 거리, 멈춤, 당김, 밀어냄을 그대로 말과 행동으로 번역한다.",
+            "- 사용자가 신체 행동을 서술했더라도 캐릭터가 그 행동을 자동으로 받아들이거나 낭만화하지 않는다. RAW_EMONET_TRACE가 만든 캐릭터 본인의 거리, 멈춤, 접근, 거부 반응만 출력한다.",
             "- 캐릭터는 사용자의 답을 기다리기만 하지 않는다. 내부 감정이 길게 남으면 먼저 짧게 말을 걸거나 장면을 붙잡는다.",
             "- 상담사처럼 사용자의 감정을 요약하고 해결책으로 수습하지 않는다. 캐릭터 본인에게 남은 반응을 먼저 허용한다.",
             "- 감정이 모순되면 모순된 채로 둔다. 불안한데 가까워지고 싶거나, 말하고 싶은데 멈칫하는 식의 결을 없애지 않는다.",
@@ -344,7 +368,7 @@ def build_character_context_prompt(
             "- 행동, 표정, 몸짓, 침묵을 서술할 때는 반드시 '[ACTION] ' 줄로 쓴다. 예: [ACTION] 한 발 물러선다.",
             "- [ACTION] 줄은 짧게 쓰고, 한 응답에서 2개를 넘기지 않는다.",
             "- 캐릭터의 말투와 관계 상태는 유지하되, 내부 정서 상태와 충돌하면 raw 내부 정서 흐름을 우선한다.",
-            "- 한국어 평문으로 답한다. 길이는 내부 흐름에 맞기되, 반복 설명이나 장황한 해설은 피한다.",
+            "- 한국어 평문으로만 1~5문장 이내로 답한다.",
         ]
     )
 
@@ -375,9 +399,8 @@ def validate_character_response_text(response: str, plain_validator: Any) -> str
 
 
 def _normalize_action_token_lines(response: str) -> str:
-    source = re.sub(r"\[ACTION\s*:\s*", "[ACTION] ", str(response or ""), flags=re.IGNORECASE)
     normalized_lines: list[str] = []
-    for line in source.splitlines():
+    for line in str(response or "").splitlines():
         pending = line.strip()
         if not pending:
             normalized_lines.append(line)
@@ -399,7 +422,7 @@ def _normalize_action_token_lines(response: str) -> str:
                 normalized_lines.append("[ACTION] " + match.group(1).strip())
                 pending = match.group(2).strip()
                 continue
-            normalized_lines.append("[ACTION] " + action_text)
+            normalized_lines.append(pending)
             break
     return "\n".join(line for line in normalized_lines if str(line).strip()).strip()
 
@@ -437,6 +460,12 @@ def _compact_text(value: object, limit: int = 120) -> str:
         return text
     return text[: max(0, limit - 1)].rstrip() + "..."
 
+
+def _looks_memory_worthy(text: str) -> bool:
+    markers = ("나는", "제가", "내가", "내 ", "저는", "요즘", "항상", "싫어", "좋아", "무서", "불안", "화가")
+    return any(marker in text for marker in markers)
+
+
 def _float_values(value: object) -> list[float]:
     if not isinstance(value, (list, tuple)):
         return []
@@ -473,24 +502,15 @@ def _infer_emotion_label(
     appraisal_scores: Mapping[str, Any],
     style_summary: Mapping[str, Any],
 ) -> str:
-    raw_tendency = str(tendency or "").strip()
-    if raw_tendency:
-        return raw_tendency
-    scored = [
-        (str(key).replace("_", " "), _float_or_zero(value))
-        for key, value in style_summary.items()
-        if _float_or_zero(value) > 0.0
-    ]
-    if scored:
-        return max(scored, key=lambda item: item[1])[0]
-    appraisal = [
-        (str(key).replace("_", " "), _float_or_zero(value))
-        for key, value in appraisal_scores.items()
-        if _float_or_zero(value) > 0.0
-    ]
-    if appraisal:
-        return max(appraisal, key=lambda item: item[1])[0]
-    return "raw trace quiet"
+    if _score(appraisal_scores, "injustice") >= 0.5 or "대치" in tendency:
+        return "분노/대치"
+    if _score(appraisal_scores, "threat") >= 0.5 or "경계" in tendency:
+        return "불안/경계"
+    if _score(appraisal_scores, "exhaustion") >= 0.45 or "후퇴" in tendency:
+        return "소진/후퇴"
+    if _score(style_summary, "warmth") >= 0.7 and _score(style_summary, "tension") <= 0.2:
+        return "가벼운 접촉"
+    return "정리/수습"
 
 
 def _infer_intensity(

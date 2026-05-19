@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from emonet.character import CharacterSessionState, load_character_card, validate_character_response_text
+from emonet.character import CharacterSessionState, load_character_card
 from emonet.chat_service import ChatGenerationConfig, ChatRuntimeConfig, build_chat_runtime, generate_chat_turn
 from emonet.legacy_cli import validate_plain_response_text
 from emonet.llm_api import request_plain_text_response
@@ -21,7 +21,7 @@ from emonet.llm_api import request_plain_text_response
 HOST = "127.0.0.1"
 PORT = 8788
 LLM_PROVIDER = os.environ.get("EMONET_LLM_PROVIDER", "openai_compatible")
-LLM_MODEL = os.environ.get("EMONET_LLM_MODEL", "gpt-oss:20b")
+LLM_MODEL = os.environ.get("EMONET_LLM_MODEL", "gpt-oss:120b-cloud")
 LLM_BASE_URL = os.environ.get("EMONET_LLM_BASE_URL", "http://127.0.0.1:11434/v1")
 LLM_INPUT_PRICE = float(os.environ.get("EMONET_LLM_INPUT_PRICE", "0.0"))
 LLM_OUTPUT_PRICE = float(os.environ.get("EMONET_LLM_OUTPUT_PRICE", "0.0"))
@@ -77,7 +77,7 @@ def _chat_config(
     api_key: str | None = None,
     *,
     affect_input_mode: str = "encoder",
-    raw_signal_policy: str = "raw_pure",
+    raw_signal_policy: str = "event_annotated",
 ) -> ChatGenerationConfig:
     return ChatGenerationConfig(
         provider=LLM_PROVIDER,
@@ -88,9 +88,8 @@ def _chat_config(
         conditioning_mode="hybrid_trace",
         response_temperature=0.45,
         response_max_retries=1,
-        max_tokens=1600,
+        max_tokens=600,
         timeout_sec=180,
-        reasoning_effort="low",
         history_turns=6,
         affect_input_mode=affect_input_mode,
         raw_signal_policy=raw_signal_policy,
@@ -165,90 +164,6 @@ def _generate_ai_user_message(*, api_key: str | None, scenario: str, turn_index:
     return text, usage
 
 
-def _plain_llm_response(*, api_key: str, message: str) -> tuple[str, dict[str, Any]]:
-    text, _raw, meta = request_plain_text_response(
-        base_url=CLAUDE_BASE_URL,
-        model_name=CLAUDE_MODEL,
-        prompt="\n".join(
-            [
-                "[USER_INPUT]",
-                message,
-                "",
-                "[INSTRUCTIONS]",
-                "- 자연스러운 한국어 대화 응답만 출력한다.",
-                "- 캐릭터 설정, EmoNet, 내부 상태는 사용하지 않는다.",
-                "- 1~4문장 이내.",
-            ]
-        ),
-        temperature=0.55,
-        max_tokens=360,
-        timeout_sec=120,
-        max_retries=1,
-        validator=validate_plain_response_text,
-        retry_instruction="자연스러운 한국어 평문 대화 응답만 다시 출력하라.",
-        system_prompt="Return a plain Korean conversational response only.",
-        api_key=api_key,
-        provider="anthropic",
-    )
-    return text, dict(meta.get("usage", {}))
-
-
-def _ruca_prompt_only_response(*, api_key: str, message: str) -> tuple[str, dict[str, Any]]:
-    card = load_character_card()
-    prompt = "\n".join(
-        [
-            "[ROLE]",
-            "너는 아래 캐릭터 설정만 사용해 한국어로 답하는 캐릭터 대화 모델이다. EmoNet, raw signal, trace, 내부 상태는 사용하지 않는다.",
-            "",
-            "[CHARACTER]",
-            f"name: {card.name}",
-            f"persona: {card.persona}",
-            f"speech_style: {card.speech_style}",
-            f"relationship: {card.relationship_defaults}",
-            f"world: {card.world_state}",
-            "temperament: " + json.dumps(card.temperament, ensure_ascii=False, sort_keys=True),
-            "trigger_map: " + json.dumps(card.trigger_map, ensure_ascii=False, sort_keys=True),
-            "boundary_rules:",
-            "\n".join(f"- {item}" for item in card.boundary_rules),
-            "",
-            "[RECENT_DIALOGUE]",
-            _recent_dialogue_for_ai(max_messages=8),
-            "",
-            "[USER_INPUT]",
-            message,
-            "",
-            "[INSTRUCTIONS]",
-            "- Ruca의 말과 행동만 출력한다.",
-            "- 행동은 필요할 때만 별도 줄에서 [ACTION]으로 시작한다.",
-            "- 내부 시스템, trace, raw signal, EmoNet을 언급하지 않는다.",
-            "- 1~5문장 이내.",
-        ]
-    )
-    text, _raw, meta = request_plain_text_response(
-        base_url=CLAUDE_BASE_URL,
-        model_name=CLAUDE_MODEL,
-        prompt=prompt,
-        temperature=0.55,
-        max_tokens=420,
-        timeout_sec=120,
-        max_retries=1,
-        validator=lambda raw: validate_character_response_text(raw, validate_plain_response_text),
-        retry_instruction="Ruca의 자연스러운 한국어 대사와 필요한 [ACTION] 줄만 다시 출력하라.",
-        system_prompt="Return only Ruca's Korean character response.",
-        api_key=api_key,
-        provider="anthropic",
-    )
-    return text, dict(meta.get("usage", {}))
-
-
-def _add_usage(usage: dict[str, Any]) -> None:
-    input_tokens = int(usage.get("input_tokens", 0) or 0)
-    output_tokens = int(usage.get("output_tokens", 0) or 0)
-    _usage["input_tokens"] += input_tokens
-    _usage["output_tokens"] += output_tokens
-    _usage["cost_usd"] += _estimate_cost(input_tokens, output_tokens)
-
-
 def _state_payload() -> dict[str, Any]:
     _ensure_starter_message()
     card = load_character_card()
@@ -274,7 +189,7 @@ APP_HTML = r"""<!doctype html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>EmoNet v5 Character Chat</title>
+  <title>EmoNet v6 Ruca & Rookie</title>
   <style>
     :root {
       --bg: #101315;
@@ -331,19 +246,6 @@ APP_HTML = r"""<!doctype html>
     .trace-cell { border: 1px solid rgba(174,184,192,.25); border-radius: 7px; padding: 8px; background: rgba(5,8,10,.3); }
     .trace-cell .k { color: var(--muted); font-size: 12px; }
     .trace-cell .v { font-weight: 720; overflow-wrap: anywhere; }
-    .flow { border: 1px solid #385544; background: #121a17; border-radius: 8px; padding: 12px; margin-top: -4px; }
-    .flow-title { color: var(--accent); font-size: 12px; font-weight: 800; text-transform: uppercase; }
-    .flow-row { display: grid; grid-template-columns: 126px 1fr; gap: 10px; padding: 10px 0; border-top: 1px solid rgba(174,184,192,.16); }
-    .flow-row:first-of-type { border-top: 0; }
-    .flow-k { color: var(--muted); font-size: 12px; font-weight: 800; text-transform: uppercase; }
-    .flow-v { overflow-wrap: anywhere; }
-    .flow-v strong { color: var(--text); }
-    .signal-bars { display: grid; gap: 7px; margin-top: 8px; }
-    .signal-line { display: grid; grid-template-columns: 92px 1fr 42px; gap: 8px; align-items: center; font-size: 12px; }
-    .signal-name { color: var(--muted); }
-    .signal-track { height: 7px; border-radius: 99px; background: #0d1012; border: 1px solid var(--line); overflow: hidden; }
-    .signal-fill { height: 100%; background: linear-gradient(90deg, #75c59a, #f1c36d); }
-    .signal-num { text-align: right; color: var(--muted); }
     .process-panel { border: 1px solid #40515f; background: #12181d; border-radius: 8px; padding: 14px; margin: 14px 0; }
     .process-header { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
     .process-title { font-size: 17px; font-weight: 800; }
@@ -351,14 +253,6 @@ APP_HTML = r"""<!doctype html>
     .process-step { border: 1px solid rgba(174,184,192,.22); background: rgba(5,8,10,.25); border-radius: 7px; padding: 10px; }
     .process-step .step-name { color: var(--accent); font-size: 12px; font-weight: 800; text-transform: uppercase; }
     .process-step pre { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); font-size: 12px; line-height: 1.45; }
-<<<<<<< Updated upstream
-    .compare-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
-    .compare-card { border: 1px solid rgba(174,184,192,.24); border-radius: 8px; background: #10161a; padding: 12px; min-height: 160px; }
-    .compare-card h3 { margin-top: 0; color: var(--accent); }
-    .compare-card pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; margin: 0; }
-=======
-    .process-copy { margin-top: 6px; color: var(--text); line-height: 1.55; }
->>>>>>> Stashed changes
     .section-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0; }
     .section-toggle h2 { margin: 0; }
     .ghost { background: transparent; border-color: var(--line); color: var(--muted); }
@@ -375,8 +269,7 @@ APP_HTML = r"""<!doctype html>
     @media (max-width: 860px) {
       .app { grid-template-columns: 1fr; }
       aside { border-right: 0; border-bottom: 1px solid var(--line); }
-      .metrics, .trace-grid, .composer, .flow-row, .signal-line { grid-template-columns: 1fr; }
-      .signal-num { text-align: left; }
+      .metrics, .trace-grid, .composer { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -390,13 +283,14 @@ APP_HTML = r"""<!doctype html>
       <input id="budget" type="number" value="22" min="0" step="0.5" />
       <p class="small">model: """ + LLM_MODEL + r"""</p>
       <label class="checkrow"><input id="llmPerception" type="checkbox" checked /> Raw signal input</label>
-      <p class="small">켜면 Ollama가 감정 이름 없이 raw 신호만 만들고, EmoNet이 감정 상태를 판단합니다.</p>
+      <p class="small">켜면 Haiku가 감정 이름 없이 raw 신호만 만들고, EmoNet이 감정 상태를 판단합니다.</p>
       <label for="rawPolicy">Raw policy</label>
       <select id="rawPolicy">
-        <option value="raw_pure" selected>raw pure</option>
-        <option value="event_annotated">event annotated</option>
+        <option value="event_annotated" selected>event annotated</option>
+        <option value="raw_pure">raw pure</option>
+        <option value="guarded">guarded</option>
       </select>
-      <p class="small">raw pure는 수치 보정과 carryover를 끄고, event annotated는 행동 사건을 기록하되 raw 수치는 보존합니다.</p>
+      <p class="small">raw pure는 수치 보정과 carryover를 끄고, event annotated는 행동 사건만 기록합니다.</p>
       <label class="checkrow"><input id="showInternals" type="checkbox" /> Show internals</label>
       <button id="clearChat">Clear session</button>
       <button id="resetMemory">Reset memory</button>
@@ -423,8 +317,8 @@ APP_HTML = r"""<!doctype html>
       </section>
     </aside>
     <main>
-      <h1>EmoNet v5 Character Chat</h1>
-      <div class="sub">v5는 EmoNet trace를 캐릭터의 내부 정서 상태로 취급하고, 캐릭터 카드와 세션 기억을 함께 사용합니다.</div>
+      <h1>EmoNet v6 Ruca & Rookie</h1>
+      <div class="sub">v6는 EmoNet trace를 캐릭터의 내부 정서 상태로 취급하고, 무입력 tick과 자발 반응을 향해 확장하는 라인입니다.</div>
 
       <div class="metrics">
         <div class="metric"><div class="name">Session spent</div><div id="spent" class="value">$0.0000</div></div>
@@ -435,19 +329,6 @@ APP_HTML = r"""<!doctype html>
 
       <div id="chatError" class="error hidden"></div>
       <div id="chatlog" class="chatlog"></div>
-      <section class="card">
-        <div class="section-toggle">
-          <h2>Compare Outputs</h2>
-          <button id="toggleCompare" class="ghost" type="button" aria-expanded="false">Show</button>
-        </div>
-        <div id="compareBody" class="collapsible-body hidden">
-          <div class="sub">같은 입력을 쌩 LLM, Ruca 프롬프트만, Ruca + EmoNet/felt_self로 동시에 비교합니다. 현재 채팅 세션에는 추가하지 않습니다.</div>
-          <label for="compareMessage">Input</label>
-          <textarea id="compareMessage" placeholder="비교할 메시지를 입력하세요"></textarea>
-          <button id="runCompare" class="primary">Run comparison</button>
-          <div id="compareResult" class="compare-grid hidden"></div>
-        </div>
-      </section>
       <section class="card">
         <div class="section-toggle">
           <h2>AI Dialogue Test</h2>
@@ -505,9 +386,6 @@ function traceHtml(record) {
   if (!record) return "";
   const state = record.emotion_state || {};
   const saturation = Math.max(0, Math.min(1, Number(state.saturation_ratio || 0)));
-  const felt = record.felt_self || {};
-  const drive = record.drive || {};
-  const surface = record.translation_surface || {};
   return `
     <div class="emotion">
       <div class="emotion-head">
@@ -515,15 +393,19 @@ function traceHtml(record) {
         <div class="emotion-intensity">강도 ${esc(compact(state.intensity, "unknown"))}</div>
       </div>
       <div class="small">${esc(compact(state.summary, ""))}</div>
-      <div class="bar" title="trace density ${Math.round(saturation * 100)}%"><div class="bar-fill" style="width:${Math.round(saturation * 100)}%"></div></div>
+      <div class="bar" title="saturation ${Math.round(saturation * 100)}%"><div class="bar-fill" style="width:${Math.round(saturation * 100)}%"></div></div>
     </div>
-    <div class="flow">
-      <div class="flow-title">response process</div>
-      ${flowRow("1. input", `<strong>${esc(compact(record.input_text, ""))}</strong>`)}
-      ${flowRow("2. ignition", `${esc(ignitionText(record))}<br><span class="small">${esc(traceInputText(record))}</span>`)}
-      ${flowRow("3. propagation", `<strong>${esc(compact(state.label, "unknown"))}</strong> · ${esc(traceDensityText(record))} · branch ${esc(compact(record.dominant_branch_len, "0"))}<br><span class="small">${esc(tracePhaseText(record))}</span>`)}
-      ${flowRow("4. residue", `${esc(feltSelfText(record))}<br><span class="small">${esc(residueText(record))}</span>`)}
-      ${flowRow("5. surface", `${esc(responseShape(record))}<br><span class="small">${esc(compact(surface.action_texture, compact(drive.action_bias, "")))}</span>`)}
+    <div class="trace">
+      <div class="trace-title">Internal state used for character response</div>
+      <div class="trace-grid">
+        <div class="trace-cell"><div class="k">felt direction</div><div class="v">${esc(compact(record.appraisal_tendency, "unknown"))}</div></div>
+        <div class="trace-cell"><div class="k">target</div><div class="v">${esc(compact(record.appraisal_target, "unknown"))}</div></div>
+        <div class="trace-cell"><div class="k">input mode</div><div class="v">${esc(compact(record.affect_input_mode, "encoder"))}</div></div>
+        <div class="trace-cell"><div class="k">raw policy</div><div class="v">${esc(compact(record.raw_signal_policy, "event_annotated"))}</div></div>
+        <div class="trace-cell"><div class="k">trace summary</div><div class="v">${esc(compact(record.trace_summary_text, "none"))}</div></div>
+        <div class="trace-cell"><div class="k">raw signal</div><div class="v">${esc(compact(JSON.stringify((record.agent_perception || {}).raw_signal || {}), "none"))}</div></div>
+        <div class="trace-cell"><div class="k">saturation</div><div class="v">${esc(Math.round(saturation * 100))}%</div></div>
+      </div>
     </div>
   `;
 }
@@ -540,89 +422,8 @@ function formatJson(value) {
   catch (_err) { return String(value ?? ""); }
 }
 
-function num(value, fallback = 0) {
-  const n = Number(value);
-  return Number.isFinite(n) ? Math.max(0, Math.min(1, n)) : fallback;
-}
-
-function levelWord(value) {
-  const n = num(value);
-  if (n >= 0.72) return "강함";
-  if (n >= 0.48) return "뚜렷함";
-  if (n >= 0.24) return "약함";
-  return "거의 없음";
-}
-
-function traceInputText(record) {
-  return `input ${compact(record?.affect_input_mode, "encoder")} · policy ${compact(record?.raw_signal_policy, "raw_pure")}`;
-}
-
-function ignitionText(record) {
-  const state = record?.emotion_state || {};
-  const branch = Number(record?.dominant_branch_len || 0);
-  const active = num(state.active_ratio);
-  const saturation = num(state.saturation_ratio);
-  if (branch <= 1 && active < 0.08 && saturation < 0.08) return "작은 점화만 생기고 넓게 번지지 않음";
-  if (branch <= 2) return "짧은 가지가 생기고 바로 정리되는 흐름";
-  if (branch <= 5) return "여러 단계로 번지며 내부 방향을 만들기 시작함";
-  return "긴 가지가 이어지며 내부 반응이 오래 유지됨";
-}
-
-function traceDensityText(record) {
-  const state = record?.emotion_state || {};
-  const pct = Math.round(num(state.saturation_ratio) * 100);
-  if (pct <= 5) return "trace density 낮음";
-  if (pct <= 35) return "trace density 약함";
-  if (pct <= 70) return "trace density 뚜렷함";
-  return "trace density 높음";
-}
-
-function residueText(record) {
-  const felt = record?.felt_self || {};
-  const drive = record?.drive || {};
-  return [
-    `말하려는 힘 ${levelWord(felt.speak_impulse)}`,
-    `숨기려는 힘 ${levelWord(felt.hide_impulse)}`,
-    compact(drive.want_to_do, "")
-  ].filter(Boolean).join(" · ");
-}
-
-function debugRawText(record) {
-  return formatJson({
-    raw_signal: (record?.agent_perception || {}).raw_signal || {},
-    interaction_event: (record?.agent_perception || {}).interaction_event || {},
-    stim_vec: record?.affect_input_stim_vec || record?.stim_vec || [],
-    trace_profile: record?.trace_profile || {}
-  });
-}
-
-function tracePhaseText(record) {
-  const lines = Array.isArray(record?.trace_lines) ? record.trace_lines : [];
-  if (lines.length) return lines.slice(0, 4).join(" / ");
-  return compact(record?.trace_summary_text, "trace 활성 요약 없음");
-}
-
-function responseShape(record) {
-  const surface = record?.translation_surface || {};
-  return compact(surface.line_shape, compact(surface.pacing, "대사 표면 정보 없음"));
-}
-
-function feltSelfText(record) {
-  const felt = record?.felt_self || {};
-  const drive = record?.drive || {};
-  return [
-    compact(felt.unresolved_phrase, ""),
-    compact(felt.body_bias, ""),
-    compact(drive.want_to_say, "")
-  ].filter(Boolean).join(" / ") || "felt self 정보 없음";
-}
-
-function flowRow(label, html) {
-  return `<div class="flow-row"><div class="flow-k">${esc(label)}</div><div class="flow-v">${html}</div></div>`;
-}
-
-function processStep(name, html) {
-  return `<div class="process-step"><div class="step-name">${esc(name)}</div><div class="process-copy">${html}</div></div>`;
+function processStep(name, value) {
+  return `<div class="process-step"><div class="step-name">${esc(name)}</div><pre>${esc(value)}</pre></div>`;
 }
 
 function renderProcessPanel() {
@@ -642,45 +443,39 @@ function renderProcessPanel() {
       </div>`;
     return;
   }
+  const rawSignal = (record.agent_perception || {}).raw_signal || {};
   const emotion = record.emotion_state || {};
   const felt = record.agent_felt_state || {};
-  const feltSelf = record.felt_self || {};
-  const drive = record.drive || {};
   const translation = record.translation_surface || {};
   const steps = [
-    processStep("1. user event", `
-      <strong>${esc(compact(record.input_text, ""))}</strong>
-      <div class="small">이 문장이 이번 턴의 내부 반응이 향하는 대상입니다.</div>
-    `),
-    processStep("2. ignition", `
-      <strong>${esc(ignitionText(record))}</strong>
-      <div class="small">${esc(traceInputText(record))} · confidence ${esc(compact((record.agent_perception || {}).confidence, "n/a"))}</div>
-    `),
-    processStep("3. propagation / convergence", `
-      <strong>${esc(compact(emotion.label, "unknown"))}</strong> · ${esc(traceDensityText(record))} · branch ${esc(compact(record.dominant_branch_len, "0"))}
-      <div class="small">${esc(tracePhaseText(record))}</div>
-    `),
-    processStep("4. residue", `
-      ${esc(feltSelfText(record))}
-      <div class="small">${esc(residueText(record))}</div>
-      <div class="small">${esc(compact(felt.body_bias, compact(feltSelf.body_bias, "")))}</div>
-    `),
-    processStep("5. drive", `
-      <strong>${esc(compact(drive.want_to_say, "말하고 싶은 잔향 없음"))}</strong>
-      <div class="small">do: ${esc(compact(drive.want_to_do, ""))}</div>
-      <div class="small">avoid: ${esc(compact(drive.avoid, ""))}</div>
-    `),
-    processStep("6. surface translation", `
-      ${esc(responseShape(record))}
-      <div class="small">${esc(compact(translation.action_texture, compact(drive.action_bias, "")))}</div>
-    `),
-    processStep("7. final reply", `
-      <strong>${esc(compact(record.llm_response, ""))}</strong>
-      <div class="small">retry ${esc(record.response_retry_count || 0)} · ${esc((record.response_validation_errors || []).join(" / ") || "validation ok")}</div>
-    `),
-    processStep("debug raw", `
-      <pre>${esc(debugRawText(record))}</pre>
-    `)
+    processStep("1. input", record.input_text || ""),
+    processStep("2. raw signal", formatJson({
+      mode: record.affect_input_mode || "encoder",
+      signal: rawSignal,
+      confidence: (record.agent_perception || {}).confidence,
+      mapped_stim_vec: record.affect_input_stim_vec || record.stim_vec || []
+    })),
+    processStep("3. EmoNet trace", (record.trace_lines || []).join("\n")),
+    processStep("4. felt state", formatJson({
+      emotion_state: emotion,
+      agent_felt_state: felt,
+      session_affect_state: record.session_affect_state || {},
+      felt_self: record.felt_self || {},
+      emotion_memory: record.emotion_memory || [],
+      drive: record.drive || {},
+      appraisal_tendency: record.appraisal_tendency,
+      appraisal_target: record.appraisal_target
+    })),
+    processStep("5. drive", formatJson({
+      felt_self: record.felt_self || {},
+      emotion_memory: record.emotion_memory || [],
+      drive: record.drive || {}
+    })),
+    processStep("6. translation surface", formatJson(translation)),
+    processStep("7. response validation", formatJson({
+      retry_count: record.response_retry_count || 0,
+      validation_errors: record.response_validation_errors || []
+    }))
   ].join("");
   panel.classList.remove("hidden");
   panel.innerHTML = `
@@ -775,71 +570,15 @@ async function runAiDialogue() {
   }
 }
 
-async function runCompare() {
-  const prompt = String($("compareMessage").value || $("message").value || "").trim();
-  if (!prompt) return;
-  $("chatError").classList.add("hidden");
-  $("runCompare").disabled = true;
-  $("compareResult").classList.remove("hidden");
-  $("compareResult").innerHTML = `
-    <div class="compare-card"><h3>Plain LLM</h3><pre>running...</pre></div>
-    <div class="compare-card"><h3>Ruca Prompt Only</h3><pre>running...</pre></div>
-    <div class="compare-card"><h3>Ruca + EmoNet</h3><pre>running...</pre></div>`;
-  try {
-    const payload = await api("/api/compare", {
-      message: prompt,
-      api_key: $("apiKey").value,
-      affect_input_mode: $("llmPerception").checked ? "llm_raw_signal" : "encoder",
-      raw_signal_policy: $("rawPolicy").value
-    });
-    usage = payload.usage || usage;
-    const results = payload.results || {};
-    const fullRecord = (results.full_ruca || {}).record || {};
-    $("compareResult").innerHTML = `
-      <div class="compare-card">
-        <h3>Plain LLM</h3>
-        <pre>${esc((results.plain_llm || {}).text || "")}</pre>
-      </div>
-      <div class="compare-card">
-        <h3>Ruca Prompt Only</h3>
-        <pre>${esc((results.ruca_prompt_only || {}).text || "")}</pre>
-      </div>
-      <div class="compare-card">
-        <h3>Ruca + EmoNet</h3>
-        <pre>${esc((results.full_ruca || {}).text || "")}</pre>
-        <div class="small">${esc(compact(JSON.stringify({
-          raw_policy: fullRecord.raw_signal_policy,
-          felt_self: fullRecord.felt_self,
-          drive: fullRecord.drive,
-          mode: (fullRecord.translation_surface || {}).mode
-        }), ""))}</div>
-      </div>`;
-  } catch (err) {
-    $("chatError").textContent = err.message;
-    $("chatError").classList.remove("hidden");
-  } finally {
-    $("runCompare").disabled = false;
-    renderUsage();
-  }
-}
-
 function setAiTestOpen(open) {
   $("aiTestBody").classList.toggle("hidden", !open);
   $("toggleAiTest").textContent = open ? "Hide" : "Show";
   $("toggleAiTest").setAttribute("aria-expanded", open ? "true" : "false");
 }
 
-function setCompareOpen(open) {
-  $("compareBody").classList.toggle("hidden", !open);
-  $("toggleCompare").textContent = open ? "Hide" : "Show";
-  $("toggleCompare").setAttribute("aria-expanded", open ? "true" : "false");
-}
-
 $("send").onclick = () => sendMessage($("message").value);
 $("runAi").onclick = () => runAiDialogue();
-$("runCompare").onclick = () => runCompare();
 $("toggleAiTest").onclick = () => setAiTestOpen($("aiTestBody").classList.contains("hidden"));
-$("toggleCompare").onclick = () => setCompareOpen($("compareBody").classList.contains("hidden"));
 $("message").addEventListener("keydown", ev => {
   if (ev.key === "Enter" && (ev.ctrlKey || ev.metaKey)) sendMessage($("message").value);
 });
@@ -899,7 +638,7 @@ class LocalGuiHandler(BaseHTTPRequestHandler):
                 api_key = str(payload.get("api_key") or os.environ.get("EMONET_LLM_API_KEY") or "").strip()
                 message = str(payload.get("message") or "").strip()
                 affect_input_mode = str(payload.get("affect_input_mode") or "encoder").strip()
-                raw_signal_policy = str(payload.get("raw_signal_policy") or "raw_pure").strip()
+                raw_signal_policy = str(payload.get("raw_signal_policy") or "event_annotated").strip()
                 if not message:
                     self._error(HTTPStatus.BAD_REQUEST, "message is empty")
                     return
@@ -923,56 +662,13 @@ class LocalGuiHandler(BaseHTTPRequestHandler):
                     _append_usage_from_record(result.record)
                     response = _state_payload()
                 self._json(HTTPStatus.OK, response)
-            elif parsed.path == "/api/compare":
-                payload = _read_json(self)
-                api_key = str(payload.get("api_key") or os.environ.get("ANTHROPIC_API_KEY") or "").strip()
-                message = str(payload.get("message") or "").strip()
-                affect_input_mode = str(payload.get("affect_input_mode") or "encoder").strip()
-                raw_signal_policy = str(payload.get("raw_signal_policy") or "event_annotated").strip()
-                if not api_key:
-                    self._error(HTTPStatus.BAD_REQUEST, "Claude API key가 필요합니다. 왼쪽에 입력하거나 ANTHROPIC_API_KEY를 설정하세요.")
-                    return
-                if not message:
-                    self._error(HTTPStatus.BAD_REQUEST, "message is empty")
-                    return
-                with _history_lock:
-                    card = load_character_card()
-                    plain_text, plain_usage = _plain_llm_response(api_key=api_key, message=message)
-                    prompt_text, prompt_usage = _ruca_prompt_only_response(api_key=api_key, message=message)
-                    full_result = generate_chat_turn(
-                        runtime=_runtime_cached(),
-                        generation_config=_chat_config(
-                            api_key,
-                            affect_input_mode=affect_input_mode,
-                            raw_signal_policy=raw_signal_policy,
-                        ),
-                        input_text=message,
-                        history=list(_messages),
-                        character_card=card,
-                        character_session=_character_session,
-                    )
-                    _add_usage(plain_usage)
-                    _add_usage(prompt_usage)
-                    _append_usage_from_record(full_result.record)
-                    response = {
-                        "results": {
-                            "plain_llm": {"text": plain_text, "usage": plain_usage},
-                            "ruca_prompt_only": {"text": prompt_text, "usage": prompt_usage},
-                            "full_ruca": {
-                                "text": full_result.assistant_text,
-                                "record": full_result.record,
-                            },
-                        },
-                        "usage": dict(_usage),
-                    }
-                self._json(HTTPStatus.OK, response)
             elif parsed.path == "/api/ai-dialogue/run":
                 payload = _read_json(self)
                 api_key = str(payload.get("api_key") or os.environ.get("EMONET_LLM_API_KEY") or "").strip()
                 scenario = str(payload.get("scenario") or "").strip()
                 turns = max(1, min(12, int(payload.get("turns") or 4)))
                 affect_input_mode = str(payload.get("affect_input_mode") or "encoder").strip()
-                raw_signal_policy = str(payload.get("raw_signal_policy") or "raw_pure").strip()
+                raw_signal_policy = str(payload.get("raw_signal_policy") or "event_annotated").strip()
                 with _history_lock:
                     card = load_character_card()
                     for turn_index in range(1, turns + 1):
@@ -1028,7 +724,7 @@ class LocalGuiHandler(BaseHTTPRequestHandler):
 
 def main() -> None:
     server = ThreadingHTTPServer((HOST, PORT), LocalGuiHandler)
-    print(f"EmoNet v5 character GUI: http://{HOST}:{PORT}/")
+    print(f"EmoNet v6 Ruca/Rookie GUI: http://{HOST}:{PORT}/")
     server.serve_forever()
 
 

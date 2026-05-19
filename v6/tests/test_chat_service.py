@@ -25,7 +25,6 @@ from emonet.chat_service import (
     resolve_default_z_encoder_path,
     resolve_default_zs_model_path,
 )
-from emonet.character import CharacterSessionState
 
 
 class ChatServiceTests(unittest.TestCase):
@@ -52,13 +51,13 @@ class ChatServiceTests(unittest.TestCase):
         self.assertIn("둘째 질문", block)
         self.assertIn("셋째 질문", block)
 
-    def test_interaction_event_preserves_raw_action_pull(self) -> None:
+    def test_interaction_event_reframes_forced_action_as_boundary_pressure(self) -> None:
         raw_signal = {
-            "approach_drive": 0.20,
+            "approach_drive": 0.85,
             "safety_buffer": 0.55,
             "alarm": 0.10,
             "fatigue": 0.20,
-            "attachment_pull": 0.25,
+            "attachment_pull": 0.90,
             "control_pressure": 0.20,
             "novelty": 0.40,
             "ambiguity": 0.35,
@@ -68,37 +67,38 @@ class ChatServiceTests(unittest.TestCase):
             {
                 "has_user_action": True,
                 "action_intensity": 0.80,
-                "contact": 0.85,
-                "proximity": 0.75,
-                "reciprocity": 0.65,
-                "restraint": 0.20,
+                "body_boundary_pressure": 0.85,
+                "forced_proximity": 0.75,
+                "reciprocity_evidence": 0.15,
+                "consent_ambiguity": 0.80,
             },
         )
 
-        self.assertGreaterEqual(adjusted["approach_drive"], 0.60)
-        self.assertGreaterEqual(adjusted["attachment_pull"], 0.65)
-        self.assertGreaterEqual(adjusted["novelty"], 0.50)
-        self.assertEqual(adjusted["alarm"], raw_signal["alarm"])
-        self.assertEqual(adjusted["safety_buffer"], raw_signal["safety_buffer"])
+        self.assertLessEqual(adjusted["approach_drive"], 0.40)
+        self.assertLessEqual(adjusted["attachment_pull"], 0.55)
+        self.assertGreaterEqual(adjusted["alarm"], 0.60)
+        self.assertGreaterEqual(adjusted["control_pressure"], 0.65)
+        self.assertGreaterEqual(adjusted["ambiguity"], 0.70)
+        self.assertLessEqual(adjusted["safety_buffer"], 0.45)
 
-    def test_permission_question_keeps_model_reported_raw_event(self) -> None:
+    def test_permission_question_is_not_treated_as_user_action(self) -> None:
         event = _normalize_interaction_event(
             {
                 "has_user_action": True,
                 "action_intensity": 0.60,
-                "contact": 0.70,
-                "proximity": 0.40,
-                "reciprocity": 0.55,
-                "restraint": 0.10,
+                "body_boundary_pressure": 0.70,
+                "forced_proximity": 0.40,
+                "reciprocity_evidence": 0.55,
+                "consent_ambiguity": 0.70,
             },
             "가까이 앉아도 돼?",
         )
 
-        self.assertTrue(event["has_user_action"])
-        self.assertEqual(event["action_intensity"], 0.60)
-        self.assertEqual(event["contact"], 0.70)
-        self.assertEqual(event["proximity"], 0.40)
-        self.assertEqual(event["reciprocity"], 0.55)
+        self.assertFalse(event["has_user_action"])
+        self.assertEqual(event["action_intensity"], 0.0)
+        self.assertEqual(event["body_boundary_pressure"], 0.0)
+        self.assertEqual(event["forced_proximity"], 0.0)
+        self.assertLessEqual(event["consent_ambiguity"], 0.35)
 
     def test_agent_perception_fallback_keeps_apology_turn_alive(self) -> None:
         payload = _fallback_agent_perception_payload(
@@ -141,10 +141,10 @@ class ChatServiceTests(unittest.TestCase):
             "interaction_event": {
                 "has_user_action": False,
                 "action_intensity": 0.0,
-                "contact": 0.0,
-                "proximity": 0.0,
-                "reciprocity": 0.0,
-                "restraint": 0.0,
+                "body_boundary_pressure": 0.0,
+                "forced_proximity": 0.0,
+                "reciprocity_evidence": 0.0,
+                "consent_ambiguity": 0.0,
             },
         }
         history = [
@@ -251,69 +251,6 @@ class ChatServiceTests(unittest.TestCase):
         self.assertEqual(result.record["llm_response"], "응답 문장이다.")
         self.assertEqual(result.record["style_tags"], ["direct", "tense"])
         self.assertEqual(result.record["response_retry_count"], 0)
-
-    def test_character_memory_uses_k_residue_not_user_text(self) -> None:
-        runtime = EmoNetChatRuntime(
-            config=ChatRuntimeConfig(),
-            model=object(),
-            decoder=object(),
-        )
-        fake_profile = {
-            "stim_vec": np.asarray([0.1, 0.2, 0.3, 0.4], dtype=np.float32),
-            "dominant_branch_len": 4,
-            "z": np.asarray([0.0, 0.5, 1.0], dtype=np.float32),
-            "s_pred": np.asarray([0.25, 0.75], dtype=np.float32),
-            "style_tags": ["direct"],
-            "style_summary": {"direct": 0.7, "tension": 0.5},
-            "trace_summary_text": "k trace",
-            "trace_lines": [
-                "early: tick 1-2, K 평균 0.25",
-                "middle: tick 3-4, K 평균 0.75",
-                "late: tick 5-6, K 평균 0.50",
-            ],
-            "trace_profile": {
-                "ticks_run": 6,
-                "active_window_ticks": 5,
-                "mean_active_nodes": 24.0,
-                "max_active_nodes": 60,
-                "mean_edges_fired": 12.5,
-                "max_edges_fired": 31,
-                "dominant_branch_len": 4,
-                "termination_reason": "stable_convergence",
-            },
-            "appraisal_summary_text": "",
-            "appraisal_lines": [],
-            "appraisal_target": "",
-            "appraisal_tendency": "",
-            "ticks_run": 6,
-            "termination_reason": "stable_convergence",
-        }
-        with (
-            patch("emonet.chat_service.ensure_model_server_ready"),
-            patch("emonet.chat_service.infer_style_profile", return_value=fake_profile),
-            patch(
-                "emonet.chat_service.build_conditioned_generation_prompt",
-                return_value=("[USER_INPUT]\nhello", "style_tags"),
-            ),
-            patch(
-                "emonet.chat_service.request_plain_text_response",
-                return_value=("ok", "ok", {"retry_count": 0, "validation_errors": []}),
-            ),
-        ):
-            result = generate_chat_turn(
-                runtime=runtime,
-                generation_config=ChatGenerationConfig(history_turns=2),
-                input_text="hello plain text should not become memory",
-                character_session=CharacterSessionState(),
-            )
-
-        self.assertEqual(result.character_session.user_memory, ())
-        memory = result.record["emotion_memory"]
-        self.assertEqual(len(memory), 1)
-        self.assertEqual(memory[0]["event"], "k_residue")
-        self.assertNotIn("hello plain text", str(memory[0]))
-        self.assertEqual(memory[0]["k_residue"]["dominant_branch_len"], 4)
-        self.assertEqual(memory[0]["k_residue"]["phase_k_peak"], 0.75)
 
     def test_generate_chat_turn_requires_episode_payload_for_episode_mode(self) -> None:
         runtime = EmoNetChatRuntime(

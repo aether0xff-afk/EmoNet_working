@@ -21,10 +21,11 @@ def main() -> int:
     parser.add_argument("--model-name", default="gpt-5.4")
     parser.add_argument("--api-key-env", default="OPENAI_API_KEY")
     parser.add_argument("--temperature", type=float, default=0.7)
-    parser.add_argument("--max-tokens", type=int, default=320)
+    parser.add_argument("--max-tokens", type=int, default=900)
     parser.add_argument("--timeout-sec", type=int, default=45)
     parser.add_argument("--reasoning-effort", default=None)
     parser.add_argument("--no-fallback", action="store_true", help="Raise LLM errors instead of falling back to rule composer.")
+    parser.add_argument("--emonet", action="store_true", help="Use the EmoNet trace runtime to update Ruca emotion state.")
     args = parser.parse_args()
 
     llm_config = LLMConfig(
@@ -44,6 +45,7 @@ def main() -> int:
         use_llm=args.llm,
         llm_config=llm_config,
         fallback_to_rule_composer=not args.no_fallback,
+        use_emonet=args.emonet,
     )
     print(result.assistant_text)
     if args.prompt:

@@ -404,7 +404,7 @@ def _normalize_action_token_lines(response: str) -> str:
                 normalized_lines.append("[ACTION] " + match.group(1).strip())
                 pending = match.group(2).strip()
                 continue
-            normalized_lines.append(pending)
+            normalized_lines.append("[ACTION] " + action_text)
             break
     return "\n".join(line for line in normalized_lines if str(line).strip()).strip()
 

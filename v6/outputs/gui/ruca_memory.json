@@ -1,0 +1,87 @@
+[
+  {
+    "memory_id": "mem-0001",
+    "memory_type": "short_term",
+    "summary": "최근 상호작용: 지금 GUI 테스트 중이야. 짧게 대답해줘",
+    "source_event": "지금 GUI 테스트 중이야. 짧게 대답해줘",
+    "emotion_snapshot": {
+      "valence": 0.0,
+      "arousal": 0.3218333333333333,
+      "affinity": 0.396,
+      "stability": 0.56675,
+      "protective_tension": 0.15200000000000002,
+      "curiosity": 0.37431250000000005
+    },
+    "importance": 0.096,
+    "created_at": "2026-05-18T23:44:52+00:00",
+    "last_accessed_at": "2026-05-19T00:29:51+00:00"
+  },
+  {
+    "memory_id": "mem-0002",
+    "memory_type": "short_term",
+    "summary": "최근 상호작용: qwen3 연결 테스트야. Ruca처럼 아주 짧게 대답해줘.",
+    "source_event": "qwen3 연결 테스트야. Ruca처럼 아주 짧게 대답해줘.",
+    "emotion_snapshot": {
+      "valence": 0.0,
+      "arousal": 0.38378333333333325,
+      "affinity": 0.34848,
+      "stability": 0.5313199999999999,
+      "protective_tension": 0.11552000000000003,
+      "curiosity": 0.35563750000000005
+    },
+    "importance": 0.138,
+    "created_at": "2026-05-19T00:15:23+00:00",
+    "last_accessed_at": "2026-05-19T00:29:51+00:00"
+  },
+  {
+    "memory_id": "mem-0003",
+    "memory_type": "short_term",
+    "summary": "최근 상호작용: qwen3 ?? ????. Ruca?? ?? ?? ????.",
+    "source_event": "qwen3 ?? ????. Ruca?? ?? ?? ????.",
+    "emotion_snapshot": {
+      "valence": 0.0,
+      "arousal": 0.42714833333333324,
+      "affinity": 0.3066624,
+      "stability": 0.5015587999999999,
+      "protective_tension": 0.08779520000000002,
+      "curiosity": 0.43069750000000007
+    },
+    "importance": 0.138,
+    "created_at": "2026-05-19T00:17:51+00:00",
+    "last_accessed_at": "2026-05-19T00:29:51+00:00"
+  },
+  {
+    "memory_id": "mem-0004",
+    "memory_type": "short_term",
+    "summary": "최근 상호작용: 안녕?",
+    "source_event": "안녕?",
+    "emotion_snapshot": {
+      "valence": 0.0,
+      "arousal": 0.42250383333333325,
+      "affinity": 0.269862912,
+      "stability": 0.49905939199999994,
+      "protective_tension": 0.06672435200000001,
+      "curiosity": 0.48512050000000007
+    },
+    "importance": 0.013,
+    "created_at": "2026-05-19T00:22:42+00:00",
+    "last_accessed_at": "2026-05-19T00:29:51+00:00"
+  },
+  {
+    "memory_id": "mem-0005",
+    "memory_type": "short_term",
+    "summary": "최근 상호작용: 오늘부터 실사용 테스트야. 너무 일반 챗봇처럼 말하지 말고 Ruca처럼 짧게 받아줘.",
+    "source_event": "오늘부터 실사용 테스트야. 너무 일반 챗봇처럼 말하지 말고 Ruca처럼 짧게 받아줘.",
+    "emotion_snapshot": {
+      "valence": 0.0,
+      "arousal": 0.4705860166666666,
+      "affinity": 0.23747936256000002,
+      "stability": 0.4639598892799999,
+      "protective_tension": 0.05071050752000001,
+      "curiosity": 0.44690890000000005
+    },
+    "importance": 0.196,
+    "created_at": "2026-05-19T00:29:58+00:00",
+    "last_accessed_at": "2026-05-19T00:29:58+00:00"
+  }
+]

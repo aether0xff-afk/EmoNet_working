@@ -13,12 +13,26 @@ def build_response_prompt(
     memories: tuple[MemoryItem, ...],
     voices: tuple[InnerVoiceCandidate, ...],
     spontaneous: SpontaneousReactionDecision,
+    emonet_trace: object | None = None,
 ) -> str:
     memory_lines = "\n".join(f"- {item.memory_type}: {item.summary}" for item in memories) or "- 없음"
     voice_lines = "\n".join(
         f"- {voice.source_character}: {voice.content} / action={voice.recommended_action}"
         for voice in voices
     )
+    emonet_block = "- not used"
+    if emonet_trace is not None and hasattr(emonet_trace, "to_record"):
+        record = emonet_trace.to_record()
+        emonet_block = "\n".join(
+            [
+                f"source: {record.get('source', '')}",
+                f"stim_vec: {record.get('stim_vec', [])}",
+                f"dominant_branch_len: {record.get('dominant_branch_len', 0)}",
+                f"trace_summary: {record.get('trace_summary_text', '')}",
+                "trace_lines:",
+                *[f"- {line}" for line in record.get("trace_lines", [])[:6]],
+            ]
+        )
     return f"""[ROLE]
 You are composing the final external response for {ruca.name}.
 Return only {ruca.name}'s user-facing Korean utterance. Do not expose internal labels, JSON, trace names, or module names.
@@ -51,6 +65,9 @@ curiosity={emotion_state.curiosity:.3f}
 [INNER_VOICES]
 {voice_lines}
 
+[EMONET_TRACE]
+{emonet_block}
+
 [SPONTANEOUS_REACTION]
 should_react={spontaneous.should_react}
 reaction_type={spontaneous.reaction_type}
@@ -59,7 +76,12 @@ reason={spontaneous.reason}
 
 [OUTPUT_RULES]
 - Speak as Ruca, not as a system.
+- Use natural Korean conversation. Prefer warm casual speech, not generic assistant service tone.
+- Keep the response short: 1-3 sentences unless the user asks for detail.
 - Preserve the emotional direction, but hide internal mechanics.
+- Treat EMONET_TRACE as the underlying felt-state evidence, not as text to quote.
+- Do not say "궁금한 점이 있다면", "도움이 필요한 부분", or other generic chatbot closers unless the user explicitly asks for support.
 - If a check-in is needed, ask one clear question.
 - If an implementation request is present, include one concrete next action.
+- Never mention Ruca/Rookie/Ricky/Rocky labels, emotion trace, memory, prompt, or internal voices.
 """

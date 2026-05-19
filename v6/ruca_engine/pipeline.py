@@ -7,6 +7,7 @@ from typing import Any, Mapping
 from .composer import compose_response
 from .context import TurnContext, analyze_turn_context
 from .emotion import update_emotion_state
+from .emonet_adapter import EmoNetTraceResult, infer_emonet_trace
 from .inner_voice import generate_inner_voices
 from .llm_client import LLMConfig, LLMResponse, generate_llm_response
 from .memory import MemoryStore
@@ -27,6 +28,8 @@ class TurnResult:
     inner_voices: tuple[InnerVoiceCandidate, ...]
     spontaneous_reaction: SpontaneousReactionDecision
     response_prompt: str
+    emonet_trace: EmoNetTraceResult | None
+    emonet_error: str | None
     llm_response: LLMResponse | None
     llm_error: str | None
     session_state: RucaSessionState
@@ -45,6 +48,8 @@ class RucaPipeline:
         llm_config: LLMConfig | None = None,
         use_llm: bool = False,
         fallback_to_rule_composer: bool = True,
+        use_emonet: bool = False,
+        fallback_to_rule_emotion: bool = True,
     ) -> None:
         self.profiles = load_character_profiles(profiles_path)
         self.memory_store = memory_store or MemoryStore.from_items()
@@ -53,13 +58,26 @@ class RucaPipeline:
         self.llm_config = llm_config
         self.use_llm = bool(use_llm)
         self.fallback_to_rule_composer = bool(fallback_to_rule_composer)
+        self.use_emonet = bool(use_emonet)
+        self.fallback_to_rule_emotion = bool(fallback_to_rule_emotion)
 
     def run_turn(self, user_text: str, previous_emotion: EmotionState | Mapping[str, Any] | None = None) -> TurnResult:
         if previous_emotion is None:
             prev_state = self.session_state.emotion_state
         else:
             prev_state = previous_emotion if isinstance(previous_emotion, EmotionState) else EmotionState.from_mapping(previous_emotion)
-        next_state, signals = update_emotion_state(prev_state, user_text)
+        rule_next_state, signals = update_emotion_state(prev_state, user_text)
+        next_state = rule_next_state
+        emonet_trace: EmoNetTraceResult | None = None
+        emonet_error: str | None = None
+        if self.use_emonet:
+            try:
+                emonet_trace = infer_emonet_trace(user_text)
+                next_state = emonet_trace.emotion_state
+            except Exception as exc:
+                emonet_error = str(exc)
+                if not self.fallback_to_rule_emotion:
+                    raise
         memories = self.memory_store.retrieve(user_text)
         context = analyze_turn_context(
             user_text=user_text,
@@ -84,6 +102,7 @@ class RucaPipeline:
             memories=memories,
             voices=voices,
             spontaneous=spontaneous,
+            emonet_trace=emonet_trace,
         )
         rule_assistant_text = compose_response(
             user_text=user_text,
@@ -128,7 +147,11 @@ class RucaPipeline:
             "session": next_session.to_record(),
             "input_signals": signals.to_record(),
             "previous_emotion_state": prev_state.to_record(),
+            "rule_emotion_state": rule_next_state.to_record(),
             "emotion_state": next_state.to_record(),
+            "emotion_source": "emonet" if emonet_trace else "rule",
+            "emonet_trace": emonet_trace.to_record() if emonet_trace else None,
+            "emonet_error": emonet_error,
             "turn_context": context.to_record(),
             "retrieved_memories": [item.to_record() for item in memories],
             "inner_voices": [voice.to_record() for voice in voices],
@@ -151,6 +174,8 @@ class RucaPipeline:
             inner_voices=voices,
             spontaneous_reaction=spontaneous,
             response_prompt=response_prompt,
+            emonet_trace=emonet_trace,
+            emonet_error=emonet_error,
             llm_response=llm_response,
             llm_error=llm_error,
             session_state=next_session,
@@ -169,6 +194,8 @@ def run_turn(
     use_llm: bool = False,
     llm_config: LLMConfig | None = None,
     fallback_to_rule_composer: bool = True,
+    use_emonet: bool = False,
+    fallback_to_rule_emotion: bool = True,
 ) -> TurnResult:
     pipeline = RucaPipeline(
         profiles_path=profiles_path,
@@ -177,5 +204,7 @@ def run_turn(
         llm_config=llm_config,
         use_llm=use_llm,
         fallback_to_rule_composer=fallback_to_rule_composer,
+        use_emonet=use_emonet,
+        fallback_to_rule_emotion=fallback_to_rule_emotion,
     )
     return pipeline.run_turn(user_text, previous_emotion=previous_emotion)

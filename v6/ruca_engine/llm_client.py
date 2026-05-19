@@ -16,7 +16,7 @@ class LLMConfig:
     api_key: str | None = None
     api_key_env: str = "OPENAI_API_KEY"
     temperature: float = 0.7
-    max_tokens: int = 320
+    max_tokens: int = 900
     timeout_sec: int = 45
     reasoning_effort: str | None = None
 
@@ -64,7 +64,11 @@ def _call_openai_compatible_chat(prompt: str, config: LLMConfig, api_key: str | 
         "messages": [
             {
                 "role": "system",
-                "content": "Return only Ruca's final Korean user-facing reply. Do not expose labels, JSON, or analysis.",
+                "content": (
+                    "Return only Ruca's final Korean user-facing reply. "
+                    "Do not expose labels, JSON, traces, system analysis, or thinking. "
+                    "Use warm casual Korean unless the user clearly asks otherwise."
+                ),
             },
             {"role": "user", "content": prompt},
         ],
@@ -98,7 +102,11 @@ def _call_anthropic_messages(prompt: str, config: LLMConfig, api_key: str | None
         "model": config.model_name,
         "max_tokens": int(config.max_tokens),
         "temperature": float(config.temperature),
-        "system": "Return only Ruca's final Korean user-facing reply. Do not expose labels, JSON, or analysis.",
+        "system": (
+            "Return only Ruca's final Korean user-facing reply. "
+            "Do not expose labels, JSON, traces, system analysis, or thinking. "
+            "Use warm casual Korean unless the user clearly asks otherwise."
+        ),
         "messages": [{"role": "user", "content": prompt}],
     }
     headers = {
@@ -147,9 +155,9 @@ def _extract_openai_content(message: dict[str, Any]) -> str:
             if isinstance(item, dict) and item.get("type") == "text" and isinstance(item.get("text"), str)
         ]
         return "".join(chunks).strip()
-    if isinstance(content, str):
+    if isinstance(content, str) and content.strip():
         return content.strip()
-    for field_name in ("reasoning", "reasoning_content", "refusal"):
+    for field_name in ("refusal",):
         fallback = message.get(field_name)
         if isinstance(fallback, str) and fallback.strip():
             return fallback.strip()
@@ -163,10 +171,21 @@ def _normalize_usage(usage: dict[str, Any]) -> dict[str, int]:
 
 
 def _validate_ruca_text(text: str) -> str:
-    cleaned = str(text or "").strip()
+    cleaned = _strip_thinking(str(text or "")).strip()
     if not cleaned:
         raise ValueError("LLM response was empty")
     forbidden = ("[ROLE]", "[INNER_VOICES]", "{", "}", "voice_id", "source_character")
     if any(token in cleaned for token in forbidden):
         raise ValueError("LLM response exposed internal prompt structure")
+    return cleaned
+
+
+def _strip_thinking(text: str) -> str:
+    cleaned = str(text or "")
+    while "<think>" in cleaned and "</think>" in cleaned:
+        start = cleaned.find("<think>")
+        end = cleaned.find("</think>", start)
+        if end < 0:
+            break
+        cleaned = cleaned[:start] + cleaned[end + len("</think>") :]
     return cleaned

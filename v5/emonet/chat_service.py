@@ -321,6 +321,137 @@ def inject_chat_history(prompt: str, history: Sequence[Mapping[str, Any]] | None
     )
 
 
+def _action_lines(text: object) -> set[str]:
+    return {
+        re.sub(r"\s+", " ", line.strip().replace("[ACTION]", "[ACTION] ")).strip()
+        for line in str(text or "").splitlines()
+        if line.strip().startswith("[ACTION]") and len(line.strip()) > len("[ACTION]")
+    }
+
+
+def _semantic_korean_key(text: object) -> str:
+    return re.sub(r"[^0-9a-zA-Z가-힣]+", "", str(text or "").lower())
+
+
+def _recent_assistant_action_lines(history: Sequence[Mapping[str, Any]] | None, max_turns: int = 3) -> set[str]:
+    if not history:
+        return set()
+    actions: set[str] = set()
+    for message in list(history)[-max(1, int(max_turns)) * 2 :]:
+        if str(message.get("role", "")).strip().lower() != "assistant":
+            continue
+        actions.update(_action_lines(message.get("content", "")))
+    return actions
+
+
+def validate_contextual_character_response(
+    response: str,
+    *,
+    user_text: str,
+    history: Sequence[Mapping[str, Any]] | None,
+) -> str:
+    normalized = validate_character_response_text(response, validate_plain_response_text)
+    user_compact = _compact_text(user_text, limit=120).strip()
+    spoken_lines = [
+        line.strip()
+        for line in normalized.splitlines()
+        if line.strip() and not line.strip().startswith("[ACTION]")
+    ]
+    if user_compact:
+        user_key = _semantic_korean_key(user_compact)
+        for line in spoken_lines:
+            line_key = _semantic_korean_key(line)
+            if line_key == user_key:
+                raise ValueError("response repeats the latest user message verbatim")
+            if len(user_key) >= 8 and user_key in line_key and line.rstrip().endswith("?"):
+                raise ValueError("response mirrors the latest user question instead of answering it")
+    repeated_actions = _action_lines(normalized) & _recent_assistant_action_lines(history)
+    if repeated_actions:
+        raise ValueError("response repeats recent action line: " + sorted(repeated_actions)[0])
+    return normalized
+
+
+def append_latest_turn_guard(prompt: str, *, user_text: str, history: Sequence[Mapping[str, Any]] | None) -> str:
+    recent_actions = sorted(_recent_assistant_action_lines(history))
+    recent_action_block = "\n".join(f"- {item}" for item in recent_actions) if recent_actions else "- 없음"
+    return "\n".join(
+        [
+            prompt,
+            "",
+            "[LATEST_TURN_GUARD]",
+            f"latest_user_input: {user_text}",
+            "이번 출력은 반드시 latest_user_input에 대한 새 답변이어야 한다.",
+            "latest_user_input을 그대로 따라 쓰거나, 공백/말줄임표만 바꿔 되묻지 않는다.",
+            "직전 발화의 뜻을 묻는 질문이면, 그 뜻을 캐릭터 말투로 짧게 풀어 답한다.",
+            "아래 최근 ACTION 줄은 그대로 재사용하지 않는다.",
+            recent_action_block,
+            "출력은 한국어 캐릭터 응답만 쓴다. 내부 상태명, 분석명, 섹션명은 쓰지 않는다.",
+        ]
+    )
+
+
+def build_compact_character_prompt(
+    *,
+    user_text: str,
+    history: Sequence[Mapping[str, Any]] | None,
+    character_card: CharacterCard,
+    session_state: CharacterSessionState,
+    profile: Mapping[str, Any],
+) -> str:
+    recent_actions = sorted(_recent_assistant_action_lines(history))
+    recent_action_block = "\n".join(f"- {item}" for item in recent_actions) if recent_actions else "- 없음"
+    felt_self = profile.get("felt_self") if isinstance(profile.get("felt_self"), Mapping) else {}
+    drive = profile.get("drive") if isinstance(profile.get("drive"), Mapping) else {}
+    surface = profile.get("translation_surface") if isinstance(profile.get("translation_surface"), Mapping) else {}
+    last_assistant = ""
+    for message in reversed(list(history or [])):
+        if str(message.get("role", "")).strip().lower() == "assistant":
+            last_assistant = _compact_text(message.get("content", ""), 180)
+            break
+    explain_previous = any(marker in user_text for marker in ("무슨뜻", "무슨 뜻", "뭔뜻", "뭔 뜻", "무슨 말"))
+    return "\n".join(
+        [
+            "[ROLE]",
+            "너는 Ruca의 한국어 캐릭터 응답만 출력한다. 내부 상태를 설명하지 말고 말투와 행동으로 번역한다.",
+            "",
+            "[CHARACTER]",
+            f"name: {character_card.name}",
+            f"persona: {_compact_text(character_card.persona, 260)}",
+            f"speech_style: {_compact_text(character_card.speech_style, 220)}",
+            f"relationship: {_compact_text(session_state.relationship_state or character_card.relationship_defaults, 180)}",
+            f"scene: {_compact_text(session_state.scene_state or character_card.world_state, 160)}",
+            "",
+            "[RECENT_DIALOGUE]",
+            build_recent_dialogue_block(history, 2) or "- 없음",
+            "",
+            "[CURRENT_TASK]",
+            (
+                f"사용자가 방금 전 Ruca의 말이 무슨 뜻인지 물었다. 직전 Ruca 발화의 뜻을 짧게 풀어 답한다: {last_assistant}"
+                if explain_previous
+                else f"사용자의 최신 말에 직접 답한다: {user_text}"
+            ),
+            "",
+            "[INTERNAL_CUES]",
+            f"- 말하고 싶은 결: {_compact_text(drive.get('want_to_say') or felt_self.get('unresolved_phrase') or '', 120)}",
+            f"- 몸/행동 결: {_compact_text(drive.get('want_to_do') or felt_self.get('body_bias') or surface.get('action_texture') or '', 120)}",
+            f"- 말의 질감: {_compact_text(surface.get('line_shape') or surface.get('pacing') or '', 140)}",
+            f"- trace 요약: {_compact_text(profile.get('trace_summary_text') or '', 160)}",
+            "",
+            "[RECENT_ACTIONS_DO_NOT_REPEAT]",
+            recent_action_block,
+            "",
+            "[OUTPUT_RULES]",
+            "- CURRENT_TASK에 직접 답한다.",
+            "- 사용자의 문장을 그대로 반복하거나 공백, 말줄임표만 바꿔 되묻지 않는다.",
+            "- 직전 발화의 뜻을 묻는 질문이면 그 뜻을 Ruca 말투로 짧게 풀어 답한다.",
+            "- 내부 상태명, trace, appraisal, arousal, valence, JSON, 섹션명을 출력하지 않는다.",
+            "- 한국어 1~4문장으로만 출력한다.",
+            "- 행동은 필요할 때만 0~1개 쓰고, 반드시 별도 줄에서 '[ACTION] '으로 시작한다.",
+            "- RECENT_ACTIONS_DO_NOT_REPEAT의 ACTION 줄은 그대로 쓰지 않는다.",
+        ]
+    )
+
+
 def _float_list(value: object) -> list[float]:
     return np.asarray(value, dtype=float).tolist()
 
@@ -1437,7 +1568,18 @@ def generate_chat_turn(
         appraisal_summary=str(profile.get("appraisal_summary_text", "")),
         raw_trace_block=_build_raw_emonet_trace_block(profile),
     )
-    prompt_sections = f"character_context,{prompt_sections}"
+    if "qwen3" in str(generation_config.model_name or "").lower():
+        prompt = build_compact_character_prompt(
+            user_text=user_text,
+            history=history,
+            character_card=active_character,
+            session_state=prompt_session,
+            profile=profile,
+        )
+        prompt_sections = f"qwen_compact_character_context,{prompt_sections}"
+    else:
+        prompt = append_latest_turn_guard(prompt, user_text=user_text, history=history)
+        prompt_sections = f"character_context,{prompt_sections}"
     response_text, _raw_output, response_meta = request_plain_text_response(
         base_url=generation_config.base_url,
         model_name=generation_config.model_name,
@@ -1446,7 +1588,7 @@ def generate_chat_turn(
         max_tokens=generation_config.max_tokens,
         timeout_sec=generation_config.timeout_sec,
         max_retries=generation_config.response_max_retries,
-        validator=lambda raw: validate_character_response_text(raw, validate_plain_response_text),
+        validator=lambda raw: validate_contextual_character_response(raw, user_text=user_text, history=history),
         retry_instruction=DEFAULT_RESPONSE_RETRY_INSTRUCTION,
         system_prompt=DEFAULT_REQUEST_SYSTEM_PROMPT,
         api_key=generation_config.api_key,

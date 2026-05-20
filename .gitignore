@@ -17,6 +17,7 @@ htmlcov/
 .streamlit/
 
 # Temporary workspaces and generated scratch files
+.worktrees/
 tmp/
 temp/
 *.tmp

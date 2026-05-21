@@ -4,10 +4,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
-from .composer import compose_response
 from .context import TurnContext, analyze_turn_context
 from .emotion import update_emotion_state
 from .emonet_adapter import EmoNetTraceResult, infer_emonet_trace
+from .event_scheduler import RucaEvent, schedule_event, text_for_emotion
 from .inner_voice import generate_inner_voices
 from .llm_client import LLMConfig, LLMResponse, generate_llm_response
 from .memory import MemoryStore
@@ -34,6 +34,7 @@ class TurnResult:
     llm_error: str | None
     session_state: RucaSessionState
     saved_memory: MemoryItem | None
+    event: RucaEvent
     debug_record: dict[str, Any]
 
 
@@ -47,9 +48,7 @@ class RucaPipeline:
         session_state: RucaSessionState | None = None,
         llm_config: LLMConfig | None = None,
         use_llm: bool = False,
-        fallback_to_rule_composer: bool = True,
         use_emonet: bool = False,
-        fallback_to_rule_emotion: bool = True,
     ) -> None:
         self.profiles = load_character_profiles(profiles_path)
         self.memory_store = memory_store or MemoryStore.from_items()
@@ -57,45 +56,60 @@ class RucaPipeline:
         self.session_state = session_state or (session_store.load() if session_store else RucaSessionState())
         self.llm_config = llm_config
         self.use_llm = bool(use_llm)
-        self.fallback_to_rule_composer = bool(fallback_to_rule_composer)
         self.use_emonet = bool(use_emonet)
-        self.fallback_to_rule_emotion = bool(fallback_to_rule_emotion)
 
-    def run_turn(self, user_text: str, previous_emotion: EmotionState | Mapping[str, Any] | None = None) -> TurnResult:
+    def run_turn(
+        self,
+        user_text: str,
+        previous_emotion: EmotionState | Mapping[str, Any] | None = None,
+        *,
+        elapsed_minutes: float = 0.0,
+        force_silence: bool = False,
+    ) -> TurnResult:
+        event = schedule_event(user_text, elapsed_minutes=elapsed_minutes, force_silence=force_silence)
+        event_text = text_for_emotion(event)
         if previous_emotion is None:
             prev_state = self.session_state.emotion_state
         else:
             prev_state = previous_emotion if isinstance(previous_emotion, EmotionState) else EmotionState.from_mapping(previous_emotion)
-        rule_next_state, signals = update_emotion_state(prev_state, user_text)
+        rule_next_state, signals = update_emotion_state(prev_state, event_text)
         next_state = rule_next_state
         emonet_trace: EmoNetTraceResult | None = None
         emonet_error: str | None = None
         if self.use_emonet:
             try:
-                emonet_trace = infer_emonet_trace(user_text)
+                emonet_trace = infer_emonet_trace(event_text)
                 next_state = emonet_trace.emotion_state
             except Exception as exc:
                 emonet_error = str(exc)
-                if not self.fallback_to_rule_emotion:
-                    raise
-        memories = self.memory_store.retrieve(user_text)
+                raise RuntimeError(f"EmoNet trace requested but failed: {emonet_error}") from exc
+        memories = self.memory_store.retrieve(event.user_text or event_text)
         context = analyze_turn_context(
-            user_text=user_text,
+            user_text=event.user_text,
+            scheduled_event_type=event.event_type,
             rookie=self.profiles["rookie"],
             signals=signals,
             memories=memories,
         )
         voices = generate_inner_voices(
             profiles=self.profiles,
-            user_text=user_text,
+            user_text=event.user_text,
             emotion_state=next_state,
             memories=memories,
             signals=signals,
             context=context,
+            event=event,
         )
-        spontaneous = decide_spontaneous_reaction(emotion_state=next_state, signals=signals, memories=memories)
+        spontaneous = decide_spontaneous_reaction(
+            emotion_state=next_state,
+            signals=signals,
+            memories=memories,
+            event_type=event.event_type,
+            elapsed_minutes=event.elapsed_minutes,
+        )
         response_prompt = build_response_prompt(
-            user_text=user_text,
+            user_text=event.user_text,
+            event=event,
             ruca=self.profiles["ruca"],
             emotion_state=next_state,
             turn_context=context,
@@ -104,38 +118,32 @@ class RucaPipeline:
             spontaneous=spontaneous,
             emonet_trace=emonet_trace,
         )
-        rule_assistant_text = compose_response(
-            user_text=user_text,
-            emotion_state=next_state,
-            voices=voices,
-            spontaneous=spontaneous,
-        )
-        assistant_text = rule_assistant_text
+        assistant_text = ""
         llm_response: LLMResponse | None = None
         llm_error: str | None = None
-        composer_mode = "rule"
-        if self.use_llm:
+        expression_mode = "internal_only"
+        if event.should_speak:
+            if not self.use_llm:
+                raise RuntimeError("Ruca was scheduled to speak, but no LLM expression layer was enabled.")
             try:
                 llm_response = generate_llm_response(response_prompt, self.llm_config or LLMConfig())
                 assistant_text = llm_response.text
-                composer_mode = "llm"
+                expression_mode = "llm"
             except Exception as exc:
                 llm_error = str(exc)
-                composer_mode = "llm_fallback"
-                if not self.fallback_to_rule_composer:
-                    raise
+                raise RuntimeError(f"LLM expression layer failed: {llm_error}") from exc
         saved_memory = self.memory_store.observe_turn(
-            user_text=user_text,
+            user_text=event.user_text,
             assistant_text=assistant_text,
             emotion_state=next_state,
             signals=signals,
         )
         next_session = self.session_state.next_turn(
-            user_text=user_text,
+            user_text=event.user_text,
             assistant_text=assistant_text,
             emotion_state=next_state,
             debug_summary={
-                "event_type": context.event_type,
+                "event_type": event.event_type,
                 "spontaneous_reaction": spontaneous.to_record(),
             },
         )
@@ -144,6 +152,7 @@ class RucaPipeline:
             self.session_store.save(next_session)
         debug_record = {
             "turn_index": next_session.turn_index,
+            "event": event.to_record(),
             "session": next_session.to_record(),
             "input_signals": signals.to_record(),
             "previous_emotion_state": prev_state.to_record(),
@@ -157,8 +166,7 @@ class RucaPipeline:
             "inner_voices": [voice.to_record() for voice in voices],
             "spontaneous_reaction": spontaneous.to_record(),
             "response_prompt": response_prompt,
-            "composer_mode": composer_mode,
-            "rule_assistant_text": rule_assistant_text,
+            "expression_mode": expression_mode,
             "llm_config": (self.llm_config or LLMConfig()).to_record() if self.use_llm else None,
             "llm_response": llm_response.to_record() if llm_response else None,
             "llm_error": llm_error,
@@ -180,6 +188,7 @@ class RucaPipeline:
             llm_error=llm_error,
             session_state=next_session,
             saved_memory=saved_memory,
+            event=event,
             debug_record=debug_record,
         )
 
@@ -193,9 +202,9 @@ def run_turn(
     profiles_path: Path | None = None,
     use_llm: bool = False,
     llm_config: LLMConfig | None = None,
-    fallback_to_rule_composer: bool = True,
     use_emonet: bool = False,
-    fallback_to_rule_emotion: bool = True,
+    elapsed_minutes: float = 0.0,
+    force_silence: bool = False,
 ) -> TurnResult:
     pipeline = RucaPipeline(
         profiles_path=profiles_path,
@@ -203,8 +212,11 @@ def run_turn(
         session_store=SessionStore(session_path) if session_path else None,
         llm_config=llm_config,
         use_llm=use_llm,
-        fallback_to_rule_composer=fallback_to_rule_composer,
         use_emonet=use_emonet,
-        fallback_to_rule_emotion=fallback_to_rule_emotion,
     )
-    return pipeline.run_turn(user_text, previous_emotion=previous_emotion)
+    return pipeline.run_turn(
+        user_text,
+        previous_emotion=previous_emotion,
+        elapsed_minutes=elapsed_minutes,
+        force_silence=force_silence,
+    )

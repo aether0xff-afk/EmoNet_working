@@ -1,10 +1,9 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import argparse
 import json
 import os
 from pathlib import Path
-import re
 import sys
 import time
 
@@ -19,7 +18,6 @@ from emonet.cli import (
     ensure_model_server_ready,
     maybe_print_progress,
     request_json_response,
-    request_plain_text_response,
 )
 
 
@@ -69,7 +67,7 @@ def build_judge_prompt(row: dict[str, object]) -> str:
     return "\n".join(
         [
             "[ROLE]",
-            "당신은 한국어 감정 응답 품질을 채점하는 심사자다.",
+            "?뱀떊? ?쒓뎅??媛먯젙 ?묐떟 ?덉쭏??梨꾩젏?섎뒗 ?ъ궗?먮떎.",
             "",
             "[INPUT_TEXT]",
             text,
@@ -87,12 +85,12 @@ def build_judge_prompt(row: dict[str, object]) -> str:
             response,
             "",
             "[SCORING_RULE]",
-            "- 각 항목을 1점(매우 나쁨)부터 5점(매우 좋음)까지 정수로 평가한다.",
-            "- content_fit: 입력 내용에 직접적으로 맞는가",
-            "- emotional_appropriateness: 입력 감정 상태에 맞는가",
-            "- style_match: 목표 스타일 요약과 태그에 얼마나 맞는가",
-            "- naturalness: 한국어 응답이 자연스러운가",
-            "- overall_quality: 전체적으로 설득력 있는가",
+            "- 媛???ぉ??1??留ㅼ슦 ?섏겏)遺??5??留ㅼ슦 醫뗭쓬)源뚯? ?뺤닔濡??됯??쒕떎.",
+            "- content_fit: ?낅젰 ?댁슜??吏곸젒?곸쑝濡?留욌뒗媛",
+            "- emotional_appropriateness: ?낅젰 媛먯젙 ?곹깭??留욌뒗媛",
+            "- style_match: 紐⑺몴 ?ㅽ????붿빟怨??쒓렇???쇰쭏??留욌뒗媛",
+            "- naturalness: ?쒓뎅???묐떟???먯뿰?ㅻ윭?닿?",
+            "- overall_quality: ?꾩껜?곸쑝濡??ㅻ뱷???덈뒗媛",
             "",
             "[OUTPUT_FORMAT]",
             "JSON only.",
@@ -107,84 +105,6 @@ def build_judge_prompt(row: dict[str, object]) -> str:
             "}",
         ]
     )
-
-
-def build_compact_judge_prompt(row: dict[str, object]) -> str:
-    text = str(row.get("text", "")).strip()
-    response = str(row.get("llm_response", "")).strip()
-    condition = str(row.get("condition", "")).strip()
-    target_summary = str(row.get("style_summary_text", "")).strip()
-    target_tags = str(row.get("style_tags_json", "[]")).strip()
-    return "\n".join(
-        [
-            "[TASK]",
-            "아래 응답을 5개 항목으로 1~5점 정수 평가하라.",
-            "",
-            f"input={text}",
-            f"condition={condition}",
-            f"target_tags={target_tags}",
-            f"target_summary={target_summary}",
-            f"response={response}",
-            "",
-            "[FIELDS]",
-            "content_fit, emotional_appropriateness, style_match, naturalness, overall_quality",
-            "",
-            "[OUTPUT]",
-            "다른 말 없이 다섯 정수만 쉼표로 출력한다.",
-            "예시: 4,4,3,4,4",
-        ]
-    )
-
-
-def build_minimal_compact_judge_prompt(row: dict[str, object]) -> str:
-    text = " ".join(str(row.get("text", "")).strip().split())
-    response = " ".join(str(row.get("llm_response", "")).strip().split())
-    condition = str(row.get("condition", "")).strip()
-    target_summary = str(row.get("style_summary_text", "")).strip()
-    if len(text) > 180:
-        text = text[:180] + "..."
-    if len(response) > 180:
-        response = response[:180] + "..."
-    if len(target_summary) > 80:
-        target_summary = target_summary[:80] + "..."
-    return "\n".join(
-        [
-            "5개 점수만 출력:",
-            "content_fit, emotional_appropriateness, style_match, naturalness, overall_quality",
-            "형식: 4,4,3,4,4",
-            f"condition={condition}",
-            f"style={target_summary}",
-            f"text={text}",
-            f"response={response}",
-        ]
-    )
-
-
-def normalize_compact_scores(text: str) -> dict[str, int]:
-    raw = str(text or "").strip()
-    if not raw:
-        raise ValueError("empty compact score response")
-
-    named_values: dict[str, int] = {}
-    for key in SCORE_KEYS:
-        pattern = re.compile(rf"{re.escape(key)}\s*[:=]\s*([1-5])", re.IGNORECASE)
-        match = pattern.search(raw)
-        if match:
-            named_values[key] = int(match.group(1))
-    if len(named_values) == len(SCORE_KEYS):
-        return named_values
-
-    numbers = [int(token) for token in re.findall(r"(?<!\d)([1-5])(?!\d)", raw)]
-    if len(numbers) < len(SCORE_KEYS):
-        raise ValueError("compact score response must contain five integers in [1,5]")
-    numbers = numbers[: len(SCORE_KEYS)]
-    return {key: value for key, value in zip(SCORE_KEYS, numbers, strict=True)}
-
-
-def validate_compact_score_response(text: str) -> str:
-    raw = str(text or "").strip()
-    normalize_compact_scores(raw)
-    return raw
 
 
 def resolve_api_key(api_key_env: str | None) -> str | None:
@@ -204,7 +124,7 @@ def resolve_reasoning_effort(base_url: str, api_key: str | None, requested: str 
     if not requested:
         return None
     if not (api_key and "api.openai.com" in str(base_url).lower()):
-        return None
+        raise ValueError("--reasoning-effort is only supported for api.openai.com requests with an API key")
     return str(requested).strip()
 
 
@@ -221,77 +141,21 @@ def request_score_payload(
     reasoning_effort: str | None = None,
 ) -> tuple[dict[str, int], str, str]:
     json_prompt = build_judge_prompt(row)
-    try:
-        payload, raw = request_json_response(
-            base_url=base_url,
-            model_name=model_name,
-            prompt=json_prompt,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            timeout_sec=timeout_sec,
-            max_retries=max_retries,
-            validator=normalize_scores,
-            retry_instruction=(
-                "직전 응답의 JSON 형식 또는 점수 범위가 잘못되었다. "
-                "반드시 scores object 안에 다섯 항목을 1~5 정수로 다시 출력하라."
-            ),
-            api_key=api_key,
-            response_format={"type": "json_object"} if should_use_json_mode(base_url, api_key) else None,
-            reasoning_effort=reasoning_effort,
-        )
-        return payload, raw, "json"
-    except Exception as json_exc:
-        compact_prompt = build_compact_judge_prompt(row)
-        try:
-            compact_text, raw, _meta = request_plain_text_response(
-                base_url=base_url,
-                model_name=model_name,
-                prompt=compact_prompt,
-                temperature=0.0,
-                max_tokens=min(max_tokens, 64),
-                timeout_sec=timeout_sec,
-                max_retries=max_retries,
-                validator=validate_compact_score_response,
-                retry_instruction=(
-                    "직전 응답이 비어 있거나 형식이 틀렸다. "
-                    "설명 없이 1~5 정수 다섯 개만 쉼표로 출력하라. "
-                    "예시: 4,4,3,4,4"
-                ),
-                system_prompt="Return only five integers separated by commas.",
-                api_key=api_key,
-                reasoning_effort=reasoning_effort,
-            )
-            payload = normalize_compact_scores(compact_text)
-            return payload, raw, "compact"
-        except Exception as compact_exc:
-            minimal_prompt = build_minimal_compact_judge_prompt(row)
-            last_raw = ""
-            try:
-                minimal_text, raw, _meta = request_plain_text_response(
-                    base_url=base_url,
-                    model_name=model_name,
-                    prompt=minimal_prompt,
-                    temperature=0.0,
-                    max_tokens=16,
-                    timeout_sec=timeout_sec,
-                    max_retries=max_retries,
-                    validator=validate_compact_score_response,
-                    retry_instruction=(
-                        "직전 응답이 비어 있거나 형식이 틀렸다. "
-                        "반드시 숫자 다섯 개만 쉼표로 출력하라. 예시: 4,4,3,4,4"
-                    ),
-                    system_prompt="Output only five comma-separated integers.",
-                    api_key=api_key,
-                    reasoning_effort=reasoning_effort,
-                )
-                payload = normalize_compact_scores(minimal_text)
-                return payload, raw, "minimal_compact"
-            except Exception as minimal_exc:
-                last_raw = str(minimal_exc)
-                raise ValueError(
-                    "judge scoring failed after JSON, compact, and minimal compact fallbacks. "
-                    f"json_error={json_exc}; compact_error={compact_exc}; minimal_error={last_raw}"
-                ) from minimal_exc
+    payload, raw = request_json_response(
+        base_url=base_url,
+        model_name=model_name,
+        prompt=json_prompt,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        timeout_sec=timeout_sec,
+        max_retries=max_retries,
+        validator=normalize_scores,
+        retry_instruction="Previous output was not a valid JSON scores object. Return exactly one JSON object with scores for the five metrics.",
+        api_key=api_key,
+        response_format={"type": "json_object"} if should_use_json_mode(base_url, api_key) else None,
+        reasoning_effort=reasoning_effort,
+    )
+    return payload, raw, "json"
 
 
 def load_existing_keys(output_csv: Path) -> set[tuple[str, str]]:

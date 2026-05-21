@@ -4,6 +4,7 @@ from .models import EmotionState
 from .session import RucaSessionState, SessionStore
 from .llm_client import LLMConfig, LLMResponse
 from .emonet_adapter import EmoNetTraceResult, infer_emonet_trace
+from .event_scheduler import RucaEvent, schedule_event
 
 __all__ = [
     "EmotionState",
@@ -12,7 +13,9 @@ __all__ = [
     "LLMConfig",
     "LLMResponse",
     "EmoNetTraceResult",
+    "RucaEvent",
     "infer_emonet_trace",
+    "schedule_event",
     "SessionStore",
     "TurnResult",
     "default_profiles_path",

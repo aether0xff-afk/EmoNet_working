@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 import re
@@ -51,9 +51,9 @@ DEFAULT_REQUEST_SYSTEM_PROMPT = (
     "Do not analyze or relabel emotions; translate the provided internal state into speech."
 )
 DEFAULT_RESPONSE_RETRY_INSTRUCTION = (
-    "직전 응답은 반복, 미완성 문장, bullet/JSON, 혹은 부자연스러운 출력 때문에 거부되었다. "
-    "같은 문장이나 핵심 구절을 반복하지 말고, 마지막 문장은 완결된 한국어 평문으로 끝내라. "
-    "행동 서술을 쓸 때는 문장 중간에 넣지 말고 반드시 별도 줄에서 '[ACTION] '으로 시작하라."
+    "吏곸쟾 ?묐떟? 諛섎났, 誘몄셿??臾몄옣, bullet/JSON, ?뱀? 遺?먯뿰?ㅻ윭??異쒕젰 ?뚮Ц??嫄곕??섏뿀?? "
+    "媛숈? 臾몄옣?대굹 ?듭떖 援ъ젅??諛섎났?섏? 留먭퀬, 留덉?留?臾몄옣? ?꾧껐???쒓뎅???됰Ц?쇰줈 ?앸궡?? "
+    "?됰룞 ?쒖닠?????뚮뒗 臾몄옣 以묎컙???ｌ? 留먭퀬 諛섎뱶??蹂꾨룄 以꾩뿉??'[ACTION] '?쇰줈 ?쒖옉?섎씪."
 )
 AGENT_PERCEPTION_SYSTEM_PROMPT = (
     "You are a JSON API. Return exactly one valid JSON object and nothing else. "
@@ -285,7 +285,7 @@ def _compact_text(value: object, limit: int = 220) -> str:
     text = " ".join(str(value or "").split())
     if len(text) <= limit:
         return text
-    return text[: max(0, limit - 1)].rstrip() + "…"
+    return text[: max(0, limit - 3)].rstrip() + "..."
 
 
 def build_recent_dialogue_block(history: Sequence[Mapping[str, Any]] | None, max_turns: int) -> str:
@@ -317,10 +317,10 @@ def inject_chat_history(prompt: str, history: Sequence[Mapping[str, Any]] | None
             prompt,
             "",
             "[CHAT_CONTINUITY_RULES]",
-            "- RECENT_DIALOGUE는 맥락 유지를 위한 참고 정보다.",
-            "- 가장 최근 USER_INPUT에 직접 답한다.",
-            "- 직전 ASSISTANT 문장을 기계적으로 반복하지 않는다.",
-            "- 앞선 대화와 충돌하지 않되, 감정 결은 최신 USER_INPUT을 우선한다.",
+            "- RECENT_DIALOGUE??留λ씫 ?좎?瑜??꾪븳 李멸퀬 ?뺣낫??",
+            "- 媛??理쒓렐 USER_INPUT??吏곸젒 ?듯븳??",
+            "- 吏곸쟾 ASSISTANT 臾몄옣??湲곌퀎?곸쑝濡?諛섎났?섏? ?딅뒗??",
+            "- ?욎꽑 ??붿? 異⑸룎?섏? ?딅릺, 媛먯젙 寃곗? 理쒖떊 USER_INPUT???곗꽑?쒕떎.",
         ]
     )
 
@@ -336,15 +336,15 @@ def _string_list(value: object) -> list[str]:
 
 
 def _level_from_korean_text(text: str) -> float:
-    if "매우 높음" in text:
+    if "留ㅼ슦 ?믪쓬" in text:
         return 0.90
-    if "높음" in text:
+    if "?믪쓬" in text:
         return 0.75
-    if "중간" in text:
+    if "以묎컙" in text:
         return 0.55
-    if "매우 낮음" in text:
+    if "留ㅼ슦 ??쓬" in text:
         return 0.10
-    if "낮음" in text:
+    if "??쓬" in text:
         return 0.30
     return 0.0
 
@@ -357,7 +357,7 @@ def _level_for_trace_metric(line: str, marker: str) -> float:
 
 
 def _extract_phase_k(line: str) -> float:
-    match = re.search(r"K 평균 ([0-9]+(?:\.[0-9]+)?)", line)
+    match = re.search(r"K ?됯퇏 ([0-9]+(?:\.[0-9]+)?)", line)
     if not match:
         return 0.0
     try:
@@ -480,60 +480,6 @@ def _apply_interaction_event_to_raw_signal(
     return adjusted
 
 
-def _fallback_agent_perception_payload(user_text: str, error: str, raw: str) -> dict[str, Any]:
-    text = str(user_text or "").lower()
-    apology_markers = ("미안", "죄송", "sorry", "늦었", "late")
-    greeting_markers = ("안녕", "왔어", "왔네", "hello", "hi")
-    action_markers = ("[action]", "잡", "안아", "다가", "손", "끌", "밀", "막")
-    is_apology = any(marker in text for marker in apology_markers)
-    is_greeting = any(marker in text for marker in greeting_markers)
-    has_action = any(marker in text for marker in action_markers)
-
-    raw_signal = {
-        "approach_drive": 0.32,
-        "safety_buffer": 0.58,
-        "alarm": 0.22,
-        "fatigue": 0.18,
-        "attachment_pull": 0.34,
-        "control_pressure": 0.16,
-        "novelty": 0.18,
-        "ambiguity": 0.30,
-    }
-    if is_apology:
-        raw_signal.update(
-            {
-                "approach_drive": 0.42,
-                "safety_buffer": 0.66,
-                "alarm": 0.16,
-                "attachment_pull": 0.44,
-                "control_pressure": 0.10,
-                "ambiguity": 0.24,
-            }
-        )
-    elif is_greeting:
-        raw_signal.update({"approach_drive": 0.38, "attachment_pull": 0.36, "novelty": 0.22})
-    if has_action:
-        raw_signal.update({"alarm": 0.42, "control_pressure": 0.38, "ambiguity": 0.48, "safety_buffer": 0.45})
-
-    return {
-        "raw_signal": raw_signal,
-        "interaction_event": {
-            "has_user_action": bool(has_action),
-            "action_intensity": 0.45 if has_action else 0.0,
-            "body_boundary_pressure": 0.35 if has_action else 0.0,
-            "forced_proximity": 0.20 if has_action else 0.0,
-            "reciprocity_evidence": 0.15 if has_action else 0.0,
-            "consent_ambiguity": 0.35 if has_action else 0.0,
-        },
-        "confidence": 0.35,
-        "fallback": {
-            "reason": "agent_perception_invalid_json",
-            "error": str(error)[:240],
-            "raw": str(raw)[:500],
-        },
-    }
-
-
 def _build_agent_perceived_stim(
     *,
     generation_config: ChatGenerationConfig,
@@ -583,7 +529,7 @@ def _build_agent_perceived_stim(
         except Exception as exc:
             last_error = str(exc)
     if payload is None:
-        payload = _fallback_agent_perception_payload(user_text, last_error, raw)
+        raise ValueError(f"agent perception failed to return valid JSON: {last_error}; raw={raw[:500]!r}")
     raw_signal = payload.get("raw_signal") if isinstance(payload.get("raw_signal"), Mapping) else payload
     interaction_event = _normalize_interaction_event(
         payload.get("interaction_event") if isinstance(payload.get("interaction_event"), Mapping) else {},
@@ -629,8 +575,6 @@ def _build_agent_perceived_stim(
         "confidence": _clamp01(payload.get("confidence")),
         "stim_vec": vec.astype(float).tolist(),
     }
-    if isinstance(payload.get("fallback"), Mapping):
-        metadata["fallback"] = dict(payload["fallback"])
     return vec, metadata
 
 
@@ -851,13 +795,13 @@ def _derive_agent_felt_state_from_trace(profile: Mapping[str, Any]) -> dict[str,
         norepinephrine = float(stim[2]) if len(stim) > 2 else 0.0
         melatonin = float(stim[3]) if len(stim) > 3 else 0.0
         if melatonin >= 0.55 and dopamine < 0.35:
-            tendency = "회복/후퇴"
+            tendency = "?뚮났/?꾪눜"
             pressure = 0.30 + 0.35 * melatonin
         elif norepinephrine >= 0.55 and serotonin < 0.35:
-            tendency = "방어/경계"
+            tendency = "諛⑹뼱/寃쎄퀎"
             pressure = 0.30 + 0.35 * norepinephrine
         else:
-            tendency = "정리/수습"
+            tendency = "?뺣━/?섏뒿"
             pressure = max(0.0, min(0.35, 0.35 * max(norepinephrine, melatonin)))
         return {
             "felt_pressure": round(float(pressure), 4),
@@ -873,11 +817,11 @@ def _derive_agent_felt_state_from_trace(profile: Mapping[str, Any]) -> dict[str,
             "trace_interpretation": "no_active_trace",
         }
 
-    phase_lines = [line for line in trace_lines if line.startswith(("초기:", "중기:", "후기:"))]
-    tension = max((_level_for_trace_metric(line, "긴장/날카로움") for line in phase_lines), default=0.0)
-    fatigue = max((_level_for_trace_metric(line, "피로/둔화") for line in phase_lines), default=0.0)
-    approach = max((_level_for_trace_metric(line, "접근/밀어붙임") for line in phase_lines), default=0.0)
-    stability = max((_level_for_trace_metric(line, "안정/완충") for line in phase_lines), default=0.0)
+    phase_lines = [line for line in trace_lines if line.startswith(("珥덇린:", "以묎린:", "?꾧린:"))]
+    tension = max((_level_for_trace_metric(line, "湲댁옣/?좎뭅濡쒖?") for line in phase_lines), default=0.0)
+    fatigue = max((_level_for_trace_metric(line, "?쇰줈/?뷀솕") for line in phase_lines), default=0.0)
+    approach = max((_level_for_trace_metric(line, "approach") for line in phase_lines), default=0.0)
+    stability = max((_level_for_trace_metric(line, "?덉젙/?꾩땐") for line in phase_lines), default=0.0)
     low_buffer = max(0.0, 1.0 - stability) if stability > 0.0 else 0.0
     phase_k = [_extract_phase_k(line) for line in phase_lines]
     k_growth = 0.0
@@ -887,15 +831,15 @@ def _derive_agent_felt_state_from_trace(profile: Mapping[str, Any]) -> dict[str,
     pressure = max(0.75 * tension, 0.75 * low_buffer, 0.45 * active_window_ratio, 0.20 * k_growth)
     unresolved = str(trace_profile.get("termination_reason", "")) == "max_ticks" or active_window_ratio >= 0.70
     if pressure >= 0.72 and approach >= 0.55:
-        tendency = "대치/표출"
+        tendency = "?移??쒖텧"
     elif pressure >= 0.62 or low_buffer >= 0.55:
-        tendency = "방어/경계"
+        tendency = "諛⑹뼱/寃쎄퀎"
     elif fatigue >= 0.62 and approach < 0.35:
-        tendency = "회복/후퇴"
+        tendency = "?뚮났/?꾪눜"
     elif unresolved and pressure >= 0.50:
-        tendency = "방어/경계"
+        tendency = "諛⑹뼱/寃쎄퀎"
     else:
-        tendency = "정리/수습"
+        tendency = "?뺣━/?섏뒿"
 
     return {
         "felt_pressure": round(float(pressure), 4),
@@ -920,7 +864,7 @@ def _apply_agent_felt_trace_overrides(profile: Mapping[str, Any]) -> dict[str, A
     tension = float(felt["felt_tension"])
     low_buffer = float(felt["felt_low_buffer"])
     k_growth = float(felt["felt_k_growth"])
-    should_raise_pressure = original_tendency != "회복/후퇴" or pressure >= 0.95
+    should_raise_pressure = original_tendency != "?뚮났/?꾪눜" or pressure >= 0.95
     if pressure > 0.0 and should_raise_pressure:
         style_summary["tension"] = max(float(style_summary.get("tension", 0.0)), tension, 0.75 * pressure)
         style_summary["raw_negative_affect"] = max(float(style_summary.get("raw_negative_affect", 0.0)), 0.55 * pressure)
@@ -937,10 +881,10 @@ def _apply_agent_felt_trace_overrides(profile: Mapping[str, Any]) -> dict[str, A
     if pressure >= 0.55 and should_raise_pressure:
         appraisal_scores["threat"] = max(float(appraisal_scores.get("threat", 0.0)), 0.40 + 0.45 * pressure)
         appraisal_scores["control_loss"] = max(float(appraisal_scores.get("control_loss", 0.0)), 0.35 + 0.35 * pressure)
-    if original_tendency == "대치/표출" and pressure >= 0.55 and should_raise_pressure:
+    if original_tendency == "?移??쒖텧" and pressure >= 0.55 and should_raise_pressure:
         appraisal_scores["injustice"] = max(float(appraisal_scores.get("injustice", 0.0)), 0.35 + 0.40 * pressure)
     updated["appraisal_scores"] = appraisal_scores
-    if should_raise_pressure and (felt["tendency"] != "정리/수습" or original_tendency == "정리/수습"):
+    if should_raise_pressure and (felt["tendency"] != "?뺣━/?섏뒿" or original_tendency == "?뺣━/?섏뒿"):
         updated["appraisal_tendency"] = str(felt["tendency"])
     if pressure >= 0.55 and should_raise_pressure:
         updated["appraisal_target"] = "agent_internal"
@@ -951,11 +895,11 @@ def _apply_agent_felt_trace_overrides(profile: Mapping[str, Any]) -> dict[str, A
 
 def _summarize_agent_style_summary(style_summary: Mapping[str, Any]) -> str:
     labels = {
-        "tension": "긴장",
-        "raw_negative_affect": "원초적부정정동",
-        "directness": "직설성",
-        "seriousness": "무게감",
-        "warmth": "온기",
+        "tension": "tension",
+        "raw_negative_affect": "raw_negative_affect",
+        "directness": "directness",
+        "seriousness": "seriousness",
+        "warmth": "warmth",
     }
     ranked = sorted(
         ((key, float(value)) for key, value in style_summary.items() if key in labels),
@@ -965,15 +909,15 @@ def _summarize_agent_style_summary(style_summary: Mapping[str, Any]) -> str:
     parts = []
     for key, value in ranked[:4]:
         if value >= 0.75:
-            level = "매우 높음"
+            level = "留ㅼ슦 ?믪쓬"
         elif value >= 0.55:
-            level = "높음"
+            level = "?믪쓬"
         elif value >= 0.35:
-            level = "중간"
+            level = "以묎컙"
         elif value >= 0.15:
-            level = "낮음"
+            level = "??쓬"
         else:
-            level = "매우 낮음"
+            level = "留ㅼ슦 ??쓬"
         parts.append(f"{labels[key]} {level}")
     return ", ".join(parts)
 
@@ -1007,49 +951,49 @@ def _build_translation_surface(profile: Mapping[str, Any]) -> dict[str, Any]:
 
     if event_boundary_load >= 0.52 and reciprocity < 0.55:
         mode = "body_boundary_event"
-        line_shape = "처음에는 몸이 먼저 멈추고, 말은 짧게 늦게 나온다. 설명보다 경계와 혼란을 남긴다."
-        action_texture = "한 발 물러서거나 손목/어깨/시선으로 공간을 확보한다. 붙잡거나 다가가는 행동은 쓰지 않는다."
+        line_shape = "泥섏쓬?먮뒗 紐몄씠 癒쇱? 硫덉텛怨? 留먯? 吏㏐쾶 ??쾶 ?섏삩?? ?ㅻ챸蹂대떎 寃쎄퀎? ?쇰????④릿??"
+        action_texture = "??諛?臾쇰윭?쒓굅???먮ぉ/?닿묠/?쒖꽑?쇰줈 怨듦컙???뺣낫?쒕떎. 遺숈옟嫄곕굹 ?ㅺ?媛???됰룞? ?곗? ?딅뒗??"
     elif melatonin >= 0.60 and norepinephrine >= 0.62:
         mode = "stalled_pressure"
-        line_shape = "짧은 문장 뒤에 덜 끝난 문장을 남긴다. 확정적인 위로보다 막힌 느낌을 둔다."
-        action_texture = "움직임이 느려지거나 손/시선이 잠깐 멈춘다."
+        line_shape = "吏㏃? 臾몄옣 ?ㅼ뿉 ???앸궃 臾몄옣???④릿?? ?뺤젙?곸씤 ?꾨줈蹂대떎 留됲엺 ?먮굦???붾떎."
+        action_texture = "?吏곸엫???먮젮吏嫄곕굹 ???쒖꽑???좉퉸 硫덉텣??"
     elif norepinephrine >= 0.62 and dopamine < 0.48:
         mode = "flinch_boundary"
-        line_shape = "처음에는 짧게 부정하거나 멈칫하고, 뒤늦게 한 문장만 붙인다."
-        action_texture = "시선을 피하거나 손을 풀었다가 다시 멈춘다."
+        line_shape = "泥섏쓬?먮뒗 吏㏐쾶 遺?뺥븯嫄곕굹 硫덉무?섍퀬, ?ㅻ뒭寃???臾몄옣留?遺숈씤??"
+        action_texture = "?쒖꽑???쇳븯嫄곕굹 ?먯쓣 ??덈떎媛 ?ㅼ떆 硫덉텣??"
     elif norepinephrine >= 0.55 and dopamine >= 0.52:
         mode = "reach_under_pressure"
-        line_shape = "가까이 가고 싶은 말과 답을 못 찾는 말이 같이 나온다."
-        action_texture = "다가가거나 붙잡는 행동을 쓰되, 바로 설명으로 수습하지 않는다."
+        line_shape = "媛源뚯씠 媛怨??띠? 留먭낵 ?듭쓣 紐?李얜뒗 留먯씠 媛숈씠 ?섏삩??"
+        action_texture = "?ㅺ?媛嫄곕굹 遺숈옟???됰룞???곕릺, 諛붾줈 ?ㅻ챸?쇰줈 ?섏뒿?섏? ?딅뒗??"
     elif melatonin >= 0.52:
         mode = "slow_heavy"
-        line_shape = "말끝이 무거워지고, 긴 설명보다 낮은 한두 문장으로 둔다."
-        action_texture = "숨, 어깨, 고개, 느린 손동작처럼 둔한 움직임을 쓴다."
+        line_shape = "留먮걹??臾닿굅?뚯?怨? 湲??ㅻ챸蹂대떎 ??? ?쒕몢 臾몄옣?쇰줈 ?붾떎."
+        action_texture = "?? ?닿묠, 怨좉컻, ?먮┛ ?먮룞?묒쿂???뷀븳 ?吏곸엫???대떎."
     elif serotonin >= 0.55 and pressure < 0.45:
         mode = "soft_contact"
-        line_shape = "부드럽지만 자동 위로가 아니라 가볍게 붙어 있는 말로 둔다."
-        action_texture = "작은 시선, 고개 끄덕임, 가까운 자세 정도만 쓴다."
+        line_shape = "遺?쒕읇吏留??먮룞 ?꾨줈媛 ?꾨땲??媛蹂띻쾶 遺숈뼱 ?덈뒗 留먮줈 ?붾떎."
+        action_texture = "?묒? ?쒖꽑, 怨좉컻 ?꾨뜒?? 媛源뚯슫 ?먯꽭 ?뺣룄留??대떎."
     else:
         mode = "uneven_contact"
-        line_shape = "문장을 매끈하게 정리하지 말고 작은 어긋남이나 망설임을 남긴다."
-        action_texture = "침묵, 시선, 손동작 중 하나만 짧게 쓴다."
+        line_shape = "臾몄옣??留ㅻ걟?섍쾶 ?뺣━?섏? 留먭퀬 ?묒? ?닿툔?⑥씠??留앹꽕?꾩쓣 ?④릿??"
+        action_texture = "移⑤У, ?쒖꽑, ?먮룞??以??섎굹留?吏㏐쾶 ?대떎."
 
     if active_ratio >= 0.28 or pressure >= 0.62:
-        pacing = "압력이 높다. 길게 설명하지 말고 한 문장을 단단하게 남긴다."
+        pacing = "?뺣젰???믩떎. 湲멸쾶 ?ㅻ챸?섏? 留먭퀬 ??臾몄옣???⑤떒?섍쾶 ?④릿??"
     elif stuckness >= 0.45:
-        pacing = "막힘이 남아 있다. 질문보다 미완성 반응을 우선한다."
+        pacing = "留됲옒???⑥븘 ?덈떎. 吏덈Ц蹂대떎 誘몄셿??諛섏쓳???곗꽑?쒕떎."
     else:
-        pacing = "압력은 낮다. 과장하지 않고 작게 반응한다."
+        pacing = "?뺣젰? ??떎. 怨쇱옣?섏? ?딄퀬 ?묎쾶 諛섏쓳?쒕떎."
 
     avoid = [
-        "사용자 감정을 '~인 거네', '~해서 불안한 거고' 식으로 해설하지 않는다.",
-        "같은 행동을 반복하지 않는다. 직전 표현이 손/시선/침묵이면 다른 표면을 고른다.",
-        "미래를 단정하거나 관계를 깔끔하게 정리하지 않는다.",
+        "?ъ슜??媛먯젙??'~??嫄곕꽕', '~?댁꽌 遺덉븞??嫄곌퀬' ?앹쑝濡??댁꽕?섏? ?딅뒗??",
+        "媛숈? ?됰룞??諛섎났?섏? ?딅뒗?? 吏곸쟾 ?쒗쁽?????쒖꽑/移⑤У?대㈃ ?ㅻⅨ ?쒕㈃??怨좊Ⅸ??",
+        "誘몃옒瑜??⑥젙?섍굅??愿怨꾨? 源붾걫?섍쾶 ?뺣━?섏? ?딅뒗??",
     ]
     if event_boundary_load >= 0.45 and reciprocity < 0.55:
-        avoid.append("사용자 행동을 곧바로 로맨틱한 접근이나 동의로 번역하지 않는다.")
+        avoid.append("?ъ슜???됰룞??怨㏓컮濡?濡쒕㎤?깊븳 ?묎렐?대굹 ?숈쓽濡?踰덉뿭?섏? ?딅뒗??")
     if mode in {"reach_under_pressure", "stalled_pressure"}:
-        avoid.append("바로 괜찮다고 말하지 않는다.")
+        avoid.append("諛붾줈 愿쒖갖?ㅺ퀬 留먰븯吏 ?딅뒗??")
 
     return {
         "mode": mode,
@@ -1075,12 +1019,12 @@ def _build_translation_surface(profile: Mapping[str, Any]) -> dict[str, Any]:
 def _level_word(value: float) -> str:
     value = _clamp01(value)
     if value >= 0.72:
-        return "강하게"
+        return "high"
     if value >= 0.48:
-        return "뚜렷하게"
+        return "medium"
     if value >= 0.24:
-        return "약하게"
-    return "거의 없이"
+        return "low"
+    return "none"
 
 
 def _build_felt_self_state(
@@ -1115,20 +1059,20 @@ def _build_felt_self_state(
     trust_shift = _clamp01(0.55 * serotonin + 0.25 * _clamp01(interaction_event.get("reciprocity_evidence")) - 0.25 * boundary_load)
 
     if boundary_load >= 0.52:
-        unresolved = "가까워지고 싶은 마음보다 몸이 먼저 멈춘 감각이 남아 있다"
-        body_bias = "공간을 확보하려 하지만 시선을 완전히 끊지는 못한다"
+        unresolved = "boundary pressure is active before the character is ready"
+        body_bias = "body keeps distance and does not fully settle"
     elif approach_impulse >= avoidance_impulse + 0.16:
-        unresolved = "붙잡고 싶은 말이 먼저 올라오지만 너무 빠를까 봐 걸린다"
-        body_bias = "가까이 있고 싶지만 손이나 시선이 먼저 조심스러워진다"
+        unresolved = "approach impulse rises, but it is not fully resolved"
+        body_bias = "attention leans closer while staying cautious"
     elif avoidance_impulse >= approach_impulse + 0.14:
-        unresolved = "물러서고 싶은 힘과 확인하고 싶은 힘이 같이 남아 있다"
-        body_bias = "몸은 뒤로 가려 하고 말은 늦게 따라온다"
+        unresolved = "avoidance and checking remain active"
+        body_bias = "body pulls back and speech slows"
     elif melatonin >= 0.52:
-        unresolved = "말하고 싶은데 힘이 늦게 따라오는 잔향이 있다"
-        body_bias = "숨과 어깨가 먼저 느려진다"
+        unresolved = "fatigue lowers expression before speech"
+        body_bias = "breath and tempo slow down"
     else:
-        unresolved = "작은 긴장이 남아 있지만 대화를 끊고 싶지는 않다"
-        body_bias = "짧게 시선을 맞추고 다음 말을 기다린다"
+        unresolved = "small tension remains without a clean answer"
+        body_bias = "gaze holds and waits for the next words"
 
     return {
         "felt_toward": "user",
@@ -1162,19 +1106,19 @@ def _build_drive_state(profile: Mapping[str, Any], felt_self: Mapping[str, Any])
     initiative = _clamp01(0.45 * speak + 0.25 * pressure + 0.20 * approach - 0.18 * hide)
     question_need = _clamp01(0.38 * _clamp01((profile.get("agent_perception", {}) or {}).get("raw_signal", {}).get("ambiguity")) + 0.22 * hide - 0.20 * initiative)
     if boundary >= 0.45 or avoid > approach + 0.12:
-        action_bias = "공간을 확보하거나 몸이 먼저 멈추는 행동"
+        action_bias = "keeps space and pauses first"
     elif approach > avoid + 0.16:
-        action_bias = "시선을 맞추거나 가까이 남으려는 작은 행동"
+        action_bias = "leans closer or meets the gaze"
     elif hide > speak:
-        action_bias = "숨, 어깨, 손처럼 말보다 늦은 행동"
+        action_bias = "stays quiet before speaking"
     else:
-        action_bias = "짧은 시선 변화나 작은 침묵"
+        action_bias = "small pause and slight gaze shift"
     if speak >= hide + 0.12:
-        speech_bias = "먼저 한 문장을 남긴다"
+        speech_bias = "speaks first in a short sentence"
     elif hide >= speak + 0.12:
-        speech_bias = "말을 줄이고 덜 끝난 느낌을 둔다"
+        speech_bias = "reduces speech and leaves space"
     else:
-        speech_bias = "말하고 싶은 힘과 숨기고 싶은 힘을 같이 남긴다"
+        speech_bias = "balances speaking with restraint"
     return {
         "initiative": round(float(initiative), 4),
         "question_need": round(float(question_need), 4),
@@ -1182,7 +1126,7 @@ def _build_drive_state(profile: Mapping[str, Any], felt_self: Mapping[str, Any])
         "speech_bias": speech_bias,
         "want_to_say": str(felt_self.get("unresolved_phrase", "")),
         "want_to_do": str(felt_self.get("body_bias", "")),
-        "avoid": "감정을 설명하거나 정리하지 말고 충동의 방향만 말과 행동으로 번역한다.",
+        "avoid": "媛먯젙???ㅻ챸?섍굅???뺣━?섏? 留먭퀬 異⑸룞??諛⑺뼢留?留먭낵 ?됰룞?쇰줈 踰덉뿭?쒕떎.",
         "levels": {
             "approach": _level_word(approach),
             "avoidance": _level_word(avoid),

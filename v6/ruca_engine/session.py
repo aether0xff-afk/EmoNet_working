@@ -42,6 +42,7 @@ class RucaSessionState:
             "turn_index": self.turn_index + 1,
             "user_text": user_text,
             "assistant_text": assistant_text,
+            "spoke": bool(assistant_text.strip()),
             "event_type": str(debug_summary.get("event_type", "")),
             "spontaneous_reaction": dict(debug_summary.get("spontaneous_reaction", {})),
             "created_at": utc_now_iso(),

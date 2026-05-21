@@ -10,7 +10,7 @@ from .pipeline import run_turn
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run one Ruca/Rookie MVP turn.")
-    parser.add_argument("text", help="User text to process.")
+    parser.add_argument("text", nargs="?", default="", help="User text to process. Omit for a silence tick.")
     parser.add_argument("--memory", type=Path, default=None, help="Optional JSON memory file path.")
     parser.add_argument("--session", type=Path, default=None, help="Optional JSON session file path.")
     parser.add_argument("--debug", action="store_true", help="Print full debug record as JSON.")
@@ -24,8 +24,9 @@ def main() -> int:
     parser.add_argument("--max-tokens", type=int, default=900)
     parser.add_argument("--timeout-sec", type=int, default=45)
     parser.add_argument("--reasoning-effort", default=None)
-    parser.add_argument("--no-fallback", action="store_true", help="Raise LLM errors instead of falling back to rule composer.")
     parser.add_argument("--emonet", action="store_true", help="Use the EmoNet trace runtime to update Ruca emotion state.")
+    parser.add_argument("--elapsed-minutes", type=float, default=0.0, help="Minutes since the last user message for silence ticks.")
+    parser.add_argument("--silence", action="store_true", help="Force an internal-only silence tick.")
     args = parser.parse_args()
 
     llm_config = LLMConfig(
@@ -44,10 +45,11 @@ def main() -> int:
         session_path=args.session,
         use_llm=args.llm,
         llm_config=llm_config,
-        fallback_to_rule_composer=not args.no_fallback,
         use_emonet=args.emonet,
+        elapsed_minutes=args.elapsed_minutes,
+        force_silence=args.silence,
     )
-    print(result.assistant_text)
+    print(result.assistant_text if result.assistant_text else "[internal_only]")
     if args.prompt:
         print(result.response_prompt)
     if args.debug:

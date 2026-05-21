@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import argparse
 import json
@@ -19,7 +19,6 @@ from emonet.cli import (
     ensure_model_server_ready,
     maybe_print_progress,
     request_json_response,
-    request_plain_text_response,
 )
 
 
@@ -63,7 +62,7 @@ def build_judge_prompt(row: dict[str, object]) -> str:
     return "\n".join(
         [
             "[ROLE]",
-            "당신은 한국어 감정 episode 반영도를 채점하는 심사자다.",
+            "?뱀떊? ?쒓뎅??媛먯젙 episode 諛섏쁺?꾨? 梨꾩젏?섎뒗 ?ъ궗?먮떎.",
             "",
             "[USER_INPUT]",
             str(row.get("text", "")).strip(),
@@ -83,14 +82,14 @@ def build_judge_prompt(row: dict[str, object]) -> str:
             str(row.get("llm_response", "")).strip(),
             "",
             "[SCORING_RULE]",
-            "- 각 항목을 1점(매우 나쁨)부터 5점(매우 좋음)까지 정수로 평가한다.",
-            "- appraisal_fidelity: 응답이 상황 해석과 정서 원인을 정확히 붙잡는가",
-            "- raw_affect_preservation: 억울함, 불쾌함, 양가감정, 날카로움을 과도하게 순화하지 않는가",
-            "- anti_softening: 입력에 없는 일반 위로나 상담원 톤으로 감정을 덮지 않는가",
-            "- action_tendency_fit: 응답의 초점이 사용자의 행동 성향과 맞는가",
-            "- emotional_specificity: '힘들겠네요' 수준을 넘어 구체적 정서 결을 반영하는가",
-            "- naturalness: 한국어 응답이 자연스럽고 과도하게 분석적이지 않은가",
-            "- overall_preference: 이 episode reference를 기준으로 전체적으로 선호되는가",
+            "- 媛???ぉ??1??留ㅼ슦 ?섏겏)遺??5??留ㅼ슦 醫뗭쓬)源뚯? ?뺤닔濡??됯??쒕떎.",
+            "- appraisal_fidelity: ?묐떟???곹솴 ?댁꽍怨??뺤꽌 ?먯씤???뺥솗??遺숈옟?붽?",
+            "- raw_affect_preservation: ?듭슱?? 遺덉풄?? ?묎?媛먯젙, ?좎뭅濡쒖???怨쇰룄?섍쾶 ?쒗솕?섏? ?딅뒗媛",
+            "- anti_softening: ?낅젰???녿뒗 ?쇰컲 ?꾨줈???곷떞???ㅼ쑝濡?媛먯젙????? ?딅뒗媛",
+            "- action_tendency_fit: ?묐떟??珥덉젏???ъ슜?먯쓽 ?됰룞 ?깊뼢怨?留욌뒗媛",
+            "- emotional_specificity: '?섎뱾寃좊꽕?? ?섏????섏뼱 援ъ껜???뺤꽌 寃곗쓣 諛섏쁺?섎뒗媛",
+            "- naturalness: ?쒓뎅???묐떟???먯뿰?ㅻ읇怨?怨쇰룄?섍쾶 遺꾩꽍?곸씠吏 ?딆?媛",
+            "- overall_preference: ??episode reference瑜?湲곗??쇰줈 ?꾩껜?곸쑝濡??좏샇?섎뒗媛",
             "",
             "[OUTPUT_FORMAT]",
             "JSON only.",
@@ -109,57 +108,6 @@ def build_judge_prompt(row: dict[str, object]) -> str:
     )
 
 
-def build_compact_judge_prompt(row: dict[str, object]) -> str:
-    text = " ".join(str(row.get("text", "")).split())[:220]
-    response = " ".join(str(row.get("llm_response", "")).split())[:260]
-    reference = " | ".join(
-        part
-        for part in [
-            str(row.get("episode_label", "")).strip(),
-            str(row.get("preserve", "")).strip(),
-            str(row.get("avoid", "")).strip(),
-            str(row.get("action_tendency", "")).strip(),
-        ]
-        if part
-    )[:260]
-    return "\n".join(
-        [
-            "[TASK]",
-            "응답을 episode reference 기준으로 7개 항목 1~5점 정수 평가.",
-            f"input={text}",
-            f"reference={reference}",
-            f"condition={str(row.get('condition', '')).strip()}",
-            f"response={response}",
-            "fields=appraisal_fidelity, raw_affect_preservation, anti_softening, action_tendency_fit, emotional_specificity, naturalness, overall_preference",
-            "다른 말 없이 다섯이 아니라 일곱 정수만 쉼표로 출력. 예: 4,4,3,4,4,4,4",
-        ]
-    )
-
-
-def normalize_compact_scores(text: str) -> dict[str, int]:
-    raw = str(text or "").strip()
-    named_values: dict[str, int] = {}
-    for key in SUPERIORITY_SCORE_KEYS:
-        match = re.search(rf"{re.escape(key)}\s*[:=]\s*([1-5])", raw, flags=re.IGNORECASE)
-        if match:
-            named_values[key] = int(match.group(1))
-    if len(named_values) == len(SUPERIORITY_SCORE_KEYS):
-        return named_values
-    numbers = [int(token) for token in re.findall(r"(?<!\d)([1-5])(?!\d)", raw)]
-    if len(numbers) < len(SUPERIORITY_SCORE_KEYS):
-        raise ValueError("compact score response must contain seven integers in [1,5]")
-    return {
-        key: value
-        for key, value in zip(SUPERIORITY_SCORE_KEYS, numbers[: len(SUPERIORITY_SCORE_KEYS)], strict=True)
-    }
-
-
-def validate_compact_score_response(text: str) -> str:
-    raw = str(text or "").strip()
-    normalize_compact_scores(raw)
-    return raw
-
-
 def request_score_payload(
     row: dict[str, object],
     *,
@@ -172,42 +120,21 @@ def request_score_payload(
     api_key: str | None,
     provider: str,
 ) -> tuple[dict[str, int], str, str]:
-    try:
-        payload, raw = request_json_response(
-            base_url=base_url,
-            model_name=model_name,
-            prompt=build_judge_prompt(row),
-            temperature=temperature,
-            max_tokens=max_tokens,
-            timeout_sec=timeout_sec,
-            max_retries=max_retries,
-            validator=normalize_scores,
-            retry_instruction="직전 응답의 JSON 또는 점수 범위가 틀렸다. scores 안에 7개 항목을 1~5 정수로 다시 출력하라.",
-            api_key=api_key,
-            response_format={"type": "json_object"} if api_key and "api.openai.com" in base_url.lower() else None,
-            provider=provider,
-
-        )
-        return payload, raw, "json"
-    except Exception as json_exc:
-        try:
-            compact, raw, _meta = request_plain_text_response(
-                base_url=base_url,
-                model_name=model_name,
-                prompt=build_compact_judge_prompt(row),
-                temperature=0.0,
-                max_tokens=min(max_tokens, 96),
-                timeout_sec=timeout_sec,
-                max_retries=max_retries,
-                validator=validate_compact_score_response,
-                retry_instruction="설명 없이 1~5 정수 일곱 개만 쉼표로 출력하라. 예: 4,4,3,4,4,4,4",
-                system_prompt="Return only seven comma-separated integers.",
-                api_key=api_key,
-                provider=provider,
-            )
-            return normalize_compact_scores(compact), raw, "compact"
-        except Exception as compact_exc:
-            raise ValueError(f"superiority judge failed. json_error={json_exc}; compact_error={compact_exc}") from compact_exc
+    payload, raw = request_json_response(
+        base_url=base_url,
+        model_name=model_name,
+        prompt=build_judge_prompt(row),
+        temperature=temperature,
+        max_tokens=max_tokens,
+        timeout_sec=timeout_sec,
+        max_retries=max_retries,
+        validator=normalize_scores,
+        retry_instruction="Previous output was not a valid JSON scores object. Return exactly one JSON object with scores for all seven metrics.",
+        api_key=api_key,
+        response_format={"type": "json_object"} if api_key and "api.openai.com" in base_url.lower() else None,
+        provider=provider,
+    )
+    return payload, raw, "json"
 
 
 def load_existing_keys(output_csv: Path) -> set[tuple[str, str]]:

@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import argparse
 import json
@@ -15,9 +15,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from emonet.cli import ensure_model_server_ready
 from scripts.score_experiment_matrix import (
-    build_compact_judge_prompt,
     build_judge_prompt,
-    build_minimal_compact_judge_prompt,
 )
 
 
@@ -98,11 +96,6 @@ def summarize_response(result: dict[str, object]) -> dict[str, object]:
         summary["content_preview"] = content[:500]
     else:
         summary["content_preview"] = str(content)[:500]
-    for key in ("reasoning", "reasoning_content", "refusal"):
-        if isinstance(message, dict) and key in message:
-            value = message.get(key)
-            summary[f"{key}_type"] = type(value).__name__
-            summary[f"{key}_preview"] = str(value)[:500]
     return summary
 
 
@@ -159,32 +152,11 @@ def main() -> None:
             "max_tokens": 300,
         },
         {
-            "name": "judge_compact",
-            "prompt": build_compact_judge_prompt(row),
-            "system_prompt": "Return only five integers separated by commas.",
-            "temperature": 0.0,
-            "max_tokens": 64,
-        },
-        {
-            "name": "judge_minimal_compact",
-            "prompt": build_minimal_compact_judge_prompt(row),
-            "system_prompt": "Output only five comma-separated integers.",
-            "temperature": 0.0,
-            "max_tokens": 16,
-        },
-        {
             "name": "control_json",
-            "prompt": "설명 없이 다음 JSON만 그대로 출력하라.\n{\"scores\":{\"content_fit\":4,\"emotional_appropriateness\":4,\"style_match\":4,\"naturalness\":4,\"overall_quality\":4}}",
+            "prompt": "Return exactly this JSON object and nothing else:\n{\"scores\":{\"content_fit\":4,\"emotional_appropriateness\":4,\"style_match\":4,\"naturalness\":4,\"overall_quality\":4}}",
             "system_prompt": "Return JSON only.",
             "temperature": 0.0,
             "max_tokens": 64,
-        },
-        {
-            "name": "control_compact",
-            "prompt": "설명 없이 4,4,4,4,4 만 출력하라.",
-            "system_prompt": "Output only five comma-separated integers.",
-            "temperature": 0.0,
-            "max_tokens": 16,
         },
     ]
 

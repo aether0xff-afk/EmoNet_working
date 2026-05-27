@@ -5,12 +5,16 @@ import json
 from pathlib import Path
 
 from .llm_client import LLMConfig
-from .pipeline import run_turn
+from .pipeline import RucaPipeline, run_turn
+from .memory import MemoryStore
+from .session import SessionStore
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run one Ruca/Rookie MVP turn.")
-    parser.add_argument("text", help="User text to process.")
+    parser.add_argument("text", nargs="?", default="", help="User text to process.")
+    parser.add_argument("--event-type", default="user_message", choices=["user_message", "no_reply"], help="Event type to process.")
+    parser.add_argument("--elapsed-minutes", type=float, default=0.0, help="Elapsed minutes for no_reply events.")
     parser.add_argument("--memory", type=Path, default=None, help="Optional JSON memory file path.")
     parser.add_argument("--session", type=Path, default=None, help="Optional JSON session file path.")
     parser.add_argument("--debug", action="store_true", help="Print full debug record as JSON.")
@@ -38,15 +42,28 @@ def main() -> int:
         timeout_sec=args.timeout_sec,
         reasoning_effort=args.reasoning_effort,
     )
-    result = run_turn(
-        args.text,
-        memory_path=args.memory,
-        session_path=args.session,
-        use_llm=args.llm,
-        llm_config=llm_config,
-        fallback_to_rule_composer=not args.no_fallback,
-        use_emonet=args.emonet,
-    )
+    if args.event_type == "user_message":
+        result = run_turn(
+            args.text,
+            memory_path=args.memory,
+            session_path=args.session,
+            use_llm=args.llm,
+            llm_config=llm_config,
+            fallback_to_rule_composer=not args.no_fallback,
+            use_emonet=args.emonet,
+        )
+    else:
+        memory_store = MemoryStore(args.memory) if args.memory else MemoryStore.from_items()
+        session_store = SessionStore(args.session) if args.session else None
+        pipeline = RucaPipeline(
+            memory_store=memory_store,
+            session_store=session_store,
+            use_llm=args.llm,
+            llm_config=llm_config,
+            fallback_to_rule_composer=not args.no_fallback,
+            use_emonet=args.emonet,
+        )
+        result = pipeline.run_event(event_type=args.event_type, elapsed_minutes=args.elapsed_minutes, text=args.text)
     print(result.assistant_text)
     if args.prompt:
         print(result.response_prompt)

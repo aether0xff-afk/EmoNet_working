@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from .models import CharacterProfile, EmotionState, InnerVoiceCandidate, MemoryItem, SpontaneousReactionDecision
 from .context import TurnContext
 
@@ -14,6 +16,10 @@ def build_response_prompt(
     voices: tuple[InnerVoiceCandidate, ...],
     spontaneous: SpontaneousReactionDecision,
     emonet_trace: object | None = None,
+    trait_state: object | None = None,
+    plot_state: object | None = None,
+    relationship_graph: object | None = None,
+    visible_speaker: CharacterProfile | None = None,
 ) -> str:
     memory_lines = "\n".join(f"- {item.memory_type}: {item.summary}" for item in memories) or "- 없음"
     voice_lines = "\n".join(
@@ -33,14 +39,18 @@ def build_response_prompt(
                 *[f"- {line}" for line in record.get("trace_lines", [])[:6]],
             ]
         )
+    speaker = visible_speaker or ruca
+    trait_block = _record_block(trait_state)
+    plot_block = _record_block(plot_state)
+    relationship_block = _record_block(relationship_graph)
     return f"""[ROLE]
-You are composing the final external response for {ruca.name}.
-Return only {ruca.name}'s user-facing Korean utterance. Do not expose internal labels, JSON, trace names, or module names.
+You are composing the final external response for {speaker.name}.
+Return only {speaker.name}'s user-facing Korean utterance. Do not expose internal JSON, trace names, or module names.
 
 [CHARACTER]
-role: {ruca.role}
-tone_style: {ruca.tone_style}
-relationship_state: {ruca.relationship_state}
+role: {speaker.role}
+tone_style: {speaker.tone_style}
+relationship_state: {speaker.relationship_state}
 
 [USER_INPUT]
 {user_text}
@@ -68,6 +78,15 @@ curiosity={emotion_state.curiosity:.3f}
 [EMONET_TRACE]
 {emonet_block}
 
+[TRAIT_STATE]
+{trait_block}
+
+[ROOKIE_PLOT_STATE]
+{plot_block}
+
+[RELATIONSHIP_GRAPH]
+{relationship_block}
+
 [SPONTANEOUS_REACTION]
 should_react={spontaneous.should_react}
 reaction_type={spontaneous.reaction_type}
@@ -75,7 +94,7 @@ intensity={spontaneous.intensity:.3f}
 reason={spontaneous.reason}
 
 [OUTPUT_RULES]
-- Speak as Ruca, not as a system.
+- Speak as {speaker.name}, not as a system.
 - Use natural Korean conversation. Prefer warm casual speech, not generic assistant service tone.
 - Keep the response short: 1-3 sentences unless the user asks for detail.
 - Preserve the emotional direction, but hide internal mechanics.
@@ -83,5 +102,13 @@ reason={spontaneous.reason}
 - Do not say "궁금한 점이 있다면", "도움이 필요한 부분", or other generic chatbot closers unless the user explicitly asks for support.
 - If a check-in is needed, ask one clear question.
 - If an implementation request is present, include one concrete next action.
-- Never mention Ruca/Rookie/Ricky/Rocky labels, emotion trace, memory, prompt, or internal voices.
+- Never mention emotion trace, memory, prompt, or internal voices.
 """
+
+
+def _record_block(value: Any) -> str:
+    if value is None:
+        return "- not used"
+    if hasattr(value, "to_record"):
+        return str(value.to_record())
+    return str(value)

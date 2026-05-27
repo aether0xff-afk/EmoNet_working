@@ -1,0 +1,728 @@
+# v7 Neural Memory Runtime Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Build v7 as the neural-memory extension of v6, where memories are bound to EmoNet activation signatures and recalled when similar neural/emotional patterns reactivate.
+
+**Architecture:** Keep `RucaPipeline` as the orchestration boundary. Add a `NeuralMemoryIndex` beside `MemoryStore`: memories remain serializable records, while neurons/trace signatures act as recall addresses, activation cues, and suppression signals. The LLM remains only the final expression layer; neural recall affects retrieved memory, emotion, relationship pressure, and response gating before any LLM call.
+
+**Tech Stack:** Python standard library dataclasses/JSON, `unittest`, existing `v6/ruca_engine` runtime, optional EmoNet trace output when `--emonet` is enabled. CLI remains the only required user surface.
+
+---
+
+## Design Summary
+
+v7 should not store full memory text inside individual neurons. That would make persistence, debugging, and safety control brittle.
+
+Instead:
+
+```text
+event
+  -> emotion / EmoNet trace
+  -> activation signature
+  -> MemoryItem saved in MemoryStore
+  -> MemoryItem bound to activation signature in NeuralMemoryIndex
+```
+
+Later:
+
+```text
+new event
+  -> current activation signature
+  -> neural index scores similar memory bindings
+  -> recalled memories are merged with lexical memory retrieval
+  -> recalled memory affects context, relationship, plot pressure, and response gate
+```
+
+In plain terms:
+
+- Neurons decide what kind of experience can wake a memory.
+- MemoryStore keeps the actual memory record.
+- NeuralMemoryIndex connects memory ids to activation signatures.
+- Response generation receives recalled memories only after local runtime state has selected them.
+
+---
+
+## File Structure
+
+- Create `v6/ruca_engine/neural_memory.py`: activation signature dataclass, binding record, index load/save, similarity scoring, cooldown/fatigue suppression.
+- Modify `v6/ruca_engine/models.py`: optionally add record helpers only if shared model types are needed.
+- Modify `v6/ruca_engine/memory.py`: keep `MemoryStore` as the source of memory records; expose stable lookup by `memory_id`.
+- Modify `v6/ruca_engine/pipeline.py`: build current activation signature, bind saved memories, recall neural memories before context analysis, and expose debug records.
+- Modify `v6/ruca_engine/session.py`: persist lightweight neural recall state if cooldown/fatigue must survive CLI runs.
+- Modify `v6/ruca_engine/cli.py`: add `--neural-memory` and `--neural-memory-path` options.
+- Modify `v6/README.md`: document v7 neural memory mode and CLI examples.
+- Test in `v6/tests/test_ruca_engine.py`: focused unit and integration tests for neural binding, recall, cooldown, and CLI behavior.
+
+---
+
+### Task 1: Activation Signature Model
+
+**Files:**
+- Create: `v6/ruca_engine/neural_memory.py`
+- Test: `v6/tests/test_ruca_engine.py`
+
+- [ ] **Step 1: Write the failing test**
+
+Add this test:
+
+```python
+def test_activation_signature_from_emotion_state_is_stable(self) -> None:
+    from ruca_engine.neural_memory import ActivationSignature
+
+    signature = ActivationSignature.from_runtime(
+        emotion_state=EmotionState(arousal=0.7, protective_tension=0.6, curiosity=0.2),
+        signals=update_emotion_state(EmotionState(), "나 지금 너무 불안해")[1],
+        trace_record=None,
+    )
+
+    self.assertIn("emotion:arousal", signature.weights)
+    self.assertIn("emotion:protective_tension", signature.weights)
+    self.assertGreater(signature.weights["emotion:arousal"], 0.0)
+    self.assertGreater(signature.weights["signal:alarm"], 0.0)
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run:
+
+```powershell
+python -m unittest v6.tests.test_ruca_engine.RucaEngineTests.test_activation_signature_from_emotion_state_is_stable -v
+```
+
+Expected: FAIL because `ruca_engine.neural_memory` does not exist.
+
+- [ ] **Step 3: Write minimal implementation**
+
+Create `v6/ruca_engine/neural_memory.py`:
+
+```python
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any, Mapping
+
+from .emotion import InputSignals
+from .models import EmotionState, clamp
+
+
+@dataclass(frozen=True)
+class ActivationSignature:
+    weights: dict[str, float] = field(default_factory=dict)
+
+    @classmethod
+    def from_runtime(
+        cls,
+        *,
+        emotion_state: EmotionState,
+        signals: InputSignals,
+        trace_record: Mapping[str, Any] | None = None,
+    ) -> "ActivationSignature":
+        weights = {
+            "emotion:valence": abs(float(emotion_state.valence)),
+            "emotion:arousal": float(emotion_state.arousal),
+            "emotion:affinity": float(emotion_state.affinity),
+            "emotion:stability_inverse": 1.0 - float(emotion_state.stability),
+            "emotion:protective_tension": float(emotion_state.protective_tension),
+            "emotion:curiosity": float(emotion_state.curiosity),
+            "signal:alarm": float(signals.alarm),
+            "signal:warmth": float(signals.warmth),
+            "signal:action_pressure": float(signals.action_pressure),
+            "signal:curiosity": float(signals.curiosity),
+            "signal:intensity": float(signals.intensity),
+        }
+        if trace_record:
+            for index, value in enumerate(trace_record.get("stim_vec", [])[:8]):
+                weights[f"trace:stim:{index}"] = float(value)
+        return cls(weights={name: round(clamp(value, 0.0, 1.0), 4) for name, value in weights.items()})
+
+    @classmethod
+    def from_mapping(cls, payload: Mapping[str, Any] | None) -> "ActivationSignature":
+        if not isinstance(payload, Mapping):
+            return cls()
+        weights = payload.get("weights", payload)
+        if not isinstance(weights, Mapping):
+            return cls()
+        return cls(weights={str(name): round(clamp(float(value), 0.0, 1.0), 4) for name, value in weights.items()})
+
+    def to_record(self) -> dict[str, Any]:
+        return {"weights": dict(self.weights)}
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run:
+
+```powershell
+python -m unittest v6.tests.test_ruca_engine.RucaEngineTests.test_activation_signature_from_emotion_state_is_stable -v
+```
+
+Expected: PASS.
+
+---
+
+### Task 2: Neural Memory Binding and Similarity Recall
+
+**Files:**
+- Modify: `v6/ruca_engine/neural_memory.py`
+- Modify: `v6/ruca_engine/memory.py`
+- Test: `v6/tests/test_ruca_engine.py`
+
+- [ ] **Step 1: Write the failing test**
+
+Add this test:
+
+```python
+def test_neural_memory_index_recalls_similar_memory_ids(self) -> None:
+    from ruca_engine.neural_memory import ActivationSignature, NeuralMemoryIndex
+
+    index = NeuralMemoryIndex()
+    alarm_signature = ActivationSignature({"signal:alarm": 0.9, "emotion:protective_tension": 0.8})
+    warm_signature = ActivationSignature({"signal:warmth": 0.9, "emotion:affinity": 0.8})
+
+    index = index.bind_memory("mem-alarm", alarm_signature)
+    index = index.bind_memory("mem-warm", warm_signature)
+    recalled = index.recall(ActivationSignature({"signal:alarm": 0.8, "emotion:protective_tension": 0.7}), limit=1)
+
+    self.assertEqual([item.memory_id for item in recalled], ["mem-alarm"])
+    self.assertGreater(recalled[0].score, 0.5)
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run:
+
+```powershell
+python -m unittest v6.tests.test_ruca_engine.RucaEngineTests.test_neural_memory_index_recalls_similar_memory_ids -v
+```
+
+Expected: FAIL because `NeuralMemoryIndex` is not defined.
+
+- [ ] **Step 3: Write minimal implementation**
+
+Add to `v6/ruca_engine/neural_memory.py`:
+
+```python
+@dataclass(frozen=True)
+class NeuralMemoryBinding:
+    memory_id: str
+    signature: ActivationSignature
+    recall_count: int = 0
+    cooldown: float = 0.0
+
+    @classmethod
+    def from_mapping(cls, payload: Mapping[str, Any]) -> "NeuralMemoryBinding":
+        return cls(
+            memory_id=str(payload.get("memory_id", "")).strip(),
+            signature=ActivationSignature.from_mapping(payload.get("signature")),
+            recall_count=int(payload.get("recall_count", 0)),
+            cooldown=clamp(float(payload.get("cooldown", 0.0)), 0.0, 1.0),
+        )
+
+    def to_record(self) -> dict[str, Any]:
+        return {
+            "memory_id": self.memory_id,
+            "signature": self.signature.to_record(),
+            "recall_count": self.recall_count,
+            "cooldown": self.cooldown,
+        }
+
+
+@dataclass(frozen=True)
+class NeuralRecallCandidate:
+    memory_id: str
+    score: float
+    reason: str
+
+    def to_record(self) -> dict[str, Any]:
+        return {"memory_id": self.memory_id, "score": self.score, "reason": self.reason}
+
+
+@dataclass(frozen=True)
+class NeuralMemoryIndex:
+    bindings: tuple[NeuralMemoryBinding, ...] = ()
+
+    @classmethod
+    def from_mapping(cls, payload: Mapping[str, Any] | None) -> "NeuralMemoryIndex":
+        if not isinstance(payload, Mapping):
+            return cls()
+        bindings = payload.get("bindings", ())
+        return cls(tuple(NeuralMemoryBinding.from_mapping(item) for item in bindings if isinstance(item, Mapping)))
+
+    def bind_memory(self, memory_id: str, signature: ActivationSignature) -> "NeuralMemoryIndex":
+        clean_id = str(memory_id).strip()
+        next_binding = NeuralMemoryBinding(memory_id=clean_id, signature=signature)
+        kept = tuple(binding for binding in self.bindings if binding.memory_id != clean_id)
+        return NeuralMemoryIndex(bindings=(*kept, next_binding))
+
+    def recall(self, signature: ActivationSignature, *, limit: int = 5, threshold: float = 0.35) -> tuple[NeuralRecallCandidate, ...]:
+        candidates = []
+        for binding in self.bindings:
+            score = _signature_similarity(signature, binding.signature) * (1.0 - binding.cooldown)
+            if score >= threshold:
+                candidates.append(
+                    NeuralRecallCandidate(
+                        memory_id=binding.memory_id,
+                        score=round(score, 4),
+                        reason="activation_signature_similarity",
+                    )
+                )
+        candidates.sort(key=lambda item: item.score, reverse=True)
+        return tuple(candidates[: max(0, int(limit))])
+
+    def to_record(self) -> dict[str, Any]:
+        return {"bindings": [binding.to_record() for binding in self.bindings]}
+
+
+def _signature_similarity(left: ActivationSignature, right: ActivationSignature) -> float:
+    keys = set(left.weights) | set(right.weights)
+    if not keys:
+        return 0.0
+    distance = sum(abs(left.weights.get(key, 0.0) - right.weights.get(key, 0.0)) for key in keys) / len(keys)
+    return clamp(1.0 - distance, 0.0, 1.0)
+```
+
+Add to `v6/ruca_engine/memory.py`:
+
+```python
+    def get_by_ids(self, memory_ids: tuple[str, ...]) -> tuple[MemoryItem, ...]:
+        wanted = {str(memory_id) for memory_id in memory_ids}
+        return tuple(item for item in self._items if item.memory_id in wanted)
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run:
+
+```powershell
+python -m unittest v6.tests.test_ruca_engine.RucaEngineTests.test_neural_memory_index_recalls_similar_memory_ids -v
+```
+
+Expected: PASS.
+
+---
+
+### Task 3: Persist Neural Memory Index
+
+**Files:**
+- Modify: `v6/ruca_engine/neural_memory.py`
+- Test: `v6/tests/test_ruca_engine.py`
+
+- [ ] **Step 1: Write the failing test**
+
+Add this test:
+
+```python
+def test_neural_memory_index_persists_json(self) -> None:
+    from ruca_engine.neural_memory import ActivationSignature, NeuralMemoryIndexStore
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        path = Path(tmpdir) / "neural_memory.json"
+        store = NeuralMemoryIndexStore(path)
+        index = store.load().bind_memory("mem-0001", ActivationSignature({"signal:alarm": 0.8}))
+        store.save(index)
+
+        loaded = NeuralMemoryIndexStore(path).load()
+
+    self.assertEqual(loaded.bindings[0].memory_id, "mem-0001")
+    self.assertEqual(loaded.bindings[0].signature.weights["signal:alarm"], 0.8)
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run:
+
+```powershell
+python -m unittest v6.tests.test_ruca_engine.RucaEngineTests.test_neural_memory_index_persists_json -v
+```
+
+Expected: FAIL because `NeuralMemoryIndexStore` is not defined.
+
+- [ ] **Step 3: Write minimal implementation**
+
+Add to `v6/ruca_engine/neural_memory.py`:
+
+```python
+import json
+from pathlib import Path
+
+
+class NeuralMemoryIndexStore:
+    def __init__(self, path: Path) -> None:
+        self.path = path
+
+    def load(self) -> NeuralMemoryIndex:
+        if not self.path.exists():
+            return NeuralMemoryIndex()
+        payload = json.loads(self.path.read_text(encoding="utf-8"))
+        if not isinstance(payload, Mapping):
+            raise ValueError(f"neural memory file must contain an object: {self.path}")
+        return NeuralMemoryIndex.from_mapping(payload)
+
+    def save(self, index: NeuralMemoryIndex) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.path.write_text(json.dumps(index.to_record(), ensure_ascii=False, indent=2), encoding="utf-8")
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run:
+
+```powershell
+python -m unittest v6.tests.test_ruca_engine.RucaEngineTests.test_neural_memory_index_persists_json -v
+```
+
+Expected: PASS.
+
+---
+
+### Task 4: Pipeline Neural Recall Integration
+
+**Files:**
+- Modify: `v6/ruca_engine/pipeline.py`
+- Modify: `v6/ruca_engine/memory.py`
+- Test: `v6/tests/test_ruca_engine.py`
+
+- [ ] **Step 1: Write the failing test**
+
+Add this test:
+
+```python
+def test_pipeline_recalls_memory_from_neural_signature(self) -> None:
+    from ruca_engine.neural_memory import ActivationSignature, NeuralMemoryIndex
+
+    stored = MemoryItem(
+        memory_id="mem-alarm",
+        memory_type="long_term",
+        summary="사용자가 이전에 침묵 뒤 불안을 크게 느꼈음",
+        source_event="무입력 이후 불안",
+        emotion_snapshot=EmotionState(protective_tension=0.8).to_record(),
+        importance=0.9,
+    )
+    neural_index = NeuralMemoryIndex().bind_memory(
+        "mem-alarm",
+        ActivationSignature({"signal:alarm": 0.8, "emotion:protective_tension": 0.7}),
+    )
+    pipeline = RucaPipeline(memory_store=MemoryStore.from_items([stored]), neural_memory_index=neural_index)
+    result = pipeline.run_turn("나 지금 너무 불안해")
+
+    self.assertIn("neural_recall", result.debug_record)
+    self.assertEqual(result.debug_record["neural_recall"]["candidates"][0]["memory_id"], "mem-alarm")
+    self.assertTrue(any(item.memory_id == "mem-alarm" for item in result.retrieved_memories))
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run:
+
+```powershell
+python -m unittest v6.tests.test_ruca_engine.RucaEngineTests.test_pipeline_recalls_memory_from_neural_signature -v
+```
+
+Expected: FAIL because `RucaPipeline` has no `neural_memory_index` argument.
+
+- [ ] **Step 3: Write minimal implementation**
+
+Modify `RucaPipeline.__init__` to accept:
+
+```python
+        neural_memory_index: NeuralMemoryIndex | None = None,
+        neural_memory_store: NeuralMemoryIndexStore | None = None,
+```
+
+Initialize:
+
+```python
+        self.neural_memory_store = neural_memory_store
+        self.neural_memory_index = neural_memory_index or (neural_memory_store.load() if neural_memory_store else NeuralMemoryIndex())
+```
+
+In `_run_event`, after `rule_next_state` / `emonet_trace` are known and before `analyze_turn_context`, build:
+
+```python
+        current_signature = ActivationSignature.from_runtime(
+            emotion_state=next_state,
+            signals=signals,
+            trace_record=emonet_trace.to_record() if emonet_trace else None,
+        )
+        neural_candidates = self.neural_memory_index.recall(current_signature)
+        neural_memories = self.memory_store.get_by_ids(tuple(candidate.memory_id for candidate in neural_candidates))
+        lexical_memories = self.memory_store.retrieve(reference_text)
+        memories = _merge_memories(lexical_memories, neural_memories)
+```
+
+After `saved_memory`:
+
+```python
+        if saved_memory:
+            self.neural_memory_index = self.neural_memory_index.bind_memory(saved_memory.memory_id, current_signature)
+            if self.neural_memory_store:
+                self.neural_memory_store.save(self.neural_memory_index)
+```
+
+Add debug:
+
+```python
+            "neural_recall": {
+                "signature": current_signature.to_record(),
+                "candidates": [candidate.to_record() for candidate in neural_candidates],
+                "recalled_memories": [item.to_record() for item in neural_memories],
+            },
+```
+
+Add helper:
+
+```python
+def _merge_memories(left: tuple[MemoryItem, ...], right: tuple[MemoryItem, ...]) -> tuple[MemoryItem, ...]:
+    merged = []
+    seen = set()
+    for item in (*right, *left):
+        if item.memory_id in seen:
+            continue
+        seen.add(item.memory_id)
+        merged.append(item)
+    return tuple(merged)
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run:
+
+```powershell
+python -m unittest v6.tests.test_ruca_engine.RucaEngineTests.test_pipeline_recalls_memory_from_neural_signature -v
+```
+
+Expected: PASS.
+
+---
+
+### Task 5: Neural Recall Cooldown
+
+**Files:**
+- Modify: `v6/ruca_engine/neural_memory.py`
+- Modify: `v6/ruca_engine/pipeline.py`
+- Test: `v6/tests/test_ruca_engine.py`
+
+- [ ] **Step 1: Write the failing test**
+
+Add this test:
+
+```python
+def test_neural_recall_applies_cooldown_after_recall(self) -> None:
+    from ruca_engine.neural_memory import ActivationSignature, NeuralMemoryIndex
+
+    index = NeuralMemoryIndex().bind_memory("mem-alarm", ActivationSignature({"signal:alarm": 0.9}))
+    first = index.recall(ActivationSignature({"signal:alarm": 0.9}), limit=1)
+    cooled = index.apply_recall_feedback(first)
+    second = cooled.recall(ActivationSignature({"signal:alarm": 0.9}), limit=1, threshold=0.75)
+
+    self.assertEqual(first[0].memory_id, "mem-alarm")
+    self.assertEqual(second, ())
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run:
+
+```powershell
+python -m unittest v6.tests.test_ruca_engine.RucaEngineTests.test_neural_recall_applies_cooldown_after_recall -v
+```
+
+Expected: FAIL because `apply_recall_feedback` is not defined.
+
+- [ ] **Step 3: Write minimal implementation**
+
+Add to `NeuralMemoryIndex`:
+
+```python
+    def apply_recall_feedback(self, recalled: tuple[NeuralRecallCandidate, ...]) -> "NeuralMemoryIndex":
+        recalled_ids = {candidate.memory_id for candidate in recalled}
+        next_bindings = []
+        for binding in self.bindings:
+            if binding.memory_id in recalled_ids:
+                next_bindings.append(
+                    NeuralMemoryBinding(
+                        memory_id=binding.memory_id,
+                        signature=binding.signature,
+                        recall_count=binding.recall_count + 1,
+                        cooldown=0.35,
+                    )
+                )
+            else:
+                next_bindings.append(
+                    NeuralMemoryBinding(
+                        memory_id=binding.memory_id,
+                        signature=binding.signature,
+                        recall_count=binding.recall_count,
+                        cooldown=round(max(0.0, binding.cooldown - 0.05), 4),
+                    )
+                )
+        return NeuralMemoryIndex(bindings=tuple(next_bindings))
+```
+
+In `RucaPipeline._run_event`, after recall:
+
+```python
+        self.neural_memory_index = self.neural_memory_index.apply_recall_feedback(neural_candidates)
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run:
+
+```powershell
+python -m unittest v6.tests.test_ruca_engine.RucaEngineTests.test_neural_recall_applies_cooldown_after_recall -v
+```
+
+Expected: PASS.
+
+---
+
+### Task 6: CLI Neural Memory Mode
+
+**Files:**
+- Modify: `v6/ruca_engine/cli.py`
+- Test: `v6/tests/test_ruca_engine.py`
+
+- [ ] **Step 1: Write the failing test**
+
+Add this test:
+
+```python
+def test_cli_can_persist_neural_memory_index(self) -> None:
+    with tempfile.TemporaryDirectory() as tmpdir:
+        memory_path = Path(tmpdir) / "memory.json"
+        session_path = Path(tmpdir) / "session.json"
+        neural_path = Path(tmpdir) / "neural_memory.json"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "ruca_engine.cli",
+                "나 지금 너무 불안해",
+                "--memory",
+                str(memory_path),
+                "--session",
+                str(session_path),
+                "--neural-memory",
+                "--neural-memory-path",
+                str(neural_path),
+                "--debug",
+            ],
+            cwd=PROJECT_ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+    self.assertEqual(completed.returncode, 0, completed.stderr)
+    self.assertTrue(neural_path.exists())
+    self.assertIn('"neural_recall"', completed.stdout)
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run:
+
+```powershell
+python -m unittest v6.tests.test_ruca_engine.RucaEngineTests.test_cli_can_persist_neural_memory_index -v
+```
+
+Expected: FAIL because CLI does not recognize `--neural-memory`.
+
+- [ ] **Step 3: Write minimal implementation**
+
+In `v6/ruca_engine/cli.py`, add arguments:
+
+```python
+    parser.add_argument("--neural-memory", action="store_true", help="Enable v7 neural activation memory recall.")
+    parser.add_argument("--neural-memory-path", type=Path, default=None, help="Optional JSON neural memory index path.")
+```
+
+When creating `RucaPipeline`, pass:
+
+```python
+            neural_memory_store=NeuralMemoryIndexStore(args.neural_memory_path)
+            if args.neural_memory and args.neural_memory_path
+            else None,
+```
+
+For non-persistent neural memory:
+
+```python
+            neural_memory_index=NeuralMemoryIndex() if args.neural_memory and not args.neural_memory_path else None,
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run:
+
+```powershell
+python -m unittest v6.tests.test_ruca_engine.RucaEngineTests.test_cli_can_persist_neural_memory_index -v
+```
+
+Expected: PASS.
+
+---
+
+### Task 7: Documentation and Verification
+
+**Files:**
+- Modify: `v6/README.md`
+- Test: all v6 tests
+
+- [ ] **Step 1: Document v7 neural memory CLI**
+
+Add this section to `v6/README.md`:
+
+```markdown
+## v7 Neural Memory Mode
+
+v7 adds neural activation memory recall. Memory text stays in `MemoryStore`; the neural memory index stores activation signatures that point back to memory ids.
+
+```powershell
+python -m ruca_engine.cli "나 지금 너무 불안해" --memory .\outputs\ruca_memory.json --session .\outputs\ruca_session.json --neural-memory --neural-memory-path .\outputs\ruca_neural_memory.json --debug
+python -m ruca_engine.cli "또 갑자기 불안해졌어" --memory .\outputs\ruca_memory.json --session .\outputs\ruca_session.json --neural-memory --neural-memory-path .\outputs\ruca_neural_memory.json --debug
+```
+
+Debug JSON includes `neural_recall.signature`, `neural_recall.candidates`, and `neural_recall.recalled_memories`.
+```
+
+- [ ] **Step 2: Run focused tests**
+
+Run:
+
+```powershell
+python -m unittest v6.tests.test_ruca_engine -v
+```
+
+Expected: PASS.
+
+- [ ] **Step 3: Run full v6 test suite**
+
+Run:
+
+```powershell
+python -m unittest discover -s v6/tests -v
+```
+
+Expected: PASS with zero failures.
+
+- [ ] **Step 4: Run CLI smoke**
+
+Run:
+
+```powershell
+python -m v6.ruca_engine.cli "나 지금 너무 불안해" --neural-memory --neural-memory-path .\v6\outputs\ruca_neural_memory.json --debug
+```
+
+Expected: exit 0 and debug JSON includes `"neural_recall"`.
+
+---
+
+## Self-Review
+
+- Spec coverage: v7 neural memory binding, activation recall, persistent neural index, cooldown suppression, pipeline integration, CLI access, and documentation are covered.
+- Placeholder scan: no `TBD`, `TODO`, or incomplete implementation steps are intentionally left.
+- Type consistency: `ActivationSignature`, `NeuralMemoryIndex`, `NeuralMemoryIndexStore`, and `NeuralRecallCandidate` are defined before use in pipeline and CLI tasks.
+- Scope check: GUI remains out of scope. v7 adds neural memory to the existing CLI-first v6 runtime.

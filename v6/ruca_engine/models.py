@@ -80,6 +80,9 @@ class MemoryItem:
     source_event: str
     emotion_snapshot: dict[str, float]
     importance: float
+    ruca_interpretation: str = ""
+    emotion_delta: dict[str, float] = field(default_factory=dict)
+    relationship_effect: dict[str, float] = field(default_factory=dict)
     created_at: str = field(default_factory=utc_now_iso)
     last_accessed_at: str = field(default_factory=utc_now_iso)
 
@@ -93,6 +96,9 @@ class MemoryItem:
             source_event=str(payload.get("source_event", "")).strip(),
             emotion_snapshot={str(k): float(v) for k, v in dict(snapshot).items()},
             importance=clamp(float(payload.get("importance", 0.0)), 0.0, 1.0),
+            ruca_interpretation=str(payload.get("ruca_interpretation", "") or "").strip(),
+            emotion_delta={str(k): float(v) for k, v in dict(payload.get("emotion_delta", {})).items()},
+            relationship_effect={str(k): float(v) for k, v in dict(payload.get("relationship_effect", {})).items()},
             created_at=str(payload.get("created_at", "") or utc_now_iso()),
             last_accessed_at=str(payload.get("last_accessed_at", "") or utc_now_iso()),
         )
@@ -119,6 +125,16 @@ class InnerVoiceCandidate:
 class SpontaneousReactionDecision:
     should_react: bool
     reaction_type: str
+    intensity: float
+    reason: str
+
+    def to_record(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class ResponseDecision:
+    action: str
     intensity: float
     reason: str
 

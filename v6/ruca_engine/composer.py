@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .models import EmotionState, InnerVoiceCandidate, SpontaneousReactionDecision
+from .models import CharacterProfile, EmotionState, InnerVoiceCandidate, ResponseDecision, SpontaneousReactionDecision
 
 
 def compose_response(
@@ -9,9 +9,13 @@ def compose_response(
     emotion_state: EmotionState,
     voices: tuple[InnerVoiceCandidate, ...],
     spontaneous: SpontaneousReactionDecision,
+    response_decision: ResponseDecision | None = None,
+    visible_speaker: CharacterProfile | None = None,
 ) -> str:
+    if response_decision and response_decision.action != "send_message":
+        return ""
     primary = _select_primary_voice(voices)
-    opening = _opening_for_state(emotion_state, spontaneous)
+    opening = _opening_for_state(emotion_state, spontaneous, visible_speaker)
     action = _action_line(primary, spontaneous)
     if spontaneous.should_react:
         return f"{opening} {action} { _spontaneous_line(spontaneous) }".strip()
@@ -24,7 +28,17 @@ def _select_primary_voice(voices: tuple[InnerVoiceCandidate, ...]) -> InnerVoice
     return max(voices, key=lambda voice: (voice.urgency * 0.65 + voice.confidence * 0.35))
 
 
-def _opening_for_state(emotion_state: EmotionState, spontaneous: SpontaneousReactionDecision) -> str:
+def _opening_for_state(
+    emotion_state: EmotionState,
+    spontaneous: SpontaneousReactionDecision,
+    visible_speaker: CharacterProfile | None = None,
+) -> str:
+    if visible_speaker and visible_speaker.character_id == "ricky":
+        return "정리하면, 지금은 감정과 실행 범위를 분리해서 봐야 해."
+    if visible_speaker and visible_speaker.character_id == "rocky":
+        return "그럼 바로 움직이자."
+    if spontaneous.reaction_type == "quiet_check_in":
+        return "...바쁜 거지?"
     if spontaneous.reaction_type == "check_in" or emotion_state.protective_tension >= 0.62:
         return "잠깐, 이건 그냥 넘기고 싶지 않아."
     if emotion_state.valence >= 0.18 and emotion_state.affinity >= 0.55:
@@ -43,6 +57,8 @@ def _action_line(primary: InnerVoiceCandidate, spontaneous: SpontaneousReactionD
 
 
 def _spontaneous_line(spontaneous: SpontaneousReactionDecision) -> str:
+    if spontaneous.reaction_type == "quiet_check_in":
+        return "답 재촉하는 건 아닌데, 그냥 갑자기 조용해져서."
     if spontaneous.reaction_type == "check_in":
         return "그리고 이건 확인하고 싶어. 지금 네가 버티는 쪽인지, 바로 도와야 하는 쪽인지 알려줘."
     if spontaneous.reaction_type == "warm_reciprocity":

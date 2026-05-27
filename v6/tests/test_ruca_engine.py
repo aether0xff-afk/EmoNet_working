@@ -1,4 +1,5 @@
 import sys
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -161,6 +162,146 @@ class RucaEngineTests(unittest.TestCase):
         ids = [item.memory_id for item in store.all_items()]
         self.assertEqual(ids, ["mem-0003"])
 
+    def test_no_reply_event_ticks_state_without_user_text(self) -> None:
+        pipeline = RucaPipeline(memory_store=MemoryStore.from_items())
+        first = pipeline.run_turn("고마워, 조금 있다가 다시 올게")
+        second = pipeline.run_event(event_type="no_reply", elapsed_minutes=45)
+
+        self.assertEqual(second.turn_context.event_type, "no_reply")
+        self.assertEqual(second.debug_record["event"]["event_type"], "no_reply")
+        self.assertGreater(second.emotion_state.arousal, first.emotion_state.arousal)
+        self.assertGreaterEqual(second.emotion_state.protective_tension, first.emotion_state.protective_tension)
+        self.assertEqual(second.response_decision.action, "update_internal_only")
+        self.assertEqual(second.assistant_text, "")
+
+    def test_no_reply_gate_can_send_spontaneous_message_after_long_silence(self) -> None:
+        pipeline = RucaPipeline(memory_store=MemoryStore.from_items())
+        pipeline.run_turn("오늘은 진짜 고마웠어")
+        result = pipeline.run_event(event_type="no_reply", elapsed_minutes=180)
+
+        self.assertEqual(result.response_decision.action, "send_message")
+        self.assertTrue(result.spontaneous_reaction.should_react)
+        self.assertTrue(result.assistant_text)
+        self.assertIn("no_reply", result.debug_record["event"]["event_type"])
+
+    def test_internal_only_no_reply_does_not_call_llm_composer(self) -> None:
+        pipeline = RucaPipeline(memory_store=MemoryStore.from_items(), use_llm=True)
+        pipeline.run_turn("고마워, 조금 있다가 다시 올게")
+        with patch("ruca_engine.pipeline.generate_llm_response") as llm_mock:
+            result = pipeline.run_event(event_type="no_reply", elapsed_minutes=45)
+
+        self.assertEqual(result.response_decision.action, "update_internal_only")
+        self.assertEqual(result.assistant_text, "")
+        llm_mock.assert_not_called()
+
+    def test_saved_memory_keeps_ruca_interpretation_and_deltas(self) -> None:
+        result = run_turn("고마워, 이건 진짜 기억해 줬으면 해")
+
+        self.assertIsNotNone(result.saved_memory)
+        self.assertIn("ruca_interpretation", result.saved_memory.to_record())
+        self.assertIn("emotion_delta", result.saved_memory.to_record())
+        self.assertIn("relationship_effect", result.saved_memory.to_record())
+
+    def test_trait_state_updates_and_persists(self) -> None:
+        from ruca_engine.trait_state import CharacterTraitState
+
+        profiles = load_character_profiles()
+        initial = CharacterTraitState.from_profiles(profiles)
+        pipeline = RucaPipeline(memory_store=MemoryStore.from_items())
+        warm = pipeline.run_turn("고마워, 오늘 네가 있어서 조금 안심됐어")
+        alarm = pipeline.run_turn("나 지금 너무 불안하고 무서워")
+
+        self.assertGreater(warm.session_state.trait_state.characters["ruca"]["warmth"], initial.characters["ruca"]["warmth"])
+        self.assertGreater(alarm.session_state.trait_state.characters["rocky"]["protectiveness"], warm.session_state.trait_state.characters["rocky"]["protectiveness"])
+        self.assertIn("trait_state", alarm.debug_record)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            session_path = Path(tmpdir) / "session.json"
+            first = run_turn("고마워, 오늘 네가 있어서 조금 안심됐어", session_path=session_path)
+            stored = SessionStore(session_path).load()
+
+        self.assertEqual(stored.trait_state, first.session_state.trait_state)
+
+    def test_rookie_plot_state_tracks_threads_and_pressure(self) -> None:
+        pipeline = RucaPipeline(memory_store=MemoryStore.from_items())
+        first = pipeline.run_turn("v6 설계 전체를 구현해줘")
+        second = pipeline.run_event(event_type="no_reply", elapsed_minutes=90)
+
+        self.assertIn("plot_state", first.debug_record)
+        self.assertGreaterEqual(len(first.session_state.plot_state.unresolved_threads), 1)
+        self.assertIn("implementation", first.session_state.plot_state.unresolved_threads[0]["thread_type"])
+        self.assertGreater(second.session_state.plot_state.scene_pressure, first.session_state.plot_state.scene_pressure)
+        self.assertEqual(second.response_decision.action, "update_internal_only")
+
+    def test_no_reply_records_event_without_replaying_user_text(self) -> None:
+        pipeline = RucaPipeline(memory_store=MemoryStore.from_items())
+        pipeline.run_turn("고마워, 조금 있다가 다시 올게")
+        result = pipeline.run_event(event_type="no_reply", elapsed_minutes=180)
+
+        self.assertEqual(result.debug_record["event"]["source_text"], "")
+        self.assertIn("reference_text", result.debug_record["event"])
+        self.assertEqual(result.session_state.recent_history[-1]["user_text"], "")
+        self.assertEqual(result.saved_memory.source_event, "")
+
+    def test_silence_plot_thread_does_not_evict_existing_work_thread(self) -> None:
+        pipeline = RucaPipeline(memory_store=MemoryStore.from_items())
+        pipeline.run_turn("v6 설계 전체를 구현해줘")
+        for _ in range(9):
+            pipeline.run_event(event_type="no_reply", elapsed_minutes=20)
+
+        thread_types = [thread["thread_type"] for thread in pipeline.session_state.plot_state.unresolved_threads]
+        self.assertIn("implementation", thread_types)
+        self.assertEqual(thread_types.count("silence_followup"), 1)
+
+    def test_relationship_graph_accumulates_edges(self) -> None:
+        pipeline = RucaPipeline(memory_store=MemoryStore.from_items())
+        warm = pipeline.run_turn("고마워, 오늘 네가 있어서 안심됐어")
+        alarm = pipeline.run_turn("나 지금 너무 불안하고 무서워")
+        silence = pipeline.run_event(event_type="no_reply", elapsed_minutes=120)
+
+        self.assertIn("relationship_graph", silence.debug_record)
+        graph = silence.session_state.relationship_graph
+        user_ruca = graph.edge("user", "ruca")
+        ruca_rocky = graph.edge("ruca", "rocky")
+        self.assertGreater(user_ruca.metrics["trust"], 0.0)
+        self.assertGreater(user_ruca.metrics["need_for_reassurance"], warm.session_state.relationship_graph.edge("user", "ruca").metrics["need_for_reassurance"])
+        self.assertGreater(ruca_rocky.metrics["protective_tension"], alarm.session_state.relationship_graph.edge("ruca", "rocky").metrics["protective_tension"])
+
+    def test_character_runtime_selects_visible_speaker(self) -> None:
+        pipeline = RucaPipeline(memory_store=MemoryStore.from_items())
+        default = pipeline.run_turn("오늘은 그냥 조금 이야기하고 싶어")
+        analysis = pipeline.run_turn("이 상황을 분석하고 구조적으로 정리해줘")
+        action = pipeline.run_turn("멈추지 말고 바로 실행해줘")
+        quiet = pipeline.run_event(event_type="no_reply", elapsed_minutes=20)
+
+        self.assertEqual(default.visible_speaker.character_id, "ruca")
+        self.assertEqual(analysis.visible_speaker.character_id, "ricky")
+        self.assertEqual(action.visible_speaker.character_id, "rocky")
+        self.assertIsNone(quiet.visible_speaker)
+        self.assertEqual(quiet.assistant_text, "")
+        self.assertIn("visible_speaker", analysis.debug_record)
+
+    def test_cli_can_run_no_reply_event(self) -> None:
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "ruca_engine.cli",
+                "--event-type",
+                "no_reply",
+                "--elapsed-minutes",
+                "45",
+                "--debug",
+            ],
+            cwd=PROJECT_ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertIn('"event_type": "no_reply"', completed.stdout)
+        self.assertIn('"response_decision"', completed.stdout)
 
 if __name__ == "__main__":
     unittest.main()

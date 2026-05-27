@@ -66,3 +66,34 @@ def update_emotion_state(previous: EmotionState, text: str) -> tuple[EmotionStat
         curiosity=clamp(previous.curiosity * 0.80 + 0.05 + curiosity_delta, 0.0, 1.0),
     )
     return next_state, signals
+
+
+def update_emotion_for_event(
+    previous: EmotionState,
+    *,
+    event_type: str,
+    text: str = "",
+    elapsed_minutes: float = 0.0,
+) -> tuple[EmotionState, InputSignals]:
+    if event_type != "no_reply":
+        return update_emotion_state(previous, text)
+
+    elapsed = max(0.0, float(elapsed_minutes))
+    time_pressure = clamp(elapsed / 180.0, 0.0, 1.0)
+    recent_warmth = 0.18 if "고마" in text or "좋" in text or "따뜻" in text else 0.0
+    signals = InputSignals(
+        alarm=clamp(time_pressure * 0.38, 0.0, 1.0),
+        warmth=recent_warmth,
+        action_pressure=0.0,
+        curiosity=clamp(0.18 + time_pressure * 0.28, 0.0, 1.0),
+        intensity=clamp(0.20 + time_pressure * 0.58, 0.0, 1.0),
+    )
+    next_state = EmotionState(
+        valence=clamp(previous.valence * 0.88 - time_pressure * 0.06 + recent_warmth * 0.04),
+        arousal=clamp(previous.arousal * 0.88 + 0.05 + time_pressure * 0.18, 0.0, 1.0),
+        affinity=clamp(previous.affinity * 0.94 + recent_warmth * 0.03, 0.0, 1.0),
+        stability=clamp(previous.stability * 0.90 + 0.04 - time_pressure * 0.12, 0.0, 1.0),
+        protective_tension=clamp(previous.protective_tension * 0.90 + time_pressure * 0.16, 0.0, 1.0),
+        curiosity=clamp(previous.curiosity * 0.90 + 0.05 + time_pressure * 0.10, 0.0, 1.0),
+    )
+    return next_state, signals

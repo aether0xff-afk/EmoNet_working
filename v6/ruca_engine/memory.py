@@ -58,14 +58,21 @@ class MemoryStore:
         assistant_text: str,
         emotion_state: EmotionState,
         signals: InputSignals,
+        event_type: str = "user_message",
     ) -> MemoryItem | None:
         importance = max(signals.alarm, signals.warmth * 0.8, signals.action_pressure * 0.7, signals.intensity)
-        if importance < 0.24 and not user_text.strip():
+        if event_type == "no_reply":
+            importance = max(importance, min(1.0, emotion_state.protective_tension + signals.intensity * 0.35))
+        if importance < 0.24 and not user_text.strip() and event_type != "no_reply":
             return None
         memory_type = "short_term"
         if importance >= 0.62:
             memory_type = "relationship" if signals.warmth >= signals.alarm else "long_term"
+        if event_type == "no_reply" and importance >= 0.45:
+            memory_type = "emotional"
         summary = _summarize_event(user_text=user_text, assistant_text=assistant_text, signals=signals)
+        if event_type == "no_reply":
+            summary = "무입력 시간 동안 Ruca 내부 상태가 움직임"
         item = MemoryItem(
             memory_id=self._next_memory_id(),
             memory_type=memory_type,
@@ -73,6 +80,9 @@ class MemoryStore:
             source_event=user_text.strip(),
             emotion_snapshot=emotion_state.to_record(),
             importance=round(float(importance), 3),
+            ruca_interpretation=_ruca_interpretation(event_type=event_type, signals=signals),
+            emotion_delta=_emotion_delta(signals=signals),
+            relationship_effect=_relationship_effect(signals=signals, event_type=event_type),
         )
         self._items.append(item)
         self._trim_short_term()
@@ -122,3 +132,30 @@ def _summarize_event(*, user_text: str, assistant_text: str, signals: InputSigna
     else:
         prefix = "최근 상호작용"
     return f"{prefix}: {text}" if text else prefix
+
+
+def _ruca_interpretation(*, event_type: str, signals: InputSignals) -> str:
+    if event_type == "no_reply":
+        return "침묵을 단순 공백이 아니라 기다림과 작은 불안의 사건으로 받아들임"
+    if signals.alarm >= 0.55:
+        return "사용자가 흔들리는 신호를 보내 Ruca가 보호적으로 받아들임"
+    if signals.warmth >= 0.50:
+        return "사용자의 따뜻한 신호가 관계 안정감으로 남음"
+    if signals.action_pressure >= 0.50:
+        return "사용자가 실행을 맡기려는 흐름으로 받아들임"
+    return "큰 감정 사건은 아니지만 현재 대화 흐름으로 저장함"
+
+
+def _emotion_delta(*, signals: InputSignals) -> dict[str, float]:
+    return {
+        "anxiety": round(float(signals.alarm * 0.12 + signals.intensity * 0.03), 3),
+        "attachment": round(float(signals.warmth * 0.08), 3),
+        "curiosity": round(float(signals.curiosity * 0.06), 3),
+    }
+
+
+def _relationship_effect(*, signals: InputSignals, event_type: str) -> dict[str, float]:
+    return {
+        "trust": round(float(signals.warmth * 0.04 - signals.alarm * 0.02), 3),
+        "need_for_reassurance": round(float((0.05 if event_type == "no_reply" else 0.0) + signals.alarm * 0.06), 3),
+    }

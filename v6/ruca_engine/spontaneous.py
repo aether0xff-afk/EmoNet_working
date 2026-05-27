@@ -9,8 +9,26 @@ def decide_spontaneous_reaction(
     emotion_state: EmotionState,
     signals: InputSignals,
     memories: tuple[MemoryItem, ...] = (),
+    event_type: str = "user_message",
+    elapsed_minutes: float = 0.0,
 ) -> SpontaneousReactionDecision:
     repeated_alarm = sum(1 for item in memories if item.emotion_snapshot.get("protective_tension", 0.0) >= 0.55)
+    if event_type == "no_reply":
+        elapsed = max(0.0, float(elapsed_minutes))
+        pressure = max(signals.intensity, emotion_state.protective_tension, min(1.0, elapsed / 180.0))
+        if elapsed >= 120 and pressure >= 0.58:
+            return SpontaneousReactionDecision(
+                should_react=True,
+                reaction_type="quiet_check_in",
+                intensity=round(float(pressure), 3),
+                reason="긴 무입력 시간이 감정 tick과 결합되어 낮은 강도의 확인 메시지가 가능하다.",
+            )
+        return SpontaneousReactionDecision(
+            should_react=False,
+            reaction_type="silent_tick",
+            intensity=round(float(pressure), 3),
+            reason="침묵은 사건으로 처리하지만 아직 사용자를 부를 만큼 강하지 않다.",
+        )
     if signals.alarm >= 0.60 or emotion_state.protective_tension >= 0.70 or repeated_alarm >= 2:
         intensity = max(signals.alarm, emotion_state.protective_tension, min(1.0, repeated_alarm / 3.0))
         return SpontaneousReactionDecision(

@@ -20,7 +20,6 @@ from emonet.cli import (
     append_jsonl,
     build_model as build_emonet_model,
     build_conditioned_generation_prompt,
-    build_response_generation_prompt,
     ensure_model_server_ready,
     format_expression_cue_lines,
     format_style_summary_lines,

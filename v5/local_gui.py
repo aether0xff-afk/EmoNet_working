@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import html
 import json
 import os
 import threading
@@ -8,7 +7,6 @@ import traceback
 from dataclasses import asdict
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
@@ -167,8 +165,8 @@ def _generate_ai_user_message(*, api_key: str | None, scenario: str, turn_index:
 
 def _plain_llm_response(*, api_key: str, message: str) -> tuple[str, dict[str, Any]]:
     text, _raw, meta = request_plain_text_response(
-        base_url=CLAUDE_BASE_URL,
-        model_name=CLAUDE_MODEL,
+        base_url=LLM_BASE_URL,
+        model_name=LLM_MODEL,
         prompt="\n".join(
             [
                 "[USER_INPUT]",
@@ -188,7 +186,7 @@ def _plain_llm_response(*, api_key: str, message: str) -> tuple[str, dict[str, A
         retry_instruction="자연스러운 한국어 평문 대화 응답만 다시 출력하라.",
         system_prompt="Return a plain Korean conversational response only.",
         api_key=api_key,
-        provider="anthropic",
+        provider=LLM_PROVIDER,
     )
     return text, dict(meta.get("usage", {}))
 
@@ -225,8 +223,8 @@ def _ruca_prompt_only_response(*, api_key: str, message: str) -> tuple[str, dict
         ]
     )
     text, _raw, meta = request_plain_text_response(
-        base_url=CLAUDE_BASE_URL,
-        model_name=CLAUDE_MODEL,
+        base_url=LLM_BASE_URL,
+        model_name=LLM_MODEL,
         prompt=prompt,
         temperature=0.55,
         max_tokens=420,
@@ -236,7 +234,7 @@ def _ruca_prompt_only_response(*, api_key: str, message: str) -> tuple[str, dict
         retry_instruction="Ruca의 자연스러운 한국어 대사와 필요한 [ACTION] 줄만 다시 출력하라.",
         system_prompt="Return only Ruca's Korean character response.",
         api_key=api_key,
-        provider="anthropic",
+        provider=LLM_PROVIDER,
     )
     return text, dict(meta.get("usage", {}))
 
@@ -351,14 +349,11 @@ APP_HTML = r"""<!doctype html>
     .process-step { border: 1px solid rgba(174,184,192,.22); background: rgba(5,8,10,.25); border-radius: 7px; padding: 10px; }
     .process-step .step-name { color: var(--accent); font-size: 12px; font-weight: 800; text-transform: uppercase; }
     .process-step pre { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); font-size: 12px; line-height: 1.45; }
-<<<<<<< Updated upstream
     .compare-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
     .compare-card { border: 1px solid rgba(174,184,192,.24); border-radius: 8px; background: #10161a; padding: 12px; min-height: 160px; }
     .compare-card h3 { margin-top: 0; color: var(--accent); }
     .compare-card pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; margin: 0; }
-=======
     .process-copy { margin-top: 6px; color: var(--text); line-height: 1.55; }
->>>>>>> Stashed changes
     .section-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0; }
     .section-toggle h2 { margin: 0; }
     .ghost { background: transparent; border-color: var(--line); color: var(--muted); }
@@ -925,12 +920,17 @@ class LocalGuiHandler(BaseHTTPRequestHandler):
                 self._json(HTTPStatus.OK, response)
             elif parsed.path == "/api/compare":
                 payload = _read_json(self)
-                api_key = str(payload.get("api_key") or os.environ.get("ANTHROPIC_API_KEY") or "").strip()
+                api_key = str(
+                    payload.get("api_key")
+                    or os.environ.get("EMONET_LLM_API_KEY")
+                    or os.environ.get("ANTHROPIC_API_KEY")
+                    or ""
+                ).strip()
                 message = str(payload.get("message") or "").strip()
                 affect_input_mode = str(payload.get("affect_input_mode") or "encoder").strip()
                 raw_signal_policy = str(payload.get("raw_signal_policy") or "event_annotated").strip()
                 if not api_key:
-                    self._error(HTTPStatus.BAD_REQUEST, "Claude API key가 필요합니다. 왼쪽에 입력하거나 ANTHROPIC_API_KEY를 설정하세요.")
+                    self._error(HTTPStatus.BAD_REQUEST, "LLM API key가 필요합니다. 왼쪽에 입력하거나 EMONET_LLM_API_KEY를 설정하세요.")
                     return
                 if not message:
                     self._error(HTTPStatus.BAD_REQUEST, "message is empty")

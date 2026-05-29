@@ -53,22 +53,53 @@ def _ollama_native_chat_with_usage(
     }
     data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
     request = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"}, method="POST")
-    try:
-        with urllib.request.urlopen(request, timeout=timeout_sec) as response:
-            response_payload = json.loads(response.read().decode("utf-8"))
-    except urllib.error.HTTPError as exc:
-        body = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"Ollama native chat failed ({exc.code}): {body[:800]}") from exc
-    except urllib.error.URLError as exc:
-        raise ConnectionError(f"could not reach Ollama native chat endpoint: {exc}") from exc
+    response_payload = _read_json_response(request, timeout_sec, "Ollama native chat")
     message = response_payload.get("message") or {}
-    content = message.get("content")
-    if not isinstance(content, str) or not content.strip():
+    content = _content_to_text(message.get("content"))
+    if content is None:
         raise ValueError("Ollama native chat response did not contain text content")
-    return content.strip(), {
+    return content, {
         "input_tokens": int(response_payload.get("prompt_eval_count") or 0),
         "output_tokens": int(response_payload.get("eval_count") or 0),
     }
+
+
+def _read_json_response(request: urllib.request.Request, timeout_sec: int, error_label: str) -> dict[str, Any]:
+    try:
+        with urllib.request.urlopen(request, timeout=timeout_sec) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"{error_label} failed ({exc.code}): {body[:800]}") from exc
+    except urllib.error.URLError as exc:
+        raise ConnectionError(f"could not reach {error_label} endpoint: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise ValueError(f"{error_label} response must be a JSON object")
+    return payload
+
+
+def _content_to_text(content: object) -> str | None:
+    if isinstance(content, str):
+        text = content.strip()
+        return text or None
+    if not isinstance(content, list):
+        return None
+    text_chunks: list[str] = []
+    for item in content:
+        if not isinstance(item, dict):
+            continue
+        if item.get("type") == "text" and isinstance(item.get("text"), str):
+            text_chunks.append(item["text"])
+    text = "".join(text_chunks).strip()
+    return text or None
+
+
+def _first_non_empty_message_field(message: dict[str, Any], field_names: tuple[str, ...]) -> str | None:
+    for field_name in field_names:
+        fallback = message.get(field_name)
+        if isinstance(fallback, str) and fallback.strip():
+            return fallback.strip()
+    return None
 
 
 def extract_json_block(text: str) -> dict:
@@ -165,41 +196,19 @@ def call_openai_compatible_chat_with_usage(
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
     request = urllib.request.Request(url, data=data, headers=headers, method="POST")
-    try:
-        with urllib.request.urlopen(request, timeout=timeout_sec) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-    except urllib.error.HTTPError as exc:
-        body = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"OpenAI-compatible chat failed ({exc.code}): {body[:800]}") from exc
-    except urllib.error.URLError as exc:
-        raise ConnectionError(f"could not reach OpenAI-compatible chat endpoint: {exc}") from exc
+    payload = _read_json_response(request, timeout_sec, "OpenAI-compatible chat")
 
     choices = payload.get("choices") or []
     if not choices:
         raise ValueError("OpenAI-compatible chat response missing choices")
     message = choices[0].get("message") or {}
-    content = message.get("content")
-    if isinstance(content, list):
-        text_chunks: list[str] = []
-        for item in content:
-            if not isinstance(item, dict):
-                continue
-            if item.get("type") == "text" and isinstance(item.get("text"), str):
-                text_chunks.append(item["text"])
-        content = "".join(text_chunks)
-    if isinstance(content, str) and content.strip():
-        return content.strip(), _normalize_openai_usage(payload.get("usage") or {})
+    content = _content_to_text(message.get("content"))
+    if content is not None:
+        return content, _normalize_openai_usage(payload.get("usage") or {})
 
-<<<<<<< Updated upstream
-    for field_name in ("refusal",):
-        fallback = message.get(field_name)
-        if isinstance(fallback, str) and fallback.strip():
-            return fallback.strip(), _normalize_openai_usage(payload.get("usage") or {})
-=======
-    fallback = message.get("refusal")
-    if isinstance(fallback, str) and fallback.strip():
-        return fallback.strip(), _normalize_openai_usage(payload.get("usage") or {})
->>>>>>> Stashed changes
+    fallback = _first_non_empty_message_field(message, ("refusal",))
+    if fallback is not None:
+        return fallback, _normalize_openai_usage(payload.get("usage") or {})
     raise ValueError("chat response did not contain text content")
 
 
@@ -240,14 +249,7 @@ def call_anthropic_messages_with_usage(
         "anthropic-version": "2023-06-01",
     }
     request = urllib.request.Request(url, data=data, headers=headers, method="POST")
-    try:
-        with urllib.request.urlopen(request, timeout=timeout_sec) as response:
-            response_payload = json.loads(response.read().decode("utf-8"))
-    except urllib.error.HTTPError as exc:
-        body = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"Anthropic messages failed ({exc.code}): {body[:800]}") from exc
-    except urllib.error.URLError as exc:
-        raise ConnectionError(f"could not reach Anthropic endpoint: {exc}") from exc
+    response_payload = _read_json_response(request, timeout_sec, "Anthropic messages")
 
     chunks: list[str] = []
     for item in response_payload.get("content") or []:

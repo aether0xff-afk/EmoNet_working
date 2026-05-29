@@ -495,7 +495,6 @@ def _extract_phase_k(line: str) -> float:
     except ValueError:
         return 0.0
 
-
 def _clamp01(value: object) -> float:
     try:
         return max(0.0, min(1.0, float(value)))
@@ -934,11 +933,6 @@ def _build_session_affect_state(
         "tendency": str(profile.get("appraisal_tendency", "")),
         "trace_interpretation": str(felt.get("trace_interpretation", "")),
     }
-    try:
-        return float(match.group(1))
-    except ValueError:
-        return 0.0
-
 
 def _derive_agent_felt_state_from_trace(profile: Mapping[str, Any]) -> dict[str, Any]:
     trace_lines = _string_list(profile.get("trace_lines", []))

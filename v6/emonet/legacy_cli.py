@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 import re
 import time
-from typing import Any, Callable
+from typing import Any, Callable, Sequence
 import urllib.error
 import urllib.request
 
@@ -728,7 +728,6 @@ def build_balanced_subset(
     if label_column not in df.columns:
         return df.sample(n=target_size, random_state=seed).reset_index(drop=True)
 
-    rng = np.random.default_rng(seed)
     groups = {label: group.copy() for label, group in df.groupby(label_column, dropna=False)}
     label_keys = sorted(groups.keys(), key=lambda x: str(x))
     base_quota = max(1, target_size // max(1, len(label_keys)))
@@ -820,6 +819,7 @@ def train_zs_decoder_from_dataframe(
     use_all_rows: bool,
     keep_column: str = "keep_sample",
 ) -> dict[str, object]:
+    rng = np.random.default_rng(seed)
     original_rows = len(df)
     keep_filtered_rows = 0
     if not use_all_rows and keep_column in df.columns:
@@ -839,7 +839,6 @@ def train_zs_decoder_from_dataframe(
 
     z_matrix = df[z_columns].to_numpy(dtype=np.float32)
     s_matrix = df[s_columns].to_numpy(dtype=np.float32)
-    rng = np.random.default_rng(seed)
     indices = rng.permutation(len(df))
 
     val_rows = 0
@@ -946,6 +945,7 @@ def train_transformer_z_encoder_from_dataframe(
         raise RuntimeError("torch is required to train the transformer z encoder")
     if model.z_encoder is None or model.config.z_encoder_mode != "transformer":
         raise RuntimeError("model must be initialized with transformer z encoder mode")
+    rng = np.random.default_rng(seed)
     if batch_size <= 0:
         raise ValueError("batch_size must be positive")
     if epochs <= 0:
@@ -975,7 +975,6 @@ def train_transformer_z_encoder_from_dataframe(
         branch_tensors.append(np.asarray(outputs["branch_tensor"], dtype=np.float32))
         maybe_print_progress("fit-z-encoder feature prep", idx, len(texts), feature_start, every=progress_every)
 
-    rng = np.random.default_rng(seed)
     indices = rng.permutation(len(df))
     val_idx = np.asarray([], dtype=np.int64)
     train_idx = indices
@@ -4190,6 +4189,7 @@ def rebalance_labeled_style_dataframe(
 ) -> tuple[pd.DataFrame, dict[str, object]]:
     if soft_cap_ratio < 0.0 or soft_cap_ratio > 1.0:
         raise ValueError("soft_cap_ratio must be between 0.0 and 1.0")
+    rng = np.random.default_rng(seed)
     active_axes = resolve_style_axes(style_dim, style_profile=style_profile)
     start_time = time.perf_counter()
     records = df.to_dict(orient="records")
@@ -4264,7 +4264,6 @@ def rebalance_labeled_style_dataframe(
         else:
             target_size = int(eligible_mask.sum())
     target_size = min(int(target_size), int(eligible_mask.sum()))
-    rng = np.random.default_rng(seed)
     bucket_priority = {"rare_raw": 3, "edgy": 2, "mixed": 1, "soft_safe": 0}
     eligible = analyzed.loc[eligible_mask].copy()
     eligible["bucket_priority"] = eligible["rebalance_bucket"].map(bucket_priority).fillna(-1).astype(int)

@@ -230,8 +230,6 @@ def build_docx():
 
     i = 0
     in_doc = False
-    in_abstract = False
-    in_enum = False
     in_quote = False
     in_bib = False
     para_buf: list[str] = []
@@ -285,12 +283,10 @@ def build_docx():
         if line.startswith("\\begin{abstract}"):
             flush()
             add_heading(doc, "초록", 1)
-            in_abstract = True
             i += 1
             continue
         if line.startswith("\\end{abstract}"):
             flush()
-            in_abstract = False
             doc.add_section(WD_SECTION.CONTINUOUS)
             body_sec = doc.sections[-1]
             body_sec.footer.is_linked_to_previous = False
@@ -311,12 +307,10 @@ def build_docx():
             continue
         if line.startswith("\\begin{enumerate}"):
             flush()
-            in_enum = True
             i += 1
             continue
         if line.startswith("\\end{enumerate}"):
             flush()
-            in_enum = False
             i += 1
             continue
         if line.startswith("\\begin{quote}"):

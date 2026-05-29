@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import torch
 from torch import nn
@@ -53,7 +53,6 @@ class EmotionalDynamicsNet(nn.Module):
 
         num_exc = int(round(n * config.dynamics.excitatory_ratio))
         num_inh = int(round(n * config.dynamics.inhibitory_ratio))
-        num_mod = n - num_exc - num_inh
         neuron_types = torch.zeros(n, dtype=torch.long)
         neuron_types[num_exc : num_exc + num_inh] = 1
         neuron_types[num_exc + num_inh :] = 2

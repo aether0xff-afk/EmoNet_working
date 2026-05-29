@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Sequence
+from typing import List
 
 import networkx as nx
 import torch
@@ -110,7 +110,6 @@ class StructuralClusterManager:
             mean_memory.append(mem.abs().mean())
         modularity = 0.0
         if calculate_modularity:
-            n = adjacency.shape[0]
             same = cluster_ids.unsqueeze(0) == cluster_ids.unsqueeze(1)
             sym_w = (weights.abs() + weights.abs().T) / 2.0
             internal = sym_w[same].mean().item() if same.any() else 0.0

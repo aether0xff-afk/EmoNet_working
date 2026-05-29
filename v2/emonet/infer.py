@@ -4,7 +4,6 @@ import argparse
 import json
 from pathlib import Path
 
-import torch
 
 from .config import STYLE_NAMES, default_config
 from .model import EmotionArchitecture

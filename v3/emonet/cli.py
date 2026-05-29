@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 import re
 import time
-from typing import Any, Callable
+from typing import Any, Callable, Sequence
 import urllib.error
 import urllib.request
 
@@ -806,7 +806,6 @@ def build_balanced_subset(
     if label_column not in df.columns:
         return df.sample(n=target_size, random_state=seed).reset_index(drop=True)
 
-    rng = np.random.default_rng(seed)
     groups = {label: group.copy() for label, group in df.groupby(label_column, dropna=False)}
     label_keys = sorted(groups.keys(), key=lambda x: str(x))
     base_quota = max(1, target_size // max(1, len(label_keys)))

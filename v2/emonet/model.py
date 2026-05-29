@@ -8,7 +8,7 @@ from torch import nn
 
 from .branching import BranchPath, BranchTracker
 from .clustering import StructuralClusterManager
-from .config import AppConfig, STYLE_NAMES, default_config
+from .config import AppConfig, default_config
 from .dynamics import EmotionalDynamicsNet
 from .encoders import ControlEncoder
 from .history import HistoryBuffer

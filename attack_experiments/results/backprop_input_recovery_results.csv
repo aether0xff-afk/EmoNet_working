@@ -1,0 +1,4 @@
+case_id,original_text,optimization_steps,loss_type,initial_loss,final_loss,token_accuracy,keyword_recovery,semantic_similarity,exact_match,recovered_text,interpretation
+1,The secret code is apple.,800,MSE,0.352149,0.000040,1.0000,1.0000,1.0000,True,the secret code is apple.,원문 완전 복원: latent 직접 저장은 심각한 정보 유출
+2,Latent vectors should be encrypted.,800,MSE,0.357616,0.000040,1.0000,1.0000,1.0000,True,latent vectors should be encrypted.,원문 완전 복원: latent 직접 저장은 심각한 정보 유출
+3,Picasso hides a private message.,800,MSE,0.325141,0.000041,1.0000,1.0000,1.0000,True,picasso hides a private message.,원문 완전 복원: latent 직접 저장은 심각한 정보 유출

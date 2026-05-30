@@ -1,0 +1,6 @@
+base_sentence,variant_sentence,token_change_type,l2_distance,cosine_distance,byte_difference_ratio,avalanche_score,interpretation
+The secret code is apple.,The secret code is apples.,글자 1개 추가,2.097568,0.089018,0.912073,2.097568,작은 입력 변화가 latent에 뚜렷하게 반영됨
+The secret code is apple.,The secret code is orange.,핵심 단어 변경,1.752571,0.061641,0.921260,1.752571,작은 입력 변화가 latent에 뚜렷하게 반영됨
+The secret code is apple.,The secret code is banana.,핵심 단어 변경,2.520239,0.126073,0.912073,2.520239,작은 입력 변화가 latent에 뚜렷하게 반영됨
+The secret code is apple.,A secret code is apple.,관사 변경,2.014466,0.079086,0.914698,2.014466,작은 입력 변화가 latent에 뚜렷하게 반영됨
+The secret code is apple.,The hidden code is apple.,의미 유사 단어 변경,2.203166,0.098344,0.895013,2.203166,작은 입력 변화가 latent에 뚜렷하게 반영됨

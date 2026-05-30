@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 from concurrent.futures import ProcessPoolExecutor
-from concurrent.futures.process import BrokenProcessPool
 from datetime import datetime, timezone
 import json
 import os
@@ -225,40 +224,6 @@ def estimate_executor_chunksize(total: int, num_workers: int, preferred: int = 6
     return max(1, min(int(preferred), max(1, total // max(1, num_workers * 8))))
 
 
-def build_worker_fallback_plan(requested_workers: int) -> list[int]:
-    worker_count = resolve_num_workers(requested_workers)
-    if worker_count <= 1:
-        return [1]
-    plan = [worker_count]
-    seen = {worker_count}
-    current = worker_count
-    while current > 1:
-        current = max(1, current // 2)
-        if current not in seen:
-            plan.append(current)
-            seen.add(current)
-    if 1 not in seen:
-        plan.append(1)
-    return plan
-
-
-def is_parallel_pool_failure(exc: BaseException) -> bool:
-    if isinstance(exc, BrokenProcessPool):
-        return True
-    if isinstance(exc, OSError):
-        message = str(exc).lower()
-        return "handle is closed" in message or "invalid handle" in message
-    return False
-
-
-def print_worker_fallback(task_name: str, failed_workers: int, next_workers: int, exc: BaseException) -> None:
-    print(
-        f"{task_name}: worker pool failed with num_workers={failed_workers} "
-        f"({exc.__class__.__name__}: {exc}). falling back to num_workers={next_workers} and retrying remaining work.",
-        flush=True,
-    )
-
-
 def build_model_payload(args: argparse.Namespace) -> dict[str, Any]:
     payload: dict[str, Any] = {}
     for field_name in MODEL_BUILD_ARG_FIELDS:
@@ -442,8 +407,7 @@ def export_z_from_dataframe(
     total = len(records)
     start_time = time.perf_counter()
     rows: list[dict[str, object]] = []
-    fallback_plan = build_worker_fallback_plan(num_workers)
-    worker_count = fallback_plan[0]
+    worker_count = resolve_num_workers(num_workers)
 
     if worker_count <= 1:
         if model is None:
@@ -457,36 +421,17 @@ def export_z_from_dataframe(
             raise ValueError("model_args is required when num_workers > 1")
         payload = prepare_parallel_model_payload(model_args)
         completed = 0
-        for plan_idx, current_workers in enumerate(fallback_plan):
-            remaining_records = records[completed:]
-            if not remaining_records:
-                break
-            if current_workers <= 1:
-                serial_model = model if model is not None else build_model(model_args)
-                for record in remaining_records:
-                    outputs = serial_model.forward(str(record.get(text_column, "")))
-                    rows.append(build_output_row(record, outputs))
-                    completed += 1
-                    maybe_print_progress("export-z", completed, total, start_time, every=progress_every)
-                break
-
-            try:
-                chunksize = estimate_executor_chunksize(len(remaining_records), current_workers, preferred=128)
-                task_iter = ((record, text_column) for record in remaining_records)
-                with ProcessPoolExecutor(
-                    max_workers=current_workers,
-                    initializer=_init_parallel_model,
-                    initargs=(payload,),
-                ) as executor:
-                    for row in executor.map(_parallel_export_record, task_iter, chunksize=chunksize):
-                        rows.append(row)
-                        completed += 1
-                        maybe_print_progress("export-z", completed, total, start_time, every=progress_every)
-                break
-            except Exception as exc:
-                if not is_parallel_pool_failure(exc) or plan_idx >= len(fallback_plan) - 1:
-                    raise
-                print_worker_fallback("export-z", current_workers, fallback_plan[plan_idx + 1], exc)
+        chunksize = estimate_executor_chunksize(len(records), worker_count, preferred=128)
+        task_iter = ((record, text_column) for record in records)
+        with ProcessPoolExecutor(
+            max_workers=worker_count,
+            initializer=_init_parallel_model,
+            initargs=(payload,),
+        ) as executor:
+            for row in executor.map(_parallel_export_record, task_iter, chunksize=chunksize):
+                rows.append(row)
+                completed += 1
+                maybe_print_progress("export-z", completed, total, start_time, every=progress_every)
 
     output_df = pd.DataFrame(rows)
     output_csv.parent.mkdir(parents=True, exist_ok=True)
@@ -571,8 +516,7 @@ def export_z_from_json_stream(
     existing_ids = load_existing_ids(output_csv) if resume else set()
     start_time = time.perf_counter()
     source_rows: list[dict[str, object]] = []
-    fallback_plan = build_worker_fallback_plan(num_workers)
-    worker_count = fallback_plan[0]
+    worker_count = resolve_num_workers(num_workers)
 
     if resume and existing_ids:
         print(f"resume mode: skipping {len(existing_ids)} existing talk_id rows")
@@ -606,47 +550,26 @@ def export_z_from_json_stream(
         if model_args is None:
             raise ValueError("model_args is required when num_workers > 1")
         payload = prepare_parallel_model_payload(model_args)
-        for plan_idx, current_workers in enumerate(fallback_plan):
-            remaining_rows = source_rows[processed:]
-            if not remaining_rows:
-                break
-            if current_workers <= 1:
-                serial_model = model if model is not None else build_model(model_args)
-                for source_row in remaining_rows:
-                    outputs = serial_model.forward(str(source_row["text"]))
-                    rows_to_write.append(build_output_row(source_row, outputs))
+        chunksize = estimate_executor_chunksize(len(source_rows), worker_count, preferred=max(16, chunk_size))
+        task_iter = ((source_row, "text") for source_row in source_rows)
+        with ProcessPoolExecutor(
+            max_workers=worker_count,
+            initializer=_init_parallel_model,
+            initargs=(payload,),
+        ) as executor:
+            try:
+                for row in executor.map(_parallel_export_record, task_iter, chunksize=chunksize):
+                    rows_to_write.append(row)
                     processed += 1
                     written += 1
                     maybe_print_progress("export-z", processed, total, start_time, every=progress_every)
                     if len(rows_to_write) >= chunk_size:
                         write_header = flush_rows(rows_to_write, output_csv, write_header)
                         rows_to_write.clear()
-                break
-
-            try:
-                chunksize = estimate_executor_chunksize(len(remaining_rows), current_workers, preferred=max(16, chunk_size))
-                task_iter = ((source_row, "text") for source_row in remaining_rows)
-                with ProcessPoolExecutor(
-                    max_workers=current_workers,
-                    initializer=_init_parallel_model,
-                    initargs=(payload,),
-                ) as executor:
-                    for row in executor.map(_parallel_export_record, task_iter, chunksize=chunksize):
-                        rows_to_write.append(row)
-                        processed += 1
-                        written += 1
-                        maybe_print_progress("export-z", processed, total, start_time, every=progress_every)
-                        if len(rows_to_write) >= chunk_size:
-                            write_header = flush_rows(rows_to_write, output_csv, write_header)
-                            rows_to_write.clear()
-                break
-            except Exception as exc:
+            finally:
                 if len(rows_to_write) >= chunk_size:
                     write_header = flush_rows(rows_to_write, output_csv, write_header)
                     rows_to_write.clear()
-                if not is_parallel_pool_failure(exc) or plan_idx >= len(fallback_plan) - 1:
-                    raise
-                print_worker_fallback("export-z", current_workers, fallback_plan[plan_idx + 1], exc)
 
     write_header = flush_rows(rows_to_write, output_csv, write_header)
     elapsed = time.perf_counter() - start_time
@@ -724,8 +647,7 @@ def probe_branch_lengths(
     start_time = time.perf_counter()
     records = df.to_dict(orient="records")
     total = len(records)
-    fallback_plan = build_worker_fallback_plan(num_workers)
-    worker_count = fallback_plan[0]
+    worker_count = resolve_num_workers(num_workers)
 
     if worker_count <= 1:
         if model is None:
@@ -741,38 +663,17 @@ def probe_branch_lengths(
             raise ValueError("model_args is required when num_workers > 1")
         payload = prepare_parallel_model_payload(model_args)
         completed = 0
-        for plan_idx, current_workers in enumerate(fallback_plan):
-            remaining_records = records[completed:]
-            if not remaining_records:
-                break
-            if current_workers <= 1:
-                serial_model = model if model is not None else build_model(model_args)
-                for record in remaining_records:
-                    outputs = serial_model.forward(str(record.get(text_column, "")))
-                    row = dict(record)
-                    row["dominant_branch_len"] = int(len(outputs["dominant_branch"]))
-                    rows.append(row)
-                    completed += 1
-                    maybe_print_progress("probe-branch", completed, total, start_time, every=progress_every)
-                break
-
-            try:
-                chunksize = estimate_executor_chunksize(len(remaining_records), current_workers, preferred=64)
-                task_iter = ((record, text_column) for record in remaining_records)
-                with ProcessPoolExecutor(
-                    max_workers=current_workers,
-                    initializer=_init_parallel_model,
-                    initargs=(payload,),
-                ) as executor:
-                    for row in executor.map(_parallel_probe_record, task_iter, chunksize=chunksize):
-                        rows.append(row)
-                        completed += 1
-                        maybe_print_progress("probe-branch", completed, total, start_time, every=progress_every)
-                break
-            except Exception as exc:
-                if not is_parallel_pool_failure(exc) or plan_idx >= len(fallback_plan) - 1:
-                    raise
-                print_worker_fallback("probe-branch", current_workers, fallback_plan[plan_idx + 1], exc)
+        chunksize = estimate_executor_chunksize(len(records), worker_count, preferred=64)
+        task_iter = ((record, text_column) for record in records)
+        with ProcessPoolExecutor(
+            max_workers=worker_count,
+            initializer=_init_parallel_model,
+            initargs=(payload,),
+        ) as executor:
+            for row in executor.map(_parallel_probe_record, task_iter, chunksize=chunksize):
+                rows.append(row)
+                completed += 1
+                maybe_print_progress("probe-branch", completed, total, start_time, every=progress_every)
     return pd.DataFrame(rows)
 
 

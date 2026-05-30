@@ -671,7 +671,6 @@ class EmoNetSmokeTests(unittest.TestCase):
         )
         dominant = extractor.build_dominant_branch(
             topk_paths=[best_path, weaker_path],
-            fallback_stim_vec=np.zeros(4, dtype=np.float32),
             branch_log=[],
             topk=2,
         )

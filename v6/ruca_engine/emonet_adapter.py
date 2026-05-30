@@ -21,20 +21,20 @@ class EmoNetTraceResult:
     source: str = "emonet_v5_runtime_v6_artifacts"
 
     def to_record(self) -> dict[str, Any]:
-        trace_profile = dict(self.profile.get("trace_profile", {}))
+        trace_profile = _required_mapping(self.profile, "trace_profile")
         return {
             "source": self.source,
             "emotion_state": self.emotion_state.to_record(),
-            "stim_vec": _float_list(self.profile.get("stim_vec", [])),
-            "affect_input_stim_vec": _float_list(self.profile.get("affect_input_stim_vec", [])),
-            "dominant_branch_len": int(self.profile.get("dominant_branch_len", 0) or 0),
-            "trace_summary_text": str(self.profile.get("trace_summary_text", "")),
-            "trace_lines": [str(item) for item in self.profile.get("trace_lines", [])],
+            "stim_vec": _required_float_list(self.profile, "stim_vec"),
+            "affect_input_stim_vec": _required_float_list(self.profile, "affect_input_stim_vec"),
+            "dominant_branch_len": _required_int(self.profile, "dominant_branch_len"),
+            "trace_summary_text": _required_str(self.profile, "trace_summary_text"),
+            "trace_lines": _required_str_list(self.profile, "trace_lines"),
             "trace_profile": trace_profile,
-            "style_tags": [str(item) for item in self.profile.get("style_tags", [])],
-            "style_summary": dict(self.profile.get("style_summary", {})),
-            "z_dim": len(_float_list(self.profile.get("z", []))),
-            "s_pred_dim": len(_float_list(self.profile.get("s_pred", []))),
+            "style_tags": _required_str_list(self.profile, "style_tags"),
+            "style_summary": _required_mapping(self.profile, "style_summary"),
+            "z_dim": len(_required_float_list(self.profile, "z")),
+            "s_pred_dim": len(_required_float_list(self.profile, "s_pred")),
         }
 
 
@@ -67,14 +67,16 @@ def _runtime_and_infer() -> tuple[Any, Any]:
 
 
 def _profile_to_emotion_state(profile: dict[str, Any]) -> EmotionState:
-    stim = _pad4(_float_list(profile.get("stim_vec", [])))
+    stim = _required_stim_vec(profile, "stim_vec")
     dopamine, serotonin, norepinephrine, melatonin = stim[:4]
-    trace_profile = dict(profile.get("trace_profile", {}))
-    branch_len = float(profile.get("dominant_branch_len", trace_profile.get("dominant_branch_len", 0)) or 0)
-    ticks_run = max(1.0, float(trace_profile.get("ticks_run", 1) or 1))
-    active_window = float(trace_profile.get("active_window_ticks", 0) or 0)
+    trace_profile = _required_mapping(profile, "trace_profile")
+    branch_len = _required_float(profile, "dominant_branch_len")
+    ticks_run = _required_float(trace_profile, "ticks_run")
+    if ticks_run <= 0:
+        raise ValueError("trace_profile.ticks_run must be positive")
+    active_window = _required_float(trace_profile, "active_window_ticks")
     active_ratio = clamp(active_window / ticks_run, 0.0, 1.0)
-    mean_active = float(trace_profile.get("mean_active_nodes", 0.0) or 0.0)
+    mean_active = _required_float(trace_profile, "mean_active_nodes")
     activity_pressure = clamp(mean_active / 128.0, 0.0, 1.0)
 
     valence = clamp((dopamine + serotonin) * 0.55 - (norepinephrine + melatonin) * 0.45)
@@ -93,15 +95,58 @@ def _profile_to_emotion_state(profile: dict[str, Any]) -> EmotionState:
     )
 
 
-def _float_list(value: Any) -> list[float]:
+def _required_float_list(mapping: dict[str, Any], field_name: str) -> list[float]:
+    if field_name not in mapping:
+        raise ValueError(f"EmoNet profile missing required field: {field_name}")
+    value = mapping[field_name]
     try:
-        return [float(item) for item in value]
-    except Exception:
-        return []
+        result = [float(item) for item in value]
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"EmoNet profile field {field_name} must be a numeric sequence") from exc
+    if not result:
+        raise ValueError(f"EmoNet profile field {field_name} must not be empty")
+    return result
 
 
-def _pad4(values: list[float]) -> list[float]:
-    padded = list(values[:4])
-    while len(padded) < 4:
-        padded.append(0.0)
-    return [clamp(item, 0.0, 1.0) for item in padded]
+def _required_stim_vec(mapping: dict[str, Any], field_name: str) -> list[float]:
+    values = _required_float_list(mapping, field_name)
+    if len(values) != 4:
+        raise ValueError(f"EmoNet profile field {field_name} must contain exactly 4 values")
+    return [clamp(item, 0.0, 1.0) for item in values]
+
+
+def _required_mapping(mapping: dict[str, Any], field_name: str) -> dict[str, Any]:
+    if field_name not in mapping or not isinstance(mapping[field_name], dict):
+        raise ValueError(f"EmoNet profile field {field_name} must be an object")
+    return dict(mapping[field_name])
+
+
+def _required_float(mapping: dict[str, Any], field_name: str) -> float:
+    if field_name not in mapping:
+        raise ValueError(f"EmoNet profile missing required field: {field_name}")
+    try:
+        return float(mapping[field_name])
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"EmoNet profile field {field_name} must be numeric") from exc
+
+
+def _required_int(mapping: dict[str, Any], field_name: str) -> int:
+    value = _required_float(mapping, field_name)
+    if int(value) != value:
+        raise ValueError(f"EmoNet profile field {field_name} must be an integer")
+    return int(value)
+
+
+def _required_str(mapping: dict[str, Any], field_name: str) -> str:
+    if field_name not in mapping or not isinstance(mapping[field_name], str):
+        raise ValueError(f"EmoNet profile field {field_name} must be a string")
+    return mapping[field_name]
+
+
+def _required_str_list(mapping: dict[str, Any], field_name: str) -> list[str]:
+    if field_name not in mapping:
+        raise ValueError(f"EmoNet profile missing required field: {field_name}")
+    value = mapping[field_name]
+    if not isinstance(value, list):
+        raise ValueError(f"EmoNet profile field {field_name} must be a list")
+    return [str(item) for item in value]

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Ruca/Rookie MVP Engine
 
 `v6`는 업로드된 Ruca & Rookie 통합 설계를 실제로 움직이는 최소 엔진으로 옮기는 작업선이다.
@@ -90,10 +91,93 @@ python -m ruca_engine.cli "Ruca처럼 짧게 답해줘" --llm --debug
 
 ```powershell
 python -m ruca_engine.cli "Ruca처럼 짧게 답해줘" --llm --base-url http://localhost:11434/v1 --model-name gpt-oss:20b --debug
+=======
+﻿# EmoNet v6
+
+`v6` is the Ruca & Rookie autonomous character runtime line. It extends the
+`v5` character-chat MVP toward characters that keep an internal emotional life
+across time: user messages, silence ticks, internal voices, response gating,
+relationship memory, and optional EmoNet trace conditioning.
+
+```text
+user message or silence
+  -> scheduled Ruca event
+  -> emotion tick
+  -> memory and relationship lookup
+  -> internal voices
+  -> response gate
+  -> Ruca message, quiet check-in, or internal-only state update
+```
+
+The LLM is the required expression layer whenever Ruca is scheduled to speak.
+EmoNet, memory, relationship state, and scene state decide what Ruca is carrying
+before the LLM turns it into dialogue.
+
+## Current v6 Slice
+
+- `ruca_engine/event_scheduler.py`: normalizes user messages, short silence, and long silence into Ruca events.
+- `ruca_engine/pipeline.py`: runs one full Ruca event and records debug state.
+- `ruca_engine/emotion.py`: rule-based emotional trace update when EmoNet is not requested.
+- `ruca_engine/memory.py`: short-term and relationship memory persistence.
+- `ruca_engine/inner_voice.py`: Ruca/Ricky/Rocky private candidate voices.
+- `ruca_engine/spontaneous.py`: response gate for check-ins and silence.
+- `local_gui.py`: local browser GUI for character chat and AI dialogue tests.
+
+## Run
+
+From this directory:
+
+```powershell
+$PY = "$env:USERPROFILE\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe"
+& $PY -m unittest discover -s tests -v
+```
+
+One normal turn:
+
+```powershell
+& $PY -m ruca_engine.cli "v6를 더 개발해줘" --llm --debug
+```
+
+One internal-only silence tick:
+
+```powershell
+& $PY -m ruca_engine.cli --silence --elapsed-minutes 10 --debug
+```
+
+A long silence that may produce a quiet check-in:
+
+```powershell
+& $PY -m ruca_engine.cli --elapsed-minutes 60 --llm --debug
+```
+
+Persistent memory/session:
+
+```powershell
+& $PY -m ruca_engine.cli "지금 너무 불안하고 무서워" --llm --memory .\outputs\ruca_memory.json --session .\outputs\ruca_session.json --debug
+& $PY -m ruca_engine.cli --elapsed-minutes 60 --llm --memory .\outputs\ruca_memory.json --session .\outputs\ruca_session.json --debug
+```
+
+## LLM Expression Layer
+
+When Ruca is scheduled to speak, `--llm` is required. If the LLM call fails, the
+turn fails loudly instead of fabricating a rule-based reply. Supported providers
+are `openai_compatible` and `anthropic`.
+
+```powershell
+$env:OPENAI_API_KEY = "..."
+& $PY -m ruca_engine.cli "Ruca처럼 짧게 답해줘" --llm --debug
+```
+
+For local Ollama/OpenAI-compatible servers:
+
+```powershell
+& $PY -m ruca_engine.cli "Ruca처럼 짧게 답해줘" --llm --base-url http://127.0.0.1:11434/v1 --model-name gpt-oss:120b-cloud --debug
+>>>>>>> afac398b3a22494cb46fd7c4f2dfef5ffd6559a3
 ```
 
 `response_gate`가 `update_internal_only` 또는 `stay_silent`를 선택한 경우 LLM composer는 호출하지 않는다. 게이트가 표면 메시지를 보내기로 한 경우에만 LLM이 최종 문장을 만든다.
 
+<<<<<<< HEAD
 ## Runtime State
 
 세션 파일에는 다음 상태가 함께 저장된다.
@@ -116,3 +200,8 @@ python -m ruca_engine.cli "Ruca처럼 짧게 답해줘" --llm --base-url http://
 - 메모리는 대화 원문만이 아니라 Ruca의 해석, 감정 delta, 관계 효과를 함께 저장한다.
 - Rookie는 장기 플롯/scene 계층으로 확장할 수 있게 맥락 질문을 제공한다.
 - 이번 v6 런타임 통합의 사용자 표면은 CLI다. GUI 파일은 기존 흐름과 분리해 두고 이 단계에서 v6 `RucaPipeline`에 연결하지 않는다.
+=======
+The repository keeps optional research tooling for figures and ridge encoding.
+Runtime paths should fail explicitly when required model, perception, plotting,
+or trace dependencies are missing.
+>>>>>>> afac398b3a22494cb46fd7c4f2dfef5ffd6559a3

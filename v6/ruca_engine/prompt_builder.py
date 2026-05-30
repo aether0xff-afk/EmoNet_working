@@ -4,11 +4,13 @@ from typing import Any
 
 from .models import CharacterProfile, EmotionState, InnerVoiceCandidate, MemoryItem, SpontaneousReactionDecision
 from .context import TurnContext
+from .event_scheduler import RucaEvent
 
 
 def build_response_prompt(
     *,
     user_text: str,
+    event: RucaEvent | None = None,
     ruca: CharacterProfile,
     emotion_state: EmotionState,
     turn_context: TurnContext,
@@ -54,6 +56,12 @@ relationship_state: {speaker.relationship_state}
 
 [USER_INPUT]
 {user_text}
+
+[EVENT]
+event_type: {event.event_type if event else "user_message"}
+elapsed_minutes: {event.elapsed_minutes if event else 0.0:.1f}
+should_speak: {event.should_speak if event else True}
+event_reason: {event.reason if event else "user supplied an explicit message"}
 
 [TURN_CONTEXT]
 event_type: {turn_context.event_type}

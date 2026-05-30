@@ -1,8 +1,10 @@
-import importlib.util
+﻿import importlib.util
 import json
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
+from unittest.mock import patch
 
 import pandas as pd
 
@@ -32,7 +34,7 @@ class ExperimentToolTests(unittest.TestCase):
             (sample_dir / "emotion_trace_summary.json").write_text(
                 json.dumps(
                     {
-                        "input_text": "대표가 나만 공개적으로 무시해서 화가 난다.",
+                        "input_text": "??쒓? ?섎쭔 怨듦컻?곸쑝濡?臾댁떆?댁꽌 ?붽? ?쒕떎.",
                         "input_meta": {"sample_id": "s_1"},
                         "ticks_run": 12,
                         "termination_reason": "stable_convergence",
@@ -40,7 +42,7 @@ class ExperimentToolTests(unittest.TestCase):
                         "active_tick_count": 10,
                         "persistence_ratio": 0.83,
                         "saturation_ratio": 0.72,
-                        "dominant_global_signal": "공세적 긴장",
+                        "dominant_global_signal": "怨듭꽭??湲댁옣",
                         "drive": 0.22,
                         "brake": 0.18,
                         "alarm": 0.61,
@@ -58,7 +60,7 @@ class ExperimentToolTests(unittest.TestCase):
             (sample_dir / "emotion_trajectory_summary.json").write_text(
                 json.dumps(
                     {
-                        "input_text": "대표가 나만 공개적으로 무시해서 화가 난다.",
+                        "input_text": "??쒓? ?섎쭔 怨듦컻?곸쑝濡?臾댁떆?댁꽌 ?붽? ?쒕떎.",
                         "input_meta": {"sample_id": "s_1"},
                         "trajectory_pattern": "high_arousal_persistence",
                         "phase_count": 3,
@@ -75,45 +77,45 @@ class ExperimentToolTests(unittest.TestCase):
 
             pd.DataFrame(
                 [
-                    {"phase_index": 0, "phase": "dormant", "start_tick": 0, "end_tick": 1, "duration": 2, "mean_active_nodes": 0.0, "mean_edges_fired": 0.0, "dominant_signal": "추동/접근", "signal_conflict": 1.0},
-                    {"phase_index": 1, "phase": "ignition", "start_tick": 2, "end_tick": 4, "duration": 3, "mean_active_nodes": 120.0, "mean_edges_fired": 580.0, "dominant_signal": "경계/날카로움", "signal_conflict": 0.94},
-                    {"phase_index": 2, "phase": "persistence", "start_tick": 5, "end_tick": 11, "duration": 7, "mean_active_nodes": 210.0, "mean_edges_fired": 940.0, "dominant_signal": "경계/날카로움", "signal_conflict": 0.72},
+                    {"phase_index": 0, "phase": "dormant", "start_tick": 0, "end_tick": 1, "duration": 2, "mean_active_nodes": 0.0, "mean_edges_fired": 0.0, "dominant_signal": "異붾룞/?묎렐", "signal_conflict": 1.0},
+                    {"phase_index": 1, "phase": "ignition", "start_tick": 2, "end_tick": 4, "duration": 3, "mean_active_nodes": 120.0, "mean_edges_fired": 580.0, "dominant_signal": "寃쎄퀎/?좎뭅濡쒖?", "signal_conflict": 0.94},
+                    {"phase_index": 2, "phase": "persistence", "start_tick": 5, "end_tick": 11, "duration": 7, "mean_active_nodes": 210.0, "mean_edges_fired": 940.0, "dominant_signal": "寃쎄퀎/?좎뭅濡쒖?", "signal_conflict": 0.72},
                 ]
             ).to_csv(sample_dir / "trajectory_phases.csv", index=False, encoding="utf-8-sig")
 
             pd.DataFrame(
                 [
-                    {"tick": 0, "active_nodes": 0, "edges_fired": 0, "dominant_signal": "거의 무색", "combined_drive": 0.0, "combined_brake": 0.0, "combined_alarm": 0.0, "combined_fatigue": 0.0, "inhibitory_ratio": 0.0, "excitatory_ratio": 0.0, "modulatory_ratio": 0.0, "phase": "dormant"},
-                    {"tick": 2, "active_nodes": 88, "edges_fired": 430, "dominant_signal": "공세적 긴장", "combined_drive": 0.26, "combined_brake": 0.16, "combined_alarm": 0.52, "combined_fatigue": 0.12, "inhibitory_ratio": 0.10, "excitatory_ratio": 0.75, "modulatory_ratio": 0.15, "phase": "ignition"},
-                    {"tick": 9, "active_nodes": 230, "edges_fired": 1012, "dominant_signal": "공세적 긴장", "combined_drive": 0.27, "combined_brake": 0.20, "combined_alarm": 0.64, "combined_fatigue": 0.18, "inhibitory_ratio": 0.43, "excitatory_ratio": 0.47, "modulatory_ratio": 0.10, "phase": "persistence"},
-                    {"tick": 11, "active_nodes": 214, "edges_fired": 922, "dominant_signal": "공세적 긴장", "combined_drive": 0.24, "combined_brake": 0.18, "combined_alarm": 0.58, "combined_fatigue": 0.16, "inhibitory_ratio": 0.42, "excitatory_ratio": 0.48, "modulatory_ratio": 0.10, "phase": "persistence"},
+                    {"tick": 0, "active_nodes": 0, "edges_fired": 0, "dominant_signal": "嫄곗쓽 臾댁깋", "combined_drive": 0.0, "combined_brake": 0.0, "combined_alarm": 0.0, "combined_fatigue": 0.0, "inhibitory_ratio": 0.0, "excitatory_ratio": 0.0, "modulatory_ratio": 0.0, "phase": "dormant"},
+                    {"tick": 2, "active_nodes": 88, "edges_fired": 430, "dominant_signal": "怨듭꽭??湲댁옣", "combined_drive": 0.26, "combined_brake": 0.16, "combined_alarm": 0.52, "combined_fatigue": 0.12, "inhibitory_ratio": 0.10, "excitatory_ratio": 0.75, "modulatory_ratio": 0.15, "phase": "ignition"},
+                    {"tick": 9, "active_nodes": 230, "edges_fired": 1012, "dominant_signal": "怨듭꽭??湲댁옣", "combined_drive": 0.27, "combined_brake": 0.20, "combined_alarm": 0.64, "combined_fatigue": 0.18, "inhibitory_ratio": 0.43, "excitatory_ratio": 0.47, "modulatory_ratio": 0.10, "phase": "persistence"},
+                    {"tick": 11, "active_nodes": 214, "edges_fired": 922, "dominant_signal": "怨듭꽭??湲댁옣", "combined_drive": 0.24, "combined_brake": 0.18, "combined_alarm": 0.58, "combined_fatigue": 0.16, "inhibitory_ratio": 0.42, "excitatory_ratio": 0.48, "modulatory_ratio": 0.10, "phase": "persistence"},
                 ]
             ).to_csv(sample_dir / "trajectory_ticks.csv", index=False, encoding="utf-8-sig")
 
             pd.DataFrame(
                 [
-                    {"node_id": 145, "neuron_type": "excitatory", "bias_label": "공세적 긴장", "activity_ticks": 10, "k_mean": 420.0, "stim_drive": 0.03, "stim_brake": 0.01, "stim_alarm": 0.92, "stim_fatigue": 0.02},
-                    {"node_id": 201, "neuron_type": "inhibitory", "bias_label": "완충/억제", "activity_ticks": 10, "k_mean": 380.0, "stim_drive": 0.18, "stim_brake": 0.25, "stim_alarm": 0.39, "stim_fatigue": 0.21},
+                    {"node_id": 145, "neuron_type": "excitatory", "bias_label": "怨듭꽭??湲댁옣", "activity_ticks": 10, "k_mean": 420.0, "stim_drive": 0.03, "stim_brake": 0.01, "stim_alarm": 0.92, "stim_fatigue": 0.02},
+                    {"node_id": 201, "neuron_type": "inhibitory", "bias_label": "?꾩땐/?듭젣", "activity_ticks": 10, "k_mean": 380.0, "stim_drive": 0.18, "stim_brake": 0.25, "stim_alarm": 0.39, "stim_fatigue": 0.21},
                 ]
             ).to_csv(sample_dir / "top_nodes.csv", index=False, encoding="utf-8-sig")
 
             fake_payload = {
-                "episode_label": "배제 자극에 의해 유지되는 방어적 분노",
-                "stimulus_reading": "공개적 무시를 사회적 배제와 불공정 사건으로 처리한 episode다.",
+                "episode_label": "諛곗젣 ?먭레???섑빐 ?좎??섎뒗 諛⑹뼱??遺꾨끂",
+                "stimulus_reading": "怨듦컻??臾댁떆瑜??ы쉶??諛곗젣? 遺덇났???ш굔?쇰줈 泥섎━??episode??",
                 "appraisal": {
-                    "primary_appraisal": "불공정과 배제",
-                    "secondary_appraisal": "통제 곤란",
+                    "primary_appraisal": "遺덇났?뺢낵 諛곗젣",
+                    "secondary_appraisal": "?듭젣 怨ㅻ?",
                     "target": "other",
                     "control_state": "low",
                     "social_orientation": "defend",
                 },
                 "trajectory": {
-                    "overall_pattern": "고각성 경계가 점화 뒤 길게 유지된다.",
-                    "ignition": "초기 점화는 alarm 우세의 공격적 긴장에서 시작된다.",
-                    "persistence": "중반 이후에도 경계와 방어가 높은 수준으로 지속된다.",
-                    "resolution": "명확한 해소 없이 방어적 긴장으로 수렴한다.",
+                    "overall_pattern": "怨좉컖??寃쎄퀎媛 ?먰솕 ??湲멸쾶 ?좎??쒕떎.",
+                    "ignition": "珥덇린 ?먰솕??alarm ?곗꽭??怨듦꺽??湲댁옣?먯꽌 ?쒖옉?쒕떎.",
+                    "persistence": "以묐컲 ?댄썑?먮룄 寃쎄퀎? 諛⑹뼱媛 ?믪? ?섏??쇰줈 吏?띾맂??",
+                    "resolution": "紐낇솗???댁냼 ?놁씠 諛⑹뼱??湲댁옣?쇰줈 ?섎졃?쒕떎.",
                 },
-                "action_tendency": "즉각 반격하거나 정면 대응하고 싶지만 방향은 아직 정리되지 않은 상태",
+                "action_tendency": "利됯컖 諛섍꺽?섍굅???뺣㈃ ??묓븯怨??띠?留?諛⑺뼢? ?꾩쭅 ?뺣━?섏? ?딆? ?곹깭",
                 "rawness": {
                     "valence": "negative",
                     "arousal": "high",
@@ -121,13 +123,13 @@ class ExperimentToolTests(unittest.TestCase):
                     "should_preserve_harshness": True,
                 },
                 "response_guidance": {
-                    "preserve": "억울함과 날카로운 경계",
-                    "avoid": "과도한 위로나 상담원 톤",
-                    "tone_hint": "직설적이되 과잉 진정시키지 않는 톤",
+                    "preserve": "?듭슱?④낵 ?좎뭅濡쒖슫 寃쎄퀎",
+                    "avoid": "do not soften into generic counseling",
+                    "tone_hint": "direct but not overheated",
                 },
                 "evidence": [
-                    "phase_sequence가 dormant -> ignition -> persistence로 이어지고 persistence가 길다.",
-                    "dominant_global_signal이 공세적 긴장이고 alarm 평균이 0.61로 높다.",
+                    "phase_sequence媛 dormant -> ignition -> persistence濡??댁뼱吏怨?persistence媛 湲몃떎.",
+                    "dominant_global_signal??怨듭꽭??湲댁옣?닿퀬 alarm ?됯퇏??0.61濡??믩떎.",
                 ],
                 "confidence": 0.86,
             }
@@ -190,8 +192,8 @@ class ExperimentToolTests(unittest.TestCase):
 
             pd.DataFrame(
                 [
-                    {"sample_id": "s_1", "text": "지금 너무 예민하고 피곤하다."},
-                    {"sample_id": "s_2", "text": "삼 일째 야근이라 정말 지친다."},
+                    {"sample_id": "s_1", "text": "吏湲??덈Т ?덈??섍퀬 ?쇨낀?섎떎."},
+                    {"sample_id": "s_2", "text": "???쇱㎏ ?쇨렐?대씪 ?뺣쭚 吏移쒕떎."},
                 ]
             ).to_csv(input_csv, index=False, encoding="utf-8-sig")
 
@@ -267,9 +269,9 @@ class ExperimentToolTests(unittest.TestCase):
 
             pd.DataFrame(
                 [
-                    {"sample_id": "s_1", "text": "지금 너무 예민하고 피곤하다."},
-                    {"sample_id": "s_2", "text": "삼 일째 야근이라 정말 지친다."},
-                    {"sample_id": "s_3", "text": "내일 발표라 불안하다."},
+                    {"sample_id": "s_1", "text": "吏湲??덈Т ?덈??섍퀬 ?쇨낀?섎떎."},
+                    {"sample_id": "s_2", "text": "???쇱㎏ ?쇨렐?대씪 ?뺣쭚 吏移쒕떎."},
+                    {"sample_id": "s_3", "text": "?댁씪 諛쒗몴??遺덉븞?섎떎."},
                 ]
             ).to_csv(input_csv, index=False, encoding="utf-8-sig")
 
@@ -341,7 +343,7 @@ class ExperimentToolTests(unittest.TestCase):
                 sys.argv = [
                     "inspect_emotion_trace.py",
                     "--text",
-                    "지금 너무 예민하고 피곤하다.",
+                    "吏湲??덈Т ?덈??섍퀬 ?쇨낀?섎떎.",
                     "--dataset-csv",
                     str(dataset_csv),
                     "--benchmark-csv",
@@ -414,7 +416,7 @@ class ExperimentToolTests(unittest.TestCase):
 
             pd.DataFrame(
                 [
-                    {"sample_id": "s_1", "text": "지금 너무 예민하고 피곤하다.", "talk_id": 123, "priority": 2},
+                    {"sample_id": "s_1", "text": "吏湲??덈Т ?덈??섍퀬 ?쇨낀?섎떎.", "talk_id": 123, "priority": 2},
                 ]
             ).to_csv(input_csv, index=False, encoding="utf-8-sig")
 
@@ -462,8 +464,8 @@ class ExperimentToolTests(unittest.TestCase):
 
             pd.DataFrame(
                 [
-                    {"text": "요즘 너무 예민하고 피곤하다."},
-                    {"text": "일이 너무 많아서 버겁다."},
+                    {"text": "?붿쬁 ?덈Т ?덈??섍퀬 ?쇨낀?섎떎."},
+                    {"text": "?쇱씠 ?덈Т 留롮븘??踰꾧쾪??"},
                 ]
             ).to_csv(input_csv, index=False, encoding="utf-8-sig")
 
@@ -655,9 +657,9 @@ class ExperimentToolTests(unittest.TestCase):
 
             pd.DataFrame(
                 [
-                    {"text": "요즘 너무 예민하고 피곤하다."},
-                    {"text": "일이 너무 많아서 버겁다."},
-                    {"text": "무시당한 기분이라 화가 난다."},
+                    {"text": "?붿쬁 ?덈Т ?덈??섍퀬 ?쇨낀?섎떎."},
+                    {"text": "?쇱씠 ?덈Т 留롮븘??踰꾧쾪??"},
+                    {"text": "臾댁떆?뱁븳 湲곕텇?대씪 ?붽? ?쒕떎."},
                 ]
             ).to_csv(input_csv, index=False, encoding="utf-8-sig")
 
@@ -737,9 +739,9 @@ class ExperimentToolTests(unittest.TestCase):
 
             pd.DataFrame(
                 [
-                    {"text": "요즘 너무 예민하고 피곤하다."},
-                    {"text": "일이 많아서 버겁고 짜증난다."},
-                    {"text": "무시당한 것 같아 화가 난다."},
+                    {"text": "?붿쬁 ?덈Т ?덈??섍퀬 ?쇨낀?섎떎."},
+                    {"text": "?쇱씠 留롮븘??踰꾧쾪怨?吏쒖쬆?쒕떎."},
+                    {"text": "臾댁떆?뱁븳 寃?媛숈븘 ?붽? ?쒕떎."},
                 ]
             ).to_csv(input_csv, index=False, encoding="utf-8-sig")
 
@@ -809,9 +811,9 @@ class ExperimentToolTests(unittest.TestCase):
 
             pd.DataFrame(
                 [
-                    {"text": "일이 너무 많아서 버겁다."},
-                    {"text": "요즘 너무 예민하고 피곤하다."},
-                    {"text": "화가 나는데 참고 있다."},
+                    {"text": "?쇱씠 ?덈Т 留롮븘??踰꾧쾪??"},
+                    {"text": "?붿쬁 ?덈Т ?덈??섍퀬 ?쇨낀?섎떎."},
+                    {"text": "?붽? ?섎뒗??李멸퀬 ?덈떎."},
                 ]
             ).to_csv(input_csv, index=False, encoding="utf-8-sig")
 
@@ -897,11 +899,11 @@ class ExperimentToolTests(unittest.TestCase):
 
             df = pd.DataFrame(
                 [
-                    {"sample_id": "s_000003", "text": "입력 3", "label": "E10"},
-                    {"sample_id": "s_000001", "text": "입력 1", "label": "E20"},
-                    {"sample_id": "s_000004", "text": "입력 4", "label": "E30"},
-                    {"sample_id": "s_000002", "text": "입력 2", "label": "E40"},
-                    {"sample_id": "s_000005", "text": "입력 5", "label": "E50"},
+                    {"sample_id": "s_000003", "text": "?낅젰 3", "label": "E10"},
+                    {"sample_id": "s_000001", "text": "?낅젰 1", "label": "E20"},
+                    {"sample_id": "s_000004", "text": "?낅젰 4", "label": "E30"},
+                    {"sample_id": "s_000002", "text": "?낅젰 2", "label": "E40"},
+                    {"sample_id": "s_000005", "text": "?낅젰 5", "label": "E50"},
                 ]
             )
             df.to_csv(input_csv, index=False, encoding="utf-8-sig")
@@ -953,13 +955,13 @@ class ExperimentToolTests(unittest.TestCase):
         profile = {
             "stim_vec": [0.1, 0.2, 0.3, 0.4],
             "style_dict": {"warmth": 0.8, "softness": 0.7, "directness": 0.4},
-            "style_tags": ["부드러움", "따뜻함"],
+            "style_tags": ["warm", "direct"],
             "style_summary": {"warmth": 0.7, "tension": 0.2},
-            "anti_softening_rules": ["같은 문장을 반복하지 않는다."],
-            "grounding_rules": ["첫 문장에서 감정을 짧게 짚고 바로 답한다."],
+            "anti_softening_rules": ["媛숈? 臾몄옣??諛섎났?섏? ?딅뒗??"],
+            "grounding_rules": ["泥?臾몄옣?먯꽌 媛먯젙??吏㏐쾶 吏싰퀬 諛붾줈 ?듯븳??"],
         }
 
-        prompt, sections = module.build_condition_prompt("emonet_no_summary", "예시 입력", profile)
+        prompt, sections = module.build_condition_prompt("emonet_no_summary", "?덉떆 ?낅젰", profile)
         self.assertIn("[STYLE_TAGS]", prompt)
         self.assertIn("[STYLE_VECTOR]", prompt)
         self.assertIn("[ANTI_SOFTENING_RULES]", prompt)
@@ -967,7 +969,7 @@ class ExperimentToolTests(unittest.TestCase):
         self.assertNotIn("[STYLE_SUMMARY]", prompt)
         self.assertEqual(sections, "style_tags,expression_cues,style_vector,anti_softening_rules,grounding_rules")
 
-        prompt, sections = module.build_condition_prompt("emonet_vector_only", "예시 입력", profile)
+        prompt, sections = module.build_condition_prompt("emonet_vector_only", "?덉떆 ?낅젰", profile)
         self.assertIn("[STYLE_VECTOR]", prompt)
         self.assertIn("[ANTI_SOFTENING_RULES]", prompt)
         self.assertIn("[GROUNDING_RULES]", prompt)
@@ -981,28 +983,28 @@ class ExperimentToolTests(unittest.TestCase):
         profile = {
             "stim_vec": [0.1, 0.2, 0.3, 0.4],
             "style_dict": {"warmth": 0.8, "softness": 0.7, "directness": 0.4},
-            "style_tags": ["부드러움", "따뜻함"],
+            "style_tags": ["warm", "direct"],
             "style_summary": {"warmth": 0.7, "tension": 0.2},
-            "anti_softening_rules": ["같은 문장을 반복하지 않는다."],
-            "grounding_rules": ["첫 문장에서 감정을 짧게 짚고 바로 답한다."],
+            "anti_softening_rules": ["媛숈? 臾몄옣??諛섎났?섏? ?딅뒗??"],
+            "grounding_rules": ["泥?臾몄옣?먯꽌 媛먯젙??吏㏐쾶 吏싰퀬 諛붾줈 ?듯븳??"],
         }
         episode_payload = {
-            "episode_label": "공세적 경계-분노 혼란",
-            "stimulus_reading": "공개적 배제 사건",
+            "episode_label": "怨듭꽭??寃쎄퀎-遺꾨끂 ?쇰?",
+            "stimulus_reading": "怨듦컻??諛곗젣 ?ш굔",
             "appraisal": {
-                "primary_appraisal": "불공정과 모욕",
-                "secondary_appraisal": "통제감 저하",
+                "primary_appraisal": "exclusion and humiliation",
+                "secondary_appraisal": "low control",
                 "target": "other",
                 "control_state": "mixed",
                 "social_orientation": "defend",
             },
             "trajectory": {
-                "overall_pattern": "고각성 지속형",
-                "ignition": "빠르게 점화",
-                "persistence": "오래 지속",
-                "resolution": "날 선 상태로 수렴",
+                "overall_pattern": "persistent defense",
+                "ignition": "quick ignition",
+                "persistence": "long persistence",
+                "resolution": "unresolved",
             },
-            "action_tendency": "따지거나 항의하고 싶음",
+            "action_tendency": "?곗?嫄곕굹 ??쓽?섍퀬 ?띠쓬",
             "rawness": {
                 "valence": "negative",
                 "arousal": "high",
@@ -1010,43 +1012,43 @@ class ExperimentToolTests(unittest.TestCase):
                 "should_preserve_harshness": True,
             },
             "response_guidance": {
-                "preserve": "배제감과 날카로움",
-                "avoid": "가벼운 서운함으로 축소",
-                "tone_hint": "차갑고 진단적",
+                "preserve": "諛곗젣媛먭낵 ?좎뭅濡쒖?",
+                "avoid": "媛踰쇱슫 ?쒖슫?⑥쑝濡?異뺤냼",
+                "tone_hint": "cold and diagnostic",
             },
             "evidence": ["e1", "e2"],
             "confidence": 0.91,
         }
         profile = module.augment_profile_with_episode(profile, episode_payload, episode_source_path="episodes/s_1.json")
 
-        prompt, sections = module.build_condition_prompt("episode_trace", "예시 입력", profile)
+        prompt, sections = module.build_condition_prompt("episode_trace", "?덉떆 ?낅젰", profile)
         self.assertIn("[EPISODE_TRACE]", prompt)
-        self.assertIn("공세적 경계-분노 혼란", prompt)
-        self.assertIn("surface_keep: 배제감과 날카로움", prompt)
+        self.assertIn("怨듭꽭??寃쎄퀎-遺꾨끂 ?쇰?", prompt)
+        self.assertIn("surface_keep: 諛곗젣媛먭낵 ?좎뭅濡쒖?", prompt)
         self.assertNotIn("appraisal_state:", prompt)
         self.assertNotIn("trajectory_overall:", prompt)
         self.assertNotIn("[STYLE_TAGS]", prompt)
         self.assertEqual(sections, "episode_trace,anti_softening_rules,grounding_rules")
 
-        prompt, sections = module.build_condition_prompt("hybrid_episode", "예시 입력", profile)
+        prompt, sections = module.build_condition_prompt("hybrid_episode", "?덉떆 ?낅젰", profile)
         self.assertIn("[EPISODE_TRACE]", prompt)
         self.assertIn("[STYLE_TAGS]", prompt)
         self.assertIn("[STYLE_SUMMARY]", prompt)
-        self.assertIn("surface_keep: 배제감과 날카로움", prompt)
+        self.assertIn("surface_keep: 諛곗젣媛먭낵 ?좎뭅濡쒖?", prompt)
         self.assertNotIn("trajectory_persistence:", prompt)
         self.assertEqual(sections, "episode_trace,style_tags,style_summary,anti_softening_rules,grounding_rules")
 
-        prompt, sections = module.build_condition_prompt("episode_trace_v3", "예시 입력", profile)
+        prompt, sections = module.build_condition_prompt("episode_trace_v3", "?덉떆 ?낅젰", profile)
         self.assertIn("[INTERNAL_RESPONSE_PRIORITIES]", prompt)
-        self.assertIn("keep_in_surface: 배제감과 날카로움", prompt)
-        self.assertIn("avoid_in_surface: 가벼운 서운함으로 축소", prompt)
+        self.assertIn("keep_in_surface: 諛곗젣媛먭낵 ?좎뭅濡쒖?", prompt)
+        self.assertIn("avoid_in_surface: 媛踰쇱슫 ?쒖슫?⑥쑝濡?異뺤냼", prompt)
         self.assertNotIn("episode_label:", prompt)
         self.assertNotIn("appraisal_state:", prompt)
         self.assertNotIn("trajectory_persistence:", prompt)
         self.assertEqual(sections, "episode_trace_v3,anti_softening_rules,grounding_rules")
 
         with self.assertRaisesRegex(ValueError, "episode_trace_v3 conditioning requires episode_payload"):
-            module.build_condition_prompt("episode_trace_v3", "예시 입력", {key: value for key, value in profile.items() if key != "episode_payload"})
+            module.build_condition_prompt("episode_trace_v3", "?덉떆 ?낅젰", {key: value for key, value in profile.items() if key != "episode_payload"})
 
     def test_experiment_matrix_records_response_retry_metadata(self) -> None:
         module = load_module("experiment_matrix_retry_module", "scripts/experiment_matrix.py")
@@ -1057,7 +1059,7 @@ class ExperimentToolTests(unittest.TestCase):
             summary_json = temp_dir / "matrix_summary.json"
             log_jsonl = temp_dir / "matrix_log.jsonl"
 
-            pd.DataFrame([{"sample_id": "s1", "talk_id": "t1", "text": "지금 너무 예민하고 피곤해."}]).to_csv(
+            pd.DataFrame([{"sample_id": "s1", "talk_id": "t1", "text": "吏湲??덈Т ?덈??섍퀬 ?쇨낀??"}]).to_csv(
                 input_csv, index=False, encoding="utf-8-sig"
             )
 
@@ -1067,14 +1069,14 @@ class ExperimentToolTests(unittest.TestCase):
                 "z": [0.1] * 64,
                 "s_pred": [0.2] * 32,
                 "style_dict": {"softness": 0.4, "directness": 0.6},
-                "style_tags": ["건조함", "직설적"],
+                "style_tags": ["dry", "direct"],
                 "style_summary": {"warmth": 0.3, "tension": 0.7},
-                "style_summary_text": "긴장 높음, 따뜻함 낮음",
-                "expression_cues_text": "표정 변화=0.6",
+                "style_summary_text": "湲댁옣 ?믪쓬, ?곕쑜????쓬",
+                "expression_cues_text": "?쒖젙 蹂??0.6",
                 "anti_softening_mode": "strict",
-                "anti_softening_rules": ["같은 문장을 반복하지 않는다."],
+                "anti_softening_rules": ["媛숈? 臾몄옣??諛섎났?섏? ?딅뒗??"],
                 "grounding_mode": "grounded",
-                "grounding_rules": ["첫 문장에서 감정을 짧게 짚고 바로 답한다."],
+                "grounding_rules": ["泥?臾몄옣?먯꽌 媛먯젙??吏㏐쾶 吏싰퀬 諛붾줈 ?듯븳??"],
             }
 
             import sys
@@ -1110,10 +1112,10 @@ class ExperimentToolTests(unittest.TestCase):
                     module,
                     "request_plain_text_response",
                     side_effect=[
-                        ("직접 응답이다.", "직접 응답이다.", {"retry_count": 0, "validation_errors": []}),
+                        ("吏곸젒 ?묐떟?대떎.", "吏곸젒 ?묐떟?대떎.", {"retry_count": 0, "validation_errors": []}),
                         (
-                            "지금은 건드리지 말고 잠깐 쉬어.",
-                            "지금은 건드리지 말고 잠깐 쉬어.",
+                            "吏湲덉? 嫄대뱶由ъ? 留먭퀬 ?좉퉸 ?ъ뼱.",
+                            "吏湲덉? 嫄대뱶由ъ? 留먭퀬 ?좉퉸 ?ъ뼱.",
                             {"retry_count": 2, "validation_errors": ["repeat", "hanging"]},
                         ),
                     ],
@@ -1144,28 +1146,28 @@ class ExperimentToolTests(unittest.TestCase):
             episode_sample_dir = episode_dir / "s1"
             episode_sample_dir.mkdir(parents=True, exist_ok=True)
 
-            pd.DataFrame([{"sample_id": "s1", "talk_id": "t1", "text": "대표가 나만 공개적으로 무시해서 화가 난다."}]).to_csv(
+            pd.DataFrame([{"sample_id": "s1", "talk_id": "t1", "text": "??쒓? ?섎쭔 怨듦컻?곸쑝濡?臾댁떆?댁꽌 ?붽? ?쒕떎."}]).to_csv(
                 input_csv, index=False, encoding="utf-8-sig"
             )
             (episode_sample_dir / "episode_interpretation.json").write_text(
                 json.dumps(
                     {
-                        "episode_label": "배제 자극에 의해 유지되는 방어적 분노",
-                        "stimulus_reading": "공개적 배제 사건",
+                        "episode_label": "諛곗젣 ?먭레???섑빐 ?좎??섎뒗 諛⑹뼱??遺꾨끂",
+                        "stimulus_reading": "怨듦컻??諛곗젣 ?ш굔",
                         "appraisal": {
-                            "primary_appraisal": "불공정과 배제",
-                            "secondary_appraisal": "통제감 저하",
+                            "primary_appraisal": "遺덇났?뺢낵 諛곗젣",
+                            "secondary_appraisal": "low control",
                             "target": "other",
                             "control_state": "low",
                             "social_orientation": "defend",
                         },
                         "trajectory": {
-                            "overall_pattern": "고각성 경계가 점화 뒤 길게 유지된다.",
-                            "ignition": "초기 점화는 빠르다.",
-                            "persistence": "중반 이후에도 경계가 지속된다.",
-                            "resolution": "방어적 긴장으로 수렴한다.",
+                            "overall_pattern": "怨좉컖??寃쎄퀎媛 ?먰솕 ??湲멸쾶 ?좎??쒕떎.",
+                            "ignition": "珥덇린 ?먰솕??鍮좊Ⅴ??",
+                            "persistence": "以묐컲 ?댄썑?먮룄 寃쎄퀎媛 吏?띾맂??",
+                            "resolution": "諛⑹뼱??湲댁옣?쇰줈 ?섎졃?쒕떎.",
                         },
-                        "action_tendency": "정면 대응하고 싶음",
+                        "action_tendency": "?뺣㈃ ??묓븯怨??띠쓬",
                         "rawness": {
                             "valence": "negative",
                             "arousal": "high",
@@ -1173,9 +1175,9 @@ class ExperimentToolTests(unittest.TestCase):
                             "should_preserve_harshness": True,
                         },
                         "response_guidance": {
-                            "preserve": "억울함과 날카로운 경계",
-                            "avoid": "가벼운 서운함으로 축소",
-                            "tone_hint": "직설적이고 차가운 톤",
+                            "preserve": "?듭슱?④낵 ?좎뭅濡쒖슫 寃쎄퀎",
+                            "avoid": "媛踰쇱슫 ?쒖슫?⑥쑝濡?異뺤냼",
+                            "tone_hint": "direct and cold",
                         },
                         "evidence": ["e1", "e2"],
                         "confidence": 0.9,
@@ -1192,14 +1194,14 @@ class ExperimentToolTests(unittest.TestCase):
                 "z": [0.1] * 64,
                 "s_pred": [0.2] * 32,
                 "style_dict": {"softness": 0.4, "directness": 0.6},
-                "style_tags": ["건조함", "직설적"],
+                "style_tags": ["dry", "direct"],
                 "style_summary": {"warmth": 0.3, "tension": 0.7},
-                "style_summary_text": "긴장 높음, 따뜻함 낮음",
-                "expression_cues_text": "표정 변화=0.6",
+                "style_summary_text": "湲댁옣 ?믪쓬, ?곕쑜????쓬",
+                "expression_cues_text": "?쒖젙 蹂??0.6",
                 "anti_softening_mode": "strict",
-                "anti_softening_rules": ["같은 문장을 반복하지 않는다."],
+                "anti_softening_rules": ["媛숈? 臾몄옣??諛섎났?섏? ?딅뒗??"],
                 "grounding_mode": "grounded",
-                "grounding_rules": ["첫 문장에서 감정을 짧게 짚고 바로 답한다."],
+                "grounding_rules": ["泥?臾몄옣?먯꽌 媛먯젙??吏㏐쾶 吏싰퀬 諛붾줈 ?듯븳??"],
             }
 
             import sys
@@ -1232,7 +1234,7 @@ class ExperimentToolTests(unittest.TestCase):
                 ), unittest.mock.patch.object(
                     module,
                     "request_plain_text_response",
-                    return_value=("그래, 그건 대놓고 무시당한 느낌이라 더 열받지.", "raw", {"retry_count": 0, "validation_errors": []}),
+                    return_value=("洹몃옒, 洹멸굔 ??볤퀬 臾댁떆?뱁븳 ?먮굦?대씪 ???대컺吏.", "raw", {"retry_count": 0, "validation_errors": []}),
                 ):
                     module.main()
             finally:
@@ -1241,8 +1243,8 @@ class ExperimentToolTests(unittest.TestCase):
             saved = pd.read_csv(output_csv)
             self.assertEqual(len(saved), 1)
             self.assertEqual(saved.loc[0, "condition"], "episode_trace")
-            self.assertEqual(saved.loc[0, "episode_label"], "배제 자극에 의해 유지되는 방어적 분노")
-            self.assertIn("억울함과 날카로운 경계", str(saved.loc[0, "prompt"]))
+            self.assertEqual(saved.loc[0, "episode_label"], "諛곗젣 ?먭레???섑빐 ?좎??섎뒗 諛⑹뼱??遺꾨끂")
+            self.assertIn("?듭슱?④낵 ?좎뭅濡쒖슫 寃쎄퀎", str(saved.loc[0, "prompt"]))
             self.assertTrue(summary_json.exists())
 
     def test_score_experiment_matrix_summary_includes_retry_mean(self) -> None:
@@ -1279,60 +1281,15 @@ class ExperimentToolTests(unittest.TestCase):
         self.assertIn("mean_response_retry_count", summary.columns)
         self.assertAlmostEqual(float(summary.loc[0, "mean_response_retry_count"]), 1.0)
 
-    def test_score_experiment_matrix_compact_fallback(self) -> None:
-        module = load_module("score_experiment_matrix_compact_module", "scripts/score_experiment_matrix.py")
+    def test_score_experiment_matrix_json_failure_is_not_rewritten_as_compact_success(self) -> None:
+        module = load_module("score_experiment_matrix_json_error_module", "scripts/score_experiment_matrix.py")
         row = {
-            "text": "지금 너무 예민하고 피곤해.",
-            "llm_response": "지금은 건드리지 말고 잠깐 쉬어.",
-            "condition": "emonet_full",
-            "style_summary_text": "긴장 높음, 따뜻함 낮음",
-            "style_tags_json": "[\"건조함\", \"직설적\"]",
-        }
-        with unittest.mock.patch.object(
-            module, "request_json_response", side_effect=ValueError("json failed")
-        ), unittest.mock.patch.object(
-            module,
-            "request_plain_text_response",
-            return_value=("4,4,3,4,4", "4,4,3,4,4", {"attempt_count": 2, "retry_count": 1, "validation_errors": ["empty"]}),
-        ):
-            payload, raw, parse_mode = module.request_score_payload(
-                row,
-                base_url="http://127.0.0.1:11434/v1",
-                model_name="gpt-oss:20b",
-                timeout_sec=30,
-                max_tokens=300,
-                temperature=0.0,
-                max_retries=2,
-            )
-        self.assertEqual(parse_mode, "compact")
-        self.assertEqual(raw, "4,4,3,4,4")
-        self.assertEqual(
-            payload,
-            {
-                "content_fit": 4,
-                "emotional_appropriateness": 4,
-                "style_match": 3,
-                "naturalness": 4,
-                "overall_quality": 4,
-                },
-            )
-
-    def test_score_experiment_matrix_compact_failure_surfaces_both_errors(self) -> None:
-        module = load_module("score_experiment_matrix_compact_error_module", "scripts/score_experiment_matrix.py")
-        row = {
-            "text": "입력",
-            "llm_response": "응답",
+            "text": "input",
+            "llm_response": "response",
             "condition": "direct",
         }
-        with unittest.mock.patch.object(
-            module, "request_json_response", side_effect=ValueError("json failed")
-        ), unittest.mock.patch.object(
-            module, "request_plain_text_response", side_effect=ValueError("compact failed")
-        ):
-            with self.assertRaisesRegex(
-                ValueError,
-                "json_error=json failed; compact_error=compact failed; minimal_error=compact failed",
-            ):
+        with patch.object(module, "request_json_response", side_effect=ValueError("json failed")):
+            with self.assertRaisesRegex(ValueError, "json failed"):
                 module.request_score_payload(
                     row,
                     base_url="http://127.0.0.1:11434/v1",
@@ -1386,35 +1343,35 @@ class ExperimentToolTests(unittest.TestCase):
                 [
                     {
                         "record_id": "r1",
-                        "text": "입력 1",
+                        "text": "?낅젰 1",
                         "condition": "direct",
                         "condition_group": "baseline",
                         "status": "ok",
-                        "llm_response": "응답 A",
+                        "llm_response": "?묐떟 A",
                     },
                     {
                         "record_id": "r1",
-                        "text": "입력 1",
+                        "text": "?낅젰 1",
                         "condition": "emonet_full",
                         "condition_group": "emonet",
                         "status": "ok",
-                        "llm_response": "응답 B",
+                        "llm_response": "?묐떟 B",
                     },
                     {
                         "record_id": "r2",
-                        "text": "입력 2",
+                        "text": "?낅젰 2",
                         "condition": "direct",
                         "condition_group": "baseline",
                         "status": "ok",
-                        "llm_response": "응답 C",
+                        "llm_response": "?묐떟 C",
                     },
                     {
                         "record_id": "r2",
-                        "text": "입력 2",
+                        "text": "?낅젰 2",
                         "condition": "emonet_full",
                         "condition_group": "emonet",
                         "status": "ok",
-                        "llm_response": "응답 D",
+                        "llm_response": "?묐떟 D",
                     },
                 ]
             )
@@ -1468,19 +1425,19 @@ class ExperimentToolTests(unittest.TestCase):
                 rows.append(
                     {
                         "sample_id": f"s_{idx}",
-                        "episode_label": "죄책감 기반 만회" if idx == 5 else "배제 위협",
+                        "episode_label": "二꾩콉媛?湲곕컲 留뚰쉶" if idx == 5 else "諛곗젣 ?꾪삊",
                         "valence": "negative",
                         "arousal": "high",
                         "target": "other" if idx < 4 else "mixed",
                         "control_state": "low",
                         "social_orientation": "mixed" if idx in {4, 5, 6} else "defend",
-                        "preserve": "날카로움",
-                        "avoid": "일반 위로",
-                        "action_tendency": "사과와 만회" if idx == 5 else "방어",
+                        "preserve": "?좎뭅濡쒖?",
+                        "avoid": "?쇰컲 ?꾨줈",
+                        "action_tendency": "?ш낵? 留뚰쉶" if idx == 5 else "諛⑹뼱",
                     }
                 )
             pd.DataFrame(rows).to_csv(episode_csv, index=False, encoding="utf-8-sig")
-            pd.DataFrame([{"record_id": f"s_{idx}", "text": f"입력 {idx}"} for idx in range(10)]).to_csv(
+            pd.DataFrame([{"record_id": f"s_{idx}", "text": f"?낅젰 {idx}"} for idx in range(10)]).to_csv(
                 scored_csv, index=False, encoding="utf-8-sig"
             )
             pd.DataFrame(
@@ -1512,18 +1469,18 @@ class ExperimentToolTests(unittest.TestCase):
     def test_superiority_judge_normalization_and_prompt(self) -> None:
         module = load_module("score_superiority_judge_module", "scripts/score_superiority_judge.py")
         row = {
-            "text": "대표가 나만 빼고 커피를 돌려서 화가 나.",
+            "text": "??쒓? ?섎쭔 鍮쇨퀬 而ㅽ뵾瑜??뚮젮???붽? ??",
             "condition": "episode_trace_v3",
-            "llm_response": "그건 그냥 서운한 정도가 아니라 대놓고 배제당한 느낌이라 화가 날 만해.",
-            "episode_label": "배제 자극에 의해 유지되는 방어적 분노",
+            "llm_response": "洹멸굔 洹몃깷 ?쒖슫???뺣룄媛 ?꾨땲????볤퀬 諛곗젣?뱁븳 ?먮굦?대씪 ?붽? ??留뚰빐.",
+            "episode_label": "諛곗젣 ?먭레???섑빐 ?좎??섎뒗 諛⑹뼱??遺꾨끂",
             "valence": "negative",
             "arousal": "high",
             "target": "other",
             "control_state": "low",
             "social_orientation": "defend",
-            "preserve": "억울함과 날카로운 경계",
-            "avoid": "가벼운 서운함으로 축소",
-            "action_tendency": "문제제기 충동",
+            "preserve": "?듭슱?④낵 ?좎뭅濡쒖슫 寃쎄퀎",
+            "avoid": "媛踰쇱슫 ?쒖슫?⑥쑝濡?異뺤냼",
+            "action_tendency": "臾몄젣?쒓린 異⑸룞",
         }
         prompt = module.build_judge_prompt(row)
         self.assertIn("appraisal_fidelity", prompt)
@@ -1543,8 +1500,6 @@ class ExperimentToolTests(unittest.TestCase):
             }
         )
         self.assertEqual(payload["raw_affect_preservation"], 5)
-        compact = module.normalize_compact_scores("4,5,4,3,5,4,4")
-        self.assertEqual(compact["overall_preference"], 4)
 
     def test_paired_superiority_accepts_custom_score_keys(self) -> None:
         module = load_module("paired_superiority_custom_keys_module", "scripts/analyze_paired_superiority.py")

@@ -555,8 +555,10 @@ def main() -> None:
         if not text:
             continue
 
-        fallback_id = f"row_{idx:06d}"
-        record_id = str(record.get(args.record_id_column) or fallback_id)
+        record_id_value = record.get(args.record_id_column)
+        if record_id_value is None or str(record_id_value).strip() == "":
+            raise ValueError(f"missing required record id column {args.record_id_column!r} at input row {idx}")
+        record_id = str(record_id_value)
         talk_id = str(record.get(args.talk_id_column, "") or "")
         sample_id = str(record.get("sample_id", "") or "")
 

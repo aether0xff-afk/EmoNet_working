@@ -1,0 +1,4 @@
+dataset_size,train_loss,test_loss,token_accuracy,bleu_score,keyword_recovery,exact_match,interpretation
+100,0.000000,0.017873,0.9417,0.8917,0.9400,0.7500,대체 decoder가 test latent에서 원문 토큰을 대부분 복원함
+500,0.000000,0.000000,1.0000,1.0000,1.0000,1.0000,대체 decoder가 test latent에서 원문 토큰을 대부분 복원함
+1000,0.000000,0.000000,1.0000,1.0000,1.0000,1.0000,대체 decoder가 test latent에서 원문 토큰을 대부분 복원함

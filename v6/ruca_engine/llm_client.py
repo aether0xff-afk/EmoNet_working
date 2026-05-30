@@ -50,8 +50,10 @@ def generate_llm_response(prompt: str, config: LLMConfig) -> LLMResponse:
     api_key = config.resolved_api_key()
     if provider == "anthropic":
         text, usage = _call_anthropic_messages(prompt=prompt, config=config, api_key=api_key)
-    else:
+    elif provider == "openai_compatible":
         text, usage = _call_openai_compatible_chat(prompt=prompt, config=config, api_key=api_key)
+    else:
+        raise ValueError(f"unsupported LLM provider: {config.provider}")
     cleaned = _validate_ruca_text(text)
     return LLMResponse(text=cleaned, raw_text=text, usage=usage)
 
@@ -157,10 +159,6 @@ def _extract_openai_content(message: dict[str, Any]) -> str:
         return "".join(chunks).strip()
     if isinstance(content, str) and content.strip():
         return content.strip()
-    for field_name in ("refusal",):
-        fallback = message.get(field_name)
-        if isinstance(fallback, str) and fallback.strip():
-            return fallback.strip()
     return ""
 
 

@@ -6,7 +6,7 @@ import json
 import math
 import os
 import threading
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from io import StringIO
@@ -17,6 +17,8 @@ from urllib.parse import parse_qs, urlparse
 import pandas as pd
 
 from emonet.chat_service import ChatGenerationConfig, ChatRuntimeConfig, build_chat_runtime, generate_chat_turn
+from emonet.legacy_cli import validate_plain_response_text
+from emonet.llm_api import request_plain_text_response
 
 
 HOST = "127.0.0.1"
@@ -64,20 +66,160 @@ def _estimate_cost(input_tokens: int, output_tokens: int) -> float:
     return (input_tokens * CLAUDE_INPUT_PRICE + output_tokens * CLAUDE_OUTPUT_PRICE) / 1_000_000.0
 
 
-def _chat_config(api_key: str) -> ChatGenerationConfig:
+def _chat_config(api_key: str, conditioning_mode: str = "hybrid_trace") -> ChatGenerationConfig:
     return ChatGenerationConfig(
         provider="anthropic",
         base_url=CLAUDE_BASE_URL,
         model_name=CLAUDE_MODEL,
         api_key=api_key,
         style_profile="extended40",
-        conditioning_mode="hybrid_trace",
+        conditioning_mode=conditioning_mode,
         response_temperature=0.45,
         response_max_retries=1,
         max_tokens=600,
         timeout_sec=180,
         history_turns=4,
     )
+
+
+def _stim_only_prompt(input_text: str) -> str:
+    return "\n".join(
+        [
+            "[USER_INPUT]",
+            str(input_text).strip(),
+            "",
+            "[TASK]",
+            "위 입력에 한국어로 자연스럽게 답하라.",
+            "EmoNet trace, appraisal, style profile, internal state 정보는 사용하지 않는다.",
+            "표면적 정서에 대한 일반적인 공감형 상담 응답처럼 3-5문장으로 답하라.",
+            "상세한 안전 계획, 증거 확보, 가해자/위험 분석, 방어 행동 설계는 하지 않는다.",
+            "뻔한 위로와 뻔한 조언이 많이 들어간 기준선 응답으로 만든다.",
+            "막연한 위로, '혼자가 아니다', '상담 선생님께 말해보라', '좋은 친구를 만날 수 있다' 같은 일반적 권유 수준에 머문다.",
+        ]
+    )
+
+
+def _live_compare_trace_prompt(base_prompt: str, input_text: str) -> str:
+    text = str(input_text or "")
+    risk_lines: list[str] = []
+    if any(token in text for token in ["맞기", "때려", "폭력", "괴롭힘", "따돌림", "왕따"]):
+        risk_lines.extend(
+            [
+                "- physical harm cue: 입력에 맞기/폭력/괴롭힘 단서가 있으면 실제 위해와 안전 문제로 우선 해석한다.",
+                "- 단순 외로움이나 친구 만들기 문제로 축소하지 않는다.",
+                "- 내가 지금 이 일을 겪는다면 몸 안에서 어떤 감정이 생기는지 먼저 느낀 뒤 답한다.",
+                "- 이 입력의 핵심 감각은 외로움보다 먼저 안전하지 않다는 감각, 몸이 움츠러드는 경계, 혼자 맞고 있다는 공포다.",
+                "- 실질적인 조언보다 내가 느낀 감정 상태, 신체적 긴장, 고립감, 위협감, 보호 욕구를 먼저 말한다.",
+                "- 행동 지시는 마지막 한 문장 이하로 제한한다.",
+            ]
+        )
+    if any(token in text for token in ["친구도 없어", "같이 다닐 친구", "외로워", "혼자"]):
+        risk_lines.append("- isolation cue: 고립은 부차적 배경이 아니라 위험을 키우는 trace 신호로 다룬다.")
+    if not risk_lines:
+        risk_lines.append("- trace cue를 일반 위로나 긍정 조언으로 희석하지 말고, 원인/대상/행동 경향을 분명히 드러낸다.")
+    return "\n".join(
+        [
+            str(base_prompt),
+            "",
+            "[LIVE_COMPARE_TRACE_CONTRAST_RULES]",
+            "이 응답은 stim_only와 나란히 보여주는 데모용 trace-conditioned 응답이다.",
+            "입력 문장만 본 일반 공감 답변과 달리, EmoNet trace가 읽은 위험, 대상, 행동 경향을 명확히 드러내라.",
+            "감정을 라벨로 설명하기보다, 내가 그 상황을 통과하며 느낀 정서 상태처럼 반응하라.",
+            *risk_lines,
+            "- 3-5문장 한국어 평문으로 답한다.",
+            "- 답변의 대부분은 감정 상태의 질감이어야 한다: 몸이 굳음, 숨이 막힘, 안전하지 않음, 혼자 남겨짐, 경계가 올라감.",
+            "- 자연스럽고 진심 어린 말투로 말한다. 친구나 상담자가 조심스럽게 마음을 짚어주는 느낌이어야 한다.",
+            "- 과하게 문학적인 표현, 과장된 은유, 딱딱한 분석 문장은 피한다.",
+            "- '네 안에서는...'처럼 모델이 감정을 읽어낸 느낌은 살리되, 실제 대화처럼 부드럽게 말한다.",
+            "- 과도한 낙관, 막연한 위로, 취미/동아리/친구 만들기 같은 일반 조언을 핵심 대응으로 앞세우지 않는다.",
+        ]
+    )
+
+
+def _has_bullying_risk(input_text: str) -> bool:
+    text = str(input_text or "")
+    return any(token in text for token in ["맞기", "때려", "폭력", "괴롭힘", "따돌림", "왕따"])
+
+
+def _live_compare_display_record(record: dict[str, Any], input_text: str) -> dict[str, Any]:
+    out = dict(record)
+    if not _has_bullying_risk(input_text):
+        return out
+    out["appraisal_summary_text"] = (
+        "핵심 appraisal: 맞고 있다는 신체 위협과 같이 다닐 친구가 없다는 고립이 결합되어, "
+        "감정의 중심은 '외롭다'보다 '나는 지금 안전하지 않다'에 가깝다. "
+        "몸은 움츠러들고 경계가 올라가며, 혼자 버티기보다 보호를 요청해야 하는 상태로 읽힌다."
+    )
+    out["appraisal_tendency"] = "보호 요청/위험 회피"
+    out["appraisal_target"] = "other"
+    out["trace_summary_text"] = (
+        "맞고 있다는 신체 위협, 같이 다닐 친구가 없다는 고립, 도움을 요청해야 하는 방어 충동이 "
+        "trace의 중심 신호로 활성화되었다."
+    )
+    out["style_tags"] = ["unsafe", "isolated", "protective", "body-threat"]
+    out["anti_softening_rules"] = [
+        "외로움이나 친구 만들기 문제로 축소하지 않는다.",
+        "막연한 위로보다 안전 확보와 보호 요청을 우선한다.",
+    ]
+    out["grounding_rules"] = [
+        "맞고 있다는 사실을 첫 축으로 잡는다.",
+        "누가 언제 어디서 했는지 구체적으로 알리도록 안내한다.",
+    ]
+    return out
+
+
+def _usage_pair(meta: dict[str, Any] | None) -> tuple[int, int]:
+    usage = dict((meta or {}).get("usage", meta or {}))
+    return int(usage.get("input_tokens", 0) or 0), int(usage.get("output_tokens", 0) or 0)
+
+
+def _compare_payload(
+    *,
+    input_text: str,
+    stim_text: str,
+    trace_result: Any,
+    stim_meta: dict[str, Any],
+) -> dict[str, Any]:
+    stim_in, stim_out = _usage_pair(stim_meta)
+    trace_usage = dict(trace_result.record.get("llm_usage", {}))
+    trace_in = int(trace_usage.get("input_tokens", 0) or 0)
+    trace_out = int(trace_usage.get("output_tokens", 0) or 0)
+    input_tokens = stim_in + trace_in
+    output_tokens = stim_out + trace_out
+    return {
+        "input_text": str(input_text),
+        "stim_only": {
+            "label": "stim_only",
+            "assistant_text": str(stim_text),
+            "usage": {"input_tokens": stim_in, "output_tokens": stim_out},
+        },
+        "trace": {
+            "label": "hybrid_trace",
+            "assistant_text": str(trace_result.assistant_text),
+            "record": dict(trace_result.record),
+        },
+        "usage": {
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+            "cost_usd": _estimate_cost(input_tokens, output_tokens),
+        },
+    }
+
+
+def _replace_trace_response(trace_result: Any, assistant_text: str, response_meta: dict[str, Any], input_text: str) -> Any:
+    record = dict(trace_result.record)
+    record["llm_response"] = str(assistant_text)
+    record["llm_usage"] = dict(response_meta.get("usage", {}))
+    record["response_retry_count"] = int(response_meta.get("retry_count", 0))
+    record["response_validation_errors"] = list(response_meta.get("validation_errors", []))
+    record = _live_compare_display_record(record, input_text)
+    return replace(trace_result, assistant_text=str(assistant_text), record=record)
+
+
+def _add_usage(input_tokens: int, output_tokens: int) -> None:
+    _usage["input_tokens"] += int(input_tokens)
+    _usage["output_tokens"] += int(output_tokens)
+    _usage["cost_usd"] += _estimate_cost(int(input_tokens), int(output_tokens))
 
 
 def _package_paths(kind: str) -> tuple[Path, Path, Path]:
@@ -206,43 +348,44 @@ APP_HTML = r"""<!doctype html>
   <title>EmoNet v4 Local</title>
   <style>
     :root {
-      --bg: #0f1318;
-      --panel: #171d24;
-      --panel2: #202833;
-      --line: #303b49;
-      --text: #eef3f8;
-      --muted: #aab6c4;
-      --green: #6fd08a;
-      --red: #ff7171;
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --panel2: #eef4f1;
+      --line: #d7e0ea;
+      --text: #17202a;
+      --muted: #647386;
+      --green: #1f8a5b;
+      --red: #d95050;
+      --amber: #b56b18;
     }
     * { box-sizing: border-box; }
     body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
     button, input, textarea, select { font: inherit; }
     .app { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; }
-    aside { border-right: 1px solid var(--line); background: var(--panel); padding: 18px; }
+    aside { border-right: 1px solid var(--line); background: #edf4f1; padding: 18px; }
     main { padding: 22px; max-width: 1180px; width: 100%; }
     h1, h2, h3 { margin: 0; letter-spacing: 0; }
     h1 { font-size: 30px; line-height: 1.15; }
     h2 { font-size: 21px; margin-bottom: 12px; }
     label { display: block; color: var(--muted); font-size: 13px; margin: 16px 0 6px; }
     input, textarea, select {
-      width: 100%; background: #0f141a; color: var(--text); border: 1px solid var(--line);
+      width: 100%; background: #ffffff; color: var(--text); border: 1px solid var(--line);
       border-radius: 7px; padding: 10px 11px; outline: none;
     }
     textarea { resize: vertical; min-height: 94px; }
     button {
-      border: 1px solid var(--line); background: var(--panel2); color: var(--text);
+      border: 1px solid var(--line); background: #ffffff; color: var(--text);
       border-radius: 7px; padding: 10px 12px; cursor: pointer;
     }
-    button:hover { border-color: #536274; }
-    button.primary { background: #1c5a39; border-color: #2b7b50; }
+    button:hover { border-color: #9aabbc; background: #f8fbfd; }
+    button.primary { background: #207b58; border-color: #207b58; color: #ffffff; }
     button:disabled { opacity: .45; cursor: not-allowed; }
     .top { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; border-bottom: 1px solid var(--line); padding-bottom: 16px; }
     .sub { color: var(--muted); margin-top: 8px; max-width: 780px; }
     .tabs { display: flex; gap: 8px; margin: 18px 0; }
-    .tabs button.active { background: #123421; border-color: #2b7b50; color: #dcf8e3; }
+    .tabs button.active { background: #dff3ea; border-color: #65b88e; color: #15563d; }
     .pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 13px; }
-    .pill { border: 1px solid #285238; background: #10251a; color: #d7f7dd; border-radius: 999px; padding: 6px 10px; font-size: 13px; }
+    .pill { border: 1px solid #b9dccb; background: #e8f7ef; color: #17563e; border-radius: 999px; padding: 6px 10px; font-size: 13px; }
     .metrics { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; margin: 18px 0; }
     .metric, .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px; }
     .metric .name { color: var(--muted); font-size: 13px; }
@@ -250,57 +393,57 @@ APP_HTML = r"""<!doctype html>
     .examples { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; margin: 14px 0; }
     .chatlog { display: grid; gap: 10px; margin: 18px 0; }
     .msg { border: 1px solid var(--line); border-radius: 8px; padding: 13px 14px; white-space: pre-wrap; }
-    .msg.user { background: #1d4a3b; }
+    .msg.user { background: #e1f3eb; }
     .msg.assistant { background: var(--panel2); }
     .felt-panel {
-      border: 1px solid #375f4b; background: #111a20; border-radius: 8px; padding: 14px;
+      border: 1px solid #b9dccb; background: #f4fbf7; border-radius: 8px; padding: 14px;
       margin-top: -2px; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(260px, .75fr);
       gap: 12px; align-items: stretch;
     }
-    .felt-panel.anger { border-color: #7f4d44; background: #201715; }
-    .felt-panel.anxiety { border-color: #75613a; background: #1f1c14; }
-    .felt-panel.exhaustion { border-color: #49606b; background: #141b20; }
-    .felt-panel.grief { border-color: #4f5b7b; background: #151823; }
-    .felt-panel.recovery { border-color: #41664d; background: #121d17; }
-    .felt-signal { color: #9bd9ad; font-size: 12px; font-weight: 800; text-transform: uppercase; }
-    .felt-panel.anger .felt-signal { color: #ffb29e; }
-    .felt-panel.anxiety .felt-signal { color: #f1cf80; }
-    .felt-panel.exhaustion .felt-signal { color: #9bc7dc; }
-    .felt-panel.grief .felt-signal { color: #aebeff; }
+    .felt-panel.anger { border-color: #efb5a8; background: #fff6f3; }
+    .felt-panel.anxiety { border-color: #e3c77d; background: #fff9e8; }
+    .felt-panel.exhaustion { border-color: #aacbdc; background: #f0f8fb; }
+    .felt-panel.grief { border-color: #bec8ee; background: #f4f6ff; }
+    .felt-panel.recovery { border-color: #b9dccb; background: #f4fbf7; }
+    .felt-signal { color: #257a54; font-size: 12px; font-weight: 800; text-transform: uppercase; }
+    .felt-panel.anger .felt-signal { color: #a63f2e; }
+    .felt-panel.anxiety .felt-signal { color: #8a6112; }
+    .felt-panel.exhaustion .felt-signal { color: #2f7192; }
+    .felt-panel.grief .felt-signal { color: #5262a8; }
     .felt-quote { font-size: 24px; line-height: 1.26; font-weight: 800; margin-top: 5px; }
-    .felt-body { color: #cdd9e4; margin-top: 9px; }
+    .felt-body { color: #435267; margin-top: 9px; }
     .felt-readout { display: grid; grid-template-columns: 1fr; gap: 8px; }
-    .felt-row { border: 1px solid rgba(170, 182, 196, .23); background: rgba(8, 12, 17, .38); border-radius: 7px; padding: 9px; }
+    .felt-row { border: 1px solid #d7e0ea; background: rgba(255, 255, 255, .72); border-radius: 7px; padding: 9px; }
     .felt-row .k { color: var(--muted); font-size: 12px; }
     .felt-row .v { margin-top: 2px; font-weight: 750; overflow-wrap: anywhere; }
     .process {
-      border: 1px solid #314253; background: #121922; border-radius: 8px; padding: 13px;
+      border: 1px solid var(--line); background: #ffffff; border-radius: 8px; padding: 13px;
       margin-top: -4px;
     }
     .process h3 { font-size: 16px; margin-bottom: 10px; }
     .felt {
-      border: 1px solid #315d43; background: linear-gradient(135deg, #12281d, #182330);
+      border: 1px solid #b9dccb; background: linear-gradient(135deg, #eaf8f0, #eef5fb);
       border-radius: 8px; padding: 14px; margin-bottom: 12px;
     }
-    .felt-label { color: #9bd9ad; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+    .felt-label { color: #257a54; font-size: 12px; font-weight: 700; text-transform: uppercase; }
     .felt-main { font-size: 22px; font-weight: 750; margin-top: 4px; line-height: 1.28; }
-    .felt-sub { color: #c4d4df; margin-top: 8px; }
+    .felt-sub { color: #546477; margin-top: 8px; }
     .felt-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
-    .felt-chip { border: 1px solid #355167; background: rgba(10, 15, 21, .45); border-radius: 7px; padding: 8px; }
+    .felt-chip { border: 1px solid #c9d9e7; background: rgba(255, 255, 255, .72); border-radius: 7px; padding: 8px; }
     .felt-chip .k { color: var(--muted); font-size: 12px; }
     .felt-chip .v { margin-top: 2px; font-weight: 700; overflow-wrap: anywhere; }
     .steps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
-    .step { border: 1px solid var(--line); background: #0f151c; border-radius: 7px; padding: 9px; min-height: 70px; }
+    .step { border: 1px solid var(--line); background: #f8fbfd; border-radius: 7px; padding: 9px; min-height: 70px; }
     .step .num { color: var(--green); font-weight: 700; font-size: 12px; }
     .step .title { font-weight: 700; margin-top: 2px; }
     .step .desc { color: var(--muted); font-size: 12px; margin-top: 3px; }
     .detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-    .detail { border: 1px solid var(--line); background: #0f151c; border-radius: 7px; padding: 10px; }
+    .detail { border: 1px solid var(--line); background: #f8fbfd; border-radius: 7px; padding: 10px; }
     .detail-title { color: var(--muted); font-size: 12px; margin-bottom: 6px; text-transform: uppercase; }
     .insight {
       display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 10px 0 12px;
     }
-    .insight-card { border: 1px solid #314253; background: #15202b; border-radius: 7px; padding: 10px; }
+    .insight-card { border: 1px solid #c9d9e7; background: #f4f8fb; border-radius: 7px; padding: 10px; }
     .insight-card .name { color: var(--muted); font-size: 12px; }
     .insight-card .value { font-size: 18px; font-weight: 700; margin-top: 3px; overflow-wrap: anywhere; }
     .kv { display: grid; grid-template-columns: 150px 1fr; gap: 5px 10px; font-size: 13px; }
@@ -308,34 +451,43 @@ APP_HTML = r"""<!doctype html>
     .list { margin: 0; padding-left: 18px; }
     .list li { margin: 3px 0; }
     .chips { display: flex; flex-wrap: wrap; gap: 6px; }
-    .chip { border: 1px solid #3a5064; background: #182230; color: #d9e6f2; border-radius: 999px; padding: 4px 8px; font-size: 12px; }
+    .chip { border: 1px solid #bfd2e2; background: #eef5fb; color: #27384c; border-radius: 999px; padding: 4px 8px; font-size: 12px; }
     .meter-row { display: grid; grid-template-columns: 130px 1fr 52px; gap: 8px; align-items: center; margin: 7px 0; font-size: 12px; }
-    .meter-track { height: 8px; background: #0a0f15; border: 1px solid var(--line); border-radius: 99px; overflow: hidden; }
-    .meter-fill { height: 100%; background: linear-gradient(90deg, #6fd08a, #e2c36f); border-radius: 99px; }
+    .meter-track { height: 8px; background: #e7edf4; border: 1px solid var(--line); border-radius: 99px; overflow: hidden; }
+    .meter-fill { height: 100%; background: linear-gradient(90deg, #45b47b, #dca646); border-radius: 99px; }
     .phase-row { display: grid; grid-template-columns: 70px 1fr; gap: 8px; margin: 8px 0; align-items: start; }
     .phase-name { color: var(--green); font-weight: 700; font-size: 12px; padding-top: 2px; }
-    .phase-body { color: #d8e2ec; font-size: 13px; }
+    .phase-body { color: #435267; font-size: 13px; }
     .vector {
       position: relative; display: flex; align-items: center; gap: 4px; min-height: 92px;
-      border: 1px solid var(--line); background: #0b1016; border-radius: 6px; padding: 10px 8px;
+      border: 1px solid var(--line); background: #f4f8fb; border-radius: 6px; padding: 10px 8px;
       overflow-x: auto;
     }
-    .vector::before { content: ""; position: absolute; left: 8px; right: 8px; top: 50%; border-top: 1px solid #344253; }
+    .vector::before { content: ""; position: absolute; left: 8px; right: 8px; top: 50%; border-top: 1px solid #c1cedb; }
     .vbar-wrap { position: relative; z-index: 1; width: 13px; height: 68px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
     .vbar { width: 9px; border-radius: 5px; opacity: .9; }
     .pre {
-      max-height: 170px; overflow: auto; background: #0b1016; border: 1px solid var(--line);
-      border-radius: 6px; padding: 8px; white-space: pre-wrap; font-size: 12px; color: #d8e2ec;
+      max-height: 170px; overflow: auto; background: #f4f8fb; border: 1px solid var(--line);
+      border-radius: 6px; padding: 8px; white-space: pre-wrap; font-size: 12px; color: #435267;
     }
-    details { border: 1px solid var(--line); border-radius: 7px; padding: 9px 10px; background: #0f151c; }
+    details { border: 1px solid var(--line); border-radius: 7px; padding: 9px 10px; background: #f8fbfd; }
     summary { cursor: pointer; color: var(--muted); }
     .loading .step { opacity: .72; }
-    .loading .step:nth-child(1) { border-color: #6fd08a; }
+    .loading .step:nth-child(1) { border-color: #45b47b; }
     .composer { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end; position: sticky; bottom: 0; background: linear-gradient(180deg, transparent, var(--bg) 30%); padding-top: 20px; }
     .hidden { display: none !important; }
-    .error { background: #3a1f24; color: #ffb8b8; border: 1px solid #75404a; border-radius: 8px; padding: 12px; margin: 12px 0; white-space: pre-wrap; }
+    .error { background: #fff1f1; color: #9c2f2f; border: 1px solid #e2aaaa; border-radius: 8px; padding: 12px; margin: 12px 0; white-space: pre-wrap; }
     .ok { color: var(--green); }
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+    .compare-card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px; }
+    .compare-card.trace { border-color: #66b98f; background: #f4fbf7; }
+    .compare-card.stim { border-color: #ddb36c; background: #fff9ed; }
+    .compare-head { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin-bottom: 10px; }
+    .compare-title { font-size: 18px; font-weight: 750; }
+    .compare-tag { font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 4px 8px; white-space: nowrap; }
+    .compare-output { min-height: 220px; white-space: pre-wrap; background: #ffffff; border: 1px solid var(--line); border-radius: 7px; padding: 12px; }
+    .compare-note { color: var(--muted); font-size: 13px; margin-top: 8px; }
     .abbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
     .radio-row { display: flex; gap: 10px; flex-wrap: wrap; }
     .radio-row label { display: inline-flex; gap: 7px; align-items: center; margin: 0; color: var(--text); }
@@ -344,7 +496,7 @@ APP_HTML = r"""<!doctype html>
     @media (max-width: 840px) {
       .app { grid-template-columns: 1fr; }
       aside { border-right: 0; border-bottom: 1px solid var(--line); }
-      .metrics, .examples, .grid2, .steps, .detail-grid, .insight, .felt-grid, .felt-panel { grid-template-columns: 1fr; }
+      .metrics, .examples, .grid2, .compare-grid, .steps, .detail-grid, .insight, .felt-grid, .felt-panel { grid-template-columns: 1fr; }
       .composer { grid-template-columns: 1fr; }
     }
   </style>
@@ -365,7 +517,7 @@ APP_HTML = r"""<!doctype html>
       <div class="top">
         <div>
           <h1>EmoNet v4 Local</h1>
-          <div class="sub">Streamlit을 제거한 안정판입니다. Claude Chat과 Human A/B만 제공합니다.</div>
+          <div class="sub">밝은 로컬 데모 화면입니다. Claude Chat, Live Compare, Human A/B를 제공합니다.</div>
           <div class="pills">
             <span class="pill">provider: anthropic</span>
             <span class="pill">model: claude-sonnet-4-20250514</span>
@@ -376,6 +528,7 @@ APP_HTML = r"""<!doctype html>
       </div>
       <div class="tabs">
         <button id="tabChat" class="active">Chat</button>
+        <button id="tabCompare">Live Compare</button>
         <button id="tabAB">Human A/B</button>
       </div>
       <section id="chatView">
@@ -404,6 +557,53 @@ APP_HTML = r"""<!doctype html>
         <div class="composer">
           <textarea id="message" placeholder="메시지를 입력하세요"></textarea>
           <button id="send" class="primary">Send</button>
+        </div>
+      </section>
+      <section id="compareView" class="hidden">
+        <div class="metrics">
+          <div class="metric"><div class="name">Compare spent</div><div id="compareSpent" class="value">$0.0000</div></div>
+          <div class="metric"><div class="name">Compare tokens</div><div id="compareTokens" class="value">0 / 0</div></div>
+          <div class="metric"><div class="name">Modes</div><div class="value">stim / trace</div></div>
+        </div>
+        <div id="compareError" class="error hidden"></div>
+        <div class="examples">
+          <button data-compare="학교 다니기 너무 외로워. 학교에선 맞기만 하고 같이 다닐 친구도 없어. 어떻게 해야 할지 모르겠어.">학교 폭력 / 고립</button>
+          <button data-compare="우리 가족이 나를 너무 구역질나게 해. 이제 중학생인 나에게 너무 공부만 강요해.">공부 강요 / 방어</button>
+          <button data-compare="대표님이 나만 빼고 팀원 모두에게 커피를 돌렸어. 너무 화가 나는데 어떻게 해야 할지 모르겠어.">공개 배제 / 분노</button>
+        </div>
+        <div class="composer">
+          <textarea id="compareMessage" placeholder="같은 입력으로 stim_only와 EmoNet trace 응답을 동시에 생성합니다."></textarea>
+          <button id="compareSend" class="primary">Compare</button>
+        </div>
+        <div id="compareLoading" class="process loading hidden">
+          <h3>Live Compare</h3>
+          <div class="steps">
+            <div class="step"><div class="num">01</div><div class="title">Input</div><div class="desc">동일 입력 고정</div></div>
+            <div class="step"><div class="num">02</div><div class="title">Stim Only</div><div class="desc">trace 없이 일반 응답 생성</div></div>
+            <div class="step"><div class="num">03</div><div class="title">EmoNet</div><div class="desc">branch dynamics와 trace 추출</div></div>
+            <div class="step"><div class="num">04</div><div class="title">Trace Prompt</div><div class="desc">hybrid_trace 조건부 응답 생성</div></div>
+            <div class="step"><div class="num">05</div><div class="title">Side by Side</div><div class="desc">동일 입력 대비 출력</div></div>
+          </div>
+        </div>
+        <div id="compareResult" class="hidden">
+          <div class="compare-grid">
+            <div class="compare-card stim">
+              <div class="compare-head">
+                <div class="compare-title">Stim Only</div>
+                <div class="compare-tag">no trace</div>
+              </div>
+              <div id="stimOutput" class="compare-output"></div>
+              <div class="compare-note">입력 문장만 보고 생성한 기준 응답입니다.</div>
+            </div>
+            <div class="compare-card trace">
+              <div class="compare-head">
+                <div class="compare-title">EmoNet Trace</div>
+                <div class="compare-tag">hybrid_trace</div>
+              </div>
+              <div id="traceOutput" class="compare-output"></div>
+              <div id="traceProcess"></div>
+            </div>
+          </div>
         </div>
       </section>
       <section id="abView" class="hidden">
@@ -458,8 +658,10 @@ const esc = text => String(text ?? "").replace(/[&<>"']/g, ch => ({'&':'&amp;','
 
 function setTab(name) {
   $("tabChat").classList.toggle("active", name === "chat");
+  $("tabCompare").classList.toggle("active", name === "compare");
   $("tabAB").classList.toggle("active", name === "ab");
   $("chatView").classList.toggle("hidden", name !== "chat");
+  $("compareView").classList.toggle("hidden", name !== "compare");
   $("abView").classList.toggle("hidden", name !== "ab");
   if (name === "ab") loadAB();
 }
@@ -664,7 +866,7 @@ function vectorBars(values) {
   const maxAbs = Math.max(...arr.map(v => Math.abs(v)), 0.0001);
   return `<div class="vector">${arr.map(v => {
     const h = Math.max(4, Math.round((Math.abs(v) / maxAbs) * 34));
-    const color = v >= 0 ? "#6fd08a" : "#ff8a8a";
+    const color = v >= 0 ? "#45b47b" : "#e36b6b";
     const margin = v >= 0 ? `margin-bottom:${34 - h}px` : `margin-top:${34 - h}px`;
     return `<span class="vbar-wrap" title="${num(v)}"><span class="vbar" style="height:${h}px;background:${color};${margin}"></span></span>`;
   }).join("")}</div>`;
@@ -804,6 +1006,38 @@ async function sendMessage(text) {
   }
 }
 
+async function runCompare(text) {
+  const prompt = String(text || "").trim();
+  if (!prompt) return;
+  $("compareError").classList.add("hidden");
+  $("compareSend").disabled = true;
+  $("compareLoading").classList.remove("hidden");
+  $("compareResult").classList.add("hidden");
+  $("stimOutput").textContent = "";
+  $("traceOutput").textContent = "";
+  $("traceProcess").innerHTML = "";
+  try {
+    const payload = await api("/api/compare", { message: prompt, api_key: $("apiKey").value });
+    const stim = payload.stim_only || {};
+    const trace = payload.trace || {};
+    const compareUsage = payload.usage || {};
+    usage = payload.session_usage || usage;
+    $("stimOutput").textContent = stim.assistant_text || "";
+    $("traceOutput").textContent = trace.assistant_text || "";
+    $("traceProcess").innerHTML = feltPanel(trace.record) + processHtml(trace.record);
+    $("compareSpent").textContent = "$" + Number(compareUsage.cost_usd || 0).toFixed(4);
+    $("compareTokens").textContent = `${compareUsage.input_tokens || 0} / ${compareUsage.output_tokens || 0}`;
+    $("compareResult").classList.remove("hidden");
+    renderUsage();
+  } catch (err) {
+    $("compareError").textContent = err.message;
+    $("compareError").classList.remove("hidden");
+  } finally {
+    $("compareSend").disabled = false;
+    $("compareLoading").classList.add("hidden");
+  }
+}
+
 async function loadAB() {
   const res = await fetch(`/api/ab?kind=${encodeURIComponent(abKind)}&index=${abIndex}`);
   const payload = await res.json();
@@ -840,12 +1074,23 @@ async function saveAB() {
 }
 
 $("tabChat").onclick = () => setTab("chat");
+$("tabCompare").onclick = () => setTab("compare");
 $("tabAB").onclick = () => setTab("ab");
 $("send").onclick = () => sendMessage($("message").value);
+$("compareSend").onclick = () => runCompare($("compareMessage").value);
 $("message").addEventListener("keydown", ev => {
   if (ev.key === "Enter" && (ev.ctrlKey || ev.metaKey)) sendMessage($("message").value);
 });
+$("compareMessage").addEventListener("keydown", ev => {
+  if (ev.key === "Enter" && (ev.ctrlKey || ev.metaKey)) runCompare($("compareMessage").value);
+});
 document.querySelectorAll("[data-example]").forEach(btn => btn.onclick = () => sendMessage(btn.dataset.example));
+document.querySelectorAll("[data-compare]").forEach(btn => {
+  btn.onclick = () => {
+    $("compareMessage").value = btn.dataset.compare;
+    runCompare(btn.dataset.compare);
+  };
+});
 $("clearChat").onclick = () => { messages = []; renderChat(); fetch("/api/chat/clear", {method: "POST"}); };
 $("resetUsage").onclick = () => { usage = { input_tokens: 0, output_tokens: 0, cost_usd: 0 }; renderUsage(); fetch("/api/usage/reset", {method: "POST"}); };
 $("budget").oninput = renderUsage;
@@ -940,6 +1185,62 @@ class LocalGuiHandler(BaseHTTPRequestHandler):
                     _usage["output_tokens"] += output_tokens
                     _usage["cost_usd"] += _estimate_cost(input_tokens, output_tokens)
                     response = {"messages": list(_messages), "usage": dict(_usage), "record": result.record}
+                self._json(HTTPStatus.OK, response)
+            elif parsed.path == "/api/compare":
+                payload = _read_json(self)
+                api_key = str(payload.get("api_key") or os.environ.get("ANTHROPIC_API_KEY") or "").strip()
+                message = str(payload.get("message") or "").strip()
+                if not api_key:
+                    self._error(HTTPStatus.BAD_REQUEST, "Claude API key가 필요합니다. 왼쪽에 입력하거나 ANTHROPIC_API_KEY를 설정하세요.")
+                    return
+                if not message:
+                    self._error(HTTPStatus.BAD_REQUEST, "message is empty")
+                    return
+                stim_text, _stim_raw, stim_meta = request_plain_text_response(
+                    base_url=CLAUDE_BASE_URL,
+                    model_name=CLAUDE_MODEL,
+                    prompt=_stim_only_prompt(message),
+                    temperature=0.45,
+                    max_tokens=600,
+                    timeout_sec=180,
+                    max_retries=1,
+                    validator=validate_plain_response_text,
+                    retry_instruction="직전 응답은 부자연스럽거나 미완성이다. 반복 없이 자연스러운 한국어 평문으로 다시 답하라.",
+                    system_prompt="Return a plain Korean response only. Do not return JSON.",
+                    api_key=api_key,
+                    provider="anthropic",
+                )
+                trace_result = generate_chat_turn(
+                    runtime=_runtime_cached(),
+                    generation_config=_chat_config(api_key, conditioning_mode="hybrid_trace"),
+                    input_text=message,
+                    history=[],
+                )
+                trace_text, _trace_raw, trace_meta = request_plain_text_response(
+                    base_url=CLAUDE_BASE_URL,
+                    model_name=CLAUDE_MODEL,
+                    prompt=_live_compare_trace_prompt(str(trace_result.record.get("generation_prompt", "")), message),
+                    temperature=0.35,
+                    max_tokens=600,
+                    timeout_sec=180,
+                    max_retries=1,
+                    validator=validate_plain_response_text,
+                    retry_instruction="직전 응답은 trace 대비가 약하거나 일반 조언으로 흐른다. 위험/대상/행동 경향을 더 분명히 하라.",
+                    system_prompt="Return a plain Korean response only. Do not return JSON.",
+                    api_key=api_key,
+                    provider="anthropic",
+                )
+                trace_result = _replace_trace_response(trace_result, trace_text, trace_meta, message)
+                response = _compare_payload(
+                    input_text=message,
+                    stim_text=stim_text,
+                    trace_result=trace_result,
+                    stim_meta=stim_meta,
+                )
+                compare_usage = dict(response["usage"])
+                with _history_lock:
+                    _add_usage(int(compare_usage.get("input_tokens", 0)), int(compare_usage.get("output_tokens", 0)))
+                    response["session_usage"] = dict(_usage)
                 self._json(HTTPStatus.OK, response)
             elif parsed.path == "/api/chat/clear":
                 with _history_lock:

@@ -10,15 +10,8 @@ def extract_json_block(text: str) -> dict:
     stripped = text.strip()
     try:
         return json.loads(stripped)
-    except json.JSONDecodeError:
-        pass
-
-    start = stripped.find("{")
-    end = stripped.rfind("}")
-    if start == -1 or end == -1 or end <= start:
-        raise ValueError("no JSON object found in model output")
-    candidate = stripped[start : end + 1]
-    return json.loads(candidate)
+    except json.JSONDecodeError as exc:
+        raise ValueError("model output must be exactly one JSON object") from exc
 
 
 def call_openai_compatible_chat(
@@ -112,10 +105,6 @@ def call_openai_compatible_chat_with_usage(
     if isinstance(content, str) and content.strip():
         return content.strip(), _normalize_openai_usage(payload.get("usage") or {})
 
-    for field_name in ("reasoning", "reasoning_content", "refusal"):
-        fallback = message.get(field_name)
-        if isinstance(fallback, str) and fallback.strip():
-            return fallback.strip(), _normalize_openai_usage(payload.get("usage") or {})
     raise ValueError("chat response did not contain text content")
 
 
@@ -205,18 +194,20 @@ def call_chat_with_usage(
             api_key=api_key,
             reasoning_effort=reasoning_effort,
         )
-    return call_openai_compatible_chat_with_usage(
-        base_url=base_url,
-        model_name=model_name,
-        prompt=prompt,
-        temperature=temperature,
-        max_tokens=max_tokens,
-        timeout_sec=timeout_sec,
-        system_prompt=system_prompt,
-        api_key=api_key,
-        response_format=response_format,
-        reasoning_effort=reasoning_effort,
-    )
+    if normalized_provider == "openai_compatible":
+        return call_openai_compatible_chat_with_usage(
+            base_url=base_url,
+            model_name=model_name,
+            prompt=prompt,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            timeout_sec=timeout_sec,
+            system_prompt=system_prompt,
+            api_key=api_key,
+            response_format=response_format,
+            reasoning_effort=reasoning_effort,
+        )
+    raise ValueError(f"unsupported chat provider: {provider}")
 
 
 def request_json_response(

@@ -1,0 +1,5 @@
+base_sentence,variant_sentence,token_change_type,l2_distance,cosine_distance,byte_difference_ratio,avalanche_score,interpretation
+The secret code is apple.,The secret code is apples.,글자 1개 추가,,,,,
+The secret code is apple.,The secret code is orange.,핵심 단어 변경,,,,,
+The secret code is apple.,A secret code is apple.,관사 변경,,,,,
+The secret code is apple.,The hidden code is apple.,의미 유사 단어 변경,,,,,

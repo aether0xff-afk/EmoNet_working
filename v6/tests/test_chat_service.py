@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -17,7 +17,6 @@ from emonet.chat_service import (
     _apply_affective_carryover,
     _apply_interaction_event_to_raw_signal,
     _build_session_affect_state,
-    _fallback_agent_perception_payload,
     _normalize_interaction_event,
     build_recent_dialogue_block,
     generate_chat_turn,
@@ -40,16 +39,16 @@ class ChatServiceTests(unittest.TestCase):
 
     def test_build_recent_dialogue_block_trims_history(self) -> None:
         history = [
-            {"role": "user", "content": "첫 질문"},
-            {"role": "assistant", "content": "첫 답변"},
-            {"role": "user", "content": "둘째 질문"},
-            {"role": "assistant", "content": "둘째 답변"},
-            {"role": "user", "content": "셋째 질문"},
+            {"role": "user", "content": "泥?吏덈Ц"},
+            {"role": "assistant", "content": "泥??듬?"},
+            {"role": "user", "content": "?섏㎏ 吏덈Ц"},
+            {"role": "assistant", "content": "?섏㎏ ?듬?"},
+            {"role": "user", "content": "?뗭㎏ 吏덈Ц"},
         ]
         block = build_recent_dialogue_block(history, max_turns=2)
-        self.assertNotIn("첫 질문", block)
-        self.assertIn("둘째 질문", block)
-        self.assertIn("셋째 질문", block)
+        self.assertNotIn("泥?吏덈Ц", block)
+        self.assertIn("?섏㎏ 吏덈Ц", block)
+        self.assertIn("?뗭㎏ 吏덈Ц", block)
 
     def test_interaction_event_reframes_forced_action_as_boundary_pressure(self) -> None:
         raw_signal = {
@@ -91,7 +90,7 @@ class ChatServiceTests(unittest.TestCase):
                 "reciprocity_evidence": 0.55,
                 "consent_ambiguity": 0.70,
             },
-            "가까이 앉아도 돼?",
+            "媛源뚯씠 ?됱븘????",
         )
 
         self.assertFalse(event["has_user_action"])
@@ -99,18 +98,6 @@ class ChatServiceTests(unittest.TestCase):
         self.assertEqual(event["body_boundary_pressure"], 0.0)
         self.assertEqual(event["forced_proximity"], 0.0)
         self.assertLessEqual(event["consent_ambiguity"], 0.35)
-
-    def test_agent_perception_fallback_keeps_apology_turn_alive(self) -> None:
-        payload = _fallback_agent_perception_payload(
-            "미안해...버스를 놓히는 바람에 조금 늦었어...",
-            "no JSON object found",
-            "We need to infer raw internal signal...",
-        )
-
-        self.assertEqual(payload["fallback"]["reason"], "agent_perception_invalid_json")
-        self.assertFalse(payload["interaction_event"]["has_user_action"])
-        self.assertGreater(payload["raw_signal"]["safety_buffer"], payload["raw_signal"]["alarm"])
-        self.assertGreater(payload["raw_signal"]["attachment_pull"], payload["raw_signal"]["control_pressure"])
 
     def test_raw_signal_policy_is_validated(self) -> None:
         runtime = EmoNetChatRuntime(
@@ -122,7 +109,7 @@ class ChatServiceTests(unittest.TestCase):
             generate_chat_turn(
                 runtime=runtime,
                 generation_config=ChatGenerationConfig(raw_signal_policy="unknown"),
-                input_text="테스트",
+                input_text="test",
             )
 
     def test_carryover_is_short_residual_not_pressure_floor(self) -> None:
@@ -199,8 +186,8 @@ class ChatServiceTests(unittest.TestCase):
             decoder=object(),
         )
         history = [
-            {"role": "user", "content": "이전 사용자 메시지"},
-            {"role": "assistant", "content": "이전 보조 응답"},
+            {"role": "user", "content": "?댁쟾 ?ъ슜??硫붿떆吏"},
+            {"role": "assistant", "content": "?댁쟾 蹂댁“ ?묐떟"},
         ]
         fake_profile = {
             "stim_vec": np.asarray([0.1, 0.2, 0.3, 0.4], dtype=np.float32),
@@ -209,18 +196,18 @@ class ChatServiceTests(unittest.TestCase):
             "s_pred": np.asarray([0.25, 0.75], dtype=np.float32),
             "style_tags": ["direct", "tense"],
             "style_summary": {"direct": 0.7},
-            "style_summary_text": "직설성이 높다.",
-            "expression_cues_text": "짧고 날카로운 답.",
-            "trace_summary_text": "고각성 trace",
+            "style_summary_text": "吏곸꽕?깆씠 ?믩떎.",
+            "expression_cues_text": "吏㏐퀬 ?좎뭅濡쒖슫 ??",
+            "trace_summary_text": "怨좉컖??trace",
             "trace_lines": ["tick=1", "tick=2"],
-            "appraisal_summary_text": "배제감과 경계",
+            "appraisal_summary_text": "諛곗젣媛먭낵 寃쎄퀎",
             "appraisal_lines": ["target=other"],
             "appraisal_target": "other",
             "appraisal_tendency": "defend",
             "anti_softening_mode": "guarded",
-            "anti_softening_rules": ["위로를 덧붙이지 않는다."],
+            "anti_softening_rules": ["?꾨줈瑜??㏓텤?댁? ?딅뒗??"],
             "grounding_mode": "direct",
-            "grounding_rules": ["첫 문장에서 정서를 바로 짚는다."],
+            "grounding_rules": ["泥?臾몄옣?먯꽌 ?뺤꽌瑜?諛붾줈 吏싲뒗??"],
             "ticks_run": 7,
             "termination_reason": "stable_convergence",
         }
@@ -229,26 +216,26 @@ class ChatServiceTests(unittest.TestCase):
             patch("emonet.chat_service.infer_style_profile", return_value=fake_profile),
             patch(
                 "emonet.chat_service.build_conditioned_generation_prompt",
-                return_value=("[USER_INPUT]\n최신 입력", "style_tags"),
+                return_value=("[USER_INPUT]\n理쒖떊 ?낅젰", "style_tags"),
             ),
             patch(
                 "emonet.chat_service.request_plain_text_response",
-                return_value=("응답 문장이다.", "응답 문장이다.", {"retry_count": 0, "validation_errors": []}),
+                return_value=("?묐떟 臾몄옣?대떎.", "?묐떟 臾몄옣?대떎.", {"retry_count": 0, "validation_errors": []}),
             ) as request_mock,
         ):
             result = generate_chat_turn(
                 runtime=runtime,
                 generation_config=ChatGenerationConfig(history_turns=2),
-                input_text="최신 입력",
+                input_text="理쒖떊 ?낅젰",
                 history=history,
             )
 
         called_prompt = request_mock.call_args.kwargs["prompt"]
         self.assertIn("[RECENT_DIALOGUE]", called_prompt)
-        self.assertIn("이전 사용자 메시지", called_prompt)
-        self.assertIn("이전 보조 응답", called_prompt)
-        self.assertEqual(result.assistant_text, "응답 문장이다.")
-        self.assertEqual(result.record["llm_response"], "응답 문장이다.")
+        self.assertIn("?댁쟾 ?ъ슜??硫붿떆吏", called_prompt)
+        self.assertIn("?댁쟾 蹂댁“ ?묐떟", called_prompt)
+        self.assertEqual(result.assistant_text, "?묐떟 臾몄옣?대떎.")
+        self.assertEqual(result.record["llm_response"], "?묐떟 臾몄옣?대떎.")
         self.assertEqual(result.record["style_tags"], ["direct", "tense"])
         self.assertEqual(result.record["response_retry_count"], 0)
 
@@ -276,5 +263,5 @@ class ChatServiceTests(unittest.TestCase):
                 generate_chat_turn(
                     runtime=runtime,
                     generation_config=ChatGenerationConfig(conditioning_mode="episode_trace"),
-                    input_text="최신 입력",
+                    input_text="理쒖떊 ?낅젰",
                 )

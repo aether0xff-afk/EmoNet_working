@@ -127,8 +127,6 @@ savefig("fig_s000555_dominant_node_path")
 # -----------------------------
 # 2. Tick × cluster heatmap
 # -----------------------------
-# Prefer actual cluster/community columns if present.
-# Fallback: bias_label, then neuron_type.
 candidate_cluster_cols = [
     "cluster",
     "cluster_id",
@@ -136,8 +134,6 @@ candidate_cluster_cols = [
     "community_id",
     "module",
     "module_id",
-    "bias_label",
-    "neuron_type",
 ]
 cluster_col = None
 for col in candidate_cluster_cols:
@@ -146,14 +142,12 @@ for col in candidate_cluster_cols:
         break
 
 if cluster_col is None:
-    # Merge from node_catalog if needed.
     merge_cols = [c for c in candidate_cluster_cols if c in node_catalog.columns]
     if merge_cols:
         cluster_col = merge_cols[0]
         node_trace = node_trace.merge(node_catalog[["node_id", cluster_col]], on="node_id", how="left")
     else:
-        cluster_col = "node_id_group"
-        node_trace[cluster_col] = (node_trace["node_id"] // 16).astype(int).astype(str)
+        raise ValueError("node trace or catalog must contain an explicit cluster/community/module column")
 
 # Activation value: sum K per tick per cluster-like group.
 heat = (

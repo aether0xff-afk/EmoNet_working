@@ -21,6 +21,7 @@ class TurnContext:
 def analyze_turn_context(
     *,
     user_text: str,
+    scheduled_event_type: str = "user_message",
     rookie: CharacterProfile,
     signals: InputSignals,
     memories: tuple[MemoryItem, ...],
@@ -28,11 +29,19 @@ def analyze_turn_context(
     elapsed_minutes: float = 0.0,
 ) -> TurnContext:
     memory_pressure = min(1.0, sum(item.importance for item in memories[:3]) / 2.0)
+<<<<<<< HEAD
     if event_type == "no_reply":
         event_type = "no_reply"
         user_position = "사용자는 지금 직접 말하지 않는 공백의 위치에 있다."
         rookie_question = f"{elapsed_minutes:.0f}분의 침묵을 사건으로 볼지, 그냥 흐름으로 둘지 판단해야 한다."
         unresolved_need = "사용자 부담을 키우지 않는 내부 해석과 낮은 빈도 gate"
+=======
+    if scheduled_event_type in {"silence_tick", "long_silence"}:
+        event_type = scheduled_event_type
+        user_position = "사용자는 지금 직접 말하지 않고 있고, Ruca는 관계를 밀어붙이지 않는 위치에 있다."
+        rookie_question = "침묵을 깨야 할 만큼 중요한 신호가 있는가?"
+        unresolved_need = "내부 상태 갱신과 발화 억제 균형"
+>>>>>>> afac398b3a22494cb46fd7c4f2dfef5ffd6559a3
     elif signals.alarm >= 0.55:
         event_type = "distress"
         user_position = "사용자는 지금 설명보다 안정과 확인을 먼저 필요로 하는 위치에 있다."

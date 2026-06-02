@@ -1,0 +1,18 @@
+{
+  "name": "minecraft-rl-agent",
+  "version": "0.1.0",
+  "description": "Minecraft RL agent MVP using Knowledge Store, A/B/C policy, Prophecy, and Imagination Cycle.",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "check": "node --check src/*.js"
+  },
+  "dependencies": {
+    "mineflayer": "^4.26.0",
+    "mineflayer-pathfinder": "^2.4.5",
+    "minecraft-data": "^3.94.0",
+    "vec3": "^0.1.10"
+  }
+}

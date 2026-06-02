@@ -3,6 +3,9 @@ from __future__ import annotations
 from .models import EmotionState, ResponseDecision, SpontaneousReactionDecision
 
 
+SILENCE_EVENT_TYPES = {"no_reply", "silence_tick", "long_silence"}
+
+
 def decide_response_action(
     *,
     event_type: str,
@@ -10,12 +13,20 @@ def decide_response_action(
     spontaneous: SpontaneousReactionDecision,
     elapsed_minutes: float = 0.0,
 ) -> ResponseDecision:
-    if event_type == "no_reply":
+    if event_type in SILENCE_EVENT_TYPES:
+        if event_type == "silence_tick":
+            if elapsed_minutes > 0:
+                return ResponseDecision(
+                    action="update_internal_only",
+                    intensity=spontaneous.intensity,
+                    reason="짧은 침묵은 내부 상태만 갱신하고 외부 메시지를 보내지 않는다.",
+                )
+            return ResponseDecision(action="stay_silent", intensity=0.0, reason="처리할 시간 경과가 없다.")
         if spontaneous.should_react:
             return ResponseDecision(
                 action="send_message",
                 intensity=spontaneous.intensity,
-                reason="무입력 사건이 충분히 길고 내부 긴장이 높아 자발 메시지를 보낸다.",
+                reason="무입력 시간이 충분히 길고 내부 압력이 높아 낮은 강도의 자발 메시지를 보낸다.",
             )
         if elapsed_minutes > 0:
             return ResponseDecision(

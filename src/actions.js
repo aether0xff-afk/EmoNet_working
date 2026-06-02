@@ -1,6 +1,8 @@
-import { goals } from 'mineflayer-pathfinder';
-import { Vec3 } from 'vec3';
+import pathfinderPkg from 'mineflayer-pathfinder';
+import vec3Pkg from 'vec3';
 
+const { goals } = pathfinderPkg;
+const { Vec3 } = vec3Pkg;
 const { GoalNear } = goals;
 
 function posObjToVec3(p) {

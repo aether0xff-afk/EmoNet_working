@@ -135,4 +135,4 @@ python -m ruca_engine.cli "짧게 답해줘" `
 
 ## Next implementation line
 
-The full integration roadmap is tracked in `docs/plans/2026-06-02-ruca-rookie-integrated-runtime-roadmap.md`.
+The full integration roadmap is tracked in `docs/superpowers/plans/2026-06-02-ruca-rookie-integrated-runtime-roadmap.md`.

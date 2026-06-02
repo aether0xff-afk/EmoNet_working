@@ -13,11 +13,19 @@ def decide_spontaneous_reaction(
     elapsed_minutes: float = 0.0,
 ) -> SpontaneousReactionDecision:
     repeated_alarm = sum(1 for item in memories if item.emotion_snapshot.get("protective_tension", 0.0) >= 0.55)
-<<<<<<< HEAD
+    elapsed = max(0.0, float(elapsed_minutes))
+
+    if event_type == "silence_tick":
+        return SpontaneousReactionDecision(
+            should_react=False,
+            reaction_type="internal_only",
+            intensity=0.0,
+            reason="짧은 침묵은 관계를 밀어붙이지 않고 내부 상태만 갱신한다.",
+        )
+
     if event_type == "no_reply":
-        elapsed = max(0.0, float(elapsed_minutes))
         pressure = max(signals.intensity, emotion_state.protective_tension, min(1.0, elapsed / 180.0))
-        if elapsed >= 120 and pressure >= 0.58:
+        if elapsed >= 120.0 and pressure >= 0.58:
             return SpontaneousReactionDecision(
                 should_react=True,
                 reaction_type="quiet_check_in",
@@ -29,22 +37,23 @@ def decide_spontaneous_reaction(
             reaction_type="silent_tick",
             intensity=round(float(pressure), 3),
             reason="침묵은 사건으로 처리하지만 아직 사용자를 부를 만큼 강하지 않다.",
-=======
-    if event_type == "silence_tick":
+        )
+
+    if event_type == "long_silence":
+        if elapsed >= 45.0 or emotion_state.protective_tension >= 0.45 or repeated_alarm >= 1:
+            return SpontaneousReactionDecision(
+                should_react=True,
+                reaction_type="quiet_check_in",
+                intensity=round(float(min(1.0, 0.35 + elapsed / 180.0 + repeated_alarm * 0.1)), 3),
+                reason="침묵이 길어졌고 최근 긴장 또는 관계 기억이 남아 있어 짧은 확인이 적절하다.",
+            )
         return SpontaneousReactionDecision(
             should_react=False,
-            reaction_type="internal_only",
+            reaction_type="silent_tick",
             intensity=0.0,
-            reason="짧은 침묵은 관계를 밀어붙이지 않고 내부 상태만 갱신한다.",
+            reason="긴 침묵 후보지만 아직 확인 메시지를 보낼 만큼 압력이 높지 않다.",
         )
-    if event_type == "long_silence" and (elapsed_minutes >= 45.0 or emotion_state.protective_tension >= 0.45 or repeated_alarm >= 1):
-        return SpontaneousReactionDecision(
-            should_react=True,
-            reaction_type="quiet_check_in",
-            intensity=round(float(min(1.0, 0.35 + elapsed_minutes / 180.0 + repeated_alarm * 0.1)), 3),
-            reason="침묵이 길어졌고 최근 긴장 또는 관계 기억이 남아 있어 짧은 확인이 적절하다.",
->>>>>>> afac398b3a22494cb46fd7c4f2dfef5ffd6559a3
-        )
+
     if signals.alarm >= 0.60 or emotion_state.protective_tension >= 0.70 or repeated_alarm >= 2:
         intensity = max(signals.alarm, emotion_state.protective_tension, min(1.0, repeated_alarm / 3.0))
         return SpontaneousReactionDecision(

@@ -7,7 +7,7 @@ from .plot_manager import RookiePlotState
 from .relationship_graph import RelationshipGraph
 from .llm_client import LLMConfig, LLMResponse
 from .emonet_adapter import EmoNetTraceResult, infer_emonet_trace
-from .event_scheduler import RucaEvent, schedule_event
+from .event_scheduler import RucaEvent, make_event, schedule_event
 
 __all__ = [
     "EmotionState",
@@ -22,6 +22,7 @@ __all__ = [
     "EmoNetTraceResult",
     "RucaEvent",
     "infer_emonet_trace",
+    "make_event",
     "schedule_event",
     "SessionStore",
     "TurnResult",

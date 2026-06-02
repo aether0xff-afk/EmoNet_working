@@ -1,5 +1,5 @@
 import mineflayer from 'mineflayer';
-import { pathfinder, Movements } from 'mineflayer-pathfinder';
+import pathfinderPkg from 'mineflayer-pathfinder';
 import mcDataLoader from 'minecraft-data';
 import { loadConfig } from './config.js';
 import { KnowledgeStore } from './knowledge.js';
@@ -10,6 +10,7 @@ import { ImaginationCycle } from './imagination.js';
 import { executeAction } from './actions.js';
 import { JsonlLogger } from './logger.js';
 
+const { pathfinder, Movements } = pathfinderPkg;
 const config = loadConfig();
 const bot = mineflayer.createBot({
   host: config.host,

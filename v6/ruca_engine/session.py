@@ -13,7 +13,7 @@ from .trait_state import CharacterTraitState
 
 @dataclass(frozen=True)
 class RucaSessionState:
-    schema_version: int = 1
+    schema_version: int = 2
     emotion_state: EmotionState = field(default_factory=EmotionState)
     trait_state: CharacterTraitState = field(default_factory=CharacterTraitState)
     plot_state: RookiePlotState = field(default_factory=RookiePlotState)
@@ -28,7 +28,7 @@ class RucaSessionState:
             return cls()
         history = payload.get("recent_history", ())
         return cls(
-            schema_version=int(payload.get("schema_version", 1)),
+            schema_version=int(payload.get("schema_version", 2)),
             emotion_state=EmotionState.from_mapping(payload.get("emotion_state")),
             trait_state=CharacterTraitState.from_mapping(payload.get("trait_state")),
             plot_state=RookiePlotState.from_mapping(payload.get("plot_state")),
@@ -56,7 +56,9 @@ class RucaSessionState:
             "assistant_text": assistant_text,
             "spoke": bool(assistant_text.strip()),
             "event_type": str(debug_summary.get("event_type", "")),
+            "visible_speaker": debug_summary.get("visible_speaker"),
             "spontaneous_reaction": dict(debug_summary.get("spontaneous_reaction", {})),
+            "response_decision": dict(debug_summary.get("response_decision", {})),
             "created_at": utc_now_iso(),
         }
         history = (*self.recent_history, entry)[-max(1, int(max_history)) :]

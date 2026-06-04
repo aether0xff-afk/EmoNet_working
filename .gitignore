@@ -40,3 +40,8 @@ output/
 # OS/editor noise
 .DS_Store
 Thumbs.db
+
+# Node/Minecraft RL local runtime state
+node_modules/
+config.json
+logs/

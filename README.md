@@ -229,6 +229,29 @@ python -m unittest discover -s tests -v
 - 일부 과거 한국어 문서와 문자열에는 인코딩이 깨진 텍스트가 남아 있습니다. 동작 변경과 별도로 정리해야 합니다.
 - 기존 tracked artifact는 재현성을 위해 남겨 두었지만, 새 대량 output과 모델 파일은 `.gitignore`로 차단합니다.
 
+## Minecraft RL Agent MVP
+
+원격 `main`에는 KSEF 논문의 구조를 Minecraft 환경에 옮긴 최소 실행 버전도 포함되어 있습니다. 핵심 대응은 다음과 같습니다.
+
+| Paper concept | Minecraft MVP mapping |
+| --- | --- |
+| `nmap XML 관측` | Mineflayer 월드/인벤토리 관측 JSON |
+| `KK/KV Knowledge Storage` | 발견 블록, 보유 아이템, 제작 가능성, 실패 원인 저장 |
+| `Policy A/B/C` | WHAT/HOW/WHERE 행동 분해 |
+| `Prophecy Module` | 최근 행동 전이 기반 다음 상태/보상 예측 |
+| `Imagination Cycle` | 실행 전 후보 행동 rollout과 점수화 |
+| `FLAG 발견` | 목표 아이템 제작 또는 획득 |
+
+실행:
+
+```bash
+npm install
+cp config.example.json config.json
+npm start
+```
+
+로컬 Minecraft Java 서버를 켠 뒤 `config.json`에 접속 주소와 포트를 맞춥니다. 기본 목표는 `wooden_pickaxe`이며, 로그는 `logs/run-*.jsonl`에 저장됩니다.
+
 ## License
 
 MIT License. 자세한 내용은 [`LICENSE`](LICENSE)를 참고하세요.

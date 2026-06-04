@@ -1,0 +1,18 @@
+{
+  "host": "localhost",
+  "port": 25565,
+  "username": "RLAgent",
+  "version": false,
+  "episodeSteps": 80,
+  "imagination": {
+    "enabled": true,
+    "candidates": 8,
+    "horizon": 3,
+    "gamma": 0.72
+  },
+  "policy": {
+    "epsilon": 0.18,
+    "learningRate": 0.08
+  },
+  "goal": "wooden_pickaxe"
+}

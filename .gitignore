@@ -12,6 +12,11 @@ env/
 .coverage
 htmlcov/
 
+# Node dependencies and local runtime config
+node_modules/
+config.json
+logs/
+
 # Local editor/runtime state
 .playwright-cli/
 .streamlit/

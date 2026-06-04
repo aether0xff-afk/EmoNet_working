@@ -10,6 +10,7 @@ EmoNet은 감정 상태 모델링을 연구하고 프로토타입을 개발하�
 - `v6`: v5를 기반으로 응답 없는 틱(no-reply tick), 내면의 목소리, 자발적 응답
   게이트, Rookie용 장면 및 이야기 상태를 추가한 Ruca & Rookie 자율 캐릭터
   런타임 계열입니다.
+- `src/`: KSEF 논문의 구조를 Minecraft 환경에 옮긴 Minecraft RL Agent MVP입니다.
 - `v4`: 현재 연구, 평가, 로컬 GUI 개발에 사용하는 계열입니다.
 - `v5`: v4 런타임과 v3.1의 흔적 기반 감정(trace-as-emotion) 아이디어를 기반으로
   만든 캐릭터 채팅 MVP입니다.
@@ -26,6 +27,8 @@ EmoNet은 감정 상태 모델링을 연구하고 프로토타입을 개발하�
 
 ```text
 .
+  src/                 Minecraft RL Agent MVP
+  docs/                Minecraft RL Agent 아키텍처 문서
   v1/                  초기 emotion-z 파이프라인
   v2/                  모듈형 MVP
   v3/                  이전 연구 계열
@@ -115,6 +118,49 @@ $PY = "$env:USERPROFILE\.cache\codex-runtimes\codex-primary-runtime\dependencies
 cd .\v6
 & $PY .\local_gui.py
 ```
+
+## Minecraft RL Agent MVP
+
+루트의 Node.js 프로젝트는 KSEF 논문의 구조를 Minecraft 환경에 옮긴 최소 실행
+버전입니다.
+
+핵심 대응:
+
+- `nmap XML 관측` -> `Mineflayer 월드/인벤토리 관측 JSON`
+- `KK/KV Knowledge Storage` -> 발견 블록, 보유 아이템, 제작 가능성, 실패 원인 저장
+- `Policy A/B/C` -> WHAT/HOW/WHERE 행동 분해
+- `Prophecy Module` -> 최근 행동 전이 기반 다음 상태/보상 예측
+- `Imagination Cycle` -> 실행 전 후보 행동을 롤아웃하여 가장 높은 점수 선택
+- `FLAG 발견` -> 목표 아이템 제작 또는 획득
+
+설치 및 실행:
+
+```bash
+npm install
+cp config.example.json config.json
+npm start
+```
+
+준비:
+
+1. 로컬 Minecraft Java 서버를 켭니다.
+2. `server.properties`에서 테스트 편의를 위해 필요하면 `online-mode=false`를 사용합니다.
+3. 봇이 접속할 주소와 포트를 `config.json`에 맞춥니다.
+4. 실행합니다.
+
+기본 목표는 `wooden_pickaxe`입니다.
+
+봇은 다음 행동들을 조합해서 시도합니다.
+
+- WHAT: `observe`, `explore`, `mine`, `craft`
+- HOW: `nearest`, `safe`, `random`, `known`
+- WHERE: `tree`, `stone`, `self`, `front`, `known_area`
+
+실행 로그는 `logs/run-*.jsonl`에 저장됩니다. 각 줄은 한 step의 행동, 상태 변화,
+보상, 예언 결과, 상상 사이클 후보 평가를 담습니다.
+
+이건 연구용 MVP라서 완전한 Voyager 같은 에이전트가 아닙니다. 처음 목표는 논문
+구조가 Minecraft 환경에서 폐루프로 돌아가는지 확인하는 것입니다.
 
 ## API 키
 

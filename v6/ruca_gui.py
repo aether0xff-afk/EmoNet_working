@@ -34,7 +34,12 @@ STATE_DIR = ROOT / "outputs" / "gui"
 SESSION_PATH = STATE_DIR / "ruca_v5_character_session.json"
 HISTORY_PATH = STATE_DIR / "ruca_v5_history.json"
 LOG_PATH = STATE_DIR / "ruca_gui.log.jsonl"
+TICK_STATE_PATH = STATE_DIR / "ruca_tick_state.json"
 ARTIFACT_ROOT = Path(os.environ.get("EMONET_ARTIFACT_ROOT", str(ROOT / "artifacts")))
+
+TICK_INTERVAL_SEC = 10
+TICK_SPEAK_AFTER_SEC = 120
+TICK_SPEAK_COOLDOWN_SEC = 180
 
 _runtime: EmoNetChatRuntime | None = None
 
@@ -135,11 +140,94 @@ def _save_history(history: list[dict[str, Any]]) -> None:
     HISTORY_PATH.write_text(json.dumps(history[-80:], ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def _read_tick_state() -> dict[str, Any]:
+    if not TICK_STATE_PATH.exists():
+        return {}
+    try:
+        payload = json.loads(TICK_STATE_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _write_tick_state(state: dict[str, Any]) -> None:
+    STATE_DIR.mkdir(parents=True, exist_ok=True)
+    TICK_STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _as_float(value: Any, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _neural_pressure(session: CharacterSessionState) -> float:
+    record = session.to_record()
+    candidates: list[float] = []
+    for section_name in ("affect_state", "felt_self", "drive", "latest_trace"):
+        section = record.get(section_name)
+        if not isinstance(section, dict):
+            continue
+        for key in (
+            "felt_pressure",
+            "active_ratio",
+            "approach_drive",
+            "avoidance_drive",
+            "speak_impulse",
+            "hide_impulse",
+            "arousal",
+            "salience",
+        ):
+            if key in section:
+                candidates.append(abs(_as_float(section.get(key))))
+    return max(candidates, default=0.0)
+
+
+def _tick_state() -> dict[str, Any]:
+    history = _load_history()
+    session = _load_character_session()
+    previous = _read_tick_state()
+    silence_seconds = _as_float(previous.get("silence_seconds")) + TICK_INTERVAL_SEC
+    neural_pressure = _neural_pressure(session)
+    silence_pressure = min(0.35, silence_seconds / 600.0)
+    previous_pressure = _as_float(previous.get("pressure")) * 0.94
+    pressure = max(neural_pressure, previous_pressure, silence_pressure)
+    last_role = history[-1]["role"] if history else ""
+    last_spoke_tick = int(_as_float(previous.get("last_spoke_tick"), -999999))
+    tick_count = int(_as_float(previous.get("tick_count"))) + 1
+    can_speak = (
+        bool(history)
+        and last_role == "assistant"
+        and silence_seconds >= TICK_SPEAK_AFTER_SEC
+        and pressure >= 0.55
+        and (tick_count - last_spoke_tick) * TICK_INTERVAL_SEC >= TICK_SPEAK_COOLDOWN_SEC
+    )
+    decision = "speak_candidate" if can_speak else ("holding" if pressure >= 0.35 else "silent")
+    state = {
+        "updated_at": _now_iso(),
+        "tick_count": tick_count,
+        "silence_seconds": round(silence_seconds, 3),
+        "pressure": round(pressure, 4),
+        "neural_pressure": round(neural_pressure, 4),
+        "last_role": last_role,
+        "decision": decision,
+        "interval_seconds": TICK_INTERVAL_SEC,
+    }
+    _write_tick_state(state)
+    return state
+
+
+def _reset_tick_state() -> None:
+    if TICK_STATE_PATH.exists():
+        TICK_STATE_PATH.unlink()
+
+
 def _generation_config(payload: dict[str, Any]) -> ChatGenerationConfig:
     return ChatGenerationConfig(
-        provider=str(payload.get("provider") or "openai_compatible").strip(),
-        base_url=str(payload.get("base_url") or "http://127.0.0.1:11434/v1").strip(),
-        model_name=str(payload.get("model_name") or "qwen3:14b").strip(),
+        provider=str(payload.get("provider") or "gemini").strip(),
+        base_url=str(payload.get("base_url") or "https://generativelanguage.googleapis.com/v1beta").strip(),
+        model_name=str(payload.get("model_name") or "gemini-2.5-flash").strip(),
         api_key=str(payload.get("api_key") or "").strip() or None,
         response_temperature=float(payload.get("temperature") or 0.45),
         max_tokens=int(payload.get("max_tokens") or 900),
@@ -171,15 +259,17 @@ def _status_payload() -> dict[str, Any]:
         "messages": _messages_from_history(),
         "memory": [dict(item) for item in session.emotion_memory],
         "logs": _read_log_tail(),
+        "tick_state": _read_tick_state(),
         "paths": {
             "session": str(SESSION_PATH),
             "history": str(HISTORY_PATH),
             "log": str(LOG_PATH),
+            "tick": str(TICK_STATE_PATH),
         },
         "default_config": {
-            "provider": "openai_compatible",
-            "base_url": "http://127.0.0.1:11434/v1",
-            "model_name": "qwen3:14b",
+            "provider": "gemini",
+            "base_url": "https://generativelanguage.googleapis.com/v1beta",
+            "model_name": "gemini-2.5-flash",
             "max_tokens": 900,
             "temperature": 0.45,
             "api_key_env": "",
@@ -190,7 +280,76 @@ def _status_payload() -> dict[str, Any]:
         "env": {
             "openai_key": bool(os.environ.get("OPENAI_API_KEY", "").strip()),
             "anthropic_key": bool(os.environ.get("ANTHROPIC_API_KEY", "").strip()),
+            "gemini_key": bool(os.environ.get("GEMINI_API_KEY", "").strip()),
         },
+    }
+
+
+def _generate_and_persist_turn(
+    *,
+    payload: dict[str, Any],
+    input_text: str,
+    save_user_message: bool,
+    log_event: str,
+) -> dict[str, Any]:
+    history = _load_history()
+    session = _load_character_session()
+    config = _generation_config(payload)
+    result = generate_chat_turn(
+        runtime=_runtime_instance(),
+        generation_config=config,
+        input_text=input_text,
+        history=history,
+        character_session=session,
+    )
+    next_history = list(history)
+    if save_user_message:
+        next_history.append({"role": "user", "content": input_text})
+        _write_tick_state(
+            {
+                "updated_at": _now_iso(),
+                "tick_count": 0,
+                "silence_seconds": 0,
+                "pressure": 0,
+                "neural_pressure": 0,
+                "last_role": "user",
+                "decision": "user_input",
+                "interval_seconds": TICK_INTERVAL_SEC,
+            }
+        )
+    if result.assistant_text:
+        next_history.append({"role": "assistant", "content": result.assistant_text, "record": result.record})
+    _save_history(next_history)
+    _save_character_session(result.character_session)
+    if save_user_message and result.assistant_text:
+        _write_tick_state(
+            {
+                "updated_at": _now_iso(),
+                "tick_count": 0,
+                "silence_seconds": 0,
+                "pressure": 0,
+                "neural_pressure": 0,
+                "last_role": "assistant",
+                "decision": "answered_user",
+                "interval_seconds": TICK_INTERVAL_SEC,
+            }
+        )
+    _append_log(
+        log_event,
+        {
+            "input_text": input_text,
+            "assistant_text": result.assistant_text,
+            "model": result.record.get("llm_model_name"),
+            "conditioning_mode": result.record.get("conditioning_mode"),
+            "affect_input_mode": result.record.get("affect_input_mode"),
+            "dominant_branch_len": result.record.get("dominant_branch_len"),
+            "trace_summary_text": result.record.get("trace_summary_text"),
+        },
+    )
+    return {
+        "assistant_text": result.assistant_text,
+        "record": result.record,
+        "status": _status_payload(),
     }
 
 
@@ -257,9 +416,9 @@ APP_HTML = r"""<!doctype html>
       <h2>LLM 설정</h2>
       <label class="checkrow"><input id="useLlm" type="checkbox" checked disabled /> v5 EmoNet trace + v6 Ruca GUI</label>
       <label for="provider">Provider</label>
-      <select id="provider"><option value="openai_compatible">OpenAI compatible</option><option value="anthropic">Anthropic</option></select>
-      <label for="baseUrl">Base URL</label><input id="baseUrl" value="http://127.0.0.1:11434/v1" />
-      <label for="modelName">Model</label><input id="modelName" value="qwen3:14b" />
+      <select id="provider"><option value="gemini">Gemini</option><option value="openai_compatible">OpenAI compatible</option><option value="anthropic">Anthropic</option></select>
+      <label for="baseUrl">Base URL</label><input id="baseUrl" value="https://generativelanguage.googleapis.com/v1beta" />
+      <label for="modelName">Model</label><input id="modelName" value="gemini-2.5-flash" />
       <label for="apiKey">API key</label><input id="apiKey" type="password" autocomplete="off" placeholder="optional" />
       <div class="row">
         <div><label for="maxTokens">Max tokens</label><input id="maxTokens" type="number" min="128" step="64" value="900" /></div>
@@ -280,19 +439,23 @@ APP_HTML = r"""<!doctype html>
       <div class="sub">v5 EmoNet trace를 기반으로 Ruca 캐릭터 세션을 실행하는 로컬 GUI입니다.</div>
       <div class="metrics">
         <div class="metric"><div class="name">engine</div><div id="engine" class="value">v6 GUI</div></div>
-        <div class="metric"><div class="name">model</div><div id="model" class="value">qwen3:14b</div></div>
+        <div class="metric"><div class="name">model</div><div id="model" class="value">gemini-2.5-flash</div></div>
         <div class="metric"><div class="name">conditioning</div><div id="conditioning" class="value">hybrid_trace</div></div>
         <div class="metric"><div class="name">branch len</div><div id="branchLen" class="value">-</div></div>
       </div>
       <div id="error" class="error hidden"></div>
       <div id="chatlog" class="chatlog"></div>
-      <div class="composer"><textarea id="message" placeholder="바로 말해줘. Enter로 보내고, Shift+Enter로 줄바꿈할 수 있어."></textarea><button id="send" class="primary">보내기</button></div>
+      <div class="composer"><textarea id="message" placeholder="바로 말해줘. Enter로 보내고, Shift+Enter로 줄바꿈."></textarea><button id="send" class="primary">보내기</button></div>
     </main>
   </div>
 <script>
 let messages = [];
 let latestDebug = null;
 let status = {};
+let tickTimer = null;
+let tickInFlight = false;
+let sendInFlight = false;
+const TICK_MS = 10000;
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? "").replace(/[&<>"']/g, ch => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[ch]));
 const compact = (value, fallback = "-") => value === null || value === undefined || value === "" ? fallback : String(value);
@@ -312,9 +475,10 @@ function loadSettings() {
     saved = JSON.parse(localStorage.getItem("ruca_v6_gui_settings") || localStorage.getItem("ruca_v5_gui_settings") || "{}");
   } catch (_err) {}
   const defaults = status.default_config || {};
-  $("provider").value = saved.provider || defaults.provider || "openai_compatible";
-  $("baseUrl").value = saved.base_url || defaults.base_url || "http://127.0.0.1:11434/v1";
-  $("modelName").value = saved.model_name || defaults.model_name || "qwen3:14b";
+  const preferGemini = !!status.env?.gemini_key;
+  $("provider").value = preferGemini ? "gemini" : (saved.provider || defaults.provider || "gemini");
+  $("baseUrl").value = preferGemini ? "https://generativelanguage.googleapis.com/v1beta" : (saved.base_url || defaults.base_url || "https://generativelanguage.googleapis.com/v1beta");
+  $("modelName").value = preferGemini ? "gemini-2.5-flash" : (saved.model_name || defaults.model_name || "gemini-2.5-flash");
   $("maxTokens").value = saved.max_tokens || String(defaults.max_tokens || 900);
   $("temperature").value = saved.temperature || "0.45";
   $("conditioningMode").value = saved.conditioning_mode || defaults.conditioning_mode || "hybrid_trace";
@@ -343,14 +507,13 @@ function render() {
   $("model").textContent = compact((latestDebug || {}).llm_model_name, $("modelName").value);
   $("conditioning").textContent = compact((latestDebug || {}).conditioning_mode, $("conditioningMode").value);
   $("branchLen").textContent = compact((latestDebug || {}).dominant_branch_len);
-  $("envState").textContent = `engine: ${status.engine || ""}\nartifact_root: ${status.artifact_root || ""}\nOPENAI_API_KEY=${status.env?.openai_key ? "set" : "missing"} / ANTHROPIC_API_KEY=${status.env?.anthropic_key ? "set" : "missing"}`;
-  $("paths").textContent = `session: ${status.paths?.session || ""}\nhistory: ${status.paths?.history || ""}\nlog: ${status.paths?.log || ""}`;
+  const tick = status.tick_state || {};
+  $("envState").textContent = `engine: ${status.engine || ""}\nartifact_root: ${status.artifact_root || ""}\ntick: ${tick.decision || "silent"} / pressure=${compact(tick.pressure)} / silence=${compact(tick.silence_seconds)}s\nGEMINI_API_KEY=${status.env?.gemini_key ? "set" : "missing"} / OPENAI_API_KEY=${status.env?.openai_key ? "set" : "missing"} / ANTHROPIC_API_KEY=${status.env?.anthropic_key ? "set" : "missing"}`;
+  $("paths").textContent = `session: ${status.paths?.session || ""}\nhistory: ${status.paths?.history || ""}\nlog: ${status.paths?.log || ""}\ntick: ${status.paths?.tick || ""}`;
   $("logPanel").classList.toggle("hidden", !$("showLogs").checked);
   $("logs").textContent = (status.logs || []).map(item => JSON.stringify(item)).join("\n");
-  const visibleMessages = messages.length ? messages : [{ role:"assistant", content:"좋아. 바로 말해줘.", starter:true }];
-  $("chatlog").innerHTML = visibleMessages.map(message => {
+  $("chatlog").innerHTML = messages.map(message => {
     const bubble = `<div class="msg ${esc(message.role)}">${esc(message.content)}</div>`;
-    if (message.starter) return bubble;
     const summary = message.summary && $("showDebug").checked ? debugHtml(message.summary) : "";
     return bubble + (message.debug ? debugHtml(message.debug) : summary);
   }).join("");
@@ -372,19 +535,14 @@ async function loadStatus() {
 }
 async function sendMessage() {
   const text = $("message").value.trim();
-  if (!text) return;
+  if (!text || sendInFlight) return;
   $("error").classList.add("hidden");
-  $("send").disabled = true;
-  $("send").textContent = "전송 중...";
+  sendInFlight = true;
   messages.push({ role:"user", content:text });
   render();
   saveSettings();
   try {
-    const payload = await api("/api/chat", {
-      message:text, provider:$("provider").value, base_url:$("baseUrl").value, model_name:$("modelName").value,
-      api_key:$("apiKey").value, max_tokens:$("maxTokens").value, temperature:$("temperature").value, conditioning_mode:$("conditioningMode").value,
-      affect_input_mode:$("affectInputMode").value, style_profile:"extended40"
-    });
+    const payload = await api("/api/chat", { message:text, ...requestConfig() });
     latestDebug = payload.record;
     messages.push({ role:"assistant", content:payload.assistant_text, debug:payload.record });
     status = payload.status;
@@ -393,13 +551,42 @@ async function sendMessage() {
     $("error").textContent = err.message;
     $("error").classList.remove("hidden");
   } finally {
-    $("send").disabled = false;
-    $("send").textContent = "보내기";
+    sendInFlight = false;
     render();
   }
 }
+function requestConfig() {
+  return {
+    provider:$("provider").value, base_url:$("baseUrl").value, model_name:$("modelName").value,
+    api_key:$("apiKey").value, max_tokens:$("maxTokens").value, temperature:$("temperature").value,
+    conditioning_mode:$("conditioningMode").value, affect_input_mode:$("affectInputMode").value, style_profile:"extended40"
+  };
+}
+async function tickOnce() {
+  if (tickInFlight) return;
+  tickInFlight = true;
+  try {
+    const payload = await api("/api/tick", requestConfig());
+    status = payload.status;
+    messages = status.messages || messages;
+    if (payload.record) latestDebug = payload.record;
+    render();
+  } catch (err) {
+    $("error").textContent = err.message;
+    $("error").classList.remove("hidden");
+  } finally {
+    tickInFlight = false;
+  }
+}
+function startTickLoop() {
+  if (tickTimer) clearInterval(tickTimer);
+  tickTimer = setInterval(tickOnce, TICK_MS);
+}
 $("provider").onchange = () => {
-  if ($("provider").value === "anthropic") {
+  if ($("provider").value === "gemini") {
+    $("baseUrl").value = "https://generativelanguage.googleapis.com/v1beta";
+    $("modelName").value = "gemini-2.5-flash";
+  } else if ($("provider").value === "anthropic") {
     $("baseUrl").value = "https://api.anthropic.com";
     $("modelName").value = "claude-haiku-4-5-20251001";
   } else {
@@ -419,7 +606,7 @@ for (const id of ["baseUrl", "modelName", "maxTokens", "temperature", "condition
   $(id).onchange = () => { saveSettings(); render(); };
 }
 $("resetState").onclick = async () => { await api("/api/reset", {}); messages = []; latestDebug = null; await loadStatus(); };
-loadStatus().then(() => $("message").focus());
+loadStatus().then(() => { $("message").focus(); startTickLoop(); });
 </script>
 </body>
 </html>
@@ -471,47 +658,45 @@ class RucaGuiHandler(BaseHTTPRequestHandler):
                 if not text:
                     self._error(HTTPStatus.BAD_REQUEST, "message is empty")
                     return
-                history = _load_history()
-                session = _load_character_session()
-                config = _generation_config(payload)
-                result = generate_chat_turn(
-                    runtime=_runtime_instance(),
-                    generation_config=config,
-                    input_text=text,
-                    history=history,
-                    character_session=session,
-                )
-                next_history = history + [
-                    {"role": "user", "content": text},
-                    {"role": "assistant", "content": result.assistant_text, "record": result.record},
-                ]
-                _save_history(next_history)
-                _save_character_session(result.character_session)
-                _append_log(
-                    "v5_chat_turn",
-                    {
-                        "user_text": text,
-                        "assistant_text": result.assistant_text,
-                        "model": result.record.get("llm_model_name"),
-                        "conditioning_mode": result.record.get("conditioning_mode"),
-                        "affect_input_mode": result.record.get("affect_input_mode"),
-                        "dominant_branch_len": result.record.get("dominant_branch_len"),
-                        "trace_summary_text": result.record.get("trace_summary_text"),
-                    },
-                )
                 self._json(
                     HTTPStatus.OK,
-                    {
-                        "assistant_text": result.assistant_text,
-                        "record": result.record,
-                        "status": _status_payload(),
-                    },
+                    _generate_and_persist_turn(
+                        payload=payload,
+                        input_text=text,
+                        save_user_message=True,
+                        log_event="v5_chat_turn",
+                    ),
                 )
+            elif parsed.path == "/api/tick":
+                payload = _read_json(self)
+                tick = _tick_state()
+                if tick.get("decision") != "speak_candidate":
+                    self._json(HTTPStatus.OK, {"status": _status_payload(), "tick_state": tick})
+                    return
+                tick_text = (
+                    "NO_REPLY_TICK\n"
+                    f"elapsed_seconds: {tick.get('silence_seconds')}\n"
+                    f"pressure: {tick.get('pressure')}\n"
+                    "No new user message arrived. Do not perform reassurance or service politeness. "
+                    "Speak only if the current trace/drive has crossed into an impulse to speak; otherwise return only natural silence."
+                )
+                result = _generate_and_persist_turn(
+                    payload=payload,
+                    input_text=tick_text,
+                    save_user_message=False,
+                    log_event="v5_tick_speak",
+                )
+                updated = dict(tick)
+                updated["last_spoke_tick"] = tick.get("tick_count", 0)
+                updated["decision"] = "spoke" if result.get("assistant_text") else "silent_after_gate"
+                _write_tick_state(updated)
+                result["status"] = _status_payload()
+                result["tick_state"] = updated
+                self._json(HTTPStatus.OK, result)
             elif parsed.path == "/api/reset":
-                for path in (SESSION_PATH, HISTORY_PATH, LOG_PATH):
+                for path in (SESSION_PATH, HISTORY_PATH, LOG_PATH, TICK_STATE_PATH):
                     if path.exists():
                         path.unlink()
-                _append_log("reset", {"engine": "v6_gui"})
                 self._json(HTTPStatus.OK, _status_payload())
             else:
                 self._error(HTTPStatus.NOT_FOUND, "not found")

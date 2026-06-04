@@ -317,7 +317,7 @@ def build_character_context_prompt(
             "- 캐릭터는 사용자의 답을 기다리기만 하지 않는다. 내부 감정이 길게 남으면 먼저 짧게 말을 걸거나 장면을 붙잡는다.",
             "- 상담사처럼 사용자의 감정을 요약하고 해결책으로 수습하지 않는다. 캐릭터 본인에게 남은 반응을 먼저 허용한다.",
             "- 감정이 모순되면 모순된 채로 둔다. 불안한데 가까워지고 싶거나, 말하고 싶은데 멈칫하는 식의 결을 없애지 않는다.",
-            "- 행동 출력은 긍정적이다. 단, 행동 서술은 반드시 별도 줄에서 '[ACTION] '으로 시작하고 한 응답에 0~2개만 쓴다.",
+            "- 행동 서술을 형식 표지로 분리하지 않는다. 꼭 필요할 때만 자연스러운 대사 안에 짧게 녹인다.",
             "",
             "[CHARACTER_DO_NOT_SAY]",
             do_not_say_block,
@@ -329,6 +329,10 @@ def build_character_context_prompt(
             base_prompt,
             "",
             "[FINAL_INSTRUCTIONS]",
+            "- 감정 표출 여부를 임의로 정하지 않는다. FELT_SELF_STATE와 DRIVE_STATE가 만든 말하고 싶은 힘/숨기고 싶은 힘의 균형만 따른다.",
+            "- speak_impulse나 want_to_say가 강하면 내부 반응이 대사 표면으로 새어 나온다. hide_impulse나 avoid가 강하면 감정은 끊김, 회피, 짧은 말로 남는다.",
+            "- Gemini식 완곡한 위로, 상담, 긍정 포장, 안전한 일반론으로 정리하지 않는다. 최신 trace가 약하면 밋밋하게, 강하면 불균형하게 둔다.",
+            "- 감정 이름을 새로 고르지 않는다. RAW_EMONET_TRACE, FELT_SELF_STATE, DRIVE_STATE, translation_surface_raw에 없는 정서 방향은 추가하지 않는다.",
             "- 가장 최근 사용자 입력을 무시하지 않되, 답변의 감정 방향은 RAW_EMONET_TRACE와 SESSION_AFFECT_STATE에서만 가져온다.",
             "- CHARACTER_PROFILE, RELATIONSHIP_STATE, SCENE_STATE, RECENT_MEMORY, RAW_EMONET_TRACE 같은 내부 섹션명을 말하지 않는다.",
             "- SESSION_AFFECT_STATE 같은 내부 섹션명을 말하지 않는다.",
@@ -341,8 +345,8 @@ def build_character_context_prompt(
             "- 답변은 조언, 위로, 정리보다 캐릭터의 즉각적인 내부 반응을 우선한다.",
             "- 직전 응답과 같은 질문 구조를 반복하지 않는다.",
             "- 모든 문장을 질문으로 끝내지 않는다. 필요하면 캐릭터가 먼저 한 문장 말하고, 다음 말을 받을 공간만 남긴다.",
-            "- 행동, 표정, 몸짓, 침묵을 서술할 때는 반드시 '[ACTION] ' 줄로 쓴다. 예: [ACTION] 한 발 물러선다.",
-            "- [ACTION] 줄은 짧게 쓰고, 한 응답에서 2개를 넘기지 않는다.",
+            "- 행동, 표정, 몸짓, 침묵을 별도 형식 줄로 쓰지 않는다.",
+            "- '[ACTION]', JSON, 내부 지시문 같은 표지는 출력하지 않는다.",
             "- 캐릭터의 말투와 관계 상태는 유지하되, 내부 정서 상태와 충돌하면 raw 내부 정서 흐름을 우선한다.",
             "- 한국어 평문으로 답한다. 길이는 내부 흐름에 맞기되, 반복 설명이나 장황한 해설은 피한다.",
         ]
@@ -350,28 +354,29 @@ def build_character_context_prompt(
 
 
 def validate_character_response_text(response: str, plain_validator: Any) -> str:
-    raw_normalized = _normalize_action_token_lines(str(response or "").strip())
-    validation_proxy_lines: list[str] = []
-    for line in raw_normalized.splitlines():
-        stripped = line.strip()
-        if stripped.startswith("[ACTION]"):
-            action_text = stripped[len("[ACTION]") :].strip()
-            validation_proxy_lines.append(action_text or "행동한다.")
-        else:
-            validation_proxy_lines.append(line)
-    plain_validator("\n".join(validation_proxy_lines))
-    normalized = raw_normalized
+    normalized = _strip_action_token_lines(str(response or "").strip())
+    plain_validator(normalized)
     lowered = normalized.lower()
     for term in CHARACTER_RESPONSE_FORBIDDEN_TERMS:
         if term.lower() in lowered:
             raise ValueError(f"response exposes internal character or trace term: {term}")
     for line in normalized.splitlines():
         stripped = line.strip()
-        if stripped.startswith("[ACTION]"):
-            continue
         if any(pattern.search(stripped) for pattern in BROKEN_KOREAN_ENDING_PATTERNS):
             raise ValueError("response ends with an incomplete Korean phrase")
     return normalized
+
+
+def _strip_action_token_lines(response: str) -> str:
+    cleaned: list[str] = []
+    for line in str(response or "").splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped.upper().startswith("[ACTION]"):
+            continue
+        cleaned.append(stripped.replace("[ACTION]", "").strip())
+    return "\n".join(line for line in cleaned if line).strip()
 
 
 def _normalize_action_token_lines(response: str) -> str:

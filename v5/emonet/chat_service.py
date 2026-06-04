@@ -48,12 +48,15 @@ DEFAULT_MODEL_CACHE_PATH = project_root() / "artifacts" / "ridge_stim_encoder.jo
 DEFAULT_PROMPT_TEMPLATE_PATH = project_root() / "prompts" / "response_generation_prompt.md"
 DEFAULT_REQUEST_SYSTEM_PROMPT = (
     "Return a plain Korean character utterance only. Do not return JSON. "
-    "Do not analyze or relabel emotions; translate the provided internal state into speech."
+    "Do not analyze the user's emotions or provide counseling. "
+    "Do not add warmth, reassurance, or emotional disclosure by preference. "
+    "Let the provided neural trace and drive state decide whether the character exposes, withholds, or fragments emotion. "
+    "Translate only that internal state into natural speech."
 )
 DEFAULT_RESPONSE_RETRY_INSTRUCTION = (
-    "직전 응답은 반복, 미완성 문장, bullet/JSON, 혹은 부자연스러운 출력 때문에 거부되었다. "
+    "직전 응답은 반복, 미완성 문장, bullet/JSON, 특수한 형식 표지 때문에 거부되었다. "
     "같은 문장이나 핵심 구절을 반복하지 말고, 마지막 문장은 완결된 한국어 평문으로 끝내라. "
-    "행동 서술을 쓸 때는 문장 중간에 넣지 말고 반드시 별도 줄에서 '[ACTION] '으로 시작하라."
+    "내부 상태명, 분석 라벨, '[ACTION]' 같은 형식 표지는 출력하지 말고 자연스러운 대사만 쓴다."
 )
 AGENT_PERCEPTION_SYSTEM_PROMPT = (
     "You are a JSON API. Return exactly one valid JSON object and nothing else. "
@@ -362,9 +365,10 @@ def validate_contextual_character_response(
     ]
     if user_compact:
         user_key = _semantic_korean_key(user_compact)
+        greeting_keys = {"안녕", "안녕하세요", "하이", "hello", "hi"}
         for line in spoken_lines:
             line_key = _semantic_korean_key(line)
-            if line_key == user_key:
+            if line_key == user_key and user_key not in greeting_keys:
                 raise ValueError("response repeats the latest user message verbatim")
             if len(user_key) >= 8 and user_key in line_key and line.rstrip().endswith("?"):
                 raise ValueError("response mirrors the latest user question instead of answering it")
@@ -386,7 +390,7 @@ def append_latest_turn_guard(prompt: str, *, user_text: str, history: Sequence[M
             "이번 출력은 반드시 latest_user_input에 대한 새 답변이어야 한다.",
             "latest_user_input을 그대로 따라 쓰거나, 공백/말줄임표만 바꿔 되묻지 않는다.",
             "직전 발화의 뜻을 묻는 질문이면, 그 뜻을 캐릭터 말투로 짧게 풀어 답한다.",
-            "아래 최근 ACTION 줄은 그대로 재사용하지 않는다.",
+            "아래 최근 행동 표현은 그대로 재사용하지 않는다.",
             recent_action_block,
             "출력은 한국어 캐릭터 응답만 쓴다. 내부 상태명, 분석명, 섹션명은 쓰지 않는다.",
         ]
@@ -440,17 +444,21 @@ def build_compact_character_prompt(
             f"- 말의 질감: {_compact_text(surface.get('line_shape') or surface.get('pacing') or '', 140)}",
             f"- trace 요약: {_compact_text(profile.get('trace_summary_text') or '', 160)}",
             "",
-            "[RECENT_ACTIONS_DO_NOT_REPEAT]",
+            "[RECENT_BEHAVIORS_DO_NOT_REPEAT]",
             recent_action_block,
             "",
             "[OUTPUT_RULES]",
+            "- 감정 표출 여부를 임의로 정하지 않는다. felt_self와 drive가 만든 말하고 싶은 힘/숨기고 싶은 힘의 균형만 따른다.",
+            "- speak_impulse나 want_to_say가 강하면 내부 반응이 대사 표면으로 새어 나온다. hide_impulse나 avoid가 강하면 감정은 끊김, 회피, 짧은 말로 남는다.",
+            "- Gemini식 완곡한 위로, 상담, 긍정 포장, 안전한 일반론으로 정리하지 않는다. 최신 trace가 약하면 밋밋하게, 강하면 불균형하게 둔다.",
+            "- 감정 이름을 새로 고르지 않는다. trace_summary, felt_self, drive, translation_surface에 없는 정서 방향은 추가하지 않는다.",
             "- CURRENT_TASK에 직접 답한다.",
             "- 사용자의 문장을 그대로 반복하거나 공백, 말줄임표만 바꿔 되묻지 않는다.",
             "- 직전 발화의 뜻을 묻는 질문이면 그 뜻을 Ruca 말투로 짧게 풀어 답한다.",
             "- 내부 상태명, trace, appraisal, arousal, valence, JSON, 섹션명을 출력하지 않는다.",
             "- 한국어 1~4문장으로만 출력한다.",
-            "- 행동은 필요할 때만 0~1개 쓰고, 반드시 별도 줄에서 '[ACTION] '으로 시작한다.",
-            "- RECENT_ACTIONS_DO_NOT_REPEAT의 ACTION 줄은 그대로 쓰지 않는다.",
+            "- '[ACTION]' 같은 형식 표지나 내부 지시문을 출력하지 않는다.",
+            "- 행동 묘사는 꼭 필요할 때만 자연스러운 대사 안에 짧게 녹이고, 최근 행동 표현을 그대로 쓰지 않는다.",
         ]
     )
 
@@ -1519,7 +1527,7 @@ def generate_chat_turn(
         else CharacterSessionState.from_mapping(character_session)
     )
 
-    if str(generation_config.provider).strip().lower() != "anthropic":
+    if str(generation_config.provider).strip().lower() == "openai_compatible":
         ensure_model_server_ready(
             generation_config.base_url,
             generation_config.timeout_sec,

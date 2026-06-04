@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from typing import Any, Callable
 import urllib.error
 import urllib.request
@@ -190,16 +191,10 @@ def call_openai_compatible_chat_with_usage(
     if isinstance(content, str) and content.strip():
         return content.strip(), _normalize_openai_usage(payload.get("usage") or {})
 
-<<<<<<< Updated upstream
     for field_name in ("refusal",):
         fallback = message.get(field_name)
         if isinstance(fallback, str) and fallback.strip():
             return fallback.strip(), _normalize_openai_usage(payload.get("usage") or {})
-=======
-    fallback = message.get("refusal")
-    if isinstance(fallback, str) and fallback.strip():
-        return fallback.strip(), _normalize_openai_usage(payload.get("usage") or {})
->>>>>>> Stashed changes
     raise ValueError("chat response did not contain text content")
 
 
@@ -263,6 +258,62 @@ def call_anthropic_messages_with_usage(
     }
 
 
+def call_gemini_generate_content_with_usage(
+    *,
+    base_url: str,
+    model_name: str,
+    prompt: str,
+    temperature: float,
+    max_tokens: int,
+    timeout_sec: int,
+    system_prompt: str,
+    api_key: str | None = None,
+    response_format: dict[str, Any] | None = None,
+) -> tuple[str, dict[str, int]]:
+    active_key = (api_key or os.environ.get("GEMINI_API_KEY") or "").strip()
+    if not active_key:
+        raise ValueError("Gemini provider requires GEMINI_API_KEY or sidebar API key")
+    root = (base_url or "https://generativelanguage.googleapis.com/v1beta").rstrip("/")
+    model = (model_name or "gemini-2.5-flash").strip()
+    url = f"{root}/models/{model}:generateContent?key={active_key}"
+    payload: dict[str, Any] = {
+        "systemInstruction": {"parts": [{"text": system_prompt}]},
+        "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+        "generationConfig": {
+            "temperature": float(temperature),
+            "maxOutputTokens": int(max_tokens),
+        },
+    }
+    if response_format and response_format.get("type") == "json_object":
+        payload["generationConfig"]["responseMimeType"] = "application/json"
+
+    data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    request = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"}, method="POST")
+    try:
+        with urllib.request.urlopen(request, timeout=timeout_sec) as response:
+            response_payload = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"Gemini generateContent failed ({exc.code}): {body[:800]}") from exc
+    except urllib.error.URLError as exc:
+        raise ConnectionError(f"could not reach Gemini generateContent endpoint: {exc}") from exc
+
+    chunks: list[str] = []
+    for candidate in response_payload.get("candidates") or []:
+        content = candidate.get("content") if isinstance(candidate, dict) else {}
+        for part in (content or {}).get("parts") or []:
+            if isinstance(part, dict) and isinstance(part.get("text"), str):
+                chunks.append(part["text"])
+    text = "".join(chunks).strip()
+    if not text:
+        raise ValueError("Gemini response did not contain text content")
+    usage = response_payload.get("usageMetadata") or {}
+    return text, {
+        "input_tokens": int(usage.get("promptTokenCount") or 0),
+        "output_tokens": int(usage.get("candidatesTokenCount") or 0),
+    }
+
+
 def call_chat_with_usage(
     provider: str,
     base_url: str,
@@ -288,6 +339,18 @@ def call_chat_with_usage(
             system_prompt=system_prompt,
             api_key=api_key,
             reasoning_effort=reasoning_effort,
+        )
+    if normalized_provider == "gemini":
+        return call_gemini_generate_content_with_usage(
+            base_url=base_url,
+            model_name=model_name,
+            prompt=prompt,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            timeout_sec=timeout_sec,
+            system_prompt=system_prompt,
+            api_key=api_key,
+            response_format=response_format,
         )
     return call_openai_compatible_chat_with_usage(
         base_url=base_url,

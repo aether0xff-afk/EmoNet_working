@@ -59,6 +59,10 @@ def _memory_hint(memories: tuple[MemoryItem, ...]) -> str:
     return f"가장 가까운 기억은 '{top.summary}'이다."
 
 
+def _is_silence_event(event: RucaEvent | None) -> bool:
+    return bool(event and event.event_type in {"no_reply", "silence_tick", "long_silence"})
+
+
 def _ruca_content(
     emotion_state: EmotionState,
     signals: InputSignals,
@@ -66,7 +70,7 @@ def _ruca_content(
     rookie_hint: str,
     event: RucaEvent | None,
 ) -> str:
-    if event and event.event_type in {"silence_tick", "long_silence"}:
+    if _is_silence_event(event):
         return f"말이 없는 시간을 먼저 존중한다. 상태는 갱신하되, 필요가 크지 않으면 바깥으로 밀고 나가지 않는다. {memory_hint}{rookie_hint}"
     if signals.alarm >= 0.55 or emotion_state.protective_tension >= 0.58:
         return f"사용자가 흔들리는 신호를 보인다. 먼저 붙잡고, 너무 멀리 분석하지 않는다. {memory_hint}{rookie_hint}"
@@ -82,7 +86,7 @@ def _ricky_content(
     event: RucaEvent | None,
 ) -> str:
     need = f" 남은 필요: {context.unresolved_need}." if context else ""
-    if event and event.event_type in {"silence_tick", "long_silence"}:
+    if _is_silence_event(event):
         return f"침묵 이벤트다. 최근 기억 압력과 보호 긴장이 충분하지 않으면 내부 기록만 남긴다.{need} {memory_hint}"
     if signals.curiosity >= 0.45:
         return f"질문 의도가 있다. 개념과 다음 행동을 분리해서 정리한다.{need} {memory_hint}"
@@ -94,8 +98,8 @@ def _ricky_content(
 def _rocky_content(emotion_state: EmotionState, signals: InputSignals, event: RucaEvent | None) -> str:
     if event and event.event_type == "silence_tick":
         return "지금은 먼저 치고 나가지 않는다. 대기하면서 다음 신호를 받을 준비만 한다."
-    if event and event.event_type == "long_silence":
-        return "침묵이 길어졌다. 압박하지 않는 짧은 확인 한 번은 가능하다."
+    if event and event.event_type in {"no_reply", "long_silence"}:
+        return "침묵이 길어질 수 있다. 압박하지 않는 짧은 확인이 필요한지 내부 압력을 본다."
     if signals.action_pressure >= 0.50:
         return "멈추지 말고 바로 작게 시작한다. 막히면 원인을 찾아 다시 붙인다."
     if emotion_state.protective_tension >= 0.55:

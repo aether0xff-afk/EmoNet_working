@@ -351,14 +351,11 @@ APP_HTML = r"""<!doctype html>
     .process-step { border: 1px solid rgba(174,184,192,.22); background: rgba(5,8,10,.25); border-radius: 7px; padding: 10px; }
     .process-step .step-name { color: var(--accent); font-size: 12px; font-weight: 800; text-transform: uppercase; }
     .process-step pre { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); font-size: 12px; line-height: 1.45; }
-<<<<<<< Updated upstream
     .compare-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
     .compare-card { border: 1px solid rgba(174,184,192,.24); border-radius: 8px; background: #10161a; padding: 12px; min-height: 160px; }
     .compare-card h3 { margin-top: 0; color: var(--accent); }
     .compare-card pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; margin: 0; }
-=======
     .process-copy { margin-top: 6px; color: var(--text); line-height: 1.55; }
->>>>>>> Stashed changes
     .section-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0; }
     .section-toggle h2 { margin: 0; }
     .ghost { background: transparent; border-color: var(--line); color: var(--muted); }

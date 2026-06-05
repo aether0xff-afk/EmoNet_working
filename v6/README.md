@@ -1,207 +1,138 @@
-<<<<<<< HEAD
-# Ruca/Rookie MVP Engine
+# EmoNet v6 — Ruca/Rookie autonomous runtime
 
-`v6`는 업로드된 Ruca & Rookie 통합 설계를 실제로 움직이는 최소 엔진으로 옮기는 작업선이다.
+`v6` is the executable integration line for the Ruca/Rookie character runtime.
 
-핵심 목표는 단순 캐릭터 챗봇이 아니라, 입력과 무입력 시간을 모두 사건으로 처리하고 감정 trace, 기억, 내부 목소리, 응답 gate를 통해 Ruca가 관계적 반응을 만들게 하는 것이다. LLM은 캐릭터 그 자체가 아니라 최종 문장 생성 계층으로 둔다.
+The target is not a rule-scripted chatbot. EmoNet owns the felt-state trace. The runtime only provides events, elapsed time, memory cues, relationship context, and safe delivery gates. Inner voices are a language shadow of the trace: they may explain or surface pressure, but they must not become the component that decides emotion.
 
-## Current MVP
+## Current executable slice
 
-현재 구현은 다음 상태를 실제 객체와 디버그 로그로 만든다.
+```text
+user_message or no_reply event
+  -> EmoNet trace when --emonet is enabled
+     (development rule emotion fallback only when EmoNet is not enabled,
+      or when --allow-rule-emotion-fallback is explicitly requested)
+  -> memory retrieval
+  -> Rookie turn context and plot pressure
+  -> Ruca / Ricky / Rocky inner-voice shadows
+  -> slow trait EMA and relationship graph updates
+  -> response gate
+  -> visible speaker selection
+  -> LLM expression layer or development rule composer
+  -> persistent memory and session state
+```
 
-- Ruca/Rookie/Ricky/Rocky 캐릭터 프로필
-- 사용자 입력 이벤트와 `no_reply` 무입력 이벤트
-- 감정 trace 갱신
-- 단기/장기/관계/감정 기억 저장
-- Ruca/Ricky/Rocky 내부 목소리 후보 생성
-- 자발 반응 판단과 `send_message`/`stay_silent`/`update_internal_only` 응답 gate
-- 캐릭터 trait EMA 업데이트
-- Rookie scene/plot pressure와 unresolved thread 추적
-- user/Ruca/Ricky/Rocky/Rookie 관계 graph 누적
-- Ruca/Ricky/Rocky 표면 화자 선택
-- Ruca 최종 응답 조합
+The default visible speaker is Ruca. Ricky can surface for analysis and structure requests. Rocky can surface for urgent execution requests. Rookie manages scene and plot pressure rather than speaking directly by default.
 
-기본 표면 화자는 Ruca다. 다만 분석/구조화 요청은 Ricky, 강한 실행/긴급 행동 요청은 Rocky가 제한적으로 표면 화자로 선택될 수 있다. Rookie는 직접 발화자보다 scene/plot 관점을 제공하는 계층으로 유지한다.
+## Event model
 
-## Package Layout
+`no_reply` is the standard autonomous event. It preserves the distinction between:
 
-- `ruca_engine/models.py`: 핵심 데이터 클래스
-- `ruca_engine/profiles.py`: 캐릭터 프로필 로더
-- `ruca_engine/emotion.py`: 입력/무입력 이벤트 신호 분석과 감정 trace 갱신
-- `ruca_engine/memory.py`: 메모리 저장/조회 및 Ruca 해석/감정 delta 저장
-- `ruca_engine/context.py`: Rookie 관점을 포함한 턴 맥락 분석
-- `ruca_engine/inner_voice.py`: 내부 목소리 후보 생성
-- `ruca_engine/spontaneous.py`: 자발 반응 판단
-- `ruca_engine/response_gate.py`: 표면 메시지/침묵/내부 업데이트 결정
-- `ruca_engine/trait_state.py`: 캐릭터 trait EMA 상태 갱신
-- `ruca_engine/plot_manager.py`: Rookie plot state와 장면 압력 관리
-- `ruca_engine/relationship_graph.py`: 관계 edge와 지표 누적
-- `ruca_engine/character_runtime.py`: 표면 화자 선택
-- `ruca_engine/composer.py`: Ruca 최종 응답 조합
-- `ruca_engine/session.py`: 감정 상태와 최근 턴 히스토리 지속 저장
-- `ruca_engine/prompt_builder.py`: LLM 연결용 응답 프롬프트 생성
-- `ruca_engine/pipeline.py`: 전체 이벤트 파이프라인
-- `ruca_engine/cli.py`: 단일 턴 실행 CLI
-- `data/characters/ruca_rookie_profiles.json`: 기본 캐릭터 프로필
+- `source_text`: the new user text for this event, which is empty during no-reply time
+- `reference_text`: the last useful user text carried only as context
+- `elapsed_minutes`: time since the last user message
+- `response_decision`: `send_message`, `update_internal_only`, or `stay_silent`
 
-## Run
+Legacy `silence_tick` and `long_silence` events remain available as compatibility aliases while the GUI and scheduler migrate to `no_reply`.
 
-저장소 루트에서:
+## Package layout
+
+- `ruca_engine/pipeline.py`: full event orchestration boundary
+- `ruca_engine/event_scheduler.py`: user-message, no-reply, and legacy silence normalization
+- `ruca_engine/emonet_adapter.py`: v5 EmoNet trace runtime bridge using v6 artifacts
+- `ruca_engine/emotion.py`: development fallback and no-reply signal scaffolding
+- `ruca_engine/memory.py`: short-term, long-term, relationship, and emotional memory records
+- `ruca_engine/context.py`: Rookie turn context
+- `ruca_engine/inner_voice.py`: Ruca/Ricky/Rocky language shadows
+- `ruca_engine/spontaneous.py`: spontaneous reaction candidate
+- `ruca_engine/response_gate.py`: visible-message versus internal-only decision
+- `ruca_engine/trait_state.py`: slow character trait EMA
+- `ruca_engine/plot_manager.py`: Rookie scene pressure and unresolved threads
+- `ruca_engine/relationship_graph.py`: typed relationship edges
+- `ruca_engine/character_runtime.py`: controlled visible-speaker selection
+- `ruca_engine/session.py`: persistent runtime state
+- `ruca_engine/prompt_builder.py`: LLM expression prompt
+- `ruca_engine/cli.py`: one-event CLI
+
+## Run tests
+
+From the repository root:
 
 ```powershell
 python -m unittest discover -s v6/tests -v
 ```
 
-CLI 스모크 실행:
+## CLI smoke runs
+
+Normal user message:
 
 ```powershell
 cd .\v6
 python -m ruca_engine.cli "실제로 구현하려면 어떻게 해야 할지 알려줘" --debug
 ```
 
-메모리와 세션을 파일로 유지하려면:
+Internal-only no-reply tick:
 
 ```powershell
-cd .\v6
-python -m ruca_engine.cli "나 지금 너무 불안하고 무서워" --memory .\outputs\ruca_memory.json --session .\outputs\ruca_session.json --debug
-python -m ruca_engine.cli "이제 조금 정리해줘" --memory .\outputs\ruca_memory.json --session .\outputs\ruca_session.json --debug
+python -m ruca_engine.cli --event-type no_reply --elapsed-minutes 45 --debug
 ```
 
-무입력 시간을 사건으로 tick하려면:
+Longer no-reply event that may produce a low-pressure check-in:
 
 ```powershell
-cd .\v6
-python -m ruca_engine.cli --event-type no_reply --elapsed-minutes 45 --memory .\outputs\ruca_memory.json --session .\outputs\ruca_session.json --debug
-python -m ruca_engine.cli --event-type no_reply --elapsed-minutes 180 --memory .\outputs\ruca_memory.json --session .\outputs\ruca_session.json --debug
+python -m ruca_engine.cli --event-type no_reply --elapsed-minutes 180 --debug
 ```
 
-짧은 무입력은 `update_internal_only`로 세션만 갱신하고, 긴 무입력과 내부 압력이 충분한 경우에만 `send_message`가 선택된다.
-
-## LLM Composer
-
-LLM final composer를 실제로 켜려면 API 키를 환경변수에 넣고 `--llm`을 붙인다. 기본값은 OpenAI-compatible endpoint다.
+Persistent state:
 
 ```powershell
-$env:OPENAI_API_KEY='...'
-cd .\v6
-python -m ruca_engine.cli "Ruca처럼 짧게 답해줘" --llm --debug
+python -m ruca_engine.cli "나 지금 너무 불안하고 무서워" `
+  --memory .\outputs\ruca_memory.json `
+  --session .\outputs\ruca_session.json `
+  --debug
+
+python -m ruca_engine.cli --event-type no_reply --elapsed-minutes 180 `
+  --memory .\outputs\ruca_memory.json `
+  --session .\outputs\ruca_session.json `
+  --debug
 ```
 
-로컬 Ollama/OpenAI-compatible 서버를 쓰려면 `--base-url`과 `--model-name`을 바꾼다.
+## EmoNet-authoritative mode
+
+Use `--emonet` to make the EmoNet adapter the visible runtime emotion source.
 
 ```powershell
-python -m ruca_engine.cli "Ruca처럼 짧게 답해줘" --llm --base-url http://localhost:11434/v1 --model-name gpt-oss:20b --debug
-=======
-﻿# EmoNet v6
-
-`v6` is the Ruca & Rookie autonomous character runtime line. It extends the
-`v5` character-chat MVP toward characters that keep an internal emotional life
-across time: user messages, silence ticks, internal voices, response gating,
-relationship memory, and optional EmoNet trace conditioning.
-
-```text
-user message or silence
-  -> scheduled Ruca event
-  -> emotion tick
-  -> memory and relationship lookup
-  -> internal voices
-  -> response gate
-  -> Ruca message, quiet check-in, or internal-only state update
+python -m ruca_engine.cli "지금 너무 복잡해" --emonet --debug
 ```
 
-The LLM is the required expression layer whenever Ruca is scheduled to speak.
-EmoNet, memory, relationship state, and scene state decide what Ruca is carrying
-before the LLM turns it into dialogue.
+If required artifacts or dependencies are missing, `--emonet` fails loudly. The explicit `--allow-rule-emotion-fallback` flag exists only for development diagnostics.
 
-## Current v6 Slice
+## LLM expression layer
 
-- `ruca_engine/event_scheduler.py`: normalizes user messages, short silence, and long silence into Ruca events.
-- `ruca_engine/pipeline.py`: runs one full Ruca event and records debug state.
-- `ruca_engine/emotion.py`: rule-based emotional trace update when EmoNet is not requested.
-- `ruca_engine/memory.py`: short-term and relationship memory persistence.
-- `ruca_engine/inner_voice.py`: Ruca/Ricky/Rocky private candidate voices.
-- `ruca_engine/spontaneous.py`: response gate for check-ins and silence.
-- `local_gui.py`: local browser GUI for character chat and AI dialogue tests.
+The LLM is the final wording layer, not the emotion engine.
 
-## Run
-
-From this directory:
+OpenAI-compatible endpoint:
 
 ```powershell
-$PY = "$env:USERPROFILE\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe"
-& $PY -m unittest discover -s tests -v
+python -m ruca_engine.cli "짧게 답해줘" `
+  --llm `
+  --base-url http://127.0.0.1:11434/v1 `
+  --model-name gpt-oss:120b-cloud `
+  --debug
 ```
 
-One normal turn:
+Anthropic endpoint:
 
 ```powershell
-& $PY -m ruca_engine.cli "v6를 더 개발해줘" --llm --debug
+$env:ANTHROPIC_API_KEY = "..."
+python -m ruca_engine.cli "짧게 답해줘" `
+  --llm `
+  --provider anthropic `
+  --base-url https://api.anthropic.com `
+  --api-key-env ANTHROPIC_API_KEY `
+  --model-name claude-haiku-4-5-20251001 `
+  --debug
 ```
 
-One internal-only silence tick:
+## Next implementation line
 
-```powershell
-& $PY -m ruca_engine.cli --silence --elapsed-minutes 10 --debug
-```
-
-A long silence that may produce a quiet check-in:
-
-```powershell
-& $PY -m ruca_engine.cli --elapsed-minutes 60 --llm --debug
-```
-
-Persistent memory/session:
-
-```powershell
-& $PY -m ruca_engine.cli "지금 너무 불안하고 무서워" --llm --memory .\outputs\ruca_memory.json --session .\outputs\ruca_session.json --debug
-& $PY -m ruca_engine.cli --elapsed-minutes 60 --llm --memory .\outputs\ruca_memory.json --session .\outputs\ruca_session.json --debug
-```
-
-## LLM Expression Layer
-
-When Ruca is scheduled to speak, `--llm` is required. If the LLM call fails, the
-turn fails loudly instead of fabricating a rule-based reply. Supported providers
-are `openai_compatible` and `anthropic`.
-
-```powershell
-$env:OPENAI_API_KEY = "..."
-& $PY -m ruca_engine.cli "Ruca처럼 짧게 답해줘" --llm --debug
-```
-
-For local Ollama/OpenAI-compatible servers:
-
-```powershell
-& $PY -m ruca_engine.cli "Ruca처럼 짧게 답해줘" --llm --base-url http://127.0.0.1:11434/v1 --model-name gpt-oss:120b-cloud --debug
->>>>>>> afac398b3a22494cb46fd7c4f2dfef5ffd6559a3
-```
-
-`response_gate`가 `update_internal_only` 또는 `stay_silent`를 선택한 경우 LLM composer는 호출하지 않는다. 게이트가 표면 메시지를 보내기로 한 경우에만 LLM이 최종 문장을 만든다.
-
-<<<<<<< HEAD
-## Runtime State
-
-세션 파일에는 다음 상태가 함께 저장된다.
-
-- `emotion_state`: Ruca의 현재 감정 trace
-- `trait_state`: 캐릭터별 trait EMA
-- `plot_state`: Rookie scene pressure와 unresolved threads
-- `relationship_graph`: user/Ruca/Rookie/Ricky/Rocky 관계 edge
-- `recent_history`: 최근 사용자/표면 응답 이벤트
-
-디버그 JSON에는 위 상태와 함께 `visible_speaker`, `response_decision`, `spontaneous_reaction`, `inner_voices`, `saved_memory`가 기록된다.
-
-## Design Boundary
-
-현재 버전은 PDF의 1단계에 맞춘다.
-
-- 기본 외부 발화자는 Ruca이며, Ricky/Rocky 직접 발화는 분석/실행 압력이 명확할 때만 허용한다.
-- 무입력 시간도 사건으로 처리한다.
-- 내부 목소리는 사용자에게 그대로 보이지 않는다.
-- 메모리는 대화 원문만이 아니라 Ruca의 해석, 감정 delta, 관계 효과를 함께 저장한다.
-- Rookie는 장기 플롯/scene 계층으로 확장할 수 있게 맥락 질문을 제공한다.
-- 이번 v6 런타임 통합의 사용자 표면은 CLI다. GUI 파일은 기존 흐름과 분리해 두고 이 단계에서 v6 `RucaPipeline`에 연결하지 않는다.
-=======
-The repository keeps optional research tooling for figures and ridge encoding.
-Runtime paths should fail explicitly when required model, perception, plotting,
-or trace dependencies are missing.
->>>>>>> afac398b3a22494cb46fd7c4f2dfef5ffd6559a3
+The full integration roadmap is tracked in `docs/superpowers/plans/2026-06-02-ruca-rookie-integrated-runtime-roadmap.md`.

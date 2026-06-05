@@ -6,15 +6,22 @@ v6 코드를 통째로 복사한 뒤 조금씩 지우지 않습니다. 그러면
 
 ## Phase 0: Audit
 
-Status: active
+Status: complete
 
 - [x] v6 인위적 요소 목록 작성
 - [x] 제거 대상과 유지할 경계 구분
 - [x] 금지 목록 기반 검사기 자체도 meta-rule이므로 제거
-- [ ] 학습 목표와 데이터 계약 결정
+- [x] 학습 목표와 데이터 계약 결정: v7 starts from copied v6 runtime, then routes response generation through trace packets and LLM-built episodes while preserving v6.
 
 ## Phase 1: Minimal Learned Runtime
 
+Status: active
+
+- [x] v6 base runtime copied into v7 without modifying v6
+- [x] v7 adapter points at v7 copied artifacts/runtime paths
+- [x] Trace-first episode prompt added for `use_emonet + use_llm`
+- [x] Final response prompt now uses LLM-built episode instead of branch fields in that path
+- [ ] Remove remaining branch extraction from v7 core compatibility surface
 - [ ] 입력과 다음 observable output의 데이터 계약 확인
 - [ ] 내부 구조를 선행 고정하지 않은 최소 학습 baseline 구성
 - [ ] history 저장

@@ -1036,10 +1036,12 @@ class BranchExtractor:
         topk_paths: list[BranchPath],
         branch_log: list[TickRecord],
         topk: int,
+        fallback_stim_vec: Optional[np.ndarray] = None,
     ) -> list[DominantBranchStep]:
         selected_paths = topk_paths[:topk]
         if not selected_paths:
-            raise ValueError("dominant branch could not be built because no branch path was extracted")
+            fallback = np.zeros(STIM_DIM, dtype=np.float32) if fallback_stim_vec is None else fallback_stim_vec
+            return self._fallback_branch(fallback, branch_log)
         best_path = selected_paths[0]
         return [
             DominantBranchStep(
@@ -1056,6 +1058,23 @@ class BranchExtractor:
             if branch_log[index].active_nodes:
                 return index
         return None
+
+    @staticmethod
+    def _fallback_branch(fallback_stim_vec: np.ndarray, branch_log: list[TickRecord]) -> list[DominantBranchStep]:
+        best_state: Optional[DominantBranchStep] = None
+        for record in branch_log:
+            for state in record.node_states.values():
+                state_k = 0.0 if state.K is None else float(state.K)
+                best_k = -math.inf if best_state is None else float(best_state.K)
+                if state_k > best_k:
+                    best_state = DominantBranchStep(
+                        tick=record.tick,
+                        stim_vec=state.stim_vec.copy(),
+                        K=state_k,
+                    )
+        if best_state is not None:
+            return [best_state]
+        return [DominantBranchStep(tick=0, stim_vec=fallback_stim_vec.copy(), K=0.0)]
 
 if TORCH_AVAILABLE:
     class DominantBranchEncoder(nn.Module):
@@ -1622,6 +1641,7 @@ class EmoNet:
         topk_paths = self.topk_branches or self.extract_topk_branches()
         self.dominant_branch = self.branch_extractor.build_dominant_branch(
             topk_paths=topk_paths,
+            fallback_stim_vec=self.last_base_stim_vec,
             branch_log=self.pruned_branch_log or self.state.branch_log,
             topk=self.config.topk_branches,
         )

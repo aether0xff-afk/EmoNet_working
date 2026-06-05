@@ -6,12 +6,24 @@ v7의 목표는 “규칙을 더 정교하게 만드는 것”이 아닙니다. 
 
 ## Current Phase
 
-v7은 지금 **Phase 0: 인위적 요소 감사** 단계입니다.
+v7은 지금 **Phase 1: copied base runtime + trace-first response migration** 단계입니다.
 
 - 전체 목록: [`ARTIFICIAL_ELEMENTS.md`](ARTIFICIAL_ELEMENTS.md)
 - 제거 순서: [`MIGRATION_PLAN.md`](MIGRATION_PLAN.md)
 
-아직 v6 runtime을 복사하지 않았습니다. 먼저 제거 기준을 고정하지 않으면 v6의 규칙을 이름만 바꿔 다시 가져오게 됩니다.
+v6 runtime은 v7에 복사되었습니다. v6 디렉터리는 보존하고, v7 안에서만 이주 작업을 진행합니다.
+
+현재 v7의 첫 변경점은 branch 기반 response conditioning을 우회하는 trace-first LLM path입니다.
+
+```text
+input event/history
+  -> EmoNet trace result
+  -> branch/style fields filtered out of the response prompt
+  -> LLM episode description
+  -> LLM final user-facing response
+```
+
+기존 v6 base code와 tests는 migration baseline으로 남아 있습니다. branch 관련 code는 아직 compatibility surface에 남아 있지만, `use_emonet + use_llm` response path에서는 branch field를 prompt driving signal로 사용하지 않습니다.
 
 ## Definition
 
@@ -55,4 +67,4 @@ observation stream
 
 v7 runtime에는 사람이 작성한 행동 정책이나 행동 분류표를 두지 않습니다. 외부 애플리케이션은 운영 및 보안 경계를 가질 수 있지만, 그것을 감정 상태나 캐릭터 행동으로 번역하지 않습니다.
 
-현재 scaffold는 문서와 빈 [`runtime`](runtime) 디렉터리만 포함합니다.
+현재 scaffold는 v6에서 복사된 executable runtime과 빈 [`runtime`](runtime) 디렉터리를 함께 포함합니다.

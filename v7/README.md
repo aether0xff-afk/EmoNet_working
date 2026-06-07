@@ -34,6 +34,7 @@ This directory is a clean rebuild of EmoNet v7 around an adaptive sparse recurre
 - neutral SNN state report without emotion labels
 - ThoughtModule prompt builder
 - LM Studio-generated internal-thought runner
+- LM Studio model discovery checker
 - fake-client tests that do not require a local LLM server
 
 The EventEncoder and TraceEncoder are not trained yet. Distinct trace distances at this stage show that the pipeline is wired, not that meaningful emotional dynamics have emerged.
@@ -102,6 +103,13 @@ python experiments/run_selectivity_suite.py `
 python experiments/run_internal_thought_ablation.py `
   --encoder sentence-transformer `
   --output runs/internal_thought_ablation
+```
+
+## Check LM Studio connectivity and exposed model identifiers
+
+```powershell
+python experiments/check_lmstudio.py `
+  --base-url http://localhost:1234
 ```
 
 ## Run one LM Studio-generated internal-thought feedback experiment

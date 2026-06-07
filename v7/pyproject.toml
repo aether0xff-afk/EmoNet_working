@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "emonet-v7"
-version = "0.1.0"
+version = "0.2.0"
 description = "Adaptive sparse recurrent SNN core for EmoNet v7"
 requires-python = ">=3.11,<3.13"
 dependencies = [
@@ -17,6 +17,13 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
+text = ["sentence-transformers>=3.0"]
+llm = ["openai>=1.0"]
+all = [
+  "pytest>=8.0",
+  "sentence-transformers>=3.0",
+  "openai>=1.0",
+]
 
 [tool.setuptools]
 package-dir = {"" = "src"}

@@ -18,13 +18,21 @@ class ThoughtModule:
         self.client = client
         self.module_id = module_id
 
-    def build_messages(self, *, user_text: str, state_report: dict) -> list[dict[str, str]]:
+    def build_messages(
+        self,
+        *,
+        user_text: str,
+        state_report: dict,
+        condition_instruction: str | None = None,
+    ) -> list[dict[str, str]]:
         system = (
             "너는 EmoNet 내부 사고 모듈이다. 사용자에게 직접 답하지 말고, "
             "현재 사건을 해석하는 짧은 내부 생각 하나만 작성하라. "
             "감정 라벨을 단정하지 말고, 새로운 근거가 없으면 과도하게 확신하지 말라. "
             "한 문장으로만 답하라."
         )
+        if condition_instruction:
+            system = f"{system} 추가 실험 조건: {condition_instruction}"
         user = (
             f"<user_event>\n{user_text}\n</user_event>\n\n"
             "<neutral_internal_state>\n"
@@ -36,8 +44,20 @@ class ThoughtModule:
             {"role": "user", "content": user},
         ]
 
-    def generate_internal_thought(self, *, user_text: str, state_report: dict) -> str:
-        thought = self.client.chat(self.build_messages(user_text=user_text, state_report=state_report))
+    def generate_internal_thought(
+        self,
+        *,
+        user_text: str,
+        state_report: dict,
+        condition_instruction: str | None = None,
+        temperature: float = 0.7,
+    ) -> str:
+        messages = self.build_messages(
+            user_text=user_text,
+            state_report=state_report,
+            condition_instruction=condition_instruction,
+        )
+        thought = self.client.chat(messages, temperature=temperature)
         cleaned = " ".join(thought.strip().splitlines()).strip()
         if not cleaned:
             raise RuntimeError("thought module returned an empty thought")

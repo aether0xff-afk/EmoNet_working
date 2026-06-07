@@ -15,6 +15,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 from emonet_v7.adaptive_rsnn import AdaptiveSparseRSNN  # noqa: E402
 from emonet_v7.event_encoder import EventEncoder  # noqa: E402
 from emonet_v7.lmstudio_client import LMStudioClient  # noqa: E402
+from emonet_v7.run_logger import RunLogger  # noqa: E402
 from emonet_v7.schemas import Event  # noqa: E402
 from emonet_v7.selectivity import cosine_distance  # noqa: E402
 from emonet_v7.state_bridge import build_neutral_state_report  # noqa: E402
@@ -43,6 +44,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", default="runs/lmstudio_thought_feedback")
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--quiet", action="store_true")
     return parser.parse_args()
 
 
@@ -68,10 +70,32 @@ def build_text_encoder(args: argparse.Namespace, client: LMStudioClient):
 
 def main() -> None:
     args = parse_args()
+    output = Path(args.output)
+    logger = RunLogger(output_dir=output, verbose=not args.quiet)
+    logger.section("single LM Studio thought feedback")
+    logger.log(
+        "config",
+        "실험 설정을 불러왔다.",
+        base_url=args.base_url,
+        chat_model=args.chat_model,
+        embedding_source=args.embedding_source,
+        embedding_model=args.embedding_model,
+        device=args.device,
+        seed=args.seed,
+    )
+
     torch.manual_seed(args.seed)
     device = torch.device(args.device)
+    logger.log("lmstudio.connect", "LM Studio 클라이언트를 초기화한다.")
     client = LMStudioClient(base_url=args.base_url, model=args.chat_model)
+    models = client.list_models()
+    logger.log("lmstudio.models", "LM Studio 모델 목록을 확인했다.", models=models)
+
+    logger.log("embedding.init", "텍스트 embedding encoder를 초기화한다.")
     text_encoder = build_text_encoder(args, client)
+    logger.log("embedding.ready", "Embedding encoder가 준비됐다.", output_dim=text_encoder.output_dim)
+
+    logger.log("snn.init", "EventEncoder, SNN, TraceEncoder를 초기화한다.")
     event_encoder = EventEncoder(text_embedding_dim=text_encoder.output_dim, num_neurons=128).to(device)
     snn = AdaptiveSparseRSNN(
         num_neurons=128,
@@ -82,9 +106,11 @@ def main() -> None:
     ).to(device)
     trace_encoder = TraceEncoder(num_neurons=128).to(device)
     thought_module = ThoughtModule(client)
+    logger.log("snn.ready", "SNN 구성요소가 준비됐다.", num_neurons=128, recurrent_density=0.10)
 
     initial_state = snn.initial_state(batch_size=1, device=device)
     user_event = Event("user_0", "user_message", args.user_text, "human")
+    logger.log("user_event.start", "사용자 사건을 SNN에 입력한다.", text=args.user_text)
     state_after_user, user_traces, user_z = run_event(
         event=user_event,
         text_encoder=text_encoder,
@@ -99,11 +125,17 @@ def main() -> None:
         latent_z=user_z,
         stimulation_ticks=8,
     )
+    logger.log("user_event.done", "사용자 사건 trace를 기록했다.", state_report=state_report)
+
+    logger.log("thought.request", "로컬 LLM에 내부 생각 생성을 요청한다.")
     internal_thought = thought_module.generate_internal_thought(
         user_text=args.user_text,
         state_report=state_report,
     )
+    logger.log("thought.generated", "내부 생각이 생성됐다.", thought=internal_thought)
+
     thought_event = Event("thought_0", "internal_thought", internal_thought, "module_0")
+    logger.log("thought_event.start", "내부 생각을 같은 SNN에 재입력한다.")
     _, thought_traces, thought_z = run_event(
         event=thought_event,
         text_encoder=text_encoder,
@@ -118,6 +150,17 @@ def main() -> None:
         latent_z=thought_z,
         stimulation_ticks=8,
     )
+    trace_distance = cosine_distance(user_z, thought_z)
+    logger.log(
+        "thought_event.done",
+        "내부 생각 재입력 후 trace 변화를 기록했다.",
+        state_after_thought=thought_report,
+        trace_distance=trace_distance,
+        active_ratio_delta=thought_report["active_ratio"] - state_report["active_ratio"],
+        trace_persistence_delta=thought_report["trace_persistence"] - state_report["trace_persistence"],
+        peak_spike_count_delta=thought_report["peak_spike_count"] - state_report["peak_spike_count"],
+    )
+
     result = {
         "seed": args.seed,
         "user_text": args.user_text,
@@ -127,12 +170,11 @@ def main() -> None:
         "internal_thought": internal_thought,
         "state_after_user": state_report,
         "state_after_thought": thought_report,
-        "user_to_thought_trace_distance": cosine_distance(user_z, thought_z),
+        "user_to_thought_trace_distance": trace_distance,
         "note": "Single generated-thought plumbing run. This is not evidence of emotional semantics.",
     }
-    output = Path(args.output)
-    output.mkdir(parents=True, exist_ok=True)
     (output / "result.json").write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+    logger.log("output.saved", "실험 결과 파일을 저장했다.", files=["run_log.jsonl", "result.json"], output_dir=str(output))
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
 

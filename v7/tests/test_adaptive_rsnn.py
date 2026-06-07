@@ -48,6 +48,18 @@ def test_adaptation_increases_after_forced_spike() -> None:
     assert torch.all(next_state.threshold > model.threshold_base)
 
 
+def test_active_edges_use_source_target_order() -> None:
+    model = AdaptiveSparseRSNN(num_neurons=3, recurrent_density=0.0, seed=1)
+    model.recurrent_mask.zero_()
+    model.recurrent_mask[1, 0] = 1.0  # stored as [target=1, source=0]
+    previous = torch.tensor([[1.0, 0.0, 0.0]])
+    current = torch.tensor([[0.0, 1.0, 0.0]])
+    active = model.active_edges(previous, current)
+    assert active.shape == (1, 3, 3)
+    assert active[0, 0, 1] == 1.0  # logged as [source=0, target=1]
+    assert active[0, 1, 0] == 0.0
+
+
 def test_window_returns_expected_trace_count() -> None:
     model = build_model()
     state = model.initial_state(batch_size=1, device="cpu")

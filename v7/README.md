@@ -12,15 +12,17 @@ This directory is a clean rebuild of EmoNet v7 around an adaptive sparse recurre
 - raw tick trace collection
 - decay experiment with CSV and PNG outputs
 
-### Milestone 2: semantic event wiring
+### Milestone 2: text event wiring
 
 - Event schema for user messages and future internal thoughts
 - trainable EventEncoder from frozen text embeddings to SNN currents
 - GRU TraceEncoder that compresses raw traces into latent z
 - offline deterministic hash encoder for wiring smoke tests
-- multilingual sentence-transformers adapter for real semantic experiments
+- multilingual sentence-transformers adapter for semantic input plumbing checks
 - LM Studio client boundary for later local model calls
-- selectivity experiment with pairwise embedding and trace distances
+- selectivity script with pairwise embedding and trace distances
+
+The EventEncoder and TraceEncoder are not trained yet. Distinct trace distances at this stage show that the pipeline is wired, not that meaningful emotional dynamics have emerged.
 
 ## Install
 
@@ -31,7 +33,7 @@ py -3.11 -m venv .venv
 pip install -e .[dev]
 ```
 
-For real multilingual embeddings:
+For multilingual embeddings:
 
 ```powershell
 pip install sentence-transformers
@@ -57,7 +59,7 @@ python experiments/run_selectivity.py --encoder hash --output runs/selectivity_h
 
 Hash mode verifies deterministic wiring only. It is not a semantic experiment.
 
-## Run real multilingual semantic selectivity experiment
+## Run multilingual input plumbing check
 
 ```powershell
 python experiments/run_selectivity.py `
@@ -72,4 +74,4 @@ The later internal-thought feedback loop will use LM Studio. Provide the local s
 
 ## Scope boundary
 
-Milestone 2 still excludes LLM-generated internal thoughts, STDP, rewiring, predefined emotion axes, and predefined emotion clusters. Those features are added only after semantic trace selectivity is reviewed.
+Milestone 2 still excludes trained semantic dynamics, LLM-generated internal thoughts, STDP, rewiring, predefined emotion axes, and predefined emotion clusters. Those features are added only after the base text-to-trace plumbing is reviewed.

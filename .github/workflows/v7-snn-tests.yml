@@ -1,0 +1,39 @@
+name: v7-snn-tests
+
+on:
+  pull_request:
+    paths:
+      - "v7/**"
+      - ".github/workflows/v7-snn-tests.yml"
+  push:
+    branches:
+      - feature/v7-snn-rebuild
+    paths:
+      - "v7/**"
+      - ".github/workflows/v7-snn-tests.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: v7
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install package and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Compile Python sources
+        run: python -m compileall -q .
+      - name: Run unit tests
+        run: pytest -q
+      - name: Run decay smoke experiment
+        run: python experiments/run_decay.py --config configs/v7_0_default.yaml --output runs/ci_decay
+      - name: Run selectivity wiring smoke experiment
+        run: python experiments/run_selectivity.py --encoder hash --output runs/ci_selectivity

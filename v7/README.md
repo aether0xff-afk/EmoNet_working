@@ -2,28 +2,74 @@
 
 This directory is a clean rebuild of EmoNet v7 around an adaptive sparse recurrent spiking neural network.
 
-## Current milestone
+## Implemented milestones
 
-Milestone 1: SNN heartbeat
+### Milestone 1: SNN heartbeat
 
 - ALIF-style adaptive neurons
 - fixed sparse recurrent mask
 - event window simulation
 - raw tick trace collection
 - decay experiment with CSV and PNG outputs
-- unit tests for mask generation, adaptation, decay, and deterministic seeds
 
-## Run
+### Milestone 2: semantic event wiring
+
+- Event schema for user messages and future internal thoughts
+- trainable EventEncoder from frozen text embeddings to SNN currents
+- GRU TraceEncoder that compresses raw traces into latent z
+- offline deterministic hash encoder for wiring smoke tests
+- multilingual sentence-transformers adapter for real semantic experiments
+- LM Studio client boundary for later local model calls
+- selectivity experiment with pairwise embedding and trace distances
+
+## Install
 
 ```powershell
 cd v7
 py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -e .[dev]
-python experiments/run_decay.py --config configs/v7_0_default.yaml --output runs/decay_seed42
-pytest
 ```
+
+For real multilingual embeddings:
+
+```powershell
+pip install sentence-transformers
+```
+
+For later LM Studio calls:
+
+```powershell
+pip install openai
+```
+
+## Run heartbeat
+
+```powershell
+python experiments/run_decay.py --config configs/v7_0_default.yaml --output runs/decay_seed42
+```
+
+## Run Milestone 2 offline smoke test
+
+```powershell
+python experiments/run_selectivity.py --encoder hash --output runs/selectivity_hash_seed42
+```
+
+Hash mode verifies deterministic wiring only. It is not a semantic experiment.
+
+## Run real multilingual semantic selectivity experiment
+
+```powershell
+python experiments/run_selectivity.py `
+  --encoder sentence-transformer `
+  --model sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2 `
+  --output runs/selectivity_multilingual_seed42
+```
+
+## LM Studio boundary
+
+The later internal-thought feedback loop will use LM Studio. Provide the local server base address and loaded model identifier when that milestone starts.
 
 ## Scope boundary
 
-The first milestone intentionally excludes text embeddings, LLM calls, STDP, rewiring, predefined emotion axes, and predefined emotion clusters. Those features are added only after the base dynamics are stable.
+Milestone 2 still excludes LLM-generated internal thoughts, STDP, rewiring, predefined emotion axes, and predefined emotion clusters. Those features are added only after semantic trace selectivity is reviewed.

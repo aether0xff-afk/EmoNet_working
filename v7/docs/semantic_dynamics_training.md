@@ -68,6 +68,29 @@ The comparison output is saved to:
 runs/state_persistence_ablation_lmstudio/comparison.json
 ```
 
+## Repeat the baseline across seeds
+
+```powershell
+python experiments/run_state_persistence_multiseed.py `
+  --encoder lmstudio `
+  --base-url http://127.0.0.1:1234 `
+  --embedding-model text-embedding-nomic-embed-text-v1.5 `
+  --epochs 30 `
+  --seeds 7 13 21 42 100 `
+  --output runs/state_persistence_multiseed_lmstudio
+```
+
+Multi-seed outputs:
+
+```text
+run_log.jsonl
+by_seed.csv
+summary.json
+seed_7/comparison.json
+seed_13/comparison.json
+...
+```
+
 ## Interpretation rule
 
 ```text
@@ -78,4 +101,4 @@ reset_each_transition best validation loss
 
 is evidence that preserved state contributes to the next-event objective on this fixture. It is not evidence that the state represents emotion.
 
-Repeat across seeds before making a structural claim.
+Use the multi-seed win rate and the mean reset-minus-persistent delta before making a structural claim.

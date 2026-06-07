@@ -95,6 +95,9 @@ def main() -> None:
                     "text_embedding_cosine_distance": cosine_distance(
                         left.text_embedding, right.text_embedding
                     ),
+                    "input_current_cosine_distance": cosine_distance(
+                        left.current, right.current
+                    ),
                     "trace_latent_cosine_distance": cosine_distance(
                         left.latent_z, right.latent_z
                     ),

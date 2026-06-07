@@ -19,7 +19,7 @@ def test_hash_encoder_is_deterministic_and_normalized() -> None:
     assert torch.allclose(first.norm(dim=-1), torch.ones(1))
 
 
-def test_event_encoder_shape_and_speaker_mapping() -> None:
+def test_event_encoder_shape_and_stable_speaker_mapping() -> None:
     torch.manual_seed(1)
     encoder = EventEncoder(text_embedding_dim=32, num_neurons=16)
     events = [
@@ -28,7 +28,15 @@ def test_event_encoder_shape_and_speaker_mapping() -> None:
     ]
     output = encoder(torch.randn(2, 32), events)
     assert output.shape == (2, 16)
-    assert set(encoder.speaker_to_id) == {"human", "module_0"}
+    assert encoder.speaker_id("human") == encoder.speaker_id("human")
+    assert encoder.speaker_id("module_0") == encoder.speaker_id("module_0")
+
+
+def test_speaker_mapping_does_not_depend_on_observation_order() -> None:
+    first = EventEncoder(text_embedding_dim=8, num_neurons=4)
+    second = EventEncoder(text_embedding_dim=8, num_neurons=4)
+    assert first.speaker_id("human") == second.speaker_id("human")
+    assert first.speaker_id("module_0") == second.speaker_id("module_0")
 
 
 def test_trace_encoder_shape() -> None:

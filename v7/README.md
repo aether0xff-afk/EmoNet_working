@@ -19,8 +19,22 @@ This directory is a clean rebuild of EmoNet v7 around an adaptive sparse recurre
 - GRU TraceEncoder that compresses raw traces into latent z
 - offline deterministic hash encoder for wiring smoke tests
 - multilingual sentence-transformers adapter for semantic input plumbing checks
-- LM Studio client boundary for later local model calls
-- selectivity script with pairwise embedding and trace distances
+- selectivity script with pairwise embedding, current, and trace distances
+
+### Milestone 2.1: fixture-based multi-seed checks
+
+- YAML fixtures for repeated, paraphrased, contrastive, and unrelated sentences
+- five-seed selectivity suite with mean, standard deviation, minimum, and maximum summaries
+- uploaded GitHub Actions artifacts for reproducible inspection
+
+### Milestone 3 scaffold: internal-thought feedback
+
+- EventEncoder metadata ablation flags
+- offline injected-thought suite with reassurance, negative interpretation, and uncertainty conditions
+- neutral SNN state report without emotion labels
+- ThoughtModule prompt builder
+- LM Studio-generated internal-thought runner
+- fake-client tests that do not require a local LLM server
 
 The EventEncoder and TraceEncoder are not trained yet. Distinct trace distances at this stage show that the pipeline is wired, not that meaningful emotional dynamics have emerged.
 
@@ -36,13 +50,19 @@ pip install -e .[dev]
 For multilingual embeddings:
 
 ```powershell
-pip install sentence-transformers
+pip install -e .[text]
 ```
 
 For later LM Studio calls:
 
 ```powershell
-pip install openai
+pip install -e .[llm]
+```
+
+For all optional dependencies:
+
+```powershell
+pip install -e .[all]
 ```
 
 ## Run heartbeat
@@ -68,10 +88,33 @@ python experiments/run_selectivity.py `
   --output runs/selectivity_multilingual_seed42
 ```
 
-## LM Studio boundary
+## Run the fixture-based multi-seed suite
 
-The later internal-thought feedback loop will use LM Studio. Provide the local server base address and loaded model identifier when that milestone starts.
+```powershell
+python experiments/run_selectivity_suite.py `
+  --encoder sentence-transformer `
+  --output runs/selectivity_suite
+```
+
+## Run the offline internal-thought metadata ablation
+
+```powershell
+python experiments/run_internal_thought_ablation.py `
+  --encoder sentence-transformer `
+  --output runs/internal_thought_ablation
+```
+
+## Run one LM Studio-generated internal-thought feedback experiment
+
+```powershell
+python experiments/run_lmstudio_thought_feedback.py `
+  --base-url http://localhost:1234 `
+  --chat-model <loaded-model-identifier> `
+  --output runs/lmstudio_thought_feedback
+```
+
+Provide the local server base address and loaded model identifier before running this step.
 
 ## Scope boundary
 
-Milestone 2 still excludes trained semantic dynamics, LLM-generated internal thoughts, STDP, rewiring, predefined emotion axes, and predefined emotion clusters. Those features are added only after the base text-to-trace plumbing is reviewed.
+The current code still excludes trained semantic dynamics, validated emotional meaning, STDP, rewiring, predefined emotion axes, and predefined emotion clusters. The LM Studio runner is implemented but has not yet been verified against the user's local server.

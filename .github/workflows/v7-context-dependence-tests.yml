@@ -43,6 +43,17 @@ jobs:
             --stimulation-ticks 2 \
             --output runs/ci_context_dependence_ablation \
             --quiet
+      - name: Run multi-seed context dependence smoke experiment
+        run: |
+          python experiments/run_context_dependence_multiseed.py \
+            --encoder hash \
+            --epochs 2 \
+            --num-neurons 8 \
+            --event-ticks 4 \
+            --stimulation-ticks 2 \
+            --seeds 7 42 \
+            --output runs/ci_context_dependence_multiseed \
+            --quiet
       - name: Upload context experiment outputs
         uses: actions/upload-artifact@v4
         with:

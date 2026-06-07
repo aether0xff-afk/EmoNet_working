@@ -1,4 +1,4 @@
-"""Train persistent episode dynamics with a next-event prediction objective."""
+"""Train episode dynamics with a next-event prediction objective."""
 
 from __future__ import annotations
 
@@ -38,6 +38,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--num-neurons", type=int, default=128)
     parser.add_argument("--event-ticks", type=int, default=16)
     parser.add_argument("--stimulation-ticks", type=int, default=6)
+    parser.add_argument("--state-policy", choices=["persistent", "reset_each_transition"], default="persistent")
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--quiet", action="store_true")
@@ -65,10 +66,13 @@ def run_episode(
     predictor: NextEventPredictor,
     event_ticks: int,
     stimulation_ticks: int,
+    state_policy: str,
     device: torch.device,
 ) -> tuple[torch.Tensor, dict[str, float]]:
-    """Run one persistent episode and return its mean objective."""
+    """Run one episode and return its mean objective."""
 
+    if state_policy not in {"persistent", "reset_each_transition"}:
+        raise ValueError(f"unsupported state policy: {state_policy}")
     state = snn.initial_state(batch_size=1, device=device)
     losses = []
     next_event_values = []
@@ -76,6 +80,8 @@ def run_episode(
     inactive_values = []
     stability_values = []
     for transition in iter_transitions(episode):
+        if state_policy == "reset_each_transition":
+            state = snn.initial_state(batch_size=1, device=device)
         current_embedding = text_encoder.encode([transition.current.text]).to(device)
         target_embedding = text_encoder.encode([transition.target.text]).to(device)
         current = event_encoder(current_embedding, [transition.current])
@@ -124,6 +130,7 @@ def evaluate(
     predictor: NextEventPredictor,
     event_ticks: int,
     stimulation_ticks: int,
+    state_policy: str,
     device: torch.device,
 ) -> dict[str, float]:
     event_encoder.eval()
@@ -142,6 +149,7 @@ def evaluate(
                 predictor=predictor,
                 event_ticks=event_ticks,
                 stimulation_ticks=stimulation_ticks,
+                state_policy=state_policy,
                 device=device,
             )
             rows.append(metrics)
@@ -213,6 +221,7 @@ def main() -> None:
                 predictor=predictor,
                 event_ticks=args.event_ticks,
                 stimulation_ticks=args.stimulation_ticks,
+                state_policy=args.state_policy,
                 device=device,
             )
             total.backward()
@@ -229,6 +238,7 @@ def main() -> None:
             predictor=predictor,
             event_ticks=args.event_ticks,
             stimulation_ticks=args.stimulation_ticks,
+            state_policy=args.state_policy,
             device=device,
         )
         row = {
@@ -259,6 +269,7 @@ def main() -> None:
     frame.to_csv(output / "history.csv", index=False, encoding="utf-8-sig")
     summary = {
         "encoder": args.encoder,
+        "state_policy": args.state_policy,
         "seed": args.seed,
         "epochs": args.epochs,
         "train_episode_count": len(train_episodes),

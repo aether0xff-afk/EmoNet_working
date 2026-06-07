@@ -5,6 +5,7 @@ from .event_encoder import EventEncoder
 from .schemas import Event
 from .surrogate import spike_with_surrogate_gradient
 from .trace_encoder import TraceEncoder
+from .training_window import DifferentiableWindow, run_differentiable_window
 
 __all__ = [
     "AdaptiveSparseRSNN",
@@ -14,5 +15,7 @@ __all__ = [
     "EventEncoder",
     "Event",
     "TraceEncoder",
+    "DifferentiableWindow",
+    "run_differentiable_window",
     "spike_with_surrogate_gradient",
 ]

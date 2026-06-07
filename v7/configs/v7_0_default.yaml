@@ -1,0 +1,18 @@
+seed: 42
+snn:
+  num_neurons: 128
+  recurrent_density: 0.10
+  event_ticks: 32
+  stimulation_ticks: 8
+  threshold_base: 1.0
+  adaptation_strength: 0.40
+  membrane_decay_min: 0.80
+  membrane_decay_max: 0.95
+  adaptation_decay_min: 0.90
+  adaptation_decay_max: 0.995
+  recurrent_weight_std: 0.70
+  input_weight_std: 0.10
+experiment:
+  batch_size: 1
+  input_scale: 0.5
+  idle_ticks: 120

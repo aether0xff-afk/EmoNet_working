@@ -55,6 +55,8 @@ jobs:
             --encoder sentence-transformer \
             --model sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2 \
             --output runs/ci_internal_thought_ablation
+      - name: Run self-supervised optimizer smoke experiment
+        run: python experiments/run_self_supervised_smoke.py --output runs/ci_self_supervised_smoke --steps 20
       - name: Upload experiment outputs
         uses: actions/upload-artifact@v4
         with:

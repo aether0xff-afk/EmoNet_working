@@ -44,6 +44,7 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     torch.manual_seed(args.seed)
+    device = torch.device(args.device)
     labeled_texts = [
         ("A", "친구가 답장을 하지 않았다."),
         ("A_repeat", "친구가 답장을 하지 않았다."),
@@ -59,15 +60,15 @@ def main() -> None:
     event_encoder = EventEncoder(
         text_embedding_dim=text_encoder.output_dim,
         num_neurons=num_neurons,
-    )
+    ).to(device)
     snn = AdaptiveSparseRSNN(
         num_neurons=num_neurons,
         recurrent_density=0.10,
         seed=args.seed,
         recurrent_weight_std=0.70,
         input_weight_std=0.10,
-    )
-    trace_encoder = TraceEncoder(num_neurons=num_neurons)
+    ).to(device)
+    trace_encoder = TraceEncoder(num_neurons=num_neurons).to(device)
 
     results = []
     for label, text in labeled_texts:
@@ -119,7 +120,10 @@ def main() -> None:
         "note": (
             "Hash mode is an offline wiring smoke test, not a semantic experiment."
             if args.encoder == "hash"
-            else "Sentence-transformer mode is the semantic selectivity experiment."
+            else (
+                "Sentence-transformer mode tests semantic input plumbing. "
+                "EventEncoder and TraceEncoder are still untrained random modules."
+            )
         ),
     }
     (output / "metrics.json").write_text(

@@ -43,6 +43,18 @@ jobs:
             --encoder sentence-transformer \
             --model sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2 \
             --output runs/ci_selectivity_multilingual
+      - name: Run multi-seed multilingual selectivity suite
+        run: |
+          python experiments/run_selectivity_suite.py \
+            --encoder sentence-transformer \
+            --model sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2 \
+            --output runs/ci_selectivity_suite
+      - name: Run offline internal-thought ablation suite
+        run: |
+          python experiments/run_internal_thought_ablation.py \
+            --encoder sentence-transformer \
+            --model sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2 \
+            --output runs/ci_internal_thought_ablation
       - name: Upload experiment outputs
         uses: actions/upload-artifact@v4
         with:

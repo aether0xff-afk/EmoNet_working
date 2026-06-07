@@ -4,7 +4,7 @@ from __future__ import annotations
 
 
 class LMStudioClient:
-    """Small client boundary for later internal-thought generation."""
+    """Small client boundary for local-model experiments."""
 
     def __init__(self, *, base_url: str, model: str, api_key: str = "lm-studio") -> None:
         normalized = base_url.rstrip("/")
@@ -21,6 +21,12 @@ class LMStudioClient:
                 raise RuntimeError("Install the optional 'llm' dependency to use LM Studio") from exc
             self._client = OpenAI(base_url=self.base_url, api_key=self.api_key)
         return self._client
+
+    def list_models(self) -> list[str]:
+        """Return model identifiers exposed by the local server."""
+
+        result = self._get_client().models.list()
+        return [item.id for item in result.data]
 
     def chat(self, messages: list[dict[str, str]], *, temperature: float = 0.7) -> str:
         result = self._get_client().chat.completions.create(

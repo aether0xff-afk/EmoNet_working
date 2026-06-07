@@ -130,6 +130,24 @@ class AdaptiveSparseRSNN(nn.Module):
         spike = spike_with_surrogate_gradient(membrane - threshold)
         return SNNState(membrane, spike, adaptation, threshold)
 
+    def active_edges(
+        self,
+        previous_spike: torch.Tensor,
+        current_spike: torch.Tensor,
+    ) -> torch.Tensor:
+        """Return active edge candidates with shape [batch, source, target].
+
+        Recurrent weights are stored as [target, source] because the recurrent
+        update uses ``previous_spike @ recurrent_weight.T``. The transpose below
+        exposes a source-target view for trace logging.
+        """
+
+        return (
+            previous_spike.unsqueeze(-1)
+            * current_spike.unsqueeze(-2)
+            * self.recurrent_mask.T
+        )
+
     def run_window(
         self,
         *,
@@ -147,11 +165,7 @@ class AdaptiveSparseRSNN(nn.Module):
             current = event_current if tick < stimulation_ticks else torch.zeros_like(event_current)
             previous_spike = state.spike
             state = self.step(current=current, state=state)
-            active_edges = (
-                previous_spike.unsqueeze(-1)
-                * state.spike.unsqueeze(-2)
-                * self.recurrent_mask
-            )
+            active_edges = self.active_edges(previous_spike, state.spike)
             traces.append(
                 TickTrace(
                     tick=tick,

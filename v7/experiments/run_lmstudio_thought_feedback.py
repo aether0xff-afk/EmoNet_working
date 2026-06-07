@@ -18,7 +18,10 @@ from emonet_v7.lmstudio_client import LMStudioClient  # noqa: E402
 from emonet_v7.schemas import Event  # noqa: E402
 from emonet_v7.selectivity import cosine_distance  # noqa: E402
 from emonet_v7.state_bridge import build_neutral_state_report  # noqa: E402
-from emonet_v7.text_encoder import SentenceTransformerTextEncoder  # noqa: E402
+from emonet_v7.text_encoder import (  # noqa: E402
+    LMStudioEmbeddingTextEncoder,
+    SentenceTransformerTextEncoder,
+)
 from emonet_v7.thought_module import ThoughtModule  # noqa: E402
 from emonet_v7.trace_encoder import TraceEncoder, traces_to_sequences  # noqa: E402
 
@@ -27,6 +30,11 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", required=True)
     parser.add_argument("--chat-model", required=True)
+    parser.add_argument(
+        "--embedding-source",
+        choices=["sentence-transformer", "lmstudio"],
+        default="sentence-transformer",
+    )
     parser.add_argument(
         "--embedding-model",
         default="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
@@ -52,11 +60,18 @@ def run_event(*, event, text_encoder, event_encoder, snn, trace_encoder, state, 
     return state, traces, latent_z.detach().cpu()
 
 
+def build_text_encoder(args: argparse.Namespace, client: LMStudioClient):
+    if args.embedding_source == "lmstudio":
+        return LMStudioEmbeddingTextEncoder(client, args.embedding_model)
+    return SentenceTransformerTextEncoder(args.embedding_model, args.device)
+
+
 def main() -> None:
     args = parse_args()
     torch.manual_seed(args.seed)
     device = torch.device(args.device)
-    text_encoder = SentenceTransformerTextEncoder(args.embedding_model, args.device)
+    client = LMStudioClient(base_url=args.base_url, model=args.chat_model)
+    text_encoder = build_text_encoder(args, client)
     event_encoder = EventEncoder(text_embedding_dim=text_encoder.output_dim, num_neurons=128).to(device)
     snn = AdaptiveSparseRSNN(
         num_neurons=128,
@@ -66,7 +81,6 @@ def main() -> None:
         input_weight_std=0.10,
     ).to(device)
     trace_encoder = TraceEncoder(num_neurons=128).to(device)
-    client = LMStudioClient(base_url=args.base_url, model=args.chat_model)
     thought_module = ThoughtModule(client)
 
     initial_state = snn.initial_state(batch_size=1, device=device)
@@ -107,6 +121,9 @@ def main() -> None:
     result = {
         "seed": args.seed,
         "user_text": args.user_text,
+        "chat_model": args.chat_model,
+        "embedding_source": args.embedding_source,
+        "embedding_model": args.embedding_model,
         "internal_thought": internal_thought,
         "state_after_user": state_report,
         "state_after_thought": thought_report,

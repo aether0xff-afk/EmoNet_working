@@ -67,6 +67,16 @@ jobs:
             --stimulation-ticks 3 \
             --output runs/ci_semantic_dynamics_training \
             --quiet
+      - name: Run state persistence ablation smoke experiment
+        run: |
+          python experiments/run_state_persistence_ablation.py \
+            --encoder hash \
+            --epochs 2 \
+            --num-neurons 16 \
+            --event-ticks 6 \
+            --stimulation-ticks 2 \
+            --output runs/ci_state_persistence_ablation \
+            --quiet
       - name: Upload experiment outputs
         uses: actions/upload-artifact@v4
         with:

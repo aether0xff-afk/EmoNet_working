@@ -28,7 +28,7 @@ jobs:
       - name: Install package and test dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[dev]"
+          pip install -e ".[dev,text]"
       - name: Compile Python sources
         run: python -m compileall -q .
       - name: Run unit tests
@@ -36,4 +36,15 @@ jobs:
       - name: Run decay smoke experiment
         run: python experiments/run_decay.py --config configs/v7_0_default.yaml --output runs/ci_decay
       - name: Run selectivity wiring smoke experiment
-        run: python experiments/run_selectivity.py --encoder hash --output runs/ci_selectivity
+        run: python experiments/run_selectivity.py --encoder hash --output runs/ci_selectivity_hash
+      - name: Run multilingual input plumbing experiment
+        run: |
+          python experiments/run_selectivity.py \
+            --encoder sentence-transformer \
+            --model sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2 \
+            --output runs/ci_selectivity_multilingual
+      - name: Upload experiment outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: v7-snn-experiment-results
+          path: v7/runs

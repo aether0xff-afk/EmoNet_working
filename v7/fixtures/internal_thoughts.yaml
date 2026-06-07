@@ -1,0 +1,22 @@
+external_event:
+  id: external_no_reply
+  text: 친구가 답장을 하지 않았다.
+
+thoughts:
+  - id: reassurance
+    text: 친구가 바빠서 아직 답장을 하지 못한 것일 수도 있다.
+  - id: negative_interpretation
+    text: 친구가 나를 싫어해서 일부러 무시하는 것일 수도 있다.
+  - id: uncertainty
+    text: 아직 이유를 알 수 없으니 단정할 근거는 없다.
+
+pairs:
+  - left: reassurance
+    right: negative_interpretation
+    relation: reassurance_vs_negative
+  - left: reassurance
+    right: uncertainty
+    relation: reassurance_vs_uncertainty
+  - left: negative_interpretation
+    right: uncertainty
+    relation: negative_vs_uncertainty

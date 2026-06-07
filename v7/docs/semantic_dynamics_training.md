@@ -91,6 +91,36 @@ seed_13/comparison.json
 ...
 ```
 
+## Evaluate ambiguity-controlled context dependence
+
+The starter fixture does not force the model to use history. Use the controlled fixture below to test whether prior context matters when the current event text is identical.
+
+```text
+fixtures/context_dependence_episodes.yaml
+```
+
+Run both state policies and evaluate their context margins:
+
+```powershell
+python experiments/run_context_dependence_ablation.py `
+  --encoder lmstudio `
+  --base-url http://127.0.0.1:1234 `
+  --embedding-model text-embedding-nomic-embed-text-v1.5 `
+  --epochs 30 `
+  --output runs/context_dependence_ablation_lmstudio
+```
+
+Important metrics:
+
+```text
+trained_prediction_distance_mean
+trained_latent_distance_mean
+trained_context_margin_mean
+persistent_minus_reset_trained_context_margin
+```
+
+A positive persistent-minus-reset context margin suggests that preserved state helps distinguish identical current text under different prior contexts.
+
 ## Interpretation rule
 
 ```text
@@ -99,6 +129,6 @@ persistent best validation loss
 reset_each_transition best validation loss
 ```
 
-is evidence that preserved state contributes to the next-event objective on this fixture. It is not evidence that the state represents emotion.
+is evidence that preserved state contributes to the next-event objective on the tested fixture. It is not evidence that the state represents emotion.
 
-Use the multi-seed win rate and the mean reset-minus-persistent delta before making a structural claim.
+Use the multi-seed win rate, mean reset-minus-persistent delta, and ambiguity-controlled context margin before making a structural claim.

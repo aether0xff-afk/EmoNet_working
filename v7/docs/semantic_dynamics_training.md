@@ -110,6 +110,18 @@ python experiments/run_context_dependence_ablation.py `
   --output runs/context_dependence_ablation_lmstudio
 ```
 
+Repeat the controlled context comparison across seeds:
+
+```powershell
+python experiments/run_context_dependence_multiseed.py `
+  --encoder lmstudio `
+  --base-url http://127.0.0.1:1234 `
+  --embedding-model text-embedding-nomic-embed-text-v1.5 `
+  --epochs 30 `
+  --seeds 7 13 21 42 100 `
+  --output runs/context_dependence_multiseed_lmstudio
+```
+
 Important metrics:
 
 ```text
@@ -117,6 +129,9 @@ trained_prediction_distance_mean
 trained_latent_distance_mean
 trained_context_margin_mean
 persistent_minus_reset_trained_context_margin
+positive_context_margin_rate
+context_margin_mean
+context_margin_std
 ```
 
 A positive persistent-minus-reset context margin suggests that preserved state helps distinguish identical current text under different prior contexts.

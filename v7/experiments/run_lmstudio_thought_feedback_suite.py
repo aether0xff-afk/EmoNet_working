@@ -17,6 +17,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 from emonet_v7.adaptive_rsnn import AdaptiveSparseRSNN, SNNState  # noqa: E402
 from emonet_v7.event_encoder import EventEncoder  # noqa: E402
 from emonet_v7.lmstudio_client import LMStudioClient  # noqa: E402
+from emonet_v7.run_logger import RunLogger  # noqa: E402
 from emonet_v7.schemas import Event  # noqa: E402
 from emonet_v7.selectivity import cosine_distance  # noqa: E402
 from emonet_v7.state_bridge import build_neutral_state_report  # noqa: E402
@@ -44,6 +45,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--temperature", type=float, default=0.7)
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--quiet", action="store_true")
     return parser.parse_args()
 
 
@@ -75,10 +77,33 @@ def main() -> None:
     args = parse_args()
     if args.runs_per_condition <= 0:
         raise ValueError("runs-per-condition must be positive")
+    output = Path(args.output)
+    logger = RunLogger(output_dir=output, verbose=not args.quiet)
+    logger.section("LM Studio thought feedback suite")
+    logger.log(
+        "config",
+        "실험 설정을 불러왔다.",
+        base_url=args.base_url,
+        chat_model=args.chat_model,
+        embedding_model=args.embedding_model,
+        runs_per_condition=args.runs_per_condition,
+        temperature=args.temperature,
+        device=args.device,
+        seed=args.seed,
+    )
+
     torch.manual_seed(args.seed)
     device = torch.device(args.device)
+    logger.log("lmstudio.connect", "LM Studio 클라이언트를 초기화한다.")
     client = LMStudioClient(base_url=args.base_url, model=args.chat_model)
+    models = client.list_models()
+    logger.log("lmstudio.models", "LM Studio 모델 목록을 확인했다.", models=models)
+
+    logger.log("embedding.init", "LM Studio embedding encoder를 초기화한다.")
     text_encoder = LMStudioEmbeddingTextEncoder(client, args.embedding_model)
+    logger.log("embedding.ready", "Embedding encoder가 준비됐다.", output_dim=text_encoder.output_dim)
+
+    logger.log("snn.init", "EventEncoder, SNN, TraceEncoder를 초기화한다.")
     event_encoder = EventEncoder(text_embedding_dim=text_encoder.output_dim, num_neurons=128).to(device)
     snn = AdaptiveSparseRSNN(
         num_neurons=128,
@@ -89,9 +114,11 @@ def main() -> None:
     ).to(device)
     trace_encoder = TraceEncoder(num_neurons=128).to(device)
     thought_module = ThoughtModule(client)
+    logger.log("snn.ready", "SNN 구성요소가 준비됐다.", num_neurons=128, recurrent_density=0.10)
 
     initial_state = snn.initial_state(batch_size=1, device=device)
     user_event = Event("user_0", "user_message", args.user_text, "human")
+    logger.log("user_event.start", "사용자 사건을 SNN에 입력한다.", text=args.user_text)
     state_after_user, user_traces, user_z = run_event(
         event=user_event,
         text_encoder=text_encoder,
@@ -106,16 +133,21 @@ def main() -> None:
         latent_z=user_z,
         stimulation_ticks=8,
     )
+    logger.log("user_event.done", "사용자 사건 trace를 기록했다.", state_report=state_report)
 
     rows: list[dict] = []
     for condition, instruction in CONDITIONS.items():
+        logger.section(f"condition={condition}")
+        logger.log("condition.start", "조건 반복 실행을 시작한다.", condition=condition, instruction=instruction)
         for repeat in range(args.runs_per_condition):
+            logger.log("thought.request", "내부 생각 생성을 요청한다.", condition=condition, repeat=repeat)
             thought = thought_module.generate_internal_thought(
                 user_text=args.user_text,
                 state_report=state_report,
                 condition_instruction=instruction,
                 temperature=args.temperature,
             )
+            logger.log("thought.generated", "내부 생각이 생성됐다.", condition=condition, repeat=repeat, thought=thought)
             thought_event = Event(
                 f"thought_{condition}_{repeat}",
                 "internal_thought",
@@ -136,26 +168,25 @@ def main() -> None:
                 latent_z=thought_z,
                 stimulation_ticks=8,
             )
-            rows.append(
-                {
-                    "condition": condition,
-                    "repeat": repeat,
-                    "internal_thought": thought,
-                    "trace_distance": cosine_distance(user_z, thought_z),
-                    "active_ratio_after_user": state_report["active_ratio"],
-                    "active_ratio_after_thought": thought_report["active_ratio"],
-                    "active_ratio_delta": thought_report["active_ratio"] - state_report["active_ratio"],
-                    "trace_persistence_after_user": state_report["trace_persistence"],
-                    "trace_persistence_after_thought": thought_report["trace_persistence"],
-                    "trace_persistence_delta": thought_report["trace_persistence"] - state_report["trace_persistence"],
-                    "peak_spike_count_after_user": state_report["peak_spike_count"],
-                    "peak_spike_count_after_thought": thought_report["peak_spike_count"],
-                    "peak_spike_count_delta": thought_report["peak_spike_count"] - state_report["peak_spike_count"],
-                }
-            )
+            row = {
+                "condition": condition,
+                "repeat": repeat,
+                "internal_thought": thought,
+                "trace_distance": cosine_distance(user_z, thought_z),
+                "active_ratio_after_user": state_report["active_ratio"],
+                "active_ratio_after_thought": thought_report["active_ratio"],
+                "active_ratio_delta": thought_report["active_ratio"] - state_report["active_ratio"],
+                "trace_persistence_after_user": state_report["trace_persistence"],
+                "trace_persistence_after_thought": thought_report["trace_persistence"],
+                "trace_persistence_delta": thought_report["trace_persistence"] - state_report["trace_persistence"],
+                "peak_spike_count_after_user": state_report["peak_spike_count"],
+                "peak_spike_count_after_thought": thought_report["peak_spike_count"],
+                "peak_spike_count_delta": thought_report["peak_spike_count"] - state_report["peak_spike_count"],
+            }
+            rows.append(row)
+            logger.log("trace.measured", "내부 생각 재입력 후 trace 변화를 측정했다.", **row)
+        logger.log("condition.done", "조건 반복 실행을 마쳤다.", condition=condition)
 
-    output = Path(args.output)
-    output.mkdir(parents=True, exist_ok=True)
     frame = pd.DataFrame(rows)
     frame.to_csv(output / "runs.csv", index=False, encoding="utf-8-sig")
     with (output / "runs.jsonl").open("w", encoding="utf-8") as handle:
@@ -179,6 +210,13 @@ def main() -> None:
         "note": "Controlled prompt intervention suite. Trace changes do not establish emotional semantics.",
     }
     (output / "metadata.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
+    logger.section("summary")
+    logger.log(
+        "output.saved",
+        "실험 결과 파일을 저장했다.",
+        files=["run_log.jsonl", "runs.csv", "runs.jsonl", "summary.csv", "metadata.json"],
+        output_dir=str(output),
+    )
     print(summary.to_string())
 
 

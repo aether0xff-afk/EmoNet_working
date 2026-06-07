@@ -43,7 +43,11 @@ def main() -> None:
     }
     model = AdaptiveSparseRSNN(seed=seed, **model_kwargs).to(device)
     state = model.initial_state(batch_size=int(exp_cfg["batch_size"]), device=device)
-    event_current = torch.zeros(int(exp_cfg["batch_size"]), int(snn_cfg["num_neurons"]), device=device)
+    event_current = torch.zeros(
+        int(exp_cfg["batch_size"]),
+        int(snn_cfg["num_neurons"]),
+        device=device,
+    )
     event_current[:, : max(1, int(snn_cfg["num_neurons"]) // 8)] = float(exp_cfg["input_scale"])
 
     state, traces = model.run_window(
@@ -64,11 +68,7 @@ def main() -> None:
                 spike=state.spike.detach().cpu(),
                 adaptation=state.adaptation.detach().cpu(),
                 threshold=state.threshold.detach().cpu(),
-                active_edges=(
-                    previous_spike.unsqueeze(-1)
-                    * state.spike.unsqueeze(-2)
-                    * model.recurrent_mask
-                ).detach().cpu(),
+                active_edges=model.active_edges(previous_spike, state.spike).detach().cpu(),
             )
         )
 
@@ -79,6 +79,11 @@ def main() -> None:
     frame = pd.DataFrame(rows)
     frame.to_csv(output / "tick_summary.csv", index=False)
 
+    stimulation_ticks = int(snn_cfg["stimulation_ticks"])
+    post_input = frame.loc[frame["tick"] >= stimulation_ticks]
+    post_input_nonzero = post_input.loc[post_input["active_neuron_count"] > 0]
+    total_spikes = int(frame["active_neuron_count"].sum())
+    post_input_spikes = int(post_input["active_neuron_count"].sum())
     metrics = {
         "seed": seed,
         "num_ticks": len(frame),
@@ -86,6 +91,17 @@ def main() -> None:
         "final_active_ratio": float(frame["active_ratio"].iloc[-1]),
         "membrane_abs_max": float(frame["membrane_abs_max"].max()),
         "contains_nan": bool(frame.isna().any().any()),
+        "post_input_nonzero_ticks": int(len(post_input_nonzero)),
+        "last_nonzero_tick": (
+            int(post_input_nonzero["tick"].max())
+            if not post_input_nonzero.empty
+            else None
+        ),
+        "post_input_spike_ratio": (
+            float(post_input_spikes / total_spikes)
+            if total_spikes > 0
+            else 0.0
+        ),
     }
     (output / "metrics.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")
 

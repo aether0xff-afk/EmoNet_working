@@ -13,7 +13,12 @@ from .schemas import EVENT_KIND_TO_ID, Event
 
 
 class EventEncoder(nn.Module):
-    """Convert frozen text embeddings and structural metadata into currents."""
+    """Convert frozen text embeddings into currents.
+
+    Structural metadata is available for controlled ablations but disabled by
+    default. Early multi-seed experiments showed that concatenating untrained
+    metadata embeddings reduced text-content separability.
+    """
 
     def __init__(
         self,
@@ -25,9 +30,9 @@ class EventEncoder(nn.Module):
         num_speakers: int = 256,
         hidden_dim: int = 256,
         current_scale: float = 0.75,
-        include_event_kind: bool = True,
-        include_speaker: bool = True,
-        include_elapsed_time: bool = True,
+        include_event_kind: bool = False,
+        include_speaker: bool = False,
+        include_elapsed_time: bool = False,
     ) -> None:
         super().__init__()
         self.current_scale = float(current_scale)

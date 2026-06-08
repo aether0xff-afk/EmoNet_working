@@ -139,8 +139,8 @@ class NeuronMemoryThresholdRSNN(nn.Module):
 
         input_weight = torch.randn(num_neurons, num_neurons, generator=generator)
         recurrent_weight = torch.randn(num_neurons, num_neurons, generator=generator)
-        self.input_weight = nn.Parameter(input_weight * recurrent_weight_std)
-        self.recurrent_weight = nn.Parameter(recurrent_weight * input_weight_std)
+        self.input_weight = nn.Parameter(input_weight * input_weight_std)
+        self.recurrent_weight = nn.Parameter(recurrent_weight * recurrent_weight_std)
 
         membrane_decay = torch.empty(num_neurons).uniform_(membrane_decay_min, membrane_decay_max, generator=generator)
         adaptation_decay = torch.empty(num_neurons).uniform_(adaptation_decay_min, adaptation_decay_max, generator=generator)

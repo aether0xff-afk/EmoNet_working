@@ -1,4 +1,4 @@
-"""Summarize trace semantic-alignment benchmark outputs into a decision report."""
+"""Summarize trace semantic-alignment benchmark outputs into a conservative decision report."""
 
 from __future__ import annotations
 
@@ -17,6 +17,7 @@ REQUIRED_MODELS = {
 }
 AXES = ("valence", "arousal", "certainty", "social_distance")
 FLOAT_TOLERANCE = 1e-6
+MIN_POSITIVE_RATE = 0.8
 
 
 def parse_args() -> argparse.Namespace:
@@ -65,6 +66,11 @@ def main() -> None:
     mlp_shuffle_degradation = mean_for(frame, "context_free_mlp", "shuffled_history_mae_degradation")
     mlp_reset_degradation = mean_for(frame, "context_free_mlp", "reset_history_mae_degradation")
 
+    rate_real_vs_constant = positive_rate(frame, "snn_context_contrastive", "real_minus_constant_mae_improvement")
+    rate_real_vs_text = positive_rate(frame, "snn_context_contrastive", "real_minus_text_baseline_mae_improvement")
+    rate_shuffled_degradation = positive_rate(frame, "snn_context_contrastive", "shuffled_history_mae_degradation")
+    rate_reset_degradation = positive_rate(frame, "snn_context_contrastive", "reset_history_mae_degradation")
+
     axis_means = {
         axis: {
             "real_targeted_mae": mean_for(frame, "snn_context_contrastive", f"real_{axis}_targeted_mae"),
@@ -75,9 +81,40 @@ def main() -> None:
         for axis in AXES
     }
 
+    checks = {
+        "contrastive_snn_semantic_mae_beats_constant_baseline": snn_real_mae < snn_constant_mae,
+        "contrastive_snn_semantic_mae_beats_current_text_baseline": snn_real_mae < snn_text_mae,
+        "contrastive_snn_semantics_degrade_when_history_is_shuffled": snn_shuffled_mae > snn_real_mae,
+        "contrastive_snn_semantics_degrade_when_history_is_reset": snn_reset_mae > snn_real_mae,
+        "contrastive_snn_pair_order_is_above_chance": snn_pair_order > 0.5,
+        "contrastive_snn_direction_accuracy_is_above_chance": snn_direction > 0.5,
+        "contrastive_snn_beats_next_only_mae": snn_real_mae < next_only_mae,
+        "contrastive_snn_is_not_worse_than_gru_mae": snn_real_mae <= gru_mae,
+        "contrastive_snn_seed_stability_is_sufficient": (
+            rate_real_vs_constant >= MIN_POSITIVE_RATE
+            and rate_real_vs_text >= MIN_POSITIVE_RATE
+            and rate_shuffled_degradation >= MIN_POSITIVE_RATE
+            and rate_reset_degradation >= MIN_POSITIVE_RATE
+        ),
+        "context_free_mlp_is_history_invariant": abs(mlp_shuffle_degradation) <= FLOAT_TOLERANCE and abs(mlp_reset_degradation) <= FLOAT_TOLERANCE,
+    }
+    semantic_alignment_established = all(
+        checks[key]
+        for key in (
+            "contrastive_snn_semantic_mae_beats_current_text_baseline",
+            "contrastive_snn_semantics_degrade_when_history_is_shuffled",
+            "contrastive_snn_semantics_degrade_when_history_is_reset",
+            "contrastive_snn_pair_order_is_above_chance",
+            "contrastive_snn_direction_accuracy_is_above_chance",
+            "contrastive_snn_beats_next_only_mae",
+            "contrastive_snn_seed_stability_is_sufficient",
+            "context_free_mlp_is_history_invariant",
+        )
+    )
     report = {
         "input": str(input_dir),
         "seed_count": int(frame["seed"].nunique()),
+        "stage_verdict": "established" if semantic_alignment_established else "not_established",
         "means": {
             "snn_context_contrastive_real_targeted_mae": snn_real_mae,
             "snn_context_contrastive_shuffled_targeted_mae": snn_shuffled_mae,
@@ -92,10 +129,10 @@ def main() -> None:
         },
         "axis_means_for_snn_context_contrastive": axis_means,
         "positive_rates": {
-            "snn_real_minus_constant_mae_improvement": positive_rate(frame, "snn_context_contrastive", "real_minus_constant_mae_improvement"),
-            "snn_real_minus_text_baseline_mae_improvement": positive_rate(frame, "snn_context_contrastive", "real_minus_text_baseline_mae_improvement"),
-            "snn_shuffled_history_mae_degradation": positive_rate(frame, "snn_context_contrastive", "shuffled_history_mae_degradation"),
-            "snn_reset_history_mae_degradation": positive_rate(frame, "snn_context_contrastive", "reset_history_mae_degradation"),
+            "snn_real_minus_constant_mae_improvement": rate_real_vs_constant,
+            "snn_real_minus_text_baseline_mae_improvement": rate_real_vs_text,
+            "snn_shuffled_history_mae_degradation": rate_shuffled_degradation,
+            "snn_reset_history_mae_degradation": rate_reset_degradation,
         },
         "comparisons": {
             "snn_constant_baseline_minus_real_mae": snn_constant_mae - snn_real_mae,
@@ -106,15 +143,7 @@ def main() -> None:
             "gru_minus_snn_contrastive_real_mae": gru_mae - snn_real_mae,
             "context_free_mlp_minus_snn_contrastive_real_mae": mlp_mae - snn_real_mae,
         },
-        "checks": {
-            "contrastive_snn_semantic_mae_beats_constant_baseline": snn_real_mae < snn_constant_mae,
-            "contrastive_snn_semantic_mae_beats_current_text_baseline": snn_real_mae < snn_text_mae,
-            "contrastive_snn_semantics_degrade_when_history_is_shuffled": snn_shuffled_mae > snn_real_mae,
-            "contrastive_snn_semantics_degrade_when_history_is_reset": snn_reset_mae > snn_real_mae,
-            "contrastive_snn_pair_order_is_above_chance": snn_pair_order > 0.5,
-            "contrastive_snn_direction_accuracy_is_above_chance": snn_direction > 0.5,
-            "context_free_mlp_is_history_invariant": abs(mlp_shuffle_degradation) <= FLOAT_TOLERANCE and abs(mlp_reset_degradation) <= FLOAT_TOLERANCE,
-        },
+        "checks": checks,
         "interpretation_boundary": (
             "This report evaluates coarse semantic alignment of internal traces under a controlled fixture. "
             "It does not establish ground-truth emotions, universal neuron meanings, emergent clusters, biological fidelity, or broad real-world generalization."

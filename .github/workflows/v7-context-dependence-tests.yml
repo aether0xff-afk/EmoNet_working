@@ -54,6 +54,17 @@ jobs:
             --seeds 7 42 \
             --output runs/ci_context_dependence_multiseed \
             --quiet
+      - name: Run context objective benchmark smoke experiment
+        run: |
+          python experiments/run_context_objective_benchmark.py \
+            --encoder hash \
+            --epochs 2 \
+            --num-neurons 8 \
+            --event-ticks 4 \
+            --stimulation-ticks 2 \
+            --seeds 7 \
+            --output runs/ci_context_objective_benchmark \
+            --quiet
       - name: Upload context experiment outputs
         uses: actions/upload-artifact@v4
         with:

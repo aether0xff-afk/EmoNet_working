@@ -135,6 +135,23 @@ def _candidate_new_edges(mask: np.ndarray, similarity: np.ndarray, labels: np.nd
     return candidates
 
 
+def reset_optimizer_state_for_changed_edges(
+    *,
+    optimizer: torch.optim.Optimizer,
+    parameter: torch.nn.Parameter,
+    changed_mask: torch.Tensor,
+) -> None:
+    """Clear Adam-style moments only for structurally modified edge entries."""
+
+    state = optimizer.state.get(parameter)
+    if not state:
+        return
+    mask = changed_mask.to(device=parameter.device, dtype=torch.bool)
+    for value in state.values():
+        if torch.is_tensor(value) and value.shape == parameter.shape:
+            value.masked_fill_(mask, 0.0)
+
+
 def rewire_from_memory_profiles(
     *,
     snn: NeuronMemoryThresholdRSNN,
@@ -144,8 +161,12 @@ def rewire_from_memory_profiles(
     min_clusters: int = 2,
     max_clusters: int = 8,
     new_weight_scale: float = 0.05,
-) -> RewiringReport:
-    """Rewire a fixed fraction of edges while preserving edge count."""
+) -> tuple[RewiringReport, torch.Tensor]:
+    """Rewire a fixed fraction of edges while preserving edge count.
+
+    Returns the report and a boolean mask of structurally changed weight entries
+    so the caller can clear optimizer moments only for those entries.
+    """
 
     if not 0.0 <= fraction <= 1.0:
         raise ValueError("fraction must remain in [0, 1]")
@@ -170,11 +191,13 @@ def rewire_from_memory_profiles(
     rewired_count = min(requested, len(removable), len(addable))
     removed = removable[:rewired_count]
     added = addable[:rewired_count]
+    changed_mask = torch.zeros_like(snn.recurrent_mask, dtype=torch.bool)
 
     with torch.no_grad():
         for _, target, source in removed:
             snn.recurrent_mask[target, source] = 0.0
             snn.recurrent_weight[target, source] = 0.0
+            changed_mask[target, source] = True
         for similarity_value, target, source in added:
             snn.recurrent_mask[target, source] = 1.0
             latent_sign = torch.sign(snn.recurrent_weight[target, source])
@@ -182,13 +205,14 @@ def rewire_from_memory_profiles(
                 latent_sign = torch.tensor(1.0, device=snn.recurrent_weight.device)
             scaled = new_weight_scale * (0.5 + 0.5 * similarity_value)
             snn.recurrent_weight[target, source] = latent_sign * scaled
+            changed_mask[target, source] = True
         snn.recurrent_mask.fill_diagonal_(0.0)
 
     edge_count_after = int(snn.recurrent_mask.detach().sum().item())
     if edge_count_after != edge_count_before:
         raise RuntimeError("rewiring must preserve the directed edge budget")
     sizes = [int((labels == community).sum()) for community in sorted(set(labels.tolist()))]
-    return RewiringReport(
+    report = RewiringReport(
         seed=seed,
         requested_fraction=float(fraction),
         edge_count_before=edge_count_before,
@@ -200,3 +224,4 @@ def rewire_from_memory_profiles(
         mean_added_similarity=float(np.mean([score for score, _, _ in added])) if added else 0.0,
         functional_modularity=float(functional_modularity),
     )
+    return report, changed_mask

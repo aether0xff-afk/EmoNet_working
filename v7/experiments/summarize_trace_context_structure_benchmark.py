@@ -15,8 +15,10 @@ REQUIRED_MODELS = {
     "context_free_mlp",
     "gru_context_contrastive",
 }
-STABILITY_TOLERANCE = 1e-8
-INVARIANCE_TOLERANCE = 1e-8
+# Cosine distance is computed in float32, so exact repeats and identical
+# context-free representations can differ from zero by about 1e-7.
+STABILITY_TOLERANCE = 1e-6
+INVARIANCE_TOLERANCE = 1e-6
 
 
 def parse_args() -> argparse.Namespace:

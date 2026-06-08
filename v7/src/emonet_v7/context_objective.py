@@ -129,8 +129,13 @@ class ContextFreeMLP(nn.Module):
             nn.Linear(hidden_dim, embedding_dim),
         )
 
+    def encode_context(self, current_embedding: torch.Tensor) -> torch.Tensor:
+        """Return the context-free representation used by this baseline."""
+
+        return current_embedding
+
     def forward(self, current_embedding: torch.Tensor) -> torch.Tensor:
-        return F.normalize(self.net(current_embedding), dim=-1)
+        return F.normalize(self.net(self.encode_context(current_embedding)), dim=-1)
 
 
 class GRUContextPredictor(nn.Module):
@@ -141,6 +146,11 @@ class GRUContextPredictor(nn.Module):
         self.gru = nn.GRU(input_size=embedding_dim, hidden_size=hidden_dim, batch_first=True)
         self.projection = nn.Linear(hidden_dim, embedding_dim)
 
-    def forward(self, sequence_embeddings: torch.Tensor) -> torch.Tensor:
+    def encode_context(self, sequence_embeddings: torch.Tensor) -> torch.Tensor:
+        """Return the final recurrent hidden representation."""
+
         _, hidden = self.gru(sequence_embeddings)
-        return F.normalize(self.projection(hidden[-1]), dim=-1)
+        return hidden[-1]
+
+    def forward(self, sequence_embeddings: torch.Tensor) -> torch.Tensor:
+        return F.normalize(self.projection(self.encode_context(sequence_embeddings)), dim=-1)

@@ -1,10 +1,11 @@
-"""Run rewiring stability search and cluster diagnostics in one command.
+"""Run memory baseline, rewiring stability search, and cluster diagnostics.
 
 The pipeline:
-1. searches for a semantic-preserving rewiring region,
-2. summarizes and selects the best eligible rewiring config,
-3. evaluates adjacency-community evidence on its saved checkpoints,
-4. summarizes the final community report.
+1. creates the verified memory-threshold baseline sweep when it is missing,
+2. searches for a semantic-preserving rewiring region,
+3. summarizes and selects the best eligible rewiring config,
+4. evaluates adjacency-community evidence on its saved checkpoints,
+5. summarizes the final community report.
 
 For remote LM Studio usage, set ``EMONET_LMSTUDIO_BASE_URL`` once on the
 external machine. A command-line ``--base-url`` still overrides it.
@@ -35,6 +36,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--epochs", type=int, default=30)
     parser.add_argument("--seeds", nargs="+", type=int, default=[7, 13, 21, 42, 100])
     parser.add_argument("--null-permutations", type=int, default=64)
+    parser.add_argument("--skip-baseline-auto-create", action="store_true")
     return parser.parse_args()
 
 
@@ -65,6 +67,41 @@ def read_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def ensure_memory_baseline(*, args: argparse.Namespace, seed_args: list[str]) -> None:
+    """Create the memory-threshold parameter sweep when an external machine lacks runs/."""
+
+    baseline = Path(args.baseline)
+    required = baseline / "by_seed_config.csv"
+    if required.exists():
+        print(f"\n[baseline] reuse existing result: {required}", flush=True)
+        return
+    if args.skip_baseline_auto_create:
+        raise FileNotFoundError(
+            f"baseline result is missing: {required}. Remove --skip-baseline-auto-create or copy the prior runs directory."
+        )
+    print("\n[baseline] prior runs are missing; create memory-threshold baseline sweep first.", flush=True)
+    run(
+        [
+            sys.executable,
+            str(EXPERIMENTS / "run_memory_threshold_parameter_sweep.py"),
+            "--output",
+            str(baseline),
+            "--epochs",
+            str(args.epochs),
+            *seed_args,
+            *common_remote_args(args),
+        ]
+    )
+    run(
+        [
+            sys.executable,
+            str(EXPERIMENTS / "summarize_memory_threshold_parameter_sweep.py"),
+            "--input",
+            str(baseline),
+        ]
+    )
+
+
 def main() -> None:
     args = parse_args()
     output = Path(args.output)
@@ -73,6 +110,7 @@ def main() -> None:
     output.mkdir(parents=True, exist_ok=True)
 
     seed_args = ["--seeds", *[str(seed) for seed in args.seeds]]
+    ensure_memory_baseline(args=args, seed_args=seed_args)
     run(
         [
             sys.executable,

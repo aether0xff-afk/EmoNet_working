@@ -63,10 +63,24 @@ context_margin = 0.05
 
 These are exposed as experiment arguments. They are not treated as biological constants or final architecture choices.
 
+## Validation-best checkpoint rule
+
+Use the checked entrypoint below. It reloads the checkpoint with the lowest validation total before calculating the final real-history and shuffled-history metrics.
+
+```text
+training epochs
+→ save best_checkpoint.pt when validation improves
+→ reload best_checkpoint.pt
+→ evaluate real history
+→ evaluate shuffled history
+```
+
+The original runner is retained for implementation reference. New local experiments and CI use the checked runner.
+
 ## Local LM Studio run
 
 ```powershell
-python experiments/run_context_objective_benchmark.py `
+python experiments/run_context_objective_benchmark_checked.py `
   --encoder lmstudio `
   --base-url http://127.0.0.1:1234 `
   --embedding-model text-embedding-nomic-embed-text-v1.5 `

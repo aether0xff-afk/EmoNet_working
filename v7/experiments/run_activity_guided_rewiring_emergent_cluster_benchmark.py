@@ -35,6 +35,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", default="runs/activity_guided_rewiring_semantic_benchmark_lmstudio")
     parser.add_argument("--output", default="runs/activity_guided_rewiring_emergent_cluster_lmstudio")
+    parser.add_argument("--config-key")
     parser.add_argument("--fixture", default="fixtures/semantic_alignment_episodes.yaml")
     parser.add_argument("--feedback-strength", type=float, default=0.05)
     parser.add_argument("--memory-threshold", type=float, default=0.50)
@@ -55,7 +56,9 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def checkpoint_path(input_dir: Path, seed: int) -> Path:
+def checkpoint_path(input_dir: Path, seed: int, config_key: str | None) -> Path:
+    if config_key:
+        return input_dir / "trials" / config_key / f"seed_{seed}" / MODEL_TYPE / "best_checkpoint.pt"
     return input_dir / f"seed_{seed}" / MODEL_TYPE / "best_checkpoint.pt"
 
 
@@ -104,7 +107,7 @@ def main() -> None:
             max_clusters=args.max_clusters,
             seed=seed,
         )
-        path = checkpoint_path(input_dir, seed)
+        path = checkpoint_path(input_dir, seed, args.config_key)
         if not path.exists():
             raise FileNotFoundError(f"best checkpoint not found: {path}")
         checkpoint = torch.load(path, map_location=device, weights_only=False)
@@ -150,6 +153,7 @@ def main() -> None:
         rewiring_history = checkpoint.get("rewiring_history", [])
         row = {
             "seed": seed,
+            "config_key": args.config_key or "direct_input",
             "rewiring_event_count": len(rewiring_history),
             "rewired_edges_total": int(sum(item["rewired_edge_count"] for item in rewiring_history)),
             "initial_modularity": initial_modularity,
@@ -194,11 +198,12 @@ def main() -> None:
 
     frame = pd.DataFrame(rows)
     frame.to_csv(output / "by_seed_cluster.csv", index=False, encoding="utf-8-sig")
-    numeric_columns = [column for column in frame.columns if column not in {"seed", "selected_community_sizes"}]
+    numeric_columns = [column for column in frame.columns if column not in {"seed", "config_key", "selected_community_sizes"}]
     summary = frame[numeric_columns].agg(["mean", "std", "min", "max"]).T.reset_index().rename(columns={"index": "metric"})
     summary.to_csv(output / "summary_metrics.csv", index=False, encoding="utf-8-sig")
     metadata = {
         "source_rewiring_benchmark": str(input_dir),
+        "config_key": args.config_key,
         "fixture": args.fixture,
         "seeds": args.seeds,
         "community_detection": "weighted undirected adjacency from absolute recurrent weights; normalized spectral clustering; k selected by maximum weighted modularity",

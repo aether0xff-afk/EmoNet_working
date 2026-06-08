@@ -50,13 +50,16 @@ def build_text_encoder(args: argparse.Namespace, output: Path):
     return CachedTextEncoder(encoder, output / "embedding_cache.json")
 
 
-def load_contrast_pairs(path: str | Path) -> list[dict]:
+def load_contrast_pairs(path: str | Path, *, split: str) -> list[dict]:
     with Path(path).open("r", encoding="utf-8") as handle:
         data = yaml.safe_load(handle)
     pairs = data.get("contrast_pairs") if isinstance(data, dict) else None
     if not isinstance(pairs, list) or not pairs:
         raise ValueError("fixture must contain contrast_pairs")
-    return pairs
+    selected = [pair for pair in pairs if str(pair.get("split", "validation")) == split]
+    if not selected:
+        raise ValueError(f"fixture does not contain contrast_pairs for split: {split}")
+    return selected
 
 
 def collect_outputs(
@@ -146,7 +149,7 @@ def main() -> None:
     saved_args = checkpoint["args"]
     text_encoder = build_text_encoder(args, output)
     episodes = select_split(load_episodes(args.fixture), args.split)
-    pairs = load_contrast_pairs(args.fixture)
+    pairs = load_contrast_pairs(args.fixture, split=args.split)
     if not episodes:
         raise ValueError(f"fixture does not contain split: {args.split}")
 

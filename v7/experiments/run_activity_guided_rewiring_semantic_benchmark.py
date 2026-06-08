@@ -21,7 +21,10 @@ import run_context_objective_benchmark as base
 import run_memory_threshold_semantic_benchmark as memory
 import run_trace_semantic_alignment_benchmark as semantic
 
-from emonet_v7.activity_guided_rewiring import rewire_from_memory_profiles
+from emonet_v7.activity_guided_rewiring import (
+    reset_optimizer_state_for_changed_edges,
+    rewire_from_memory_profiles,
+)
 
 
 MODEL_TYPE = "snn_memory_feedback_rewired"
@@ -50,8 +53,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--accumulation-decay", type=float, default=0.85)
     parser.add_argument("--memory-decay", type=float, default=0.98)
     parser.add_argument("--ridge-alpha", type=float, default=10.0)
+    parser.add_argument("--rewiring-start-epoch", type=int, default=10)
     parser.add_argument("--rewiring-interval", type=int, default=5)
-    parser.add_argument("--rewiring-fraction", type=float, default=0.03)
+    parser.add_argument("--rewiring-fraction", type=float, default=0.01)
     parser.add_argument("--new-weight-scale", type=float, default=0.05)
     parser.add_argument("--min-clusters", type=int, default=2)
     parser.add_argument("--max-clusters", type=int, default=8)
@@ -90,6 +94,13 @@ def collect_train_memory_profiles(*, model, episode_steps: dict[str, int], episo
     return np.stack(profiles)
 
 
+def should_rewire(*, epoch: int, start_epoch: int, interval: int) -> bool:
+    """Return whether a completed 1-indexed epoch reaches the rewiring schedule."""
+
+    completed_epoch = epoch + 1
+    return completed_epoch >= start_epoch and (completed_epoch - start_epoch) % interval == 0
+
+
 def train_one(*, seed: int, train_pairs, validation_pairs, episode_by_id, semantic_labels, text_encoder, args, device, output: Path, logger) -> dict[str, Any]:
     model = memory.build_model(
         text_dim=text_encoder.output_dim,
@@ -125,9 +136,9 @@ def train_one(*, seed: int, train_pairs, validation_pairs, episode_by_id, semant
             epoch_rows.append(metrics)
 
         rewiring_report = None
-        if (epoch + 1) % args.rewiring_interval == 0:
+        if should_rewire(epoch=epoch, start_epoch=args.rewiring_start_epoch, interval=args.rewiring_interval):
             profiles = collect_train_memory_profiles(model=model, episode_steps=train_episode_steps, episode_by_id=episode_by_id, text_encoder=text_encoder, args=args, device=device)
-            rewiring_report = rewire_from_memory_profiles(
+            report, changed_mask = rewire_from_memory_profiles(
                 snn=model.snn,
                 response_by_episode=profiles,
                 fraction=args.rewiring_fraction,
@@ -135,10 +146,16 @@ def train_one(*, seed: int, train_pairs, validation_pairs, episode_by_id, semant
                 min_clusters=args.min_clusters,
                 max_clusters=args.max_clusters,
                 new_weight_scale=args.new_weight_scale,
-            ).to_dict()
+            )
+            reset_optimizer_state_for_changed_edges(
+                optimizer=optimizer,
+                parameter=model.snn.recurrent_weight,
+                changed_mask=changed_mask,
+            )
+            rewiring_report = report.to_dict()
             rewiring_report["epoch"] = epoch
+            rewiring_report["changed_weight_entry_count"] = int(changed_mask.sum().item())
             rewiring_history.append(rewiring_report)
-            optimizer.state.pop(model.snn.recurrent_weight, None)
             logger.log("rewiring.done", "Activity-guided adjacency rewiring을 수행했다.", **rewiring_report)
 
         train_metrics = memory.aggregate(epoch_rows)
@@ -194,6 +211,8 @@ def main() -> None:
         raise ValueError("--epochs must be positive")
     if not args.seeds:
         raise ValueError("--seeds must not be empty")
+    if args.rewiring_start_epoch <= 0:
+        raise ValueError("--rewiring-start-epoch must be positive")
     if args.rewiring_interval <= 0:
         raise ValueError("--rewiring-interval must be positive")
     if not 0.0 <= args.rewiring_fraction <= 1.0:
@@ -239,9 +258,11 @@ def main() -> None:
         "memory_threshold": args.memory_threshold,
         "accumulation_decay": args.accumulation_decay,
         "memory_decay": args.memory_decay,
+        "rewiring_start_epoch": args.rewiring_start_epoch,
         "rewiring_interval": args.rewiring_interval,
         "rewiring_fraction": args.rewiring_fraction,
         "new_weight_scale": args.new_weight_scale,
+        "optimizer_state_reset_scope": "changed recurrent-weight entries only",
         "semantic_labels_used_for_training": False,
         "semantic_labels_used_for_rewiring": False,
         "rewiring_rule": "discover functional communities from train memory-strength profiles; prune weak inter-community edges; add high-coactivity intra-community edges; preserve directed edge budget",

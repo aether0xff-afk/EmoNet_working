@@ -72,11 +72,23 @@ episodes:
         text: 문제 해결 상황을 확인할 필요가 있다.
 
 contrast_pairs:
-  - left: validation_reply_busy
+  - split: train
+    left: train_reply_busy
+    right: train_reply_uncertain
+    step_index: 1
+    relation: reply_context_contrast
+  - split: train
+    left: train_project_meeting
+    right: train_project_problem
+    step_index: 1
+    relation: project_context_contrast
+  - split: validation
+    left: validation_reply_busy
     right: validation_reply_uncertain
     step_index: 1
     relation: reply_context_contrast
-  - left: validation_project_meeting
+  - split: validation
+    left: validation_project_meeting
     right: validation_project_problem
     step_index: 1
     relation: project_context_contrast

@@ -240,6 +240,12 @@ late-ignition and saturation checks, neutral trace-report framing, response
 surface softening risk, and the rule that LLMs are expression layers rather than
 the emotion engine.
 
+## Repo Hygiene
+
+Packaging is defined by `pyproject.toml` and the source tree under
+`src/emonet_v7`. Generated `*.egg-info/` metadata is not part of the canonical
+source contract and should remain untracked.
+
 ## Device Policy
 
 Experiment entrypoints use `resolve_device`:
@@ -285,3 +291,5 @@ back. Summaries record `requested_device`, `resolved_device`, and
   protocol documented for Linear issue AET-10.
 - 2026-06-11: trace meaning and response-influence evaluation framework
   documented for Linear issue AET-11.
+- 2026-06-11: generated package metadata removed from tracked source and
+  ignored for Linear issue AET-19.

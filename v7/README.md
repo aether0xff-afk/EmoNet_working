@@ -1,43 +1,22 @@
 # EmoNet v7.0 SNN Core
 
-This directory is a clean rebuild of EmoNet v7 around an adaptive sparse recurrent spiking neural network.
+This directory is a clean rebuild of EmoNet v7 around an adaptive sparse
+recurrent spiking neural network.
 
-## Implemented milestones
+## Current implementation map
 
-### Milestone 1: SNN heartbeat
+- Adaptive sparse recurrent SNN heartbeat with raw tick trace collection.
+- Text event schema, frozen embedding adapters, EventEncoder, and TraceEncoder.
+- Fixture-based selectivity and multi-seed wiring checks.
+- Neutral internal-thought feedback scaffold for local LLM experiments.
+- Persistent semantic dynamics training with validation-best checkpoints.
+- Context-dependence ablations for identical current text under different prior
+  context.
+- Memory-threshold and activity-guided rewiring ablations.
+- Explicit CPU/CUDA device selection for training entrypoints.
 
-- ALIF-style adaptive neurons
-- fixed sparse recurrent mask
-- event window simulation
-- raw tick trace collection
-- decay experiment with CSV and PNG outputs
-
-### Milestone 2: text event wiring
-
-- Event schema for user messages and future internal thoughts
-- trainable EventEncoder from frozen text embeddings to SNN currents
-- GRU TraceEncoder that compresses raw traces into latent z
-- offline deterministic hash encoder for wiring smoke tests
-- multilingual sentence-transformers adapter for semantic input plumbing checks
-- selectivity script with pairwise embedding, current, and trace distances
-
-### Milestone 2.1: fixture-based multi-seed checks
-
-- YAML fixtures for repeated, paraphrased, contrastive, and unrelated sentences
-- five-seed selectivity suite with mean, standard deviation, minimum, and maximum summaries
-- uploaded GitHub Actions artifacts for reproducible inspection
-
-### Milestone 3 scaffold: internal-thought feedback
-
-- EventEncoder metadata ablation flags
-- offline injected-thought suite with reassurance, negative interpretation, and uncertainty conditions
-- neutral SNN state report without emotion labels
-- ThoughtModule prompt builder
-- LM Studio-generated internal-thought runner
-- LM Studio model discovery checker
-- fake-client tests that do not require a local LLM server
-
-The EventEncoder and TraceEncoder are not trained yet. Distinct trace distances at this stage show that the pipeline is wired, not that meaningful emotional dynamics have emerged.
+The working architecture and decision record lives in
+`docs/implementation_spec_and_decision_log.md`.
 
 ## Install
 
@@ -123,6 +102,25 @@ python experiments/run_lmstudio_thought_feedback.py `
 
 Provide the local server base address and loaded model identifier before running this step.
 
+## Run persistent semantic dynamics training
+
+```powershell
+python experiments/train_semantic_dynamics.py `
+  --encoder lmstudio `
+  --base-url http://127.0.0.1:1234 `
+  --embedding-model text-embedding-nomic-embed-text-v1.5 `
+  --epochs 30 `
+  --device auto `
+  --output runs/semantic_dynamics_lmstudio
+```
+
+Use `--no-cuda-fallback` with `--device cuda` when a CUDA run must fail instead
+of silently using CPU. See `docs/semantic_dynamics_training.md` for the training
+contract, output files, context ablations, and the 2026-06-11 CUDA smoke record.
+
 ## Scope boundary
 
-The current code still excludes trained semantic dynamics, validated emotional meaning, STDP, rewiring, predefined emotion axes, and predefined emotion clusters. The LM Studio runner is implemented but has not yet been verified against the user's local server.
+The current code still does not establish validated emotional meaning,
+predefined emotion axes, predefined emotion clusters, biological fidelity, or
+broad real-world generalization. Context and rewiring results should be read as
+controlled fixture ablations until broader benchmarks exist.

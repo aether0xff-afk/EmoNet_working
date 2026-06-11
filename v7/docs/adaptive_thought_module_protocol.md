@@ -195,18 +195,43 @@ Already implemented:
 
 - `ThoughtModule` builds one internal thought from user text and a neutral state
   report.
+- `TwoModuleThoughtRuntime` runs a fixed two-module discussion with message
+  envelopes, per-round buffers, participation budgets, and deterministic
+  termination rules.
 - `build_neutral_state_report` creates LLM-facing reports without emotion
   labels.
 - `run_internal_thought_ablation.py` tests injected thought conditions offline.
 - `run_lmstudio_thought_feedback_suite.py` tests repeated local LLM-generated
   thought conditions.
+- `run_two_module_thought_runtime.py` provides an offline scripted smoke runner
+  for the two-module protocol.
 
 Not yet implemented:
 
-- persistent multi-module runtime loop,
 - module creation/retirement,
 - learned participation policy,
 - shared answer arbitration beyond a fixed coordinator rule.
+
+## Offline Runtime Smoke
+
+Run the deterministic two-module protocol smoke without LM Studio:
+
+```powershell
+python experiments/run_two_module_thought_runtime.py `
+  --user-text "친구가 답장을 하지 않았다." `
+  --output runs/two_module_thought_runtime_smoke
+```
+
+Output files:
+
+```text
+result.json
+messages.jsonl
+```
+
+The smoke runner uses scripted module outputs. It verifies the runtime contract,
+message envelopes, round buffer, budgets, and fixed termination rules; it does
+not evaluate generated model quality.
 
 ## Evaluation Plan
 

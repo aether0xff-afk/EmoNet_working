@@ -114,3 +114,54 @@ seed_7/<model_type>/summary.json
 ## Scope boundary
 
 This benchmark tests context-sensitive prediction. It does not establish emotional semantics, human-like appraisal, or biological fidelity.
+
+## 2026-06-11 AET-25 LM Studio Multi-Seed Run
+
+Execution:
+
+```text
+code commit: 51cf9b7a465a5d40549656a9884fbf9e106e688b
+output: runs/context_objective_benchmark_lmstudio_aet25_committed
+encoder: lmstudio
+embedding model: text-embedding-nomic-embed-text-v1.5
+base URL: https://desktop-mmlrcfk.tail93ffc6.ts.net
+device: cpu
+epochs: 30
+seeds: 7, 13, 21, 42, 100
+fixture: fixtures/context_dependence_episodes.yaml
+```
+
+Command:
+
+```powershell
+python experiments/run_context_objective_benchmark_checked.py `
+  --encoder lmstudio `
+  --base-url $env:EMONET_LMSTUDIO_BASE_URL `
+  --embedding-model text-embedding-nomic-embed-text-v1.5 `
+  --epochs 30 `
+  --seeds 7 13 21 42 100 `
+  --output runs/context_objective_benchmark_lmstudio_aet25_committed `
+  --quiet
+```
+
+Summary:
+
+| Model | Real context margin mean | Shuffled context margin mean | Real minus shuffled mean | Best validation total mean |
+| --- | ---: | ---: | ---: | ---: |
+| `snn_context_contrastive` | 0.010292 | -0.010292 | 0.020584 | 0.098093 |
+| `snn_next_only` | 0.000060 | -0.000060 | 0.000121 | 0.057802 |
+| `gru_context_contrastive` | 0.009593 | -0.009593 | 0.019186 | 0.090149 |
+| `context_free_mlp` | 0.000000 | n/a | n/a | 0.101677 |
+
+Interpretation:
+
+- The contrastive SNN used prior context on this controlled fixture: its
+  real-minus-shuffled context margin was positive across the five-seed run and
+  far above the next-event-only SNN.
+- The context-free MLP stayed at zero context margin, as expected when current
+  text is identical inside each contrast pair.
+- The GRU recurrent baseline remained competitive with the contrastive SNN.
+  This supports the narrower claim that the fixture can reward context memory;
+  it does not establish an SNN-specific advantage.
+- These results remain context-objective evidence only. They do not establish
+  emotional semantics, subjective feeling, or validated emotion labels.

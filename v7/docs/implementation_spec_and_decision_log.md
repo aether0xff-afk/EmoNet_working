@@ -212,6 +212,9 @@ This is a structural-plasticity ablation. It is useful for testing whether
 activity-derived communities improve a controlled objective, but it is not yet a
 final learning rule or biological model.
 
+The current experiment design and visualization handoff live in
+`docs/activity_guided_rewiring_experiment_design.md`.
+
 ## Legacy Migration Boundary
 
 Pre-v7 work is treated as motivation, diagnostic history, and integration
@@ -268,3 +271,5 @@ back. Summaries record `requested_device`, `resolved_device`, and
   Linear issue AET-13.
 - 2026-06-11: legacy v1-v6 experiments classified for migration in
   `docs/legacy_experiment_migration_review.md` for Linear issue AET-12.
+- 2026-06-11: activity-guided rewiring experiment design and visualization
+  handoff documented for Linear issue AET-9.

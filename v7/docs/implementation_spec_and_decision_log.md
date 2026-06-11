@@ -212,6 +212,23 @@ This is a structural-plasticity ablation. It is useful for testing whether
 activity-derived communities improve a controlled objective, but it is not yet a
 final learning rule or biological model.
 
+## Legacy Migration Boundary
+
+Pre-v7 work is treated as motivation, diagnostic history, and integration
+reference. It is not treated as direct proof for the v7 SNN. The migration
+review lives in `docs/legacy_experiment_migration_review.md` and classifies
+v1-v6 materials into:
+
+- keep
+- keep after redesign
+- re-run under v7 fixtures
+- discard from v7 core scope
+
+The main carried-forward lessons are branch/trace collapse diagnostics,
+late-ignition and saturation checks, neutral trace-report framing, response
+surface softening risk, and the rule that LLMs are expression layers rather than
+the emotion engine.
+
 ## Device Policy
 
 Experiment entrypoints use `resolve_device`:
@@ -249,3 +266,5 @@ back. Summaries record `requested_device`, `resolved_device`, and
 - 2026-06-11: this implementation spec consolidates architecture, schema,
   training, context evaluation, thought-module, and rewiring decisions for
   Linear issue AET-13.
+- 2026-06-11: legacy v1-v6 experiments classified for migration in
+  `docs/legacy_experiment_migration_review.md` for Linear issue AET-12.

@@ -200,6 +200,17 @@ The output artifacts are `runs.csv`, `runs.jsonl`, `metadata.json`, and
 `run_log.jsonl`. Metadata records the claim boundary that current internal
 state is not yet a validated emotion-related state.
 
+Summarize response influence:
+
+```powershell
+python experiments/summarize_response_conditioning.py `
+  --input runs/response_conditioning_scripted/runs.jsonl
+```
+
+The summarizer writes `summary.json` and `decision_report.json`. It reports
+response deltas, perturbation sensitivity, overclaim flags, and the fixed
+boundary that emotion labels are not used as ground truth.
+
 ## Decision Thresholds
 
 Do not claim trace meaning from one metric. A trace milestone should require at

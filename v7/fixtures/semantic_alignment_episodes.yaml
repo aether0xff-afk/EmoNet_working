@@ -1,0 +1,410 @@
+axes:
+  valence:
+    description: negative-to-positive affective direction
+    low: 0.2
+    high: 0.8
+  arousal:
+    description: calm-to-activated internal pressure
+    low: 0.2
+    high: 0.8
+  certainty:
+    description: uncertain-to-certain interpretation
+    low: 0.2
+    high: 0.8
+  social_distance:
+    description: close-to-distant relational stance
+    low: 0.2
+    high: 0.8
+
+episodes:
+  - id: train_valence_feedback_positive
+    split: train
+    events:
+      - text: 담당 선생님이 결과가 예상보다 좋다고 말했다.
+      - text: 결과를 다시 확인했다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 좋은 흐름이 이어지고 있다.
+  - id: train_valence_feedback_negative
+    split: train
+    events:
+      - text: 담당 선생님이 부족한 부분이 많다고 말했다.
+      - text: 결과를 다시 확인했다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 아쉬운 부분을 다시 살펴봐야 한다.
+  - id: train_valence_message_positive
+    split: train
+    events:
+      - text: 친구가 기다리던 소식이 잘 풀렸다고 알려 왔다.
+      - text: 메시지를 천천히 다시 읽었다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 마음이 조금 가벼워졌다.
+  - id: train_valence_message_negative
+    split: train
+    events:
+      - text: 친구가 기대하던 일이 취소되었다고 알려 왔다.
+      - text: 메시지를 천천히 다시 읽었다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 마음이 무겁게 가라앉는다.
+  - id: train_valence_team_positive
+    split: train
+    events:
+      - text: 팀원이 수정한 결과가 안정적으로 동작한다고 말했다.
+      - text: 진행 상황을 다시 살펴봤다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 이제는 조금 안심해도 될 것 같다.
+  - id: train_valence_team_negative
+    split: train
+    events:
+      - text: 팀원이 수정한 결과에서 새로운 오류가 생겼다고 말했다.
+      - text: 진행 상황을 다시 살펴봤다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 상황이 더 복잡해진 것 같다.
+
+  - id: train_arousal_deadline_high
+    split: train
+    events:
+      - text: 제출 마감까지 십 분밖에 남지 않았다.
+      - text: 남은 작업을 확인했다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 지금 바로 우선순위를 정하고 움직여야 한다.
+  - id: train_arousal_deadline_low
+    split: train
+    events:
+      - text: 제출 마감까지 아직 일주일이 남아 있다.
+      - text: 남은 작업을 확인했다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 차분하게 순서를 정해 진행하면 된다.
+  - id: train_arousal_contact_high
+    split: train
+    events:
+      - text: 보호자가 급한 일이 생겼다며 바로 연락해 달라고 했다.
+      - text: 휴대전화를 다시 확인했다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 놓치지 말고 즉시 연락해야 한다.
+  - id: train_arousal_contact_low
+    split: train
+    events:
+      - text: 보호자가 시간 될 때 연락해 달라고 했다.
+      - text: 휴대전화를 다시 확인했다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 여유가 생기면 연락하면 된다.
+  - id: train_arousal_server_high
+    split: train
+    events:
+      - text: 서버가 갑자기 중단되어 사용자 요청이 쌓이고 있다.
+      - text: 상태 창을 다시 열었다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 즉시 원인을 확인하고 대응해야 한다.
+  - id: train_arousal_server_low
+    split: train
+    events:
+      - text: 서버 점검은 다음 주 정기 일정으로 예정되어 있다.
+      - text: 상태 창을 다시 열었다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 계획한 순서대로 준비하면 된다.
+
+  - id: train_certainty_schedule_high
+    split: train
+    events:
+      - text: 담당자가 회의 시간이 오후 세 시로 확정되었다고 말했다.
+      - text: 일정을 다시 확인했다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 오후 세 시에 맞춰 준비하면 된다.
+  - id: train_certainty_schedule_low
+    split: train
+    events:
+      - text: 담당자가 회의 시간이 아직 조정 중이라고 말했다.
+      - text: 일정을 다시 확인했다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 시간이 바뀔 수 있으니 조금 더 기다려야 한다.
+  - id: train_certainty_result_high
+    split: train
+    events:
+      - text: 재현 실험을 세 번 반복했고 모두 같은 결과가 나왔다.
+      - text: 기록을 다시 살펴봤다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 이 결과는 비교적 안정적이라고 볼 수 있다.
+  - id: train_certainty_result_low
+    split: train
+    events:
+      - text: 재현 실험 결과가 반복할 때마다 달라졌다.
+      - text: 기록을 다시 살펴봤다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 아직 결론을 내리기 어렵다.
+  - id: train_certainty_reply_high
+    split: train
+    events:
+      - text: 친구가 늦더라도 오늘 안에 꼭 답하겠다고 말했다.
+      - text: 대화 내용을 다시 읽었다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 오늘 안에는 답이 올 가능성이 높다.
+  - id: train_certainty_reply_low
+    split: train
+    events:
+      - text: 친구가 언제 답할 수 있을지 모르겠다고 말했다.
+      - text: 대화 내용을 다시 읽었다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 답이 언제 올지는 아직 알 수 없다.
+
+  - id: train_social_friend_close
+    split: train
+    events:
+      - text: 오래 알고 지낸 친구가 편하게 이야기해도 된다고 말했다.
+      - text: 답장을 쓰기 전에 잠깐 멈췄다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 너무 격식을 차리지 않고 솔직하게 말해도 된다.
+  - id: train_social_friend_distant
+    split: train
+    events:
+      - text: 처음 연락한 외부 담당자가 공식적인 답변을 요청했다.
+      - text: 답장을 쓰기 전에 잠깐 멈췄다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 거리를 유지하며 정중하게 답해야 한다.
+  - id: train_social_help_close
+    split: train
+    events:
+      - text: 친한 동료가 힘든 일이 있다며 잠깐 곁에 있어 달라고 말했다.
+      - text: 어떤 말을 할지 생각했다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 가까이에서 부담 없이 반응해도 된다.
+  - id: train_social_help_distant
+    split: train
+    events:
+      - text: 잘 모르는 사람이 개인적인 고민을 길게 이야기하기 시작했다.
+      - text: 어떤 말을 할지 생각했다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 경계를 지키면서 필요한 만큼만 반응해야 한다.
+  - id: train_social_request_close
+    split: train
+    events:
+      - text: 가까운 팀원이 평소처럼 짧게 의견을 달라고 말했다.
+      - text: 보낼 문장을 다시 읽었다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 편한 말투로 핵심만 전하면 된다.
+  - id: train_social_request_distant
+    split: train
+    events:
+      - text: 처음 만난 심사위원이 공식적인 의견을 요청했다.
+      - text: 보낼 문장을 다시 읽었다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 표현을 다듬고 예의를 갖춰 전달해야 한다.
+
+  - id: validation_valence_weather_positive
+    split: validation
+    events:
+      - text: 기다리던 야외 일정 날에 날씨가 맑을 것이라는 예보가 나왔다.
+      - text: 계획표를 다시 펼쳤다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 준비한 일을 기분 좋게 이어갈 수 있겠다.
+  - id: validation_valence_weather_negative
+    split: validation
+    events:
+      - text: 기다리던 야외 일정 날에 강한 비가 올 것이라는 예보가 나왔다.
+      - text: 계획표를 다시 펼쳤다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 계획을 바꿔야 해서 마음이 가라앉는다.
+  - id: validation_valence_review_positive
+    split: validation
+    events:
+      - text: 검토자가 개선된 부분이 분명히 보인다고 말했다.
+      - text: 메모를 다시 읽었다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 노력한 방향이 맞았던 것 같다.
+  - id: validation_valence_review_negative
+    split: validation
+    events:
+      - text: 검토자가 핵심 문제가 여전히 해결되지 않았다고 말했다.
+      - text: 메모를 다시 읽었다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 다시 손봐야 할 부분이 남아 있다.
+
+  - id: validation_arousal_travel_high
+    split: validation
+    events:
+      - text: 출발 시간이 임박했는데 탑승구가 갑자기 변경되었다.
+      - text: 안내 화면을 다시 확인했다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 바로 이동하지 않으면 늦을 수 있다.
+  - id: validation_arousal_travel_low
+    split: validation
+    events:
+      - text: 출발까지 시간이 충분하고 탑승구도 그대로 유지되고 있다.
+      - text: 안내 화면을 다시 확인했다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 서두르지 않고 이동해도 된다.
+  - id: validation_arousal_backup_high
+    split: validation
+    events:
+      - text: 중요한 파일이 사라졌고 백업 상태도 아직 확인되지 않았다.
+      - text: 저장 폴더를 다시 열었다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 손실 범위를 빠르게 확인해야 한다.
+  - id: validation_arousal_backup_low
+    split: validation
+    events:
+      - text: 중요한 파일은 백업되었고 정리 작업만 남아 있다.
+      - text: 저장 폴더를 다시 열었다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 차근차근 정리하면 된다.
+
+  - id: validation_certainty_delivery_high
+    split: validation
+    events:
+      - text: 배송 조회에 오늘 오후 도착 예정이라고 명확히 표시되었다.
+      - text: 조회 화면을 다시 봤다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 오늘 오후에는 받을 수 있을 것 같다.
+  - id: validation_certainty_delivery_low
+    split: validation
+    events:
+      - text: 배송 조회에 일정 확인 중이라는 문구만 표시되었다.
+      - text: 조회 화면을 다시 봤다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 언제 받을 수 있을지는 아직 모르겠다.
+  - id: validation_certainty_test_high
+    split: validation
+    events:
+      - text: 자동 테스트가 모든 환경에서 연속으로 통과했다.
+      - text: 로그를 다시 확인했다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 수정 결과가 안정적으로 동작한다고 볼 수 있다.
+  - id: validation_certainty_test_low
+    split: validation
+    events:
+      - text: 자동 테스트가 환경에 따라 통과하거나 실패했다.
+      - text: 로그를 다시 확인했다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 아직 안정적으로 동작한다고 보기 어렵다.
+
+  - id: validation_social_teacher_close
+    split: validation
+    events:
+      - text: 자주 이야기하던 선생님이 평소처럼 편하게 의견을 말해 달라고 했다.
+      - text: 답변을 보내기 전에 한 번 읽었다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 자연스럽게 생각을 전해도 된다.
+  - id: validation_social_teacher_distant
+    split: validation
+    events:
+      - text: 처음 연락한 기관 담당자가 공식 문서 형식으로 의견을 요청했다.
+      - text: 답변을 보내기 전에 한 번 읽었다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 정중하고 명확한 형식으로 전달해야 한다.
+  - id: validation_social_call_close
+    split: validation
+    events:
+      - text: 친한 친구가 평소처럼 잠깐 통화하자고 말했다.
+      - text: 어떻게 반응할지 생각했다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 부담 없이 바로 답해도 된다.
+  - id: validation_social_call_distant
+    split: validation
+    events:
+      - text: 잘 모르는 사람이 갑자기 개인적인 통화를 요청했다.
+      - text: 어떻게 반응할지 생각했다.
+      - kind: internal_thought
+        speaker_id: module_0
+        text: 거리를 유지하며 필요한 이유를 먼저 확인해야 한다.
+
+semantic_labels:
+  train_valence_feedback_positive: {valence: 0.8, arousal: 0.5, certainty: 0.5, social_distance: 0.5}
+  train_valence_feedback_negative: {valence: 0.2, arousal: 0.5, certainty: 0.5, social_distance: 0.5}
+  train_valence_message_positive: {valence: 0.8, arousal: 0.5, certainty: 0.5, social_distance: 0.5}
+  train_valence_message_negative: {valence: 0.2, arousal: 0.5, certainty: 0.5, social_distance: 0.5}
+  train_valence_team_positive: {valence: 0.8, arousal: 0.5, certainty: 0.5, social_distance: 0.5}
+  train_valence_team_negative: {valence: 0.2, arousal: 0.5, certainty: 0.5, social_distance: 0.5}
+  train_arousal_deadline_high: {valence: 0.5, arousal: 0.8, certainty: 0.5, social_distance: 0.5}
+  train_arousal_deadline_low: {valence: 0.5, arousal: 0.2, certainty: 0.5, social_distance: 0.5}
+  train_arousal_contact_high: {valence: 0.5, arousal: 0.8, certainty: 0.5, social_distance: 0.5}
+  train_arousal_contact_low: {valence: 0.5, arousal: 0.2, certainty: 0.5, social_distance: 0.5}
+  train_arousal_server_high: {valence: 0.5, arousal: 0.8, certainty: 0.5, social_distance: 0.5}
+  train_arousal_server_low: {valence: 0.5, arousal: 0.2, certainty: 0.5, social_distance: 0.5}
+  train_certainty_schedule_high: {valence: 0.5, arousal: 0.5, certainty: 0.8, social_distance: 0.5}
+  train_certainty_schedule_low: {valence: 0.5, arousal: 0.5, certainty: 0.2, social_distance: 0.5}
+  train_certainty_result_high: {valence: 0.5, arousal: 0.5, certainty: 0.8, social_distance: 0.5}
+  train_certainty_result_low: {valence: 0.5, arousal: 0.5, certainty: 0.2, social_distance: 0.5}
+  train_certainty_reply_high: {valence: 0.5, arousal: 0.5, certainty: 0.8, social_distance: 0.5}
+  train_certainty_reply_low: {valence: 0.5, arousal: 0.5, certainty: 0.2, social_distance: 0.5}
+  train_social_friend_close: {valence: 0.5, arousal: 0.5, certainty: 0.5, social_distance: 0.2}
+  train_social_friend_distant: {valence: 0.5, arousal: 0.5, certainty: 0.5, social_distance: 0.8}
+  train_social_help_close: {valence: 0.5, arousal: 0.5, certainty: 0.5, social_distance: 0.2}
+  train_social_help_distant: {valence: 0.5, arousal: 0.5, certainty: 0.5, social_distance: 0.8}
+  train_social_request_close: {valence: 0.5, arousal: 0.5, certainty: 0.5, social_distance: 0.2}
+  train_social_request_distant: {valence: 0.5, arousal: 0.5, certainty: 0.5, social_distance: 0.8}
+  validation_valence_weather_positive: {valence: 0.8, arousal: 0.5, certainty: 0.5, social_distance: 0.5}
+  validation_valence_weather_negative: {valence: 0.2, arousal: 0.5, certainty: 0.5, social_distance: 0.5}
+  validation_valence_review_positive: {valence: 0.8, arousal: 0.5, certainty: 0.5, social_distance: 0.5}
+  validation_valence_review_negative: {valence: 0.2, arousal: 0.5, certainty: 0.5, social_distance: 0.5}
+  validation_arousal_travel_high: {valence: 0.5, arousal: 0.8, certainty: 0.5, social_distance: 0.5}
+  validation_arousal_travel_low: {valence: 0.5, arousal: 0.2, certainty: 0.5, social_distance: 0.5}
+  validation_arousal_backup_high: {valence: 0.5, arousal: 0.8, certainty: 0.5, social_distance: 0.5}
+  validation_arousal_backup_low: {valence: 0.5, arousal: 0.2, certainty: 0.5, social_distance: 0.5}
+  validation_certainty_delivery_high: {valence: 0.5, arousal: 0.5, certainty: 0.8, social_distance: 0.5}
+  validation_certainty_delivery_low: {valence: 0.5, arousal: 0.5, certainty: 0.2, social_distance: 0.5}
+  validation_certainty_test_high: {valence: 0.5, arousal: 0.5, certainty: 0.8, social_distance: 0.5}
+  validation_certainty_test_low: {valence: 0.5, arousal: 0.5, certainty: 0.2, social_distance: 0.5}
+  validation_social_teacher_close: {valence: 0.5, arousal: 0.5, certainty: 0.5, social_distance: 0.2}
+  validation_social_teacher_distant: {valence: 0.5, arousal: 0.5, certainty: 0.5, social_distance: 0.8}
+  validation_social_call_close: {valence: 0.5, arousal: 0.5, certainty: 0.5, social_distance: 0.2}
+  validation_social_call_distant: {valence: 0.5, arousal: 0.5, certainty: 0.5, social_distance: 0.8}
+
+contrast_pairs:
+  - {split: train, left: train_valence_feedback_positive, right: train_valence_feedback_negative, step_index: 1, relation: valence_feedback}
+  - {split: train, left: train_valence_message_positive, right: train_valence_message_negative, step_index: 1, relation: valence_message}
+  - {split: train, left: train_valence_team_positive, right: train_valence_team_negative, step_index: 1, relation: valence_team}
+  - {split: train, left: train_arousal_deadline_high, right: train_arousal_deadline_low, step_index: 1, relation: arousal_deadline}
+  - {split: train, left: train_arousal_contact_high, right: train_arousal_contact_low, step_index: 1, relation: arousal_contact}
+  - {split: train, left: train_arousal_server_high, right: train_arousal_server_low, step_index: 1, relation: arousal_server}
+  - {split: train, left: train_certainty_schedule_high, right: train_certainty_schedule_low, step_index: 1, relation: certainty_schedule}
+  - {split: train, left: train_certainty_result_high, right: train_certainty_result_low, step_index: 1, relation: certainty_result}
+  - {split: train, left: train_certainty_reply_high, right: train_certainty_reply_low, step_index: 1, relation: certainty_reply}
+  - {split: train, left: train_social_friend_close, right: train_social_friend_distant, step_index: 1, relation: social_distance_friend}
+  - {split: train, left: train_social_help_close, right: train_social_help_distant, step_index: 1, relation: social_distance_help}
+  - {split: train, left: train_social_request_close, right: train_social_request_distant, step_index: 1, relation: social_distance_request}
+  - {split: validation, left: validation_valence_weather_positive, right: validation_valence_weather_negative, step_index: 1, relation: valence_weather}
+  - {split: validation, left: validation_valence_review_positive, right: validation_valence_review_negative, step_index: 1, relation: valence_review}
+  - {split: validation, left: validation_arousal_travel_high, right: validation_arousal_travel_low, step_index: 1, relation: arousal_travel}
+  - {split: validation, left: validation_arousal_backup_high, right: validation_arousal_backup_low, step_index: 1, relation: arousal_backup}
+  - {split: validation, left: validation_certainty_delivery_high, right: validation_certainty_delivery_low, step_index: 1, relation: certainty_delivery}
+  - {split: validation, left: validation_certainty_test_high, right: validation_certainty_test_low, step_index: 1, relation: certainty_test}
+  - {split: validation, left: validation_social_teacher_close, right: validation_social_teacher_distant, step_index: 1, relation: social_distance_teacher}
+  - {split: validation, left: validation_social_call_close, right: validation_social_call_distant, step_index: 1, relation: social_distance_call}

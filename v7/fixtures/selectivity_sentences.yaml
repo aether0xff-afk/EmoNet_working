@@ -1,0 +1,39 @@
+sentences:
+  - id: same_a
+    relation_group: same
+    text: 친구가 답장을 하지 않았다.
+  - id: same_a_repeat
+    relation_group: same
+    text: 친구가 답장을 하지 않았다.
+  - id: paraphrase_a
+    relation_group: paraphrase
+    text: 친구에게서 아직 답장이 오지 않았다.
+  - id: lexical_overlap_but_different
+    relation_group: lexical_overlap_but_different
+    text: 친구가 답장을 하지 않았지만 곧 직접 만나기로 했다.
+  - id: negative_interpretation
+    relation_group: interpretation
+    text: 친구가 일부러 나를 무시한 것 같다.
+  - id: benign_interpretation
+    relation_group: interpretation
+    text: 친구가 바빠서 답장을 늦게 한 것 같다.
+  - id: unrelated
+    relation_group: unrelated
+    text: 오늘 저녁에는 비가 내릴 가능성이 높다.
+
+pairs:
+  - left: same_a
+    right: same_a_repeat
+    relation: identical
+  - left: same_a
+    right: paraphrase_a
+    relation: paraphrase
+  - left: same_a
+    right: lexical_overlap_but_different
+    relation: lexical_overlap_but_different
+  - left: negative_interpretation
+    right: benign_interpretation
+    relation: interpretation_contrast
+  - left: same_a
+    right: unrelated
+    relation: unrelated

@@ -1,0 +1,78 @@
+name: v7-semantic-training-tests
+
+on:
+  pull_request:
+    paths:
+      - "v7/**"
+      - ".github/workflows/v7-semantic-training-tests.yml"
+  push:
+    branches:
+      - feature/v7-snn-rebuild
+    paths:
+      - "v7/**"
+      - ".github/workflows/v7-semantic-training-tests.yml"
+
+jobs:
+  semantic-training:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: v7
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install package and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Compile Python sources
+        run: python -m compileall -q .
+      - name: Run unit tests
+        run: pytest -q
+      - name: Run persistent episode training smoke
+        run: |
+          python experiments/train_semantic_dynamics.py \
+            --encoder hash \
+            --epochs 3 \
+            --num-neurons 32 \
+            --event-ticks 8 \
+            --stimulation-ticks 3 \
+            --output runs/ci_semantic_dynamics_training \
+            --quiet
+      - name: Replay trained semantic checkpoint
+        run: |
+          python experiments/replay_semantic_checkpoint.py \
+            --checkpoint runs/ci_semantic_dynamics_training/best_checkpoint.pt \
+            --encoder hash \
+            --output runs/ci_semantic_checkpoint_replay \
+            --quiet
+      - name: Run state persistence ablation smoke
+        run: |
+          python experiments/run_state_persistence_ablation.py \
+            --encoder hash \
+            --epochs 2 \
+            --num-neurons 16 \
+            --event-ticks 6 \
+            --stimulation-ticks 2 \
+            --output runs/ci_state_persistence_ablation \
+            --quiet
+      - name: Run multi-seed persistence ablation smoke
+        run: |
+          python experiments/run_state_persistence_multiseed.py \
+            --encoder hash \
+            --epochs 1 \
+            --num-neurons 8 \
+            --event-ticks 4 \
+            --stimulation-ticks 2 \
+            --seeds 7 42 \
+            --output runs/ci_state_persistence_multiseed \
+            --quiet
+      - name: Upload semantic experiment outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: v7-semantic-training-results
+          path: v7/runs

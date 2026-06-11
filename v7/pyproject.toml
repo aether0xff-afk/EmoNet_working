@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "emonet-v7"
+version = "0.2.0"
+description = "Adaptive sparse recurrent SNN core for EmoNet v7"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+  "torch>=2.3",
+  "numpy>=1.26",
+  "pandas>=2.2",
+  "pyyaml>=6.0",
+  "matplotlib>=3.8",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+text = ["sentence-transformers>=3.0"]
+llm = ["openai>=1.0"]
+all = [
+  "pytest>=8.0",
+  "sentence-transformers>=3.0",
+  "openai>=1.0",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

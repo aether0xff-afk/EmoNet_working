@@ -196,6 +196,11 @@ The prompt tells the local model not to answer the user, not to assert emotion
 labels, and not to overstate confidence. Generated thoughts can be injected back
 as `internal_thought` events for ablations.
 
+The multi-module discussion contract is defined in
+`docs/adaptive_thought_module_protocol.md`. The first integration target is a
+two-module private-state loop with natural-language module messages, fixed
+budget/termination rules, and no central emotion-label aggregator.
+
 ## Cluster and Rewiring Experiments
 
 Current rewiring is activity-guided:
@@ -273,3 +278,5 @@ back. Summaries record `requested_device`, `resolved_device`, and
   `docs/legacy_experiment_migration_review.md` for Linear issue AET-12.
 - 2026-06-11: activity-guided rewiring experiment design and visualization
   handoff documented for Linear issue AET-9.
+- 2026-06-11: adaptive thought module lifecycle and two-module discussion
+  protocol documented for Linear issue AET-10.

@@ -219,6 +219,10 @@ Run the deterministic two-module protocol smoke without LM Studio:
 ```powershell
 python experiments/run_two_module_thought_runtime.py `
   --user-text "친구가 답장을 하지 않았다." `
+  --max-rounds 2 `
+  --max-messages-per-module 4 `
+  --max-chars-per-message 240 `
+  --repeated-output-limit 2 `
   --output runs/two_module_thought_runtime_smoke
 ```
 
@@ -232,6 +236,12 @@ messages.jsonl
 The smoke runner uses scripted module outputs. It verifies the runtime contract,
 message envelopes, round buffer, budgets, and fixed termination rules; it does
 not evaluate generated model quality.
+
+The runtime policy can stop with `max_rounds`, `message_limit`,
+`message_too_long`, `repeated_output`, `budget_exhausted`, `stay_silent`, or
+`answer_ready`. Policy stops are recorded in `termination_reason` and
+`termination_details`; message-limit and repeated-output stops mark affected
+modules as `saturated`, while `stay_silent` marks modules as `quiet`.
 
 ## Evaluation Plan
 

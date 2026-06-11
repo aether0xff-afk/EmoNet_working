@@ -14,6 +14,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 from emonet_v7.thought_module import (  # noqa: E402
     ThoughtModule,
     ThoughtModuleState,
+    ThoughtRuntimePolicy,
     TwoModuleThoughtRuntime,
 )
 
@@ -35,6 +36,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--user-text", default="친구가 답장을 하지 않았다.")
     parser.add_argument("--output", default="runs/two_module_thought_runtime_smoke")
     parser.add_argument("--max-rounds", type=int, default=2)
+    parser.add_argument("--max-messages-per-module", type=int)
+    parser.add_argument("--max-chars-per-message", type=int)
+    parser.add_argument("--repeated-output-limit", type=int)
     return parser.parse_args()
 
 
@@ -50,7 +54,7 @@ def state_report_provider(state: ThoughtModuleState, round_index: int) -> dict:
     }
 
 
-def build_runtime() -> TwoModuleThoughtRuntime:
+def build_runtime(policy: ThoughtRuntimePolicy) -> TwoModuleThoughtRuntime:
     return TwoModuleThoughtRuntime(
         modules={
             "module_planner": ThoughtModule(
@@ -93,13 +97,20 @@ def build_runtime() -> TwoModuleThoughtRuntime:
             ),
         },
         state_report_provider=state_report_provider,
+        policy=policy,
         temperature=0.0,
     )
 
 
 def main() -> None:
     args = parse_args()
-    runtime = build_runtime()
+    policy = ThoughtRuntimePolicy(
+        max_rounds=args.max_rounds,
+        max_messages_per_module=args.max_messages_per_module,
+        max_chars_per_message=args.max_chars_per_message,
+        repeated_output_limit=args.repeated_output_limit,
+    )
+    runtime = build_runtime(policy)
     result = runtime.run(user_text=args.user_text, max_rounds=args.max_rounds)
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=True)

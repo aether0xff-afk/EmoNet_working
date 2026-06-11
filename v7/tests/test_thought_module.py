@@ -7,6 +7,7 @@ from emonet_v7.state_bridge import build_neutral_state_report
 from emonet_v7.thought_module import (
     ThoughtModule,
     ThoughtModuleState,
+    ThoughtRuntimePolicy,
     TwoModuleThoughtRuntime,
 )
 from emonet_v7.trace_encoder import TraceEncoder, traces_to_sequences
@@ -216,3 +217,90 @@ def test_two_module_runtime_stops_at_max_rounds() -> None:
 
     assert result.termination_reason == "max_rounds"
     assert len(result.rounds) == 1
+
+
+def test_two_module_runtime_saturates_on_message_length_limit() -> None:
+    long_response = """
+    {
+      "internal_thought": "이 출력은 제한보다 길다.",
+      "module_message": "짧다.",
+      "candidate_output": "",
+      "termination_vote": "needs_one_more_round"
+    }
+    """
+    runtime = TwoModuleThoughtRuntime(
+        modules={
+            "module_planner": ThoughtModule(QueueChatClient([long_response]), module_id="module_planner"),
+            "module_skeptic": ThoughtModule(QueueChatClient([long_response]), module_id="module_skeptic"),
+        },
+        module_states={
+            "module_planner": ThoughtModuleState("module_planner", "planner", participation_budget_remaining=2),
+            "module_skeptic": ThoughtModuleState("module_skeptic", "skeptic", participation_budget_remaining=2),
+        },
+        state_report_provider=lambda state, round_index: {},
+        policy=ThoughtRuntimePolicy(max_chars_per_message=5),
+    )
+
+    result = runtime.run(user_text="길이 제한을 확인하자.")
+
+    assert result.termination_reason == "message_too_long"
+    assert result.termination_details["module_id"] == "module_planner"
+    assert result.module_states["module_planner"].status == "saturated"
+
+
+def test_two_module_runtime_saturates_on_message_count_limit() -> None:
+    response = """
+    {
+      "internal_thought": "한 번 더 보자.",
+      "module_message": "검토를 계속하자.",
+      "candidate_output": "",
+      "termination_vote": "needs_one_more_round"
+    }
+    """
+    runtime = TwoModuleThoughtRuntime(
+        modules={
+            "module_planner": ThoughtModule(QueueChatClient([response]), module_id="module_planner"),
+            "module_skeptic": ThoughtModule(QueueChatClient([response]), module_id="module_skeptic"),
+        },
+        module_states={
+            "module_planner": ThoughtModuleState("module_planner", "planner", participation_budget_remaining=2),
+            "module_skeptic": ThoughtModuleState("module_skeptic", "skeptic", participation_budget_remaining=2),
+        },
+        state_report_provider=lambda state, round_index: {},
+        policy=ThoughtRuntimePolicy(max_messages_per_module=1),
+    )
+
+    result = runtime.run(user_text="메시지 수 제한을 확인하자.")
+
+    assert result.termination_reason == "message_limit"
+    assert result.termination_details["module_id"] == "module_planner"
+    assert result.module_states["module_planner"].status == "saturated"
+
+
+def test_two_module_runtime_saturates_on_repeated_output() -> None:
+    response = """
+    {
+      "internal_thought": "같은 말을 반복한다.",
+      "module_message": "반복",
+      "candidate_output": "",
+      "termination_vote": "needs_one_more_round"
+    }
+    """
+    runtime = TwoModuleThoughtRuntime(
+        modules={
+            "module_planner": ThoughtModule(QueueChatClient([response, response]), module_id="module_planner"),
+            "module_skeptic": ThoughtModule(QueueChatClient([response, response]), module_id="module_skeptic"),
+        },
+        module_states={
+            "module_planner": ThoughtModuleState("module_planner", "planner", participation_budget_remaining=3),
+            "module_skeptic": ThoughtModuleState("module_skeptic", "skeptic", participation_budget_remaining=3),
+        },
+        state_report_provider=lambda state, round_index: {},
+        policy=ThoughtRuntimePolicy(repeated_output_limit=2),
+    )
+
+    result = runtime.run(user_text="반복 출력을 확인하자.", max_rounds=3)
+
+    assert result.termination_reason == "repeated_output"
+    assert result.termination_details["text"] == "반복"
+    assert result.module_states["module_planner"].status == "saturated"

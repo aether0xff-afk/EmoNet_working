@@ -26,6 +26,9 @@ TerminationReason = Literal[
     "max_rounds",
     "budget_exhausted",
     "blocked_by_missing_context",
+    "message_limit",
+    "message_too_long",
+    "repeated_output",
 ]
 
 
@@ -87,6 +90,17 @@ class ThoughtRuntimeResult:
     final_response: str
     termination_reason: TerminationReason
     module_states: dict[str, ThoughtModuleState]
+    termination_details: dict = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class ThoughtRuntimePolicy:
+    """Cost and runaway-discussion limits for the fixed coordinator."""
+
+    max_rounds: int = 2
+    max_messages_per_module: int | None = None
+    max_chars_per_message: int | None = None
+    repeated_output_limit: int | None = None
 
 
 class ThoughtModule:
@@ -238,6 +252,7 @@ class TwoModuleThoughtRuntime:
         modules: dict[str, ThoughtModule],
         module_states: dict[str, ThoughtModuleState],
         state_report_provider: Callable[[ThoughtModuleState, int], dict],
+        policy: ThoughtRuntimePolicy | None = None,
         temperature: float = 0.7,
     ) -> None:
         if len(modules) != 2:
@@ -247,10 +262,14 @@ class TwoModuleThoughtRuntime:
         self.modules = modules
         self.module_states = {key: replace(value) for key, value in module_states.items()}
         self.state_report_provider = state_report_provider
+        self.policy = policy or ThoughtRuntimePolicy()
         self.temperature = temperature
+        self._message_counts = dict.fromkeys(modules, 0)
+        self._seen_outputs: dict[str, int] = {}
 
-    def run(self, *, user_text: str, max_rounds: int = 2) -> ThoughtRuntimeResult:
-        if max_rounds <= 0:
+    def run(self, *, user_text: str, max_rounds: int | None = None) -> ThoughtRuntimeResult:
+        effective_max_rounds = max_rounds if max_rounds is not None else self.policy.max_rounds
+        if effective_max_rounds <= 0:
             raise ValueError("max_rounds must be positive")
         if self._budget_exhausted():
             return ThoughtRuntimeResult(
@@ -259,6 +278,7 @@ class TwoModuleThoughtRuntime:
                 final_response="",
                 termination_reason="budget_exhausted",
                 module_states=self.module_states,
+                termination_details={"reason": "all module participation budgets are exhausted"},
             )
 
         messages = [
@@ -274,9 +294,10 @@ class TwoModuleThoughtRuntime:
         rounds: list[ThoughtRound] = []
         final_response = ""
         termination_reason: TerminationReason = "max_rounds"
+        termination_details: dict = {}
         next_message_index = 1
 
-        for round_index in range(max_rounds):
+        for round_index in range(effective_max_rounds):
             reports: dict[str, dict] = {}
             thoughts: dict[str, str] = {}
             candidates: dict[str, str] = {}
@@ -303,6 +324,34 @@ class TwoModuleThoughtRuntime:
                     round_index=round_index,
                     temperature=self.temperature,
                 )
+                policy_stop = self._check_turn_policy(module_id, turn)
+                if policy_stop:
+                    termination_reason, termination_details = policy_stop
+                    if termination_reason == "repeated_output":
+                        self.module_states = {
+                            key: replace(value, status="saturated")
+                            for key, value in self.module_states.items()
+                        }
+                    else:
+                        self.module_states[module_id] = replace(state, status="saturated")
+                    rounds.append(
+                        ThoughtRound(
+                            round_index=round_index,
+                            input_messages=round_start_messages,
+                            per_module_state_reports=reports,
+                            per_module_internal_thoughts=thoughts,
+                            per_module_candidate_outputs=candidates,
+                            termination_vote=termination_reason,
+                        )
+                    )
+                    return ThoughtRuntimeResult(
+                        rounds=rounds,
+                        messages=messages,
+                        final_response="",
+                        termination_reason=termination_reason,
+                        module_states=self.module_states,
+                        termination_details=termination_details,
+                    )
                 thoughts[module_id] = turn.internal_thought
                 candidates[module_id] = turn.candidate_output
                 votes.append(turn.termination_vote)
@@ -318,6 +367,7 @@ class TwoModuleThoughtRuntime:
                     )
                 )
                 next_message_index += 1
+                self._message_counts[module_id] += 1
                 if turn.module_message:
                     messages.append(
                         ThoughtMessage(
@@ -331,13 +381,14 @@ class TwoModuleThoughtRuntime:
                         )
                     )
                     next_message_index += 1
+                    self._message_counts[module_id] += 1
                 self.module_states[module_id] = replace(
                     state,
                     participation_budget_remaining=state.participation_budget_remaining - 1,
                     last_trace_report=report,
                 )
 
-            round_vote = self._aggregate_vote(votes, candidates, round_index, max_rounds)
+            round_vote = self._aggregate_vote(votes, candidates, round_index, effective_max_rounds)
             rounds.append(
                 ThoughtRound(
                     round_index=round_index,
@@ -351,6 +402,11 @@ class TwoModuleThoughtRuntime:
             if round_vote != "needs_one_more_round":
                 termination_reason = round_vote
                 final_response = _join_candidates(candidates)
+                if round_vote == "stay_silent":
+                    self.module_states = {
+                        module_id: replace(state, status="quiet")
+                        for module_id, state in self.module_states.items()
+                    }
                 break
 
         return ThoughtRuntimeResult(
@@ -359,6 +415,7 @@ class TwoModuleThoughtRuntime:
             final_response=final_response,
             termination_reason=termination_reason,
             module_states=self.module_states,
+            termination_details=termination_details,
         )
 
     def _budget_exhausted(self) -> bool:
@@ -383,6 +440,59 @@ class TwoModuleThoughtRuntime:
         if self._budget_exhausted():
             return "budget_exhausted"
         return "needs_one_more_round"
+
+    def _check_turn_policy(
+        self,
+        module_id: str,
+        turn: ThoughtTurn,
+    ) -> tuple[TerminationReason, dict] | None:
+        texts = {
+            "internal_thought": turn.internal_thought,
+            "module_message": turn.module_message,
+            "candidate_output": turn.candidate_output,
+        }
+        if self.policy.max_chars_per_message is not None:
+            for field_name, text in texts.items():
+                if len(text) > self.policy.max_chars_per_message:
+                    return (
+                        "message_too_long",
+                        {
+                            "module_id": module_id,
+                            "field": field_name,
+                            "length": len(text),
+                            "limit": self.policy.max_chars_per_message,
+                        },
+                    )
+        next_message_count = self._message_counts[module_id] + 1 + int(bool(turn.module_message))
+        if (
+            self.policy.max_messages_per_module is not None
+            and next_message_count > self.policy.max_messages_per_module
+        ):
+            return (
+                "message_limit",
+                {
+                    "module_id": module_id,
+                    "message_count": next_message_count,
+                    "limit": self.policy.max_messages_per_module,
+                },
+            )
+        if self.policy.repeated_output_limit is not None:
+            for text in (turn.module_message, turn.candidate_output):
+                if not text:
+                    continue
+                count = self._seen_outputs.get(text, 0) + 1
+                self._seen_outputs[text] = count
+                if count >= self.policy.repeated_output_limit:
+                    return (
+                        "repeated_output",
+                        {
+                            "module_id": module_id,
+                            "text": text,
+                            "count": count,
+                            "limit": self.policy.repeated_output_limit,
+                        },
+                    )
+        return None
 
 
 def _clean_required_text(payload: dict, key: str) -> str:

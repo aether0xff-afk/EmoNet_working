@@ -100,6 +100,7 @@ Thought/report feedback plumbing:
 
 - `experiments/run_internal_thought_ablation.py`
 - `experiments/run_lmstudio_thought_feedback_suite.py`
+- `experiments/run_response_conditioning.py`
 
 Rewiring and community structure:
 
@@ -174,6 +175,30 @@ the user is angry
 the model feels abandoned
 this neuron cluster means fear
 ```
+
+Run the scripted smoke protocol without LM Studio:
+
+```powershell
+python experiments/run_response_conditioning.py `
+  --backend scripted `
+  --fixture fixtures/response_conditioning_cases.yaml `
+  --output runs/response_conditioning_scripted
+```
+
+Run against LM Studio:
+
+```powershell
+python experiments/run_response_conditioning.py `
+  --backend lmstudio `
+  --base-url http://127.0.0.1:1234 `
+  --chat-model <loaded-model-identifier> `
+  --fixture fixtures/response_conditioning_cases.yaml `
+  --output runs/response_conditioning_lmstudio
+```
+
+The output artifacts are `runs.csv`, `runs.jsonl`, `metadata.json`, and
+`run_log.jsonl`. Metadata records the claim boundary that current internal
+state is not yet a validated emotion-related state.
 
 ## Decision Thresholds
 

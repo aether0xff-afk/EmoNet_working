@@ -1,0 +1,29 @@
+cases:
+  - id: reply_delay
+    user_text: "친구가 답장을 하지 않았다."
+    neutral_report:
+      active_ratio: 0.08
+      trace_persistence: 0.31
+      peak_spike_count: 3
+      final_spike_count: 0
+      latent_signature: [0.14, -0.03, 0.22, 0.01]
+    shuffled_report:
+      active_ratio: 0.22
+      trace_persistence: 0.04
+      peak_spike_count: 7
+      final_spike_count: 2
+      latent_signature: [-0.08, 0.19, -0.11, 0.05]
+  - id: schedule_pressure
+    user_text: "오늘 안에 실험 결과를 정리해야 한다."
+    neutral_report:
+      active_ratio: 0.15
+      trace_persistence: 0.44
+      peak_spike_count: 5
+      final_spike_count: 1
+      latent_signature: [0.02, 0.27, -0.06, 0.18]
+    shuffled_report:
+      active_ratio: 0.05
+      trace_persistence: 0.18
+      peak_spike_count: 2
+      final_spike_count: 0
+      latent_signature: [0.31, -0.12, 0.04, -0.09]

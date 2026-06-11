@@ -17,6 +17,8 @@ recurrent spiking neural network.
 
 The working architecture and decision record lives in
 `docs/implementation_spec_and_decision_log.md`.
+The frozen baseline release note lives in
+`docs/v7_baseline_release_note.md`.
 
 ## Install
 

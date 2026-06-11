@@ -184,6 +184,9 @@ prior context and the correct next event differ. Important checks:
 A positive context margin supports the narrower claim that prior state helped on
 the controlled fixture. It does not establish emotional semantics.
 
+The broader trace-meaning and response-influence evaluation framework is defined
+in `docs/trace_meaning_and_response_evaluation.md`.
+
 ## Thought Module Protocol
 
 The thought module protocol is intentionally minimal:
@@ -280,3 +283,5 @@ back. Summaries record `requested_device`, `resolved_device`, and
   handoff documented for Linear issue AET-9.
 - 2026-06-11: adaptive thought module lifecycle and two-module discussion
   protocol documented for Linear issue AET-10.
+- 2026-06-11: trace meaning and response-influence evaluation framework
+  documented for Linear issue AET-11.

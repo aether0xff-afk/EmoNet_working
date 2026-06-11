@@ -100,6 +100,81 @@ best_validation_total: 1.042582909266154
 
 The one-epoch hash-encoder CPU/GPU validation delta was approximately `0.00000604`. Treat this as a smoke-level device-path check only, not a numerical reproducibility claim for full training.
 
+## 2026-06-11 CUDA long-run comparison
+
+A longer strict CUDA run was executed on the same SSH host to check sustained GPU execution against a matched CPU baseline.
+
+```text
+Remote host: DESKTOP-MMLRCFK
+GPU: NVIDIA GeForce RTX 4090
+Driver: 591.86
+GPU memory before run: 858 MiB / 24564 MiB
+Python env: C:/Users/remote/miniconda3/envs/picasso-gpu/python.exe
+PyTorch: 2.11.0+cu128
+Code commit: ffe8f0ff13c7b9f27b37b074a17820295585ea92
+```
+
+Shared training settings:
+
+```text
+encoder: hash
+state_policy: persistent
+seed: 42
+epochs: 300
+num_neurons: 128
+event_ticks: 16
+stimulation_ticks: 6
+train_episode_count: 8
+validation_episode_count: 3
+```
+
+Strict CUDA command:
+
+```powershell
+python experiments/train_semantic_dynamics.py `
+  --encoder hash `
+  --epochs 300 `
+  --seed 42 `
+  --num-neurons 128 `
+  --event-ticks 16 `
+  --stimulation-ticks 6 `
+  --state-policy persistent `
+  --device cuda `
+  --no-cuda-fallback `
+  --output runs/aet26_semantic_dynamics_cuda_seed42_epochs300 `
+  --quiet
+```
+
+Matched CPU command used the same options with `--device cpu` and output path `runs/aet26_semantic_dynamics_cpu_seed42_epochs300`.
+
+Observed summaries:
+
+```text
+CUDA:
+  requested_device: cuda
+  resolved_device: cuda
+  used_device_fallback: false
+  elapsed_seconds: 128.565
+  sampled_gpu_memory_peak: 858 MiB
+  best_validation_total: 1.0264585812886555
+  best_epoch: 3
+  final_train_total: 0.0047185185248963535
+  final_validation_total: 1.0688955783843994
+
+CPU:
+  requested_device: cpu
+  resolved_device: cpu
+  used_device_fallback: false
+  elapsed_seconds: 80.928
+  sampled_gpu_memory_peak: 858 MiB
+  best_validation_total: 1.0131322145462036
+  best_epoch: 285
+  final_train_total: 0.007750193763058633
+  final_validation_total: 1.0228222608566284
+```
+
+The CPU best validation total was lower by approximately `0.01332637`, and CPU wall time was shorter by approximately `47.637` seconds on this small starter fixture. This is not evidence against using CUDA for larger workloads; it indicates that this fixture is too small for GPU throughput to dominate overhead. The useful result is stricter: the CUDA path ran for 300 epochs with `used_device_fallback: false`, produced a saved summary, and remained within the expected device policy. Treat the metric comparison as a local implementation check only, not as evidence of emotional semantics or a broad CPU/GPU performance claim.
+
 ## Output files
 
 ```text

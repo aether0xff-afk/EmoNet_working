@@ -28,7 +28,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--num-neurons", type=int, default=128)
     parser.add_argument("--event-ticks", type=int, default=16)
     parser.add_argument("--stimulation-ticks", type=int, default=6)
-    parser.add_argument("--device", default="cpu")
+    parser.add_argument("--device", default="cpu", help="Torch device: cpu, cuda, cuda:0, or auto")
+    parser.add_argument("--no-cuda-fallback", action="store_true", help="Fail instead of falling back to CPU when CUDA is unavailable")
     parser.add_argument("--seeds", nargs="+", type=int, default=[7, 13, 21, 42, 100])
     parser.add_argument("--quiet", action="store_true")
     return parser.parse_args()
@@ -64,6 +65,8 @@ def run_seed(args: argparse.Namespace, logger: RunLogger, seed: int) -> dict:
     ]
     if args.base_url:
         command.extend(["--base-url", args.base_url])
+    if args.no_cuda_fallback:
+        command.append("--no-cuda-fallback")
     if args.quiet:
         command.append("--quiet")
     logger.log("seed.start", "Seed별 context dependence 비교를 시작한다.", seed=seed, command=command)
@@ -99,6 +102,7 @@ def main() -> None:
     latent = frame["persistent_minus_reset_trained_latent_distance"]
     summary = {
         "encoder": args.encoder,
+        "requested_device": args.device,
         "seeds": args.seeds,
         "seed_count": len(args.seeds),
         "positive_context_margin_count": int((margin > 0).sum()),

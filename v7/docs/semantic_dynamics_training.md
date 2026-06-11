@@ -38,8 +38,67 @@ python experiments/train_semantic_dynamics.py `
   --base-url http://127.0.0.1:1234 `
   --embedding-model text-embedding-nomic-embed-text-v1.5 `
   --epochs 30 `
+  --device auto `
   --output runs/semantic_dynamics_lmstudio
 ```
+
+## Device policy
+
+```text
+--device cpu      always run on CPU
+--device cuda     use CUDA when available; otherwise fall back to CPU
+--device cuda:0   use a specific CUDA device when available; otherwise fall back to CPU
+--device auto     use CUDA when available; otherwise fall back to CPU
+```
+
+Add `--no-cuda-fallback` when a CUDA run must fail instead of silently using CPU. `summary.json` and `run_log.jsonl` record `requested_device`, `resolved_device`, and `used_device_fallback`.
+
+## 2026-06-11 CUDA smoke record
+
+Remote host `DESKTOP-MMLRCFK` was checked over SSH with an RTX 4090.
+
+```text
+GPU: NVIDIA GeForce RTX 4090
+Driver: 591.86
+Memory after tiny smoke: 700 MiB / 24564 MiB
+Python env: C:/Users/remote/miniconda3/envs/picasso-gpu/python.exe
+PyTorch: 2.11.0+cu128
+```
+
+Strict CUDA command:
+
+```powershell
+python experiments/train_semantic_dynamics.py `
+  --encoder hash `
+  --epochs 1 `
+  --num-neurons 16 `
+  --event-ticks 4 `
+  --stimulation-ticks 2 `
+  --device cuda `
+  --no-cuda-fallback `
+  --output runs/codex_aet18_cuda_strict_smoke `
+  --quiet
+```
+
+Observed summary:
+
+```text
+requested_device: cuda
+resolved_device: cuda
+used_device_fallback: false
+best_validation_total: 1.0425889492034912
+```
+
+Matched CPU command on the same host and seed produced:
+
+```text
+requested_device: cpu
+resolved_device: cpu
+used_device_fallback: false
+best_validation_total: 1.042582909266154
+```
+
+The one-epoch hash-encoder CPU/GPU validation delta was approximately `0.00000604`. Treat this as a smoke-level device-path check only, not a numerical reproducibility claim for full training.
 
 ## Output files
 
@@ -59,6 +118,7 @@ python experiments/run_state_persistence_ablation.py `
   --base-url http://127.0.0.1:1234 `
   --embedding-model text-embedding-nomic-embed-text-v1.5 `
   --epochs 30 `
+  --device auto `
   --output runs/state_persistence_ablation_lmstudio
 ```
 
@@ -77,6 +137,7 @@ python experiments/run_state_persistence_multiseed.py `
   --embedding-model text-embedding-nomic-embed-text-v1.5 `
   --epochs 30 `
   --seeds 7 13 21 42 100 `
+  --device auto `
   --output runs/state_persistence_multiseed_lmstudio
 ```
 
@@ -107,6 +168,7 @@ python experiments/run_context_dependence_ablation.py `
   --base-url http://127.0.0.1:1234 `
   --embedding-model text-embedding-nomic-embed-text-v1.5 `
   --epochs 30 `
+  --device auto `
   --output runs/context_dependence_ablation_lmstudio
 ```
 
@@ -119,6 +181,7 @@ python experiments/run_context_dependence_multiseed.py `
   --embedding-model text-embedding-nomic-embed-text-v1.5 `
   --epochs 30 `
   --seeds 7 13 21 42 100 `
+  --device auto `
   --output runs/context_dependence_multiseed_lmstudio
 ```
 

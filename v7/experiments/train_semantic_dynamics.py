@@ -15,6 +15,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from emonet_v7.adaptive_rsnn import AdaptiveSparseRSNN  # noqa: E402
+from emonet_v7.device import resolve_device  # noqa: E402
 from emonet_v7.embedding_cache import CachedTextEncoder  # noqa: E402
 from emonet_v7.episode_dataset import Episode, iter_transitions, load_episodes, select_split  # noqa: E402
 from emonet_v7.event_encoder import EventEncoder  # noqa: E402
@@ -39,7 +40,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--event-ticks", type=int, default=16)
     parser.add_argument("--stimulation-ticks", type=int, default=6)
     parser.add_argument("--state-policy", choices=["persistent", "reset_each_transition"], default="persistent")
-    parser.add_argument("--device", default="cpu")
+    parser.add_argument("--device", default="cpu", help="Torch device: cpu, cuda, cuda:0, or auto")
+    parser.add_argument("--no-cuda-fallback", action="store_true", help="Fail instead of falling back to CPU when CUDA is unavailable")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--quiet", action="store_true")
     return parser.parse_args()
@@ -170,7 +172,17 @@ def main() -> None:
     logger.log("config", "학습 설정을 불러왔다.", **vars(args))
 
     torch.manual_seed(args.seed)
-    device = torch.device(args.device)
+    device, used_device_fallback = resolve_device(
+        args.device,
+        allow_cuda_fallback=not args.no_cuda_fallback,
+    )
+    logger.log(
+        "device.ready",
+        "학습 device를 확정했다.",
+        requested_device=args.device,
+        resolved_device=str(device),
+        used_device_fallback=used_device_fallback,
+    )
     episodes = load_episodes(args.fixture)
     train_episodes = select_split(episodes, "train")
     validation_episodes = select_split(episodes, "validation")
@@ -280,6 +292,9 @@ def main() -> None:
         "final_validation_total": float(frame["validation_total"].iloc[-1]),
         "best_validation_total": best_validation,
         "best_epoch": best_epoch,
+        "requested_device": args.device,
+        "resolved_device": str(device),
+        "used_device_fallback": used_device_fallback,
         "note": "Starter episode curriculum. Trainability and validation behavior only; not evidence of emotional semantics.",
     }
     (output / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")

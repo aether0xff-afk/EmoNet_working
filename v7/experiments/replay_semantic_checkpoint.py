@@ -16,6 +16,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from emonet_v7.adaptive_rsnn import AdaptiveSparseRSNN  # noqa: E402
+from emonet_v7.device import resolve_device  # noqa: E402
 from emonet_v7.embedding_cache import CachedTextEncoder  # noqa: E402
 from emonet_v7.episode_dataset import Episode, iter_transitions, load_episodes, select_split  # noqa: E402
 from emonet_v7.event_encoder import EventEncoder  # noqa: E402
@@ -44,7 +45,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--encoder", choices=["hash", "lmstudio"], default="hash")
     parser.add_argument("--base-url")
     parser.add_argument("--embedding-model", default="text-embedding-nomic-embed-text-v1.5")
-    parser.add_argument("--device", default="cpu")
+    parser.add_argument("--device", default="cpu", help="Torch device: cpu, cuda, cuda:0, or auto")
+    parser.add_argument("--no-cuda-fallback", action="store_true", help="Fail instead of falling back to CPU when CUDA is unavailable")
     parser.add_argument("--quiet", action="store_true")
     return parser.parse_args()
 
@@ -150,7 +152,10 @@ def main() -> None:
     logger.section("semantic checkpoint replay")
     logger.log("config", "Replay 설정을 불러왔다.", **vars(args))
 
-    device = torch.device(args.device)
+    device, used_device_fallback = resolve_device(
+        args.device,
+        allow_cuda_fallback=not args.no_cuda_fallback,
+    )
     checkpoint = torch.load(args.checkpoint, map_location=device, weights_only=False)
     saved_args = checkpoint["args"]
     text_encoder = build_text_encoder(args, output)
@@ -163,6 +168,9 @@ def main() -> None:
         checkpoint_epoch=checkpoint["epoch"],
         saved_validation_total=checkpoint["validation_total"],
         episode_count=len(episodes),
+        requested_device=args.device,
+        resolved_device=str(device),
+        used_device_fallback=used_device_fallback,
     )
 
     trained = load_trained_bundle(checkpoint=checkpoint, text_dim=text_encoder.output_dim, device=device)
@@ -216,6 +224,9 @@ def main() -> None:
         "split": args.split,
         "state_policy": state_policy,
         "checkpoint_epoch": int(checkpoint["epoch"]),
+        "requested_device": args.device,
+        "resolved_device": str(device),
+        "used_device_fallback": used_device_fallback,
         "initial_target_cosine_similarity": initial_similarity,
         "trained_target_cosine_similarity": trained_similarity,
         "target_cosine_similarity_delta": trained_similarity - initial_similarity,

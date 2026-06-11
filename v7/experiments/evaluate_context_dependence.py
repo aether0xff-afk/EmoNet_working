@@ -15,6 +15,7 @@ import yaml
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
+from emonet_v7.device import resolve_device  # noqa: E402
 from emonet_v7.embedding_cache import CachedTextEncoder  # noqa: E402
 from emonet_v7.episode_dataset import Episode, iter_transitions, load_episodes, select_split  # noqa: E402
 from emonet_v7.lmstudio_client import LMStudioClient  # noqa: E402
@@ -34,7 +35,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--encoder", choices=["hash", "lmstudio"], default="hash")
     parser.add_argument("--base-url")
     parser.add_argument("--embedding-model", default="text-embedding-nomic-embed-text-v1.5")
-    parser.add_argument("--device", default="cpu")
+    parser.add_argument("--device", default="cpu", help="Torch device: cpu, cuda, cuda:0, or auto")
+    parser.add_argument("--no-cuda-fallback", action="store_true", help="Fail instead of falling back to CPU when CUDA is unavailable")
     parser.add_argument("--quiet", action="store_true")
     return parser.parse_args()
 
@@ -144,7 +146,10 @@ def main() -> None:
     logger.section("context dependence evaluation")
     logger.log("config", "Context dependence 평가 설정을 불러왔다.", **vars(args))
 
-    device = torch.device(args.device)
+    device, used_device_fallback = resolve_device(
+        args.device,
+        allow_cuda_fallback=not args.no_cuda_fallback,
+    )
     checkpoint = torch.load(args.checkpoint, map_location=device, weights_only=False)
     saved_args = checkpoint["args"]
     text_encoder = build_text_encoder(args, output)
@@ -170,6 +175,9 @@ def main() -> None:
         state_policy=state_policy,
         episode_count=len(episodes),
         contrast_pair_count=len(pairs),
+        requested_device=args.device,
+        resolved_device=str(device),
+        used_device_fallback=used_device_fallback,
     )
 
     rows: list[dict] = []
@@ -197,6 +205,9 @@ def main() -> None:
         "checkpoint": args.checkpoint,
         "split": args.split,
         "state_policy": state_policy,
+        "requested_device": args.device,
+        "resolved_device": str(device),
+        "used_device_fallback": used_device_fallback,
         "initial_prediction_distance_mean": float(grouped.loc["initial", "prediction_cosine_distance"]),
         "trained_prediction_distance_mean": float(grouped.loc["trained", "prediction_cosine_distance"]),
         "initial_latent_distance_mean": float(grouped.loc["initial", "latent_cosine_distance"]),

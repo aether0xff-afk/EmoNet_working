@@ -1,201 +1,235 @@
 # EmoNet
 
-[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![Status](https://img.shields.io/badge/status-research%20prototype-F59E0B)](#project-status)
-[![License](https://img.shields.io/badge/license-MIT-22C55E)](LICENSE)
+EmoNet은 감정을 단일 라벨로 맞히는 모델이 아니라, **시간에 따라 변하는 내부 상태와 trace가 감정 관련 맥락을 어떻게 담는지** 검증하는 연구 프로토타입입니다.
 
-EmoNet은 감정을 하나의 라벨이 아니라 시간에 따라 변하는 내부 상태 trace로 다루는 연구 및 프로토타입 저장소입니다. 초기 감정 파이프라인, trace-as-emotion 실험, character-chat, Ruca/Rookie 자율 캐릭터 런타임, Minecraft RL Agent MVP가 함께 보관되어 있습니다.
+현재 중심 작업은 `v7`입니다. v7은 텍스트 사건을 SNN 내부 동역학으로 변환하고, 그 상태가 다음 사건 예측, context 유지, response conditioning, memory-threshold substrate, activity-guided rewiring에 어떤 영향을 주는지 실험합니다.
 
-현재 주요 시작점은 `v6`입니다. 사람이 직접 주입한 감정 정책을 줄이는 다음 설계는 `v7`에서 진행합니다.
+## 지금 이 프로젝트를 뭐라고 부를 수 있나
 
-## Quick Start
+현재 가장 정확한 표현은 다음입니다.
+
+```text
+SNN 기반 affective dynamics 연구 프로토타입
+```
+
+조금 더 풀면:
+
+```text
+텍스트 사건의 시간적 맥락을 SNN 내부 상태 변화로 보존하고,
+그 변화가 예측, 응답 조건화, memory substrate, rewiring ablation에
+검증 가능한 영향을 주는지 확인하는 실험 시스템
+```
+
+아직 **감정을 느끼는 AI**라고 말할 단계는 아닙니다. 지금까지의 결과는 “감정 관련 내부 상태 후보”와 “맥락 의존적 trace dynamics”에 대한 통제 실험 근거입니다.
+
+## 현재 상태
+
+최근 v7 후속 작업에서 `AET-19`부터 `AET-30`까지 완료했습니다.
+
+- v7 baseline 정리
+- two-module thought runtime 구현
+- thought runtime 비용/라운드 제한 구현
+- neutral trace report 기반 response-conditioning runner 구현
+- response influence summarizer 구현
+- LM Studio multi-seed context objective 실행
+- SSH GPU 호스트에서 CUDA 장기 실행 및 CPU 비교
+- 실험 산출물 보존 정책 정리
+- memory-threshold substrate 승격 여부 결정
+- activity-guided rewiring 본실험 실행
+- 다음 benchmark fixture hierarchy 선정
+
+현재 `main`은 최신 작업이 푸시된 상태이며, 마지막 검증 기준 테스트는 `47 passed`입니다.
+
+## 핵심 결론
+
+### 1. Context objective
+
+LM Studio embedding 기반 multi-seed 실험에서 contrastive SNN은 prior context를 사용하는 신호를 보였습니다. 다만 GRU도 경쟁력이 있었기 때문에, 이것만으로 SNN 고유 우위나 감정 의미를 주장하지 않습니다.
+
+### 2. CUDA 실행
+
+원격 GPU 호스트 `DESKTOP-MMLRCFK`의 RTX 4090에서 strict CUDA 실행을 확인했습니다. 작은 fixture에서는 CPU가 더 빠른 결과도 있었으므로, CUDA 결과는 성능 우위가 아니라 **device path 검증**으로 해석합니다.
+
+### 3. Memory-threshold substrate
+
+`NeuronMemoryThresholdRSNN`은 기존 contrastive SNN과 GRU보다 일부 semantic/context 지표가 좋았습니다. 하지만 community evidence가 아직 약해서 primary substrate로 승격하지 않고, ablation substrate 및 rewiring testbed로 보류했습니다.
+
+### 4. Activity-guided rewiring
+
+semantic-preserving rewiring region은 찾았습니다. 그러나 rewired adjacency community evidence는 확립되지 않았습니다. 따라서 현재 rewiring rule은 final rule이 아니라 controlled ablation/search heuristic입니다.
+
+### 5. Benchmark fixture
+
+현재 fixture hierarchy는 다음으로 고정했습니다.
+
+| 역할 | Fixture |
+| --- | --- |
+| Primary long-run regression | `v7/fixtures/semantic_alignment_episodes.yaml` |
+| Fast CI/context guardrail | `v7/fixtures/context_dependence_episodes.yaml` |
+| Secondary response influence | `v7/fixtures/response_conditioning_cases.yaml` |
+| Starter trainability only | `v7/fixtures/semantic_training_episodes.yaml` |
+
+## 빠른 시작
 
 ```powershell
 git clone <repository-url>
 cd EmoNet_working
+cd v7
 
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install --upgrade pip
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-
-cd .\v6
-..\.venv\Scripts\python.exe -m unittest discover -s tests -v
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -e .[dev]
 ```
 
-Windows Store Python 별칭이 잡힌 환경에서는 실제 Python 실행 파일 경로를 직접 사용하세요.
+LM Studio나 response-conditioning 실험까지 실행하려면:
 
 ```powershell
-$PY = "$env:USERPROFILE\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe"
-& $PY --version
+pip install -e .[llm]
 ```
 
-## Current Focus
+모든 optional dependency를 설치하려면:
 
-- `v6`: v5를 기반으로 no-reply tick, inner voice, spontaneous response gate, Rookie용 장면 및 이야기 상태를 추가한 Ruca/Rookie 자율 캐릭터 런타임입니다.
-- `src/`: KSEF 논문의 구조를 Minecraft 환경에 옮긴 Minecraft RL Agent MVP입니다.
-- `v5`: EmoNet trace를 캐릭터 발화로 번역하는 character-chat MVP입니다.
-- `v4`: 논문, 평가, trajectory 분석, local GUI가 모인 연구 앱 라인입니다.
-- `v3.1`: trace 자체가 감정 상태 표현인지 검증하는 실험 라인입니다.
+```powershell
+pip install -e .[all]
+```
 
-## Ruca/Rookie Runtime
+## 테스트
 
-`v6/ruca_engine`은 사용자 메시지뿐 아니라 침묵도 하나의 이벤트로 처리합니다.
+v7 전체 테스트:
+
+```powershell
+cd v7
+py -3.11 -m pytest -q
+```
+
+최근 기준:
 
 ```text
-user message or silence
-  -> event scheduler
-  -> emotion state update
-  -> memory retrieval
-  -> context analysis
-  -> Ruca / Ricky / Rocky inner voices
-  -> spontaneous response gate
-  -> LLM expression layer or internal-only update
-  -> session and memory persistence
+47 passed
 ```
 
-일반 대화 한 턴:
+빠른 context guardrail만 확인:
 
 ```powershell
-cd .\v6
-python -m ruca_engine.cli "오늘은 조금 불안해" --llm --debug
+python -m pytest -q `
+  tests/test_context_dependence_fixture.py `
+  tests/test_context_objective.py `
+  tests/test_context_objective_runner.py
 ```
 
-침묵 동안 내부 상태만 갱신:
+## 주요 실행 예시
+
+### LM Studio 연결 확인
 
 ```powershell
-python -m ruca_engine.cli --silence --elapsed-minutes 10 --debug
+python experiments/check_lmstudio.py `
+  --base-url http://127.0.0.1:1234
 ```
 
-긴 침묵 뒤 발화 게이트 확인:
+### Context objective benchmark
 
 ```powershell
-python -m ruca_engine.cli --elapsed-minutes 60 --llm --debug
+python experiments/run_context_objective_benchmark_checked.py `
+  --fixture fixtures/context_dependence_episodes.yaml `
+  --encoder lmstudio `
+  --base-url http://127.0.0.1:1234 `
+  --embedding-model text-embedding-nomic-embed-text-v1.5 `
+  --epochs 30 `
+  --seeds 7 13 21 42 100 `
+  --output runs/context_objective_benchmark_lmstudio
 ```
 
-`--emonet`을 추가하면 규칙 기반 감정 갱신 대신 v6 artifact를 사용하는 EmoNet trace adapter가 활성화됩니다.
+### Memory-threshold long-run regression
 
 ```powershell
-python -m ruca_engine.cli "지금 너무 복잡해" --llm --emonet --debug
+python experiments/run_memory_threshold_parameter_sweep.py `
+  --fixture fixtures/semantic_alignment_episodes.yaml `
+  --encoder lmstudio `
+  --base-url http://127.0.0.1:1234 `
+  --embedding-model text-embedding-nomic-embed-text-v1.5 `
+  --epochs 30 `
+  --seeds 7 13 21 42 100 `
+  --device cuda `
+  --output runs/memory_threshold_parameter_sweep_lmstudio
 ```
 
-## Browser GUIs
-
-`v6`에는 목적이 다른 두 개의 로컬 웹 GUI가 있습니다.
-
-| Command | URL | Purpose |
-| --- | --- | --- |
-| `python .\local_gui.py` | `http://127.0.0.1:8788/` | v5 계열 character-chat service를 확장한 대화 및 AI dialogue 테스트 UI |
-| `python .\ruca_gui.py` | `http://127.0.0.1:8790/` | v6 artifact와 영속 세션 파일을 사용하는 Ruca GUI |
-
-침묵 tick과 자율 반응 게이트를 포함한 `ruca_engine.pipeline`을 직접 검증하려면 `python -m ruca_engine.cli`를 사용하세요.
-
-## Local LLM and API Keys
-
-OpenAI-compatible 서버를 사용할 수 있습니다. 로컬 Ollama 예시:
+### Activity-guided rewiring pipeline
 
 ```powershell
-python -m ruca_engine.cli "짧게 답해줘" `
-  --llm `
-  --base-url http://127.0.0.1:11434/v1 `
-  --model-name qwen3:14b `
-  --debug
+python experiments/run_activity_guided_rewiring_pipeline.py `
+  --fixture fixtures/semantic_alignment_episodes.yaml `
+  --encoder lmstudio `
+  --base-url http://127.0.0.1:1234 `
+  --embedding-model text-embedding-nomic-embed-text-v1.5 `
+  --epochs 30 `
+  --seeds 7 13 21 42 100 `
+  --null-permutations 64 `
+  --device cuda `
+  --output runs/activity_guided_rewiring_pipeline_lmstudio `
+  --skip-baseline-auto-create
 ```
 
-외부 API를 사용할 때만 환경 변수에 키를 설정합니다.
+## 중요한 문서
 
-```powershell
-$env:OPENAI_API_KEY = "..."
-$env:ANTHROPIC_API_KEY = "..."
-$env:GEMINI_API_KEY = "..."
-```
+| 문서 | 내용 |
+| --- | --- |
+| `v7/docs/implementation_spec_and_decision_log.md` | v7 전체 설계, claim boundary, 주요 결정 로그 |
+| `v7/docs/v7_baseline_release_note.md` | v7 baseline release note |
+| `v7/docs/context_objective_benchmark.md` | context objective 실험과 AET-25 결과 |
+| `v7/docs/semantic_dynamics_training.md` | semantic dynamics training, CUDA 기록 |
+| `v7/docs/activity_guided_rewiring_experiment_design.md` | rewiring 실험 설계와 AET-29 결과 |
+| `v7/docs/benchmark_fixture_policy.md` | primary/secondary fixture hierarchy |
+| `v7/docs/result_artifact_policy.md` | 실험 산출물 보존/커밋 정책 |
+| `v7/docs/trace_meaning_and_response_evaluation.md` | trace report와 response influence 평가 경계 |
 
-API 키, 로컬 세션, 새 대량 산출물은 커밋하지 않습니다.
-
-## Version Map
-
-| Version | Summary | Start Here |
-| --- | --- | --- |
-| `v1` | 초기 emotion-z pipeline과 GUI | `v1/emotion_z_pipeline.py` |
-| `v2` | encoder, dynamics, clustering, rewiring, branching을 분리한 PyTorch MVP | `v2/emonet/README.md` |
-| `v3` | CLI, 실험 스크립트, 평가 산출물을 포함한 self-contained 연구 라인 | `v3/OUTPUT_LAYOUT.md` |
-| `v3.1` | trace 자체가 감정 상태 표현이라는 가설을 검증하는 실험 라인 | `v3.1/README.md` |
-| `v4` | 논문, 평가, trajectory 분석, local GUI가 모인 연구 앱 라인 | `v4/README.md` |
-| `v5` | EmoNet trace를 캐릭터 발화로 번역하는 character-chat MVP | `v5/README.md` |
-| `v6` | Ruca/Rookie 자율 캐릭터 런타임과 v6 artifact 통합 | `v6/README.md` |
-| `v7` | 인위적인 감정 정책을 줄이는 재설계 라인 | `v7/README.md` |
-
-## Repository Tour
+## 저장소 구조
 
 ```text
 .
+  v7/                  현재 중심 연구 라인
+  v6/                  Ruca/Rookie 자율 캐릭터 런타임
+  v5/                  EmoNet trace -> character-chat MVP
+  v4/                  논문, 평가, trajectory 분석, local GUI
+  v3.1/                trace-as-emotion representation 연구
+  v3/, v2/, v1/        이전 실험 라인
   src/                 Minecraft RL Agent MVP
-  docs/                Architecture and repository organization docs
-  v1/                  Initial emotion-z pipeline
-  v2/                  Modular PyTorch MVP
-  v3/                  Legacy research CLI and experiments
-  v3.1/                Trace-as-emotion representation research
-  v4/                  Research, evaluation, and local GUI workspace
-  v5/                  Character-chat MVP
-  v6/                  Ruca/Rookie autonomous runtime
-  v7/                  De-handcrafted redesign line
-  Dataset/             Shared Korean emotional-dialogue dataset
-  blueprints/          Design notes and architecture sketches
-  encoder-LLM-testing/ LLM label benchmark scripts
-  encoder-ML testing/  Classical ML stimulus encoder benchmarks
-  output/, outputs/    Generated experiment outputs
-  tmp/                 Temporary render and document material
+  docs/                루트 문서
+  Dataset/             공유 데이터셋
+  blueprints/          설계 노트
+  outputs/, output/    생성 산출물
 ```
 
-## Minecraft RL Agent MVP
+## 산출물 정책
 
-루트의 Node.js 프로젝트는 KSEF 논문의 구조를 Minecraft 환경에 옮긴 최소 실행 버전입니다.
+`runs/`, checkpoint, embedding cache, raw log, bulk CSV/PNG는 기본적으로 커밋하지 않습니다. 실험 결과는 다음만 문서로 승격합니다.
 
-| Paper concept | Minecraft MVP mapping |
-| --- | --- |
-| nmap XML observation | Mineflayer world/inventory observation JSON |
-| KK/KV Knowledge Storage | 발견 블록, 보유 아이템, 제작 가능성, 실패 원인 저장 |
-| Policy A/B/C | WHAT/HOW/WHERE 행동 분해 |
-| Prophecy Module | 최근 행동 전이 기반 다음 상태/보상 예측 |
-| Imagination Cycle | 실행 전 후보 행동 rollout과 점수화 |
-| FLAG discovery | 목표 아이템 제작 또는 획득 |
+- 실행 command
+- code commit hash
+- seed와 핵심 hyperparameter
+- backend/model id
+- 핵심 metric
+- 해석 경계
+- full output 위치
 
-실행:
+자세한 기준은 `v7/docs/result_artifact_policy.md`를 봅니다.
 
-```bash
-npm install
-cp config.example.json config.json
-npm start
-```
+## Claim Boundary
 
-로컬 Minecraft Java 서버를 켠 뒤 `config.json`에 접속 주소와 포트를 맞춥니다. 기본 목표는 `wooden_pickaxe`이며, 로그는 `logs/run-*.jsonl`에 저장됩니다.
+현재 EmoNet v7이 말할 수 있는 것:
 
-## Tests
+- 텍스트 사건을 SNN 내부 상태 변화로 변환할 수 있다.
+- 일부 fixture에서 prior context가 trace와 예측에 영향을 준다.
+- memory-threshold substrate는 의미 있는 ablation 후보이다.
+- activity-guided rewiring은 semantic-preserving topology change를 찾을 수 있지만 community evidence는 아직 부족하다.
+- neutral trace report는 response surface에 영향을 줄 수 있다.
 
-현재 자율 캐릭터 런타임만 빠르게 확인:
+현재 말하면 안 되는 것:
 
-```powershell
-cd .\v6
-python -m unittest tests.test_ruca_engine -v
-```
-
-v6 전체 확인:
-
-```powershell
-python -m unittest discover -s tests -v
-```
-
-## Git Management
-
-이 저장소에는 선별된 연구 결과물이 의도적으로 포함되어 있습니다. 새로 생성한 대량 출력물, 로컬 세션, 모델 artifact, 압축 파일, API 키는 커밋하지 마세요. 이미 추적 중인 결과물은 별도 정리 작업에서 의도적으로 이동하거나 삭제할 때까지 계속 추적됩니다.
-
-## Project Status
-
-이 저장소는 연구 프로토타입입니다.
-
-- 현재 주 개발 프로토타입 경로는 `v6/ruca_engine`입니다.
-- `v4`, `v5`, `v6`에는 연구 과정에서 이어진 코드와 스크립트가 일부 중복되어 있습니다.
-- `v6/ruca_engine`은 LLM 호출 실패 시 규칙 기반 답변을 임의로 만들어 내지 않고 명시적으로 실패합니다.
-- 일부 과거 한국어 문서와 문자열에는 인코딩이 깨진 텍스트가 남아 있습니다. 동작 변경과 별도로 정리해야 합니다.
+- 시스템이 감정을 느낀다.
+- 내부 상태가 검증된 감정이다.
+- neuron cluster가 감정 cluster다.
+- rewiring rule이 최종 생물학적 규칙이다.
+- fixture 결과가 넓은 현실 일반화를 보장한다.
 
 ## License
 

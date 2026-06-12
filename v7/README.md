@@ -21,6 +21,8 @@ The frozen baseline release note lives in
 `docs/v7_baseline_release_note.md`.
 Generated experiment output policy lives in
 `docs/result_artifact_policy.md`.
+Benchmark fixture policy lives in
+`docs/benchmark_fixture_policy.md`.
 
 ## Install
 

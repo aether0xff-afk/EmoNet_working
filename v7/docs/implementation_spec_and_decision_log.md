@@ -192,6 +192,12 @@ the controlled fixture. It does not establish emotional semantics.
 The broader trace-meaning and response-influence evaluation framework is defined
 in `docs/trace_meaning_and_response_evaluation.md`.
 
+The current fixture hierarchy is fixed in
+`docs/benchmark_fixture_policy.md`: `semantic_alignment_episodes.yaml` is the
+primary long-run regression fixture, `context_dependence_episodes.yaml` is the
+fast CI/context guardrail, and `response_conditioning_cases.yaml` is a secondary
+response-surface fixture.
+
 ## Thought Module Protocol
 
 The thought module protocol is intentionally minimal:
@@ -385,7 +391,6 @@ back. Summaries record `requested_device`, `resolved_device`, and
 
 ## Open Decisions
 
-- Which context fixture should become the main regression benchmark.
 - Whether a future rewiring rule can establish community evidence; the current
   activity-guided rule remains an ablation after AET-29.
 - Which metrics justify closing a context-memory milestone: validation loss,
@@ -418,3 +423,7 @@ back. Summaries record `requested_device`, `resolved_device`, and
   evidence for Linear issue AET-28.
 - 2026-06-12: activity-guided rewiring found a semantic-preserving regime but
   did not establish rewired community evidence for Linear issue AET-29.
+- 2026-06-12: benchmark fixture hierarchy fixed for Linear issue AET-30:
+  `semantic_alignment_episodes.yaml` is primary long-run regression,
+  `context_dependence_episodes.yaml` is CI/context guardrail, and
+  `response_conditioning_cases.yaml` is secondary exploratory response work.

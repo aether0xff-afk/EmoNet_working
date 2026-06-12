@@ -171,6 +171,11 @@ Validation-best checkpointing is the default interpretation point. See
 `docs/semantic_dynamics_training.md` for commands, output files, and the
 2026-06-11 CUDA smoke record.
 
+Generated checkpoints, caches, logs, figures, and run directories are not the
+durable evidence layer. The repository keeps reviewed summaries and decision
+records instead. See `docs/result_artifact_policy.md` for the artifact
+promotion policy.
+
 ## Context Evaluation
 
 Context tests use paired episodes where the current event text is identical but

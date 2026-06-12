@@ -2,4 +2,17 @@
 __pycache__/
 .pytest_cache/
 *.pyc
+
+# Generated experiment outputs stay local or external by default.
 runs/
+outputs/
+output/
+artifacts/
+
+# Large or rebuildable experiment artifacts.
+*.pt
+*.pth
+*.npz
+*.joblib
+embedding_cache.json
+run_log.jsonl

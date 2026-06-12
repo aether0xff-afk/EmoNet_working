@@ -228,6 +228,10 @@ final learning rule or biological model.
 The current experiment design and visualization handoff live in
 `docs/activity_guided_rewiring_experiment_design.md`.
 
+As of the 2026-06-12 AET-29 pipeline run, activity-guided rewiring found a
+semantic-preserving configuration but did not establish adjacency-community
+evidence. The rule remains a controlled ablation and search heuristic.
+
 ## Memory-Threshold Substrate Decision
 
 Decision date: 2026-06-12
@@ -382,8 +386,8 @@ back. Summaries record `requested_device`, `resolved_device`, and
 ## Open Decisions
 
 - Which context fixture should become the main regression benchmark.
-- Whether rewiring should run during training, between training phases, or only
-  as an offline ablation.
+- Whether a future rewiring rule can establish community evidence; the current
+  activity-guided rule remains an ablation after AET-29.
 - Which metrics justify closing a context-memory milestone: validation loss,
   context margin, shuffled-history delta, multi-seed win rate, or a combined
   threshold.
@@ -412,3 +416,5 @@ back. Summaries record `requested_device`, `resolved_device`, and
 - 2026-06-12: memory-threshold substrate promotion was held; it remains an
   ablation substrate pending broader fixture, long-run CUDA, and community
   evidence for Linear issue AET-28.
+- 2026-06-12: activity-guided rewiring found a semantic-preserving regime but
+  did not establish rewired community evidence for Linear issue AET-29.

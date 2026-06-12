@@ -1,6 +1,6 @@
 # Activity-Guided Rewiring Experiment Design
 
-Status date: 2026-06-11
+Status date: 2026-06-12
 
 This document defines the current M3 experiment path for self-organizing
 community and rewiring checks. The implementation is an ablation, not a final
@@ -125,3 +125,101 @@ diagnostic structure.
 
 It does not establish emotional ground truth, stable neuron roles, biological
 fidelity, or broad real-world generalization.
+
+## 2026-06-12 AET-29 Pipeline Result
+
+The activity-guided rewiring pipeline was run on remote host `DESKTOP-MMLRCFK`
+with LM Studio embeddings and CUDA execution for the train/evaluation stages.
+
+```text
+Code commit: 1ca029227e6471bdbec88a800e1b5b09dbc7e657
+Python env: C:/Users/remote/miniconda3/envs/picasso-gpu/python.exe
+GPU: NVIDIA GeForce RTX 4090
+Encoder: lmstudio
+Embedding model: text-embedding-nomic-embed-text-v1.5
+Base URL: https://desktop-mmlrcfk.tail93ffc6.ts.net
+Epochs: 30
+Seeds: 7, 13, 21, 42, 100
+Null permutations: 64
+Output: runs/activity_guided_rewiring_pipeline_lmstudio
+```
+
+Pipeline command:
+
+```powershell
+python experiments/run_activity_guided_rewiring_pipeline.py `
+  --encoder lmstudio `
+  --base-url https://desktop-mmlrcfk.tail93ffc6.ts.net `
+  --embedding-model text-embedding-nomic-embed-text-v1.5 `
+  --epochs 30 `
+  --seeds 7 13 21 42 100 `
+  --null-permutations 64 `
+  --device cuda `
+  --output runs/activity_guided_rewiring_pipeline_lmstudio `
+  --skip-baseline-auto-create
+```
+
+The pipeline found a semantic-preserving rewiring region:
+
+```text
+stability_sweep stage_verdict: semantic_preserving_rewiring_region_found
+selected config: fraction_0.0100__start_10__interval_10
+rewiring_fraction: 0.01
+rewiring_start_epoch: 10
+rewiring_interval: 10
+baseline memory model real targeted MAE: 0.26881304606795314
+rewired real targeted MAE: 0.26550635248422627
+baseline_minus_rewired_mae: 0.003306693583726872
+real_direction_accuracy: 0.675
+real_pair_order_accuracy: 0.825
+shuffled_minus_real_mae: 0.06898729503154755
+reset_minus_real_mae: 0.1703202120959758
+rewiring_event_count: 2.4
+rewired_edges_total: 38.8
+objective_memory_strength_mean_abs: 0.3491812162101269
+semantic_preservation_checks_pass: true
+```
+
+Stable regions identified by the sweep:
+
+```text
+rewiring_fraction: 0.005, 0.02
+rewiring_interval: 10
+rewiring_start_epoch: 15
+```
+
+The rewired cluster diagnostic did **not** establish community evidence:
+
+```text
+pipeline stage_verdict: rewiring_community_evidence_not_established
+rewired_cluster stage_verdict: rewiring_community_evidence_not_established
+selected_cluster_count: 6.4
+trained_modularity: 0.1990827530622482
+initial_modularity: 0.19982807338237757
+null_modularity: 0.20186002082191407
+trained_minus_initial_modularity: -0.0007453203201293854
+trained_minus_null_modularity: -0.0027772677596658198
+response_coherence_gap: -0.0092938501703614
+trained_minus_null_response_coherence_gap: -0.0096060820338958
+trained_minus_null_modularity positive rate: 0.2
+trained_minus_null_response_coherence_gap positive rate: 0.2
+```
+
+Generated figure manifest:
+
+```text
+runs/activity_guided_rewiring_pipeline_lmstudio/rewired_cluster/figures/visualization_manifest.json
+```
+
+The manifest lists five seed-level community-assignment figures plus
+`community_sizes_by_seed.png` and `rewiring_cluster_metrics.png`.
+
+Interpretation:
+
+The current activity-guided rule found a narrow topology-change regime that
+preserved, and slightly improved, the controlled semantic-readability metric
+relative to the selected memory-threshold baseline. However, the resulting
+weighted adjacency did not beat shuffled-weight nulls and did not produce
+within-community memory-response coherence. The rule should therefore remain a
+controlled ablation and search heuristic, not a final rewiring rule or evidence
+for stable emotion clusters.

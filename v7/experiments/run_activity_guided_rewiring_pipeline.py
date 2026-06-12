@@ -122,6 +122,8 @@ def main() -> None:
             str(sweep_output),
             "--epochs",
             str(args.epochs),
+            "--device",
+            args.device,
             *seed_args,
             *common_remote_args(args),
         ]

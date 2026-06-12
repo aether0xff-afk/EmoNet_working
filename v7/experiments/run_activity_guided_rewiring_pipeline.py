@@ -36,6 +36,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--epochs", type=int, default=30)
     parser.add_argument("--seeds", nargs="+", type=int, default=[7, 13, 21, 42, 100])
     parser.add_argument("--null-permutations", type=int, default=64)
+    parser.add_argument("--device", default="cpu")
     parser.add_argument("--skip-baseline-auto-create", action="store_true")
     return parser.parse_args()
 
@@ -88,6 +89,8 @@ def ensure_memory_baseline(*, args: argparse.Namespace, seed_args: list[str]) ->
             str(baseline),
             "--epochs",
             str(args.epochs),
+            "--device",
+            args.device,
             *seed_args,
             *common_remote_args(args),
         ]
@@ -158,6 +161,8 @@ def main() -> None:
             config_key,
             "--null-permutations",
             str(args.null_permutations),
+            "--device",
+            args.device,
             *seed_args,
             *common_remote_args(args),
         ]

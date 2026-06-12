@@ -1,6 +1,6 @@
 # EmoNet v7 Implementation Spec and Decision Log
 
-Status date: 2026-06-11
+Status date: 2026-06-12
 
 This document is the working contract for the v7 rebuild. It describes what is
 implemented, what the current experiments are allowed to claim, and which design
@@ -107,8 +107,8 @@ The memory-threshold variant is `NeuronMemoryThresholdRSNN`:
 - It keeps fast spiking state separate from neuron-local accumulation and
   persistent memory strength.
 - Memory consolidation happens at event boundaries, not every tick.
-- It exists for memory and rewiring ablations, not as a replacement for the
-  baseline contract yet.
+- It remains an ablation substrate and downstream rewiring testbed, not the
+  primary substrate contract.
 
 ## Trace and State Reports
 
@@ -228,6 +228,119 @@ final learning rule or biological model.
 The current experiment design and visualization handoff live in
 `docs/activity_guided_rewiring_experiment_design.md`.
 
+## Memory-Threshold Substrate Decision
+
+Decision date: 2026-06-12
+
+Decision: **hold `NeuronMemoryThresholdRSNN` as an ablation substrate; do not
+promote it to the primary substrate yet.**
+
+Evidence used:
+
+- Semantic benchmark output:
+  `runs/memory_threshold_semantic_benchmark_lmstudio/decision_report.json`
+- Parameter sweep output:
+  `runs/memory_threshold_parameter_sweep_lmstudio/decision_report.json`
+- Context-structure output:
+  `runs/memory_threshold_context_structure_best_lmstudio/decision_report.json`
+- Emergent-cluster diagnostic:
+  `runs/memory_threshold_emergent_cluster_best_lmstudio/decision_report.json`
+- CUDA smoke output:
+  `runs/aet28_memory_threshold_cuda_smoke/`
+
+The positive evidence is real but narrow:
+
+- Best memory-threshold model:
+  `snn_memory_feedback`
+- Mean real targeted MAE:
+  `0.27069973498582844`
+- Previous contrastive SNN mean real targeted MAE:
+  `0.2921911489218474`
+- GRU contrastive mean real targeted MAE:
+  `0.27535309784114365`
+- Previous SNN minus best memory model MAE:
+  `0.021491413936018944`
+- GRU minus best memory model MAE:
+  `0.004653362855315202`
+- Shuffled-history degradation:
+  `0.058600530028343145`
+- Reset-history degradation:
+  `0.22351464480161665`
+- Memory strength mean absolute value:
+  `0.297730765491724`, below the non-saturation threshold used by the
+  summarizer.
+
+The parameter sweep selected:
+
+```text
+feedback_0.050__threshold_0.500__accumulation_decay_0.850
+```
+
+This selected configuration passed the semantic direction, pair-order,
+shuffled/reset degradation, seed-stability, and non-saturation checks. Its mean
+real targeted MAE was `0.26881304606795314`, improving on the previous
+contrastive SNN by `0.023378102853894245` and on the GRU by
+`0.006540051773190503`.
+
+The context-structure check also supports keeping it as a serious candidate:
+
+- Trace context gap:
+  `0.02976742759346958`
+- Trace reset gap:
+  `0.055465207248926104`
+- Same-context repeat distance:
+  approximately `0`
+- Context retrieval accuracy:
+  `1.0`
+- Linear probe accuracy:
+  `0.575` versus `0.5` chance
+- Context and reset gaps were positive for all five seeds.
+
+CUDA stability was checked on `DESKTOP-MMLRCFK` with
+`C:/Users/remote/miniconda3/envs/picasso-gpu/python.exe`, PyTorch
+`2.11.0+cu128`, and an NVIDIA RTX 4090. A short hash-encoder smoke command ran
+with `--device cuda`, `--epochs 3`, and `--seeds 42` and produced
+`by_seed_model.csv`, `summary_by_model.csv`, `metadata.json`, and
+`run_log.jsonl`. The runner uses `torch.device(args.device)` directly, so this
+path does not silently fall back to CPU.
+
+Blocking evidence against promotion:
+
+- Emergent-cluster diagnostic verdict:
+  `community_evidence_not_established`
+- Trained minus weight-shuffled null modularity:
+  `-0.0028722506016492398`
+- Response coherence gap:
+  `-0.007053542811061739`
+- Trained minus null response coherence gap:
+  `-0.008771147352330939`
+- Functional community evidence was false, and trained topology did not beat the
+  shuffled-weight null for most seeds.
+
+Rationale:
+
+The memory-threshold variant improves the controlled semantic/context metrics
+and avoids obvious memory saturation on the selected fixture. That justifies
+keeping it as the main ablation substrate for AET-29 rewiring work. It does not
+yet justify replacing `AdaptiveSparseRSNN` as the primary substrate, because the
+extra memory state and consolidation logic increase the core contract
+complexity, while the structural/community evidence needed for a substrate
+promotion is not established.
+
+Promotion conditions:
+
+- Reproduce the semantic and context-structure advantage on the primary
+  regression fixture chosen in AET-30.
+- Show non-saturated memory behavior across a broader parameter range and
+  longer runs.
+- Show degradation under shuffled/reset history while preserving exact-repeat
+  stability.
+- Establish structural or functional community evidence against appropriate
+  initialization, shuffled-weight, and label-permutation nulls.
+- Demonstrate CUDA stability on the long-run benchmark, not only a short smoke.
+- Keep the claim boundary: this would still be an emotion-related dynamics
+  substrate candidate, not evidence that the system feels emotions.
+
 ## Legacy Migration Boundary
 
 Pre-v7 work is treated as motivation, diagnostic history, and integration
@@ -268,8 +381,6 @@ back. Summaries record `requested_device`, `resolved_device`, and
 
 ## Open Decisions
 
-- Whether the memory-threshold substrate should graduate from ablation module to
-  the primary substrate.
 - Which context fixture should become the main regression benchmark.
 - Whether rewiring should run during training, between training phases, or only
   as an offline ablation.
@@ -298,3 +409,6 @@ back. Summaries record `requested_device`, `resolved_device`, and
   documented for Linear issue AET-11.
 - 2026-06-11: generated package metadata removed from tracked source and
   ignored for Linear issue AET-19.
+- 2026-06-12: memory-threshold substrate promotion was held; it remains an
+  ablation substrate pending broader fixture, long-run CUDA, and community
+  evidence for Linear issue AET-28.

@@ -9,6 +9,7 @@ from emonet_v5 import (
     build_controls,
     run_context_probe,
 )
+from emonet_v5.probes import RidgeBinaryProbe
 
 
 def build_model() -> EmoNetV5Clean:
@@ -87,3 +88,20 @@ def test_canonical_controls_preserve_shapes() -> None:
         original.fingerprint() != wrong.fingerprint()
         for original, wrong in zip(traces, controls["wrong_sample"], strict=True)
     )
+
+
+def test_ridge_probe_decodes_simple_linear_signal() -> None:
+    features = np.asarray(
+        [
+            [-2.0, 0.1],
+            [-1.5, -0.2],
+            [-1.0, 0.3],
+            [1.0, -0.1],
+            [1.5, 0.2],
+            [2.0, -0.3],
+        ],
+        dtype=np.float32,
+    )
+    labels = np.asarray([0, 0, 0, 1, 1, 1], dtype=np.int64)
+    probe = RidgeBinaryProbe(alpha=0.1).fit(features, labels)
+    assert probe.accuracy(features, labels) == 1.0

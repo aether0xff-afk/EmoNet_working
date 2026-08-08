@@ -29,3 +29,12 @@ jobs:
         run: pytest -q
       - name: Context smoke
         run: python experiments/run_context_smoke.py
+      - name: Multi-seed trace benchmark
+        run: python experiments/run_multiseed_trace_benchmark.py
+      - name: Upload trace benchmark artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v5-clean-multiseed-trace-benchmark
+          path: v5_clean/outputs/multiseed_trace_benchmark/
+          if-no-files-found: error

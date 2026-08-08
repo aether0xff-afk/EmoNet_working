@@ -1,0 +1,49 @@
+name: v5-clean-ci
+
+on:
+  pull_request:
+    paths:
+      - 'v5_clean/**'
+      - '.github/workflows/v5-clean-ci.yml'
+  push:
+    branches:
+      - 'feature/v5-clean-trace-rebuild'
+    paths:
+      - 'v5_clean/**'
+      - '.github/workflows/v5-clean-ci.yml'
+
+jobs:
+  test-v5-clean:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: v5_clean
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install
+        run: python -m pip install -e '.[dev]'
+      - name: Unit tests
+        run: pytest -q
+      - name: Context smoke
+        run: python experiments/run_context_smoke.py
+      - name: Multi-seed trace benchmark
+        run: python experiments/run_multiseed_trace_benchmark.py
+      - name: Context-order decodability benchmark
+        run: python experiments/run_context_order_probe.py
+      - name: Upload trace benchmark artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v5-clean-multiseed-trace-benchmark
+          path: v5_clean/outputs/multiseed_trace_benchmark/
+          if-no-files-found: error
+      - name: Upload context-order probe artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v5-clean-context-order-probe
+          path: v5_clean/outputs/context_order_probe/
+          if-no-files-found: error

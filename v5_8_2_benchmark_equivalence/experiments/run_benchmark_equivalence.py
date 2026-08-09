@@ -165,32 +165,39 @@ def evaluate_model(seed: int, encoder: CachedSentenceEncoder, model_name: str) -
     }
 
 
+def relational_accuracy(encoder: CachedSentenceEncoder, renderer: str) -> float:
+    factory = old_case if renderer == "old" else new_case
+    rows: list[dict[str, object]] = []
+    for pair_id in range(PAIR_COUNT):
+        c0, c1, _, _, _, _ = factory(pair_id)
+        for label, sequence in ((0, c0), (1, c1)):
+            feature = (
+                relational_structure_features(list(sequence), encoder)
+                if renderer == "old"
+                else relational_features(sequence, encoder)
+            )
+            rows.append({"pair_id": pair_id, "label": label, "feature": feature})
+    train, test = split(rows)
+    probe = DiagnosticRidge(RIDGE_ALPHA).fit(matrix(train, "feature"), labels(train))
+    return accuracy(labels(test), probe.predict(matrix(test, "feature")))
+
+
 def renderer_diagnostics(encoder: CachedSentenceEncoder) -> dict[str, float]:
     a_cos: list[float] = []
     b_cos: list[float] = []
     prefix_cos: list[float] = []
-    old_rel: list[float] = []
-    new_rel: list[float] = []
-
     for pair_id in range(PAIR_COUNT):
-        oc0, oc1, _, oa, ob, oprefix = old_case(pair_id)
-        nc0, nc1, _, na, nb, nprefix = new_case(pair_id)
+        _, _, _, oa, ob, oprefix = old_case(pair_id)
+        _, _, _, na, nb, nprefix = new_case(pair_id)
         a_cos.append(cosine(encoder.encode(oa), encoder.encode(na)))
         b_cos.append(cosine(encoder.encode(ob), encoder.encode(nb)))
         prefix_cos.append(cosine(encoder.encode(oprefix), encoder.encode(nprefix)))
-
-        old_x = np.stack([relational_structure_features(list(seq), encoder) for seq in (oc0, oc1)])
-        new_x = np.stack([relational_features(seq, encoder) for seq in (nc0, nc1)])
-        # Label-free validity proxy: the two structural feature vectors should differ.
-        old_rel.append(float(np.linalg.norm(old_x[0] - old_x[1])))
-        new_rel.append(float(np.linalg.norm(new_x[0] - new_x[1])))
-
     return {
         "event_a_old_new_cosine": float(np.mean(a_cos)),
         "event_b_old_new_cosine": float(np.mean(b_cos)),
         "prefix_old_new_cosine": float(np.mean(prefix_cos)),
-        "old_relational_class_distance": float(np.mean(old_rel)),
-        "new_relational_class_distance": float(np.mean(new_rel)),
+        "old_relational_accuracy": relational_accuracy(encoder, "old"),
+        "new_relational_accuracy": relational_accuracy(encoder, "new"),
     }
 
 
@@ -241,9 +248,7 @@ def main() -> None:
     for seed in SEEDS:
         for model_name in ("v57", "v58"):
             metrics = evaluate_model(seed, encoder, model_name)
-            metrics["paired_trace_normalized_distance"] = paired_trace_shift(
-                seed, encoder, model_name
-            )
+            metrics["paired_trace_normalized_distance"] = paired_trace_shift(seed, encoder, model_name)
             rows.append({"seed": seed, "model": model_name, **metrics})
 
     aggregate: dict[str, dict[str, float]] = {}
@@ -260,10 +265,14 @@ def main() -> None:
         aggregate[model_name]["cross_drop"] = within - cross
 
     render = renderer_diagnostics(encoder)
+    relational_valid = (
+        render["old_relational_accuracy"] >= 0.95
+        and render["new_relational_accuracy"] >= 0.95
+    )
     diagnostic = {
         model: {
-            "renderer_robust": values["cross_mean"] >= 0.70 and values["cross_drop"] <= 0.10,
-            "renderer_sensitive": values["within_mean"] >= 0.65 and values["cross_drop"] > 0.15,
+            "renderer_robust": relational_valid and values["cross_mean"] >= 0.70 and values["cross_drop"] <= 0.10,
+            "renderer_sensitive": relational_valid and values["within_mean"] >= 0.65 and values["cross_drop"] > 0.15,
         }
         for model, values in aggregate.items()
     }
@@ -277,6 +286,7 @@ def main() -> None:
         "test_pairs": PAIR_COUNT - TRAIN_PAIRS,
         "mean_by_model": aggregate,
         "renderer_embedding_and_relational_diagnostics": render,
+        "relational_validity_pass": relational_valid,
         "diagnosis": diagnostic,
         "claim_boundary": "diagnostic only; no retroactive version pass and no affect claim",
     }

@@ -38,8 +38,14 @@ jobs:
       - name: Verify v5.10 hidden-prior construction
         run: pytest -q v5_10_hidden_prior_visible_window/tests
       - name: Run leave-one-vector-world-out hidden-prior benchmark
-        run: python v5_10_hidden_prior_visible_window/experiments/run_hidden_prior_benchmark.py
-      - name: Upload artifact
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p v5_10_hidden_prior_visible_window/outputs/hidden_prior_visible_window
+          python v5_10_hidden_prior_visible_window/experiments/run_hidden_prior_benchmark.py 2>&1 \
+            | tee v5_10_hidden_prior_visible_window/outputs/hidden_prior_visible_window/run.log
+      - name: Upload benchmark output and debug log
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: v5.10-hidden-prior-visible-window

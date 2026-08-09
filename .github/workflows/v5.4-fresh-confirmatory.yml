@@ -1,0 +1,60 @@
+name: v5.4-fresh-confirmatory
+
+on:
+  pull_request:
+    paths:
+      - 'v5_4_fresh_confirmatory/**'
+      - '.github/workflows/v5.4-fresh-confirmatory.yml'
+  push:
+    branches:
+      - 'feature/v5.4-fresh-confirmatory'
+    paths:
+      - 'v5_4_fresh_confirmatory/**'
+      - '.github/workflows/v5.4-fresh-confirmatory.yml'
+
+jobs:
+  fresh-confirmatory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+      MKL_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            v5_clean
+            v5_1_semantic_context
+            v5_2_learned_memory
+            v5_3_contrastive_memory
+            v5_4_fresh_confirmatory
+          sparse-checkout-cone-mode: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install frozen protocol dependencies
+        run: python -m pip install -e './v5_clean[dev]' sentence-transformers
+
+      - name: Verify frozen recurrent core
+        run: pytest -q v5_2_learned_memory/tests
+
+      - name: Verify frozen contrastive objective
+        run: pytest -q v5_3_contrastive_memory/tests
+
+      - name: Verify fresh fixture isolation before benchmark
+        run: pytest -q v5_4_fresh_confirmatory/tests
+
+      - name: Run first v5.4 confirmatory benchmark
+        run: python v5_4_fresh_confirmatory/experiments/run_fresh_confirmatory.py
+
+      - name: Upload immutable first-result artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v5.4-fresh-confirmatory-first-result
+          path: v5_4_fresh_confirmatory/outputs/fresh_confirmatory/
+          if-no-files-found: error

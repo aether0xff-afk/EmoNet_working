@@ -1,0 +1,51 @@
+name: v5.1.1-semantic-diagnostic
+
+on:
+  pull_request:
+    paths:
+      - 'v5_1_1_semantic_diagnostic/**'
+      - '.github/workflows/v5.1.1-semantic-diagnostic.yml'
+  push:
+    branches:
+      - 'feature/v5.1.1-semantic-diagnostic'
+    paths:
+      - 'v5_1_1_semantic_diagnostic/**'
+      - '.github/workflows/v5.1.1-semantic-diagnostic.yml'
+
+jobs:
+  semantic-failure-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            v5_clean
+            v5_1_semantic_context
+            v5_1_1_semantic_diagnostic
+          sparse-checkout-cone-mode: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install frozen core and diagnostic dependencies
+        run: |
+          python -m pip install -e './v5_clean[dev]' sentence-transformers
+
+      - name: Recheck inherited semantic fixture controls
+        run: pytest -q v5_1_semantic_context/tests
+
+      - name: Run v5.1.1 semantic failure diagnostic
+        run: python v5_1_1_semantic_diagnostic/experiments/run_failure_diagnostic.py
+
+      - name: Upload v5.1.1 diagnostic artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v5.1.1-semantic-failure-diagnostic
+          path: v5_1_1_semantic_diagnostic/outputs/failure_diagnostic/
+          if-no-files-found: error

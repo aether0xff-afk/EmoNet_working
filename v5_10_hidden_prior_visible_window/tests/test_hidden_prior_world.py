@@ -21,7 +21,7 @@ from hidden_prior_world import (
     DELAYS,
     INPUT_DIM,
     PAIR_COUNT,
-    PRIMARY_TASK if False else TASKS,
+    TASKS,
     TRAIN_PAIRS,
     WORLD_SEEDS,
     build_case,
@@ -56,7 +56,6 @@ def test_pair_vectors_are_nine_orthonormal_unit_vectors() -> None:
         case.delay_event,
         case.final_event,
     ]
-    # Hidden union is P/Q/R, then A/B/C/D/N/Z = 9 unique vectors.
     assert len(keys) == 9
     vectors = np.stack([encoder.encode(key) for key in keys])
     assert vectors.shape == (9, INPUT_DIM)
@@ -67,8 +66,8 @@ def test_hidden_classes_share_multiset_and_visible_window_exactly() -> None:
     for task in TASKS:
         case = build_case(task, 55)
         assert Counter(case.hidden0) == Counter(case.hidden1)
-        assert case.visible == build_case(task, 55).visible
         assert len(case.visible) == 4
+        assert case.visible == build_case(task, 55).visible
 
 
 def test_primary_slow_ema_norm_is_matched_after_all_delays() -> None:

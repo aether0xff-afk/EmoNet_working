@@ -1,0 +1,51 @@
+name: v5.1-semantic-context
+
+on:
+  pull_request:
+    paths:
+      - 'v5_1_semantic_context/**'
+      - '.github/workflows/v5.1-semantic-context.yml'
+  push:
+    branches:
+      - 'feature/v5.1-semantic-context'
+    paths:
+      - 'v5_1_semantic_context/**'
+      - '.github/workflows/v5.1-semantic-context.yml'
+
+jobs:
+  semantic-context-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            v5_clean
+            v5_1_semantic_context
+          sparse-checkout-cone-mode: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install v5.0 core and semantic experiment dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e './v5_clean[dev]' sentence-transformers
+
+      - name: Verify v5.1 fixture isolation
+        run: pytest -q v5_1_semantic_context/tests
+
+      - name: Run v5.1 semantic-context benchmark
+        run: python v5_1_semantic_context/experiments/run_semantic_context_probe.py
+
+      - name: Upload v5.1 semantic-context artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v5.1-semantic-context-probe
+          path: v5_1_semantic_context/outputs/semantic_context_probe/
+          if-no-files-found: error

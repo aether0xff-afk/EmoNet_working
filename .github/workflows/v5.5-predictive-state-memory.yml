@@ -1,0 +1,57 @@
+name: v5.5-predictive-state-memory
+
+on:
+  pull_request:
+    paths:
+      - 'v5_5_predictive_state_memory/**'
+      - '.github/workflows/v5.5-predictive-state-memory.yml'
+  push:
+    branches:
+      - 'feature/v5.5-predictive-state-memory'
+    paths:
+      - 'v5_5_predictive_state_memory/**'
+      - '.github/workflows/v5.5-predictive-state-memory.yml'
+
+jobs:
+  predictive-state-benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+      MKL_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            v5_clean
+            v5_1_semantic_context
+            v5_2_learned_memory
+            v5_4_fresh_confirmatory
+            v5_5_predictive_state_memory
+          sparse-checkout-cone-mode: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install frozen-core and predictive-state dependencies
+        run: python -m pip install -e './v5_clean[dev]' sentence-transformers
+
+      - name: Recheck frozen recurrent core
+        run: pytest -q v5_2_learned_memory/tests
+
+      - name: Run v5.5 leakage and protocol tests
+        run: pytest -q v5_5_predictive_state_memory/tests
+
+      - name: Run v5.5 predictive-state benchmark
+        run: python v5_5_predictive_state_memory/experiments/run_predictive_state_benchmark.py
+
+      - name: Upload v5.5 benchmark artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v5.5-predictive-state-memory-benchmark
+          path: v5_5_predictive_state_memory/outputs/predictive_state_benchmark/
+          if-no-files-found: error

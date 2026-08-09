@@ -21,6 +21,11 @@ jobs:
       TOKENIZERS_PARALLELISM: 'false'
     steps:
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            v5_clean
+            v5_1_semantic_context
+          sparse-checkout-cone-mode: true
 
       - uses: actions/setup-python@v5
         with:

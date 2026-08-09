@@ -1,0 +1,60 @@
+name: v5.7.1-fast-trace-geometry
+
+on:
+  pull_request:
+    paths:
+      - 'v5_7_1_fast_trace_geometry/**'
+      - '.github/workflows/v5.7.1-fast-trace-geometry.yml'
+  push:
+    branches:
+      - 'feature/v5.7.1-fast-trace-geometry-diagnostic'
+    paths:
+      - 'v5_7_1_fast_trace_geometry/**'
+      - '.github/workflows/v5.7.1-fast-trace-geometry.yml'
+
+jobs:
+  fast-trace-geometry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+      MKL_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            v5_clean
+            v5_1_semantic_context
+            v5_2_learned_memory
+            v5_4_fresh_confirmatory
+            v5_6_dual_timescale_state
+            v5_6_1_readout_temporal_diagnostic
+            v5_7_residual_fast_dynamics
+            v5_7_1_fast_trace_geometry
+          sparse-checkout-cone-mode: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install frozen-state and geometry dependencies
+        run: python -m pip install -e './v5_clean[dev]' sentence-transformers
+
+      - name: Recheck frozen v5.7 state
+        run: pytest -q v5_7_residual_fast_dynamics/tests
+
+      - name: Verify label-free geometry invariants
+        run: pytest -q v5_7_1_fast_trace_geometry/tests
+
+      - name: Run v5.7.1 fast-trace geometry diagnostic
+        run: python v5_7_1_fast_trace_geometry/experiments/run_fast_trace_geometry.py
+
+      - name: Upload v5.7.1 diagnostic artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v5.7.1-fast-trace-geometry
+          path: v5_7_1_fast_trace_geometry/outputs/fast_trace_geometry/
+          if-no-files-found: error

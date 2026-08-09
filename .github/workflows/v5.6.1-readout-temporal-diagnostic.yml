@@ -1,0 +1,58 @@
+name: v5.6.1-readout-temporal-diagnostic
+
+on:
+  pull_request:
+    paths:
+      - 'v5_6_1_readout_temporal_diagnostic/**'
+      - '.github/workflows/v5.6.1-readout-temporal-diagnostic.yml'
+  push:
+    branches:
+      - 'feature/v5.6.1-readout-temporal-diagnostic'
+    paths:
+      - 'v5_6_1_readout_temporal_diagnostic/**'
+      - '.github/workflows/v5.6.1-readout-temporal-diagnostic.yml'
+
+jobs:
+  readout-temporal-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+      MKL_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            v5_clean
+            v5_1_semantic_context
+            v5_2_learned_memory
+            v5_4_fresh_confirmatory
+            v5_6_dual_timescale_state
+            v5_6_1_readout_temporal_diagnostic
+          sparse-checkout-cone-mode: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install frozen-state and diagnostic dependencies
+        run: python -m pip install -e './v5_clean[dev]' sentence-transformers
+
+      - name: Recheck frozen v5.6 state invariants
+        run: pytest -q v5_6_dual_timescale_state/tests
+
+      - name: Verify v5.6.1 diagnostic construction
+        run: pytest -q v5_6_1_readout_temporal_diagnostic/tests
+
+      - name: Run v5.6.1 readout and temporal diagnostic
+        run: python v5_6_1_readout_temporal_diagnostic/experiments/run_readout_temporal_diagnostic.py
+
+      - name: Upload v5.6.1 diagnostic artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v5.6.1-readout-temporal-diagnostic
+          path: v5_6_1_readout_temporal_diagnostic/outputs/readout_temporal_diagnostic/
+          if-no-files-found: error

@@ -1,0 +1,62 @@
+name: v5.7-residual-fast-dynamics
+
+on:
+  pull_request:
+    paths:
+      - 'v5_7_residual_fast_dynamics/**'
+      - '.github/workflows/v5.7-residual-fast-dynamics.yml'
+  push:
+    branches:
+      - 'feature/v5.7-residual-fast-dynamics'
+    paths:
+      - 'v5_7_residual_fast_dynamics/**'
+      - '.github/workflows/v5.7-residual-fast-dynamics.yml'
+
+jobs:
+  residual-fast-benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+      MKL_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            v5_clean
+            v5_1_semantic_context
+            v5_2_learned_memory
+            v5_4_fresh_confirmatory
+            v5_6_dual_timescale_state
+            v5_6_1_readout_temporal_diagnostic
+            v5_7_residual_fast_dynamics
+          sparse-checkout-cone-mode: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install frozen-state and residual-fast dependencies
+        run: python -m pip install -e './v5_clean[dev]' sentence-transformers
+
+      - name: Recheck frozen v5.6 state invariants
+        run: pytest -q v5_6_dual_timescale_state/tests
+
+      - name: Recheck frozen v5.6.1 structural construction
+        run: pytest -q v5_6_1_readout_temporal_diagnostic/tests
+
+      - name: Run v5.7 residual-state tests
+        run: pytest -q v5_7_residual_fast_dynamics/tests
+
+      - name: Run v5.7 residual-fast benchmark
+        run: python v5_7_residual_fast_dynamics/experiments/run_residual_fast_benchmark.py
+
+      - name: Upload v5.7 benchmark artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v5.7-residual-fast-dynamics-benchmark
+          path: v5_7_residual_fast_dynamics/outputs/residual_fast_benchmark/
+          if-no-files-found: error

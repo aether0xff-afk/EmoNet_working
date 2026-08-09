@@ -1,15 +1,15 @@
 from __future__ import annotations
 
+from pathlib import Path
+import sys
+
 import numpy as np
 
-from emonet_v5.trace import NeuralTrace
+VERSION_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(VERSION_ROOT))
 
-from v5_7_1_fast_trace_geometry.geometry import (
-    activation_energy,
-    change_energy,
-    full_geometry,
-    population_moments,
-)
+from emonet_v5.trace import NeuralTrace
+from geometry import activation_energy, change_energy, full_geometry, population_moments
 
 
 def trace(states: np.ndarray) -> NeuralTrace:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import dataclass
+from functools import lru_cache
 
 import numpy as np
 
@@ -52,7 +53,14 @@ def _pair_seed(world_seed: int, task_index: int, pair_id: int) -> int:
     return int(world_seed * 10_000_000 + task_index * 100_000 + pair_id)
 
 
+@lru_cache(maxsize=None)
 def build_world(world_seed: int) -> LookupVectorEncoder:
+    """Build each deterministic vector world once per process.
+
+    The encoder is effectively immutable for this benchmark because `encode`
+    returns copies. Caching only removes repeated QR construction and does not
+    change any vector values or protocol semantics.
+    """
     if world_seed not in WORLD_SEEDS:
         raise ValueError(world_seed)
     mapping: dict[str, np.ndarray] = {}
@@ -74,10 +82,8 @@ def build_case(task: str, pair_id: int) -> HiddenPriorCase:
     key = lambda symbol: f"{task}/{pair_id:03d}/{symbol}"
     p, q, r = key("P"), key("Q"), key("R")
     if task == "norm_matched_repeat":
-        # Same {P,P,Q,R} multiset. Under orthonormal inputs and EMA decay .8,
-        # these two orderings have exactly equal slow-state norm.
-        hidden0 = (p, q, r, p)  # repeated P at positions 1 and 4
-        hidden1 = (q, p, p, r)  # repeated P at positions 2 and 3
+        hidden0 = (p, q, r, p)
+        hidden1 = (q, p, p, r)
     else:
         hidden0 = (p, q, p, q)
         hidden1 = (p, p, q, q)

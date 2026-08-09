@@ -26,6 +26,7 @@ jobs:
         with:
           sparse-checkout: |
             v5_clean
+            v5_1_semantic_context
             v5_2_learned_memory
             v5_4_fresh_confirmatory
             v5_5_predictive_state_memory
@@ -48,7 +49,7 @@ jobs:
         run: python v5_5_predictive_state_memory/experiments/run_predictive_state_benchmark.py
 
       - name: Upload v5.5 benchmark artifact
-        if: always()
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: v5.5-predictive-state-memory-benchmark

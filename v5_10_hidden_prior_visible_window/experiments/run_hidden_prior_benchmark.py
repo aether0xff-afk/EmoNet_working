@@ -24,6 +24,7 @@ from emonet_v5 import DynamicsConfig  # noqa: E402
 from residual_state import ResidualDrivenState  # noqa: E402
 from adaptive_state import AdaptiveResidualState  # noqa: E402
 from attribution_features import trace_pairwise_cosines  # noqa: E402
+from batch_dynamics import BatchState, BatchedResidualDynamics  # noqa: E402
 from hidden_prior_world import (  # noqa: E402
     DELAYS,
     PAIR_COUNT,
@@ -33,7 +34,6 @@ from hidden_prior_world import (  # noqa: E402
     WORLD_SEEDS,
     build_case,
     build_world,
-    pairwise_relational,
 )
 
 
@@ -43,6 +43,7 @@ ADAPTATION_STRENGTH = 0.20
 RIDGE_ALPHA = 1.0
 PRIMARY_TASK = "norm_matched_repeat"
 OUT_DIR = VERSION_ROOT / "outputs" / "hidden_prior_visible_window"
+PAIR_INDEX = ((0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3))
 
 
 class RidgeProbe:
@@ -76,6 +77,12 @@ def accuracy(y: np.ndarray, pred: np.ndarray) -> float:
     return float(np.mean(np.asarray(y) == np.asarray(pred)))
 
 
+# ---------------------------------------------------------------------------
+# Scalar reference helpers retained for regression/debugging. main() does not
+# use them; the formal run uses BatchedResidualDynamics after scalar-equivalence
+# tests pass in CI.
+# ---------------------------------------------------------------------------
+
 def snapshot(model: Any) -> dict[str, Any]:
     snap: dict[str, Any] = {
         "fast": model.fast.state.copy(),
@@ -95,8 +102,9 @@ def restore(model: Any, snap: dict[str, Any]) -> None:
         model.fast.adaptation = np.asarray(snap["adaptation"], dtype=np.float32).copy()
 
 
-def prepare_hidden(model: Any, hidden: tuple[str, ...], delay_event: str, delay: int) -> dict[str, Any]:
-    # reset_both avoids rebuilding the fixed seeded topology for every sample.
+def prepare_hidden(
+    model: Any, hidden: tuple[str, ...], delay_event: str, delay: int
+) -> dict[str, Any]:
     model.reset_both()
     model._event_index = 0
     model.consume_sequence(hidden)
@@ -105,7 +113,13 @@ def prepare_hidden(model: Any, hidden: tuple[str, ...], delay_event: str, delay:
     return snapshot(model)
 
 
-def visible_features(model: Any, snap: dict[str, Any], visible: tuple[str, ...], final_event: str, reset: str | None) -> dict[str, np.ndarray]:
+def visible_features(
+    model: Any,
+    snap: dict[str, Any],
+    visible: tuple[str, ...],
+    final_event: str,
+    reset: str | None,
+) -> dict[str, np.ndarray]:
     restore(model, snap)
     if reset == "fast":
         model.reset_fast()
@@ -126,136 +140,228 @@ def visible_features(model: Any, snap: dict[str, Any], visible: tuple[str, ...],
     }
 
 
-def previsible_features(model: Any, snap: dict[str, Any]) -> dict[str, np.ndarray]:
-    result = {
-        "prefast": np.asarray(snap["fast"], dtype=np.float32).copy(),
-        "preslow": np.asarray(snap["slow"], dtype=np.float32).copy(),
-        "slow_norm": np.asarray([np.linalg.norm(snap["slow"])], dtype=np.float32),
+# ---------------------------------------------------------------------------
+# Batched formal execution.
+# ---------------------------------------------------------------------------
+
+def pairwise_batch(vectors: np.ndarray) -> np.ndarray:
+    """Six pairwise cosines for [batch,4,features]."""
+    x = np.asarray(vectors, dtype=np.float32)
+    if x.ndim != 3 or x.shape[1] != 4:
+        raise ValueError(f"expected [batch,4,d], got {x.shape}")
+    norms = np.linalg.norm(x, axis=2)
+    result: list[np.ndarray] = []
+    for i, j in PAIR_INDEX:
+        numerator = np.sum(x[:, i] * x[:, j], axis=1)
+        denominator = norms[:, i] * norms[:, j]
+        value = np.divide(
+            numerator,
+            denominator,
+            out=np.zeros_like(numerator, dtype=np.float32),
+            where=denominator > 1e-12,
+        )
+        result.append(value.astype(np.float32, copy=False))
+    return np.stack(result, axis=1).astype(np.float32, copy=False)
+
+
+def trace_selfsim_batch(traces: np.ndarray) -> np.ndarray:
+    """Six cosines for [batch,4,ticks,neurons] visible event traces."""
+    traces = np.asarray(traces, dtype=np.float32)
+    if traces.ndim != 4 or traces.shape[1] != 4:
+        raise ValueError(f"expected [batch,4,ticks,neurons], got {traces.shape}")
+    return pairwise_batch(traces.reshape(traces.shape[0], 4, -1))
+
+
+def take_state(state: BatchState, mask: np.ndarray) -> BatchState:
+    mask = np.asarray(mask)
+    return BatchState(
+        fast=state.fast[mask].copy(),
+        slow=state.slow[mask].copy(),
+        adaptation=(
+            None if state.adaptation is None else state.adaptation[mask].copy()
+        ),
+    )
+
+
+def run_visible_batch(
+    dynamics: BatchedResidualDynamics,
+    initial_state: BatchState,
+    visible: np.ndarray,
+    final_event: np.ndarray,
+) -> dict[str, np.ndarray]:
+    state = initial_state.copy()
+    event_traces: list[np.ndarray] = []
+    for position in range(4):
+        state, trace, _ = dynamics.run_event(state, visible[:, position, :])
+        event_traces.append(trace)
+    visible_traces = np.stack(event_traces, axis=1).astype(np.float32, copy=False)
+    state, final_trace, _ = dynamics.run_event(state, final_event)
+    return {
+        "raw": visible_traces.reshape(visible_traces.shape[0], -1).astype(
+            np.float32, copy=False
+        ),
+        "selfsim": trace_selfsim_batch(visible_traces),
+        "final_raw": final_trace.reshape(final_trace.shape[0], -1).astype(
+            np.float32, copy=False
+        ),
     }
-    if "adaptation" in snap:
-        result["preadaptation"] = np.asarray(snap["adaptation"], dtype=np.float32).copy()
-    return result
 
 
-def create_model(model_name: str, encoder, seed: int):
+def build_static_inputs(world: int, task: str) -> dict[str, np.ndarray]:
+    encoder = build_world(world)
+    batch_size = PAIR_COUNT * 2
+    pair_ids = np.repeat(np.arange(PAIR_COUNT, dtype=np.int64), 2)
+    labels_array = np.tile(np.asarray([0, 1], dtype=np.int64), PAIR_COUNT)
+    hidden = np.empty((batch_size, 4, encoder.output_dim), dtype=np.float32)
+    visible = np.empty_like(hidden)
+    delay_vector = np.empty((batch_size, encoder.output_dim), dtype=np.float32)
+    final_vector = np.empty_like(delay_vector)
+
+    cursor = 0
+    for pair_id in range(PAIR_COUNT):
+        case = build_case(task, pair_id)
+        visible_vectors = np.stack([encoder.encode(key) for key in case.visible]).astype(
+            np.float32, copy=False
+        )
+        delay = encoder.encode(case.delay_event)
+        final = encoder.encode(case.final_event)
+        for label, hidden_keys in ((0, case.hidden0), (1, case.hidden1)):
+            hidden[cursor] = np.stack(
+                [encoder.encode(key) for key in hidden_keys]
+            ).astype(np.float32, copy=False)
+            visible[cursor] = visible_vectors
+            delay_vector[cursor] = delay
+            final_vector[cursor] = final
+            if labels_array[cursor] != label:
+                raise AssertionError("batched row label order drifted")
+            cursor += 1
+
+    return {
+        "pair_id": pair_ids,
+        "label": labels_array,
+        "hidden": hidden,
+        "visible": visible,
+        "delay": delay_vector,
+        "final": final_vector,
+        "hidden_relational": pairwise_batch(hidden),
+        "visible_relational": pairwise_batch(visible),
+    }
+
+
+def create_batch_dynamics(model_name: str, seed: int) -> BatchedResidualDynamics:
     config = DynamicsConfig(seed=seed)
     if model_name == "v57":
-        return ResidualDrivenState(
-            encoder, seed=seed, slow_decay=SLOW_DECAY, dynamics_config=config
+        return BatchedResidualDynamics(
+            input_dim=384,
+            config=config,
+            slow_decay=SLOW_DECAY,
         )
     if model_name == "v58":
-        return AdaptiveResidualState(
-            encoder,
-            seed=seed,
+        return BatchedResidualDynamics(
+            input_dim=384,
+            config=config,
+            slow_decay=SLOW_DECAY,
             adaptation_strength=ADAPTATION_STRENGTH,
             adaptation_decay=ADAPTATION_DECAY,
-            slow_decay=SLOW_DECAY,
-            dynamics_config=config,
         )
     raise ValueError(model_name)
 
 
-def build_rows(model_name: str, seed: int, task: str, delay: int) -> list[dict[str, object]]:
-    rows: list[dict[str, object]] = []
-    for world in WORLD_SEEDS:
-        encoder = build_world(world)
-        model = create_model(model_name, encoder, seed)
+def build_world_features(
+    model_name: str,
+    seed: int,
+    delay: int,
+    static: dict[str, np.ndarray],
+) -> dict[str, np.ndarray]:
+    dynamics = create_batch_dynamics(model_name, seed)
+    batch_size = static["label"].shape[0]
+    state = dynamics.zeros(batch_size)
 
-        for pair_id in range(PAIR_COUNT):
-            case = build_case(task, pair_id)
-            visible_rel = pairwise_relational(case.visible, encoder)
-            hidden_rel = {
-                0: pairwise_relational(case.hidden0, encoder),
-                1: pairwise_relational(case.hidden1, encoder),
-            }
-            pair: dict[int, dict[str, object]] = {}
+    for position in range(4):
+        state, _, _ = dynamics.run_event(state, static["hidden"][:, position, :])
+    for _ in range(delay):
+        state, _, _ = dynamics.run_event(state, static["delay"])
+    previsible = state.copy()
 
-            for label, hidden in ((0, case.hidden0), (1, case.hidden1)):
-                snap = prepare_hidden(model, hidden, case.delay_event, delay)
-                real = visible_features(model, snap, case.visible, case.final_event, None)
-                item: dict[str, object] = {
-                    "snap": snap,
-                    "real": real,
-                    "pre": previsible_features(model, snap),
-                    "hidden_rel": hidden_rel[label],
-                }
-                if pair_id >= TRAIN_PAIRS:
-                    item["fast_reset"] = visible_features(
-                        model, snap, case.visible, case.final_event, "fast"
-                    )
-                    item["slow_reset"] = visible_features(
-                        model, snap, case.visible, case.final_event, "slow"
-                    )
-                pair[label] = item
+    intact = run_visible_batch(dynamics, previsible, static["visible"], static["final"])
+    fast_reset = run_visible_batch(
+        dynamics,
+        dynamics.reset_fast(previsible),
+        static["visible"],
+        static["final"],
+    )
+    slow_reset = run_visible_batch(
+        dynamics,
+        dynamics.reset_slow(previsible),
+        static["visible"],
+        static["final"],
+    )
+    both_reset = run_visible_batch(
+        dynamics,
+        dynamics.reset_both(previsible),
+        static["visible"],
+        static["final"],
+    )
 
-            # Both-reset state has no hidden-label information, so compute once
-            # per held-out pair and share it across the two label rows.
-            both_reset = None
-            if pair_id >= TRAIN_PAIRS:
-                both_reset = visible_features(
-                    model,
-                    pair[0]["snap"],
-                    case.visible,
-                    case.final_event,
-                    "both",
-                )
-
-            for label in (0, 1):
-                item = pair[label]
-                opposite = pair[1 - label]
-                row: dict[str, object] = {
-                    "world": world,
-                    "seed": seed,
-                    "task": task,
-                    "delay": delay,
-                    "pair_id": pair_id,
-                    "label": label,
-                    "visible_relational": visible_rel.copy(),
-                    "hidden_relational": np.asarray(item["hidden_rel"], dtype=np.float32),
-                    "intact_raw": np.asarray(item["real"]["raw"], dtype=np.float32),
-                    "intact_selfsim": np.asarray(item["real"]["selfsim"], dtype=np.float32),
-                    "final_raw": np.asarray(item["real"]["final_raw"], dtype=np.float32),
-                    "prefast": np.asarray(item["pre"]["prefast"], dtype=np.float32),
-                    "preslow": np.asarray(item["pre"]["preslow"], dtype=np.float32),
-                    "slow_norm": np.asarray(item["pre"]["slow_norm"], dtype=np.float32),
-                }
-                if model_name == "v58":
-                    row["preadaptation"] = np.asarray(
-                        item["pre"]["preadaptation"], dtype=np.float32
-                    )
-                if pair_id >= TRAIN_PAIRS:
-                    row.update(
-                        {
-                            "fast_reset_raw": np.asarray(item["fast_reset"]["raw"], dtype=np.float32),
-                            "slow_reset_raw": np.asarray(item["slow_reset"]["raw"], dtype=np.float32),
-                            "both_reset_raw": np.asarray(both_reset["raw"], dtype=np.float32),
-                            "both_reset_selfsim": np.asarray(both_reset["selfsim"], dtype=np.float32),
-                            "opposite_raw": np.asarray(opposite["real"]["raw"], dtype=np.float32),
-                            "opposite_selfsim": np.asarray(opposite["real"]["selfsim"], dtype=np.float32),
-                        }
-                    )
-                rows.append(row)
-    return rows
+    features: dict[str, np.ndarray] = {
+        "pair_id": static["pair_id"],
+        "label": static["label"],
+        "visible_relational": static["visible_relational"],
+        "hidden_relational": static["hidden_relational"],
+        "intact_raw": intact["raw"],
+        "intact_selfsim": intact["selfsim"],
+        "final_raw": intact["final_raw"],
+        "prefast": previsible.fast.astype(np.float32, copy=True),
+        "preslow": previsible.slow.astype(np.float32, copy=True),
+        "slow_norm": np.linalg.norm(previsible.slow, axis=1, keepdims=True).astype(
+            np.float32
+        ),
+        "fast_reset_raw": fast_reset["raw"],
+        "slow_reset_raw": slow_reset["raw"],
+        "both_reset_raw": both_reset["raw"],
+        "both_reset_selfsim": both_reset["selfsim"],
+    }
+    if model_name == "v58":
+        if previsible.adaptation is None:
+            raise AssertionError("adaptive batch is missing adaptation state")
+        features["preadaptation"] = previsible.adaptation.astype(
+            np.float32, copy=True
+        )
+    return features
 
 
-def matrix(rows: list[dict[str, object]], field: str) -> np.ndarray:
-    return np.stack([np.asarray(row[field], dtype=np.float32) for row in rows])
+def concatenate_worlds(
+    worlds: dict[int, dict[str, np.ndarray]],
+    world_ids: list[int],
+    field: str,
+    *,
+    train: bool,
+) -> np.ndarray:
+    values: list[np.ndarray] = []
+    for world in world_ids:
+        data = worlds[world]
+        mask = (
+            data["pair_id"] < TRAIN_PAIRS
+            if train
+            else data["pair_id"] >= TRAIN_PAIRS
+        )
+        values.append(np.asarray(data[field])[mask])
+    return np.concatenate(values, axis=0)
 
 
-def labels(rows: list[dict[str, object]]) -> np.ndarray:
-    return np.asarray([int(row["label"]) for row in rows], dtype=np.int64)
+def evaluate_fold_batch(
+    worlds: dict[int, dict[str, np.ndarray]],
+    held_world: int,
+    model_name: str,
+) -> dict[str, float]:
+    train_worlds = [world for world in WORLD_SEEDS if world != held_world]
+    held = worlds[held_world]
+    test_mask = held["pair_id"] >= TRAIN_PAIRS
+    test_indices = np.flatnonzero(test_mask)
+    opposite_indices = test_indices ^ 1
 
-
-def evaluate_fold(rows: list[dict[str, object]], held_world: int, model_name: str) -> dict[str, float]:
-    train = [
-        row for row in rows
-        if int(row["world"]) != held_world and int(row["pair_id"]) < TRAIN_PAIRS
-    ]
-    test = [
-        row for row in rows
-        if int(row["world"]) == held_world and int(row["pair_id"]) >= TRAIN_PAIRS
-    ]
-    y_train, y_test = labels(train), labels(test)
+    y_train = concatenate_worlds(worlds, train_worlds, "label", train=True)
+    y_test = held["label"][test_mask]
     independent = [
         "intact_raw",
         "intact_selfsim",
@@ -268,27 +374,40 @@ def evaluate_fold(rows: list[dict[str, object]], held_world: int, model_name: st
     ]
     if model_name == "v58":
         independent.append("preadaptation")
-    probes = {field: RidgeProbe().fit(matrix(train, field), y_train) for field in independent}
-    result = {
-        field: accuracy(y_test, probe.predict(matrix(test, field)))
-        for field, probe in probes.items()
-    }
+
+    probes: dict[str, RidgeProbe] = {}
+    result: dict[str, float] = {}
+    for field in independent:
+        x_train = concatenate_worlds(worlds, train_worlds, field, train=True)
+        probe = RidgeProbe().fit(x_train, y_train)
+        probes[field] = probe
+        result[field] = accuracy(y_test, probe.predict(held[field][test_mask]))
+
     raw_probe = probes["intact_raw"]
     selfsim_probe = probes["intact_selfsim"]
-    for control in ("fast_reset_raw", "slow_reset_raw", "both_reset_raw", "opposite_raw"):
-        result[control] = accuracy(y_test, raw_probe.predict(matrix(test, control)))
+    for control in ("fast_reset_raw", "slow_reset_raw", "both_reset_raw"):
+        result[control] = accuracy(
+            y_test, raw_probe.predict(held[control][test_mask])
+        )
+    result["opposite_raw"] = accuracy(
+        y_test, raw_probe.predict(held["intact_raw"][opposite_indices])
+    )
     result["both_reset_selfsim"] = accuracy(
-        y_test, selfsim_probe.predict(matrix(test, "both_reset_selfsim"))
+        y_test, selfsim_probe.predict(held["both_reset_selfsim"][test_mask])
     )
     result["opposite_selfsim"] = accuracy(
-        y_test, selfsim_probe.predict(matrix(test, "opposite_selfsim"))
+        y_test, selfsim_probe.predict(held["intact_selfsim"][opposite_indices])
     )
     return result
 
 
 def aggregate_model(eval_rows: list[dict[str, object]], model_name: str) -> dict[str, object]:
     subset = [row for row in eval_rows if row["model"] == model_name]
-    metric_names = [key for key in subset[0] if key not in {"model", "seed", "task", "delay", "held_world"}]
+    metric_names = [
+        key
+        for key in subset[0]
+        if key not in {"model", "seed", "task", "delay", "held_world"}
+    ]
     mean = {
         metric: float(np.mean([float(row[metric]) for row in subset]))
         for metric in metric_names
@@ -300,30 +419,52 @@ def aggregate_model(eval_rows: list[dict[str, object]], model_name: str) -> dict
     }
     per_delay_raw = {
         str(delay): float(
-            np.mean([float(row["intact_raw"]) for row in primary if int(row["delay"]) == delay])
+            np.mean(
+                [
+                    float(row["intact_raw"])
+                    for row in primary
+                    if int(row["delay"]) == delay
+                ]
+            )
         )
         for delay in DELAYS
     }
     per_delay_selfsim = {
         str(delay): float(
-            np.mean([float(row["intact_selfsim"]) for row in primary if int(row["delay"]) == delay])
+            np.mean(
+                [
+                    float(row["intact_selfsim"])
+                    for row in primary
+                    if int(row["delay"]) == delay
+                ]
+            )
         )
         for delay in DELAYS
     }
     gate = {
         "macro_raw_at_least_0_70": primary_mean["intact_raw"] >= 0.70,
-        "at_least_2_of_3_delays_raw_at_0_65": sum(v >= 0.65 for v in per_delay_raw.values()) >= 2,
+        "at_least_2_of_3_delays_raw_at_0_65": sum(
+            value >= 0.65 for value in per_delay_raw.values()
+        )
+        >= 2,
         "both_reset_raw_at_most_0_55": primary_mean["both_reset_raw"] <= 0.55,
         "opposite_hidden_raw_at_most_0_30": primary_mean["opposite_raw"] <= 0.30,
-        "visible_input_relational_at_most_0_55": primary_mean["visible_relational"] <= 0.55,
-        "hidden_relational_validity_at_least_0_99": primary_mean["hidden_relational"] >= 0.99,
+        "visible_input_relational_at_most_0_55": primary_mean[
+            "visible_relational"
+        ]
+        <= 0.55,
+        "hidden_relational_validity_at_least_0_99": primary_mean[
+            "hidden_relational"
+        ]
+        >= 0.99,
         "slow_norm_baseline_at_most_0_55": primary_mean["slow_norm"] <= 0.55,
     }
     gate["all"] = all(gate.values())
     selfsim_gate = {
         "macro_at_least_0_65": primary_mean["intact_selfsim"] >= 0.65,
         "both_reset_at_most_0_55": primary_mean["both_reset_selfsim"] <= 0.55,
-        "opposite_hidden_at_most_0_35": primary_mean["opposite_selfsim"] <= 0.35,
+        "opposite_hidden_at_most_0_35": primary_mean["opposite_selfsim"]
+        <= 0.35,
     }
     selfsim_gate["all"] = all(selfsim_gate.values())
     localization = {
@@ -352,15 +493,28 @@ def write_csv(path: Path, rows: list[dict[str, object]]) -> None:
 
 
 def main() -> None:
+    # Static vector inputs are independent of model/recurrent seed/delay and
+    # therefore built only once for each world/task.
+    static_inputs = {
+        (world, task): build_static_inputs(world, task)
+        for world in WORLD_SEEDS
+        for task in TASKS
+    }
     eval_rows: list[dict[str, object]] = []
 
-    # Process one model/seed/task/delay block at a time so the 8192D visible
-    # trajectories do not accumulate across the entire experiment.
     for model_name in ("v57", "v58"):
         for seed in RECURRENT_SEEDS:
             for task in TASKS:
                 for delay in DELAYS:
-                    rows = build_rows(model_name, seed, task, delay)
+                    world_features = {
+                        world: build_world_features(
+                            model_name,
+                            seed,
+                            delay,
+                            static_inputs[(world, task)],
+                        )
+                        for world in WORLD_SEEDS
+                    }
                     for held_world in WORLD_SEEDS:
                         eval_rows.append(
                             {
@@ -369,7 +523,9 @@ def main() -> None:
                                 "task": task,
                                 "delay": delay,
                                 "held_world": held_world,
-                                **evaluate_fold(rows, held_world, model_name),
+                                **evaluate_fold_batch(
+                                    world_features, held_world, model_name
+                                ),
                             }
                         )
 
@@ -379,10 +535,10 @@ def main() -> None:
     }
     v57_primary = by_model["v57"]["primary_norm_matched_mean"]["intact_raw"]
     v58_primary = by_model["v58"]["primary_norm_matched_mean"]["intact_raw"]
-
     summary = {
         "version": "v5.10",
         "purpose": "test whether hidden relational history alters a later identical-input visible neural trajectory",
+        "execution": "protocol-equivalent batched frozen dynamics; scalar-equivalence tested before benchmark",
         "language_encoder_used": False,
         "state_generators_changed": False,
         "worlds": list(WORLD_SEEDS),

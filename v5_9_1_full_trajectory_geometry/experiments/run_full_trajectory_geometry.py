@@ -37,7 +37,7 @@ from trajectory_features import (  # noqa: E402
     event_final_state_similarity,
     event_mean_state_similarity,
     event_trace_similarity,
-    full_episode_raw,
+    hashed_full_episode,
 )
 
 
@@ -96,7 +96,7 @@ def simulate(model, history: tuple[str, ...], current: str) -> dict[str, np.ndar
         "trace_similarity": event_trace_similarity(transient),
         "final_similarity": event_final_state_similarity(transient),
         "mean_similarity": event_mean_state_similarity(transient),
-        "episode_raw": full_episode_raw(history_observations, current_observation),
+        "episode_hash": hashed_full_episode(history_observations, current_observation),
         "current_raw": current_raw(current_observation),
     }
 
@@ -184,12 +184,12 @@ def evaluate_leave_world_out(
         "v57_trace_similarity",
         "v57_final_similarity",
         "v57_mean_similarity",
-        "v57_episode_raw",
+        "v57_episode_hash",
         "v57_current_raw",
         "v58_trace_similarity",
         "v58_final_similarity",
         "v58_mean_similarity",
-        "v58_episode_raw",
+        "v58_episode_hash",
         "v58_current_raw",
         "input_relational",
     )
@@ -259,8 +259,8 @@ def main() -> None:
     eval_rows: list[dict[str, object]] = []
     within_rows: list[dict[str, object]] = []
 
-    # Process one recurrent seed/task at a time to avoid retaining the large
-    # full-episode raw matrices for the entire benchmark.
+    # Process one recurrent seed/task at a time so the large trajectory objects
+    # never accumulate across the full benchmark.
     for seed in RECURRENT_SEEDS:
         for task in TASKS:
             rows: list[dict[str, object]] = []
@@ -324,6 +324,7 @@ def main() -> None:
         "vector_worlds": list(WORLD_SEEDS),
         "recurrent_seeds": list(RECURRENT_SEEDS),
         "tasks": list(TASKS),
+        "nonprimary_episode_readout": "deterministic 256D signed feature hash of all 14,336 raw episode coordinates",
         "mean_accuracy": mean,
         "per_task_v57_trace_similarity": per_task_v57,
         "per_task_v58_trace_similarity": per_task_v58,

@@ -74,9 +74,8 @@ def accuracy(y: np.ndarray, pred: np.ndarray) -> float:
 
 
 def isolated_fixed_traces(
-    vectors: list[np.ndarray], config: DynamicsConfig, input_dim: int
+    vectors: list[np.ndarray], dynamics: FixedRecurrentDynamics
 ) -> list[np.ndarray]:
-    dynamics = FixedRecurrentDynamics(input_dim=input_dim, config=config)
     traces: list[np.ndarray] = []
     for vector in vectors:
         dynamics.reset_state()
@@ -85,15 +84,8 @@ def isolated_fixed_traces(
 
 
 def isolated_adaptive_traces(
-    vectors: list[np.ndarray], config: DynamicsConfig, input_dim: int
+    vectors: list[np.ndarray], dynamics: AdaptiveFastDynamics
 ) -> list[np.ndarray]:
-    dynamics = AdaptiveFastDynamics(
-        input_dim=input_dim,
-        config=config,
-        adaptation_strength=ADAPTATION_STRENGTH,
-        adaptation_decay=ADAPTATION_DECAY,
-        use_recurrence=True,
-    )
     traces: list[np.ndarray] = []
     for vector in vectors:
         dynamics.reset_state()
@@ -126,6 +118,21 @@ def build_world_rows(world: int, seed: int, task: str) -> list[dict[str, object]
         slow_decay=SLOW_DECAY,
         dynamics_config=config,
     )
+    isolated57 = FixedRecurrentDynamics(input_dim=encoder.output_dim, config=config)
+    isolated58 = AdaptiveFastDynamics(
+        input_dim=encoder.output_dim,
+        config=config,
+        adaptation_strength=ADAPTATION_STRENGTH,
+        adaptation_decay=ADAPTATION_DECAY,
+        use_recurrence=True,
+    )
+
+    # The reusable isolated objects have exactly the same seeded matrices as
+    # the frozen sequential models. Only state is reset between events.
+    np.testing.assert_allclose(isolated57.input_weight, v57.fast.input_weight, atol=0.0)
+    np.testing.assert_allclose(isolated57.recurrent_weight, v57.fast.recurrent_weight, atol=0.0)
+    np.testing.assert_allclose(isolated58.input_weight, v58.fast.input_weight, atol=0.0)
+    np.testing.assert_allclose(isolated58.recurrent_weight, v58.fast.recurrent_weight, atol=0.0)
 
     rows: list[dict[str, object]] = []
     for pair_id in range(PAIR_COUNT):
@@ -140,10 +147,10 @@ def build_world_rows(world: int, seed: int, task: str) -> list[dict[str, object]
             )
 
             drives = [v57.fast.input_weight @ r for r in residuals57]
-            isolated_residual57 = isolated_fixed_traces(residuals57, config, encoder.output_dim)
-            isolated_raw57 = isolated_fixed_traces(raw_inputs, config, encoder.output_dim)
-            isolated_residual58 = isolated_adaptive_traces(residuals58, config, encoder.output_dim)
-            isolated_raw58 = isolated_adaptive_traces(raw_inputs, config, encoder.output_dim)
+            isolated_residual57 = isolated_fixed_traces(residuals57, isolated57)
+            isolated_raw57 = isolated_fixed_traces(raw_inputs, isolated57)
+            isolated_residual58 = isolated_adaptive_traces(residuals58, isolated58)
+            isolated_raw58 = isolated_adaptive_traces(raw_inputs, isolated58)
 
             seq57 = trace_pairwise_cosines(sequential57)
             iso57 = trace_pairwise_cosines(isolated_residual57)

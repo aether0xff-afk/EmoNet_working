@@ -1,0 +1,57 @@
+name: v5.6-dual-timescale-state
+
+on:
+  pull_request:
+    paths:
+      - 'v5_6_dual_timescale_state/**'
+      - '.github/workflows/v5.6-dual-timescale-state.yml'
+  push:
+    branches:
+      - 'feature/v5.6-dual-timescale-state'
+    paths:
+      - 'v5_6_dual_timescale_state/**'
+      - '.github/workflows/v5.6-dual-timescale-state.yml'
+
+jobs:
+  dual-timescale-benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_NUM_THREADS: '2'
+      MKL_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            v5_clean
+            v5_1_semantic_context
+            v5_2_learned_memory
+            v5_4_fresh_confirmatory
+            v5_6_dual_timescale_state
+          sparse-checkout-cone-mode: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install frozen-core and dual-state dependencies
+        run: python -m pip install -e './v5_clean[dev]' sentence-transformers
+
+      - name: Recheck frozen fast-state core
+        run: pytest -q v5_clean/tests
+
+      - name: Run v5.6 fast/slow reset tests
+        run: pytest -q v5_6_dual_timescale_state/tests
+
+      - name: Run v5.6 dual-timescale benchmark
+        run: python v5_6_dual_timescale_state/experiments/run_dual_timescale_benchmark.py
+
+      - name: Upload v5.6 benchmark artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v5.6-dual-timescale-state-benchmark
+          path: v5_6_dual_timescale_state/outputs/dual_timescale_benchmark/
+          if-no-files-found: error

@@ -1,0 +1,51 @@
+name: v5.1.2-domain-calibration
+
+on:
+  pull_request:
+    paths:
+      - 'v5_1_2_domain_calibration/**'
+      - '.github/workflows/v5.1.2-domain-calibration.yml'
+  push:
+    branches:
+      - 'feature/v5.1.2-domain-calibration'
+    paths:
+      - 'v5_1_2_domain_calibration/**'
+      - '.github/workflows/v5.1.2-domain-calibration.yml'
+
+jobs:
+  domain-calibration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            v5_clean
+            v5_1_semantic_context
+            v5_1_1_semantic_diagnostic
+            v5_1_2_domain_calibration
+          sparse-checkout-cone-mode: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install frozen core and calibration dependencies
+        run: python -m pip install -e './v5_clean[dev]' sentence-transformers
+
+      - name: Recheck inherited semantic fixture controls
+        run: pytest -q v5_1_semantic_context/tests
+
+      - name: Run v5.1.2 domain calibration
+        run: python v5_1_2_domain_calibration/experiments/run_domain_calibration.py
+
+      - name: Upload v5.1.2 calibration artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v5.1.2-domain-calibration
+          path: v5_1_2_domain_calibration/outputs/domain_calibration/
+          if-no-files-found: error

@@ -1,0 +1,46 @@
+name: v5.9-encoder-free-temporal
+
+on:
+  pull_request:
+    paths:
+      - 'v5_9_encoder_free_temporal/**'
+      - '.github/workflows/v5.9-encoder-free-temporal.yml'
+  push:
+    branches: ['feature/v5.9-encoder-free-mechanistic-temporal']
+
+jobs:
+  encoder-free-benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      OMP_NUM_THREADS: '2'
+      MKL_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            v5_clean
+            v5_6_dual_timescale_state
+            v5_7_residual_fast_dynamics
+            v5_8_adaptive_fast_dynamics
+            v5_9_encoder_free_temporal
+          sparse-checkout-cone-mode: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install NumPy-only dynamics dependencies
+        run: python -m pip install -e './v5_clean[dev]'
+      - name: Recheck frozen v5.7 and v5.8 dynamics
+        run: |
+          pytest -q v5_7_residual_fast_dynamics/tests
+          pytest -q v5_8_adaptive_fast_dynamics/tests
+      - name: Verify encoder-free vector-world construction
+        run: pytest -q v5_9_encoder_free_temporal/tests
+      - name: Run leave-one-vector-world-out benchmark
+        run: python v5_9_encoder_free_temporal/experiments/run_encoder_free_benchmark.py
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: v5.9-encoder-free-temporal
+          path: v5_9_encoder_free_temporal/outputs/encoder_free_temporal/
+          if-no-files-found: error

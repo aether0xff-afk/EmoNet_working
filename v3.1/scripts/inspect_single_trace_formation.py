@@ -126,11 +126,17 @@ def build_tick_report(outputs: dict[str, Any], top_n: int) -> list[dict[str, Any
         ranked = top_node_states(record, top_n)
         states = getattr(record, "node_states", {}) or {}
 
+        # Only compute a K delta when the same node was observed in the previous
+        # TickRecord. A missing node does not imply that its true previous K was 0.
         changes: list[dict[str, Any]] = []
+        first_observed: list[int] = []
         for node_id, state in states.items():
             node_id = int(node_id)
             current = float(state.K)
-            before = previous_k.get(node_id, 0.0)
+            if node_id not in previous_k:
+                first_observed.append(node_id)
+                continue
+            before = previous_k[node_id]
             delta = current - before
             if abs(delta) > 1e-9:
                 changes.append(
@@ -151,6 +157,7 @@ def build_tick_report(outputs: dict[str, Any], top_n: int) -> list[dict[str, Any
                 "active_nodes": active,
                 "newly_active_nodes": sorted(active_set - previous_active),
                 "deactivated_nodes": sorted(previous_active - active_set),
+                "first_observed_state_nodes": sorted(first_observed),
                 "dominant_node": ranked[0] if ranked else None,
                 "top_nodes": ranked,
                 "largest_K_changes": changes[:top_n],
@@ -164,9 +171,16 @@ def build_tick_report(outputs: dict[str, Any], top_n: int) -> list[dict[str, Any
     return ticks
 
 
+def clip_list(values: list[Any], limit: int = 24) -> str:
+    if len(values) <= limit:
+        return str(values)
+    return f"{values[:limit]} ... (+{len(values) - limit} more)"
+
+
 def markdown_report(report: dict[str, Any]) -> str:
     row = report["input"]
-    route = " -> ".join(map(str, report["run"]["dominant_route"])) or "(none)"
+    observed_route = " -> ".join(map(str, report["run"]["observed_dominant_route"])) or "(none)"
+    exporter_route = report["run"]["exporter_dominant_route"]
     lines = [
         "# Single-Sentence TRACE Formation Report",
         "",
@@ -174,21 +188,23 @@ def markdown_report(report: dict[str, Any]) -> str:
         "",
         f"- record_id: `{row.get('record_id', '')}`",
         f"- text: {row.get('text', '')}",
-        f"- valence/arousal: `{row.get('valence', '')}` / `{row.get('arousal', '')}`",
-        f"- target/control: `{row.get('target', '')}` / `{row.get('control_state', '')}`",
-        f"- social/action: `{row.get('social_orientation', '')}` / `{row.get('action_tendency_class', '')}`",
         "",
         "## Run summary",
         "",
+        f"- stimulus mode: `{report['settings']['stim_source']}`",
         f"- stimulus vector: `{report['run']['stim_vec']}`",
         f"- ticks_run: `{report['run']['ticks_run']}`",
-        f"- dominant route: `{route}`",
+        f"- termination: `{report['run']['termination_reason']}`",
+        f"- observed max-K route: `{observed_route}`",
+        f"- exporter dominant route: `{exporter_route}`",
+        f"- exporter route valid: `{report['run']['exporter_route_valid']}`",
         f"- added edges after sentence: `{len(report['persistent_changes']['added_edges'])}`",
         f"- removed edges after sentence: `{len(report['persistent_changes']['removed_edges'])}`",
         f"- neurons with fatigue increase: `{report['persistent_changes']['fatigue_changed_count']}`",
         "",
-        "> `delta_K` below is an observed tick-to-tick state change, not an exact",
-        "> causal attribution to memory/inhibition/fatigue/etc.",
+        "> The observed max-K route is reconstructed directly from TickRecord because",
+        "> the existing dominant-branch helper may return `-1` when it cannot identify",
+        "> a branch. `delta_K` is observational, not exact causal attribution.",
         "",
         "## Tick-by-tick formation",
         "",
@@ -196,31 +212,40 @@ def markdown_report(report: dict[str, Any]) -> str:
 
     for tick in report["ticks"]:
         dom = tick["dominant_node"] or {}
+        top_nodes = [
+            (node["neuron_id"], node["K"])
+            for node in tick["top_nodes"][:5]
+        ]
         lines.extend(
             [
                 f"### Tick {tick['tick']}",
                 "",
                 f"- active count: `{tick['active_count']}`",
-                f"- newly active: `{tick['newly_active_nodes']}`",
-                f"- deactivated: `{tick['deactivated_nodes']}`",
+                f"- newly active: `{clip_list(tick['newly_active_nodes'])}`",
+                f"- deactivated: `{clip_list(tick['deactivated_nodes'])}`",
                 f"- dominant: neuron `{dom.get('neuron_id', '')}`; K=`{dom.get('K', '')}`",
-                f"- fired edges: `{tick['edges_fired']}`",
-                "- largest K changes:",
+                f"- top 5 neurons (id, K): `{top_nodes}`",
+                f"- fired edges: `{len(tick['edges_fired'])}` total; first edges `{clip_list(tick['edges_fired'], 12)}`",
+                "- largest comparable K changes:",
             ]
         )
-        for change in tick["largest_K_changes"]:
-            lines.append(
-                f"  - neuron {change['neuron_id']}: {change['previous_K']} -> "
-                f"{change['current_K']} (delta {change['delta_K']:+.6f})"
-            )
+        if tick["largest_K_changes"]:
+            for change in tick["largest_K_changes"][:8]:
+                lines.append(
+                    f"  - neuron {change['neuron_id']}: {change['previous_K']} -> "
+                    f"{change['current_K']} (delta {change['delta_K']:+.6f})"
+                )
+        else:
+            lines.append("  - none (first observed tick or no comparable change)")
         lines.append("")
 
     lines.extend(
         [
             "## Persistent state changes",
             "",
-            f"- added edges: `{report['persistent_changes']['added_edges']}`",
-            f"- removed edges: `{report['persistent_changes']['removed_edges']}`",
+            f"- added edges: `{len(report['persistent_changes']['added_edges'])}`",
+            f"- removed edges: `{len(report['persistent_changes']['removed_edges'])}`",
+            f"- first removed edges: `{clip_list(report['persistent_changes']['removed_edges'], 24)}`",
             "- largest fatigue increases:",
         ]
     )
@@ -232,9 +257,9 @@ def markdown_report(report: dict[str, Any]) -> str:
             "",
             "## What to look for next",
             "",
-            "The first tick where a matched comparison sentence chooses a different",
-            "dominant neuron, fires a different edge, or keeps a different active set is",
-            "a candidate TRACE-formation divergence point. That point can then be tested",
+            "Run a matched comparison sentence from the same initial seed. The first tick",
+            "where its max-K neuron, fired-edge set, or surviving active set diverges is a",
+            "candidate TRACE-formation divergence point. That point can then be tested",
             "causally by ablating the neuron/edge or changing one dynamics component.",
             "",
         ]
@@ -269,6 +294,13 @@ def run(args: argparse.Namespace) -> tuple[Path, Path]:
         if float(fatigue_delta[i]) > 1e-9
     ]
 
+    exporter_route = [int(x) for x in exporter.dominant_branch_ids(outputs)]
+    observed_route = [
+        int(tick["dominant_node"]["neuron_id"])
+        for tick in ticks
+        if tick["dominant_node"] is not None
+    ]
+
     report = {
         "input": dict(row),
         "settings": {
@@ -282,7 +314,9 @@ def run(args: argparse.Namespace) -> tuple[Path, Path]:
             "ticks_run": int(outputs.get("ticks_run", len(ticks))),
             "termination_reason": str(outputs.get("termination_reason", "")),
             "stim_vec": json_vec(outputs.get("stim_vec", model_input)),
-            "dominant_route": [int(x) for x in exporter.dominant_branch_ids(outputs)],
+            "observed_dominant_route": observed_route,
+            "exporter_dominant_route": exporter_route,
+            "exporter_route_valid": bool(exporter_route) and any(x >= 0 for x in exporter_route),
             "final_z": json_vec(outputs.get("z", np.zeros((0,), dtype=np.float32))),
         },
         "ticks": ticks,

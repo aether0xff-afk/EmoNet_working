@@ -14,6 +14,12 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            v3
+            v3.1
+          lfs: false
 
       - uses: actions/setup-python@v5
         with:

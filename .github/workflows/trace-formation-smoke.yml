@@ -30,11 +30,11 @@ jobs:
       - name: Run one-sentence TRACE formation experiment
         run: |
           python -u v3.1/scripts/inspect_single_trace_formation.py \
-            --input v3.1/outputs/targeted_records_trace_normalized.csv \
+            --input v3.1/experiments/single_trace_example.csv \
             --row-index 0 \
             --config v3.1/configs/final_dynamics_v1.json \
             --seed 42 \
-            --stim-source proxy \
+            --stim-source text \
             --output-json v3.1/outputs/single_trace_formation/sample_000.json \
             --output-md v3.1/outputs/single_trace_formation/sample_000.md
 

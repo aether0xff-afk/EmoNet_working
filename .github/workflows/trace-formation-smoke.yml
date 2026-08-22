@@ -1,0 +1,54 @@
+name: TRACE Formation Smoke
+
+on:
+  pull_request:
+    paths:
+      - "v3/**"
+      - "v3.1/**"
+      - ".github/workflows/trace-formation-smoke.yml"
+  workflow_dispatch:
+
+jobs:
+  single-sentence-trace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install minimal dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pandas scikit-learn joblib
+
+      - name: Compile inspector
+        run: python -m py_compile v3.1/scripts/inspect_single_trace_formation.py
+
+      - name: Run one-sentence TRACE formation experiment
+        run: |
+          python -u v3.1/scripts/inspect_single_trace_formation.py \
+            --input v3.1/outputs/targeted_records_trace_normalized.csv \
+            --row-index 0 \
+            --config v3.1/configs/final_dynamics_v1.json \
+            --seed 42 \
+            --stim-source proxy \
+            --output-json v3.1/outputs/single_trace_formation/sample_000.json \
+            --output-md v3.1/outputs/single_trace_formation/sample_000.md
+
+      - name: Show human-readable report
+        if: always()
+        run: |
+          if [ -f v3.1/outputs/single_trace_formation/sample_000.md ]; then
+            cat v3.1/outputs/single_trace_formation/sample_000.md
+          fi
+
+      - name: Upload TRACE formation output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: single-trace-formation
+          path: v3.1/outputs/single_trace_formation/
+          if-no-files-found: warn

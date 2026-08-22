@@ -1,0 +1,42 @@
+name: TRACE Mechanism Quick
+
+on:
+  pull_request:
+    paths:
+      - "v3.1/scripts/analyze_trace_mechanism_quick.py"
+      - ".github/workflows/trace-mechanism-quick.yml"
+  workflow_dispatch:
+
+jobs:
+  quick-mechanism:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            v3/emonet
+            v3.1/scripts/export_neural_activation_traces.py
+            v3.1/scripts/analyze_trace_mechanism.py
+            v3.1/scripts/analyze_trace_mechanism_fast.py
+            v3.1/scripts/analyze_trace_mechanism_quick.py
+            v3.1/configs/final_dynamics_v1.json
+            v3.1/outputs/neural_trace_final_candidate_thr064_topk2_clip15_inh018_full80/neural_trace_summary.csv
+          lfs: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: python -m pip install numpy
+      - run: python -m py_compile v3.1/scripts/analyze_trace_mechanism_quick.py
+      - name: Run balanced quick check
+        run: python -u v3.1/scripts/analyze_trace_mechanism_quick.py
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trace-mechanism-quick
+          path: v3.1/outputs/trace_mechanism_quick/
+          if-no-files-found: warn

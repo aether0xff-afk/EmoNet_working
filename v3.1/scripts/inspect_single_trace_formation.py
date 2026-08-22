@@ -1,24 +1,11 @@
 #!/usr/bin/env python3
-"""Inspect how one v3.1 neural TRACE forms over time.
+"""Inspect how one v3.1 neural TRACE forms tick by tick.
 
-This diagnostic intentionally uses the existing EmoNet runtime without changing
-its dynamics. It runs exactly one input row, then exports a human-readable
-per-tick report showing:
-
-- which neurons were active,
-- which neuron was dominant,
-- which edges fired,
-- how activation strength K changed,
-- how the dominant route evolved,
-- which neurons accumulated fatigue,
-- and a compact summary of the final TRACE.
-
-The script does *not* claim a causal decomposition of K into exact additive
-terms, because the current runtime does not log every internal contribution
-before thresholding. Instead it exposes the complete sequence that is already
-recorded by TickRecord, plus before/after persistent state changes. This makes
-one sentence inspectable end-to-end and provides a clean base for later causal
-instrumentation.
+This is an observational diagnostic. It reuses the existing EmoNet runtime and
+exports the internal sequence already recorded by TickRecord: active neurons,
+node K/stimulus states, fired edges, dominant route, fatigue and rewiring.
+It intentionally does not claim an exact additive causal decomposition of K,
+because the current core does not log every pre-threshold contribution.
 """
 
 from __future__ import annotations
@@ -34,7 +21,6 @@ from typing import Any
 import numpy as np
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
@@ -78,25 +64,19 @@ def load_dynamics(path: Path | None) -> dict[str, Any]:
 
 
 def make_model_args(args: argparse.Namespace, dynamics: dict[str, Any]) -> SimpleNamespace:
-    return SimpleNamespace(
-        n_neurons=args.n_neurons,
-        seed=args.seed,
-        z_encoder_mode="stat",
-        stim_source=args.stim_source,
-        max_ticks=args.max_ticks,
-        min_ticks_before_converged=6,
-        convergence_patience=4,
-        progress_every=0,
+    values: dict[str, Any] = {
+        "n_neurons": args.n_neurons,
+        "seed": args.seed,
+        "z_encoder_mode": "stat",
+        "stim_source": args.stim_source,
+        "max_ticks": args.max_ticks,
+        "min_ticks_before_converged": 6,
+        "convergence_patience": 4,
+        "progress_every": 0,
         **DEFAULT_DYNAMICS,
-        **dynamics,
-    )
-
-
-def fatigue_vector(model: Any) -> np.ndarray:
-    return np.asarray(
-        [float(neuron.fatigue) for neuron in model.state.neurons],
-        dtype=np.float32,
-    )
+    }
+    values.update(dynamics)
+    return SimpleNamespace(**values)
 
 
 def edge_set(model: Any) -> set[tuple[int, int]]:
@@ -108,85 +88,85 @@ def edge_set(model: Any) -> set[tuple[int, int]]:
     return edges
 
 
-def _jsonable_vec(value: Any, decimals: int = 5) -> list[float]:
-    arr = np.asarray(value, dtype=np.float32).reshape(-1)
+def fatigue_vector(model: Any) -> np.ndarray:
+    return np.asarray([float(n.fatigue) for n in model.state.neurons], dtype=np.float32)
+
+
+def json_vec(value: Any, decimals: int = 5) -> list[float]:
+    arr = exporter.to_numpy(value).reshape(-1)
     return [round(float(x), decimals) for x in arr]
 
 
-def _top_node_states(record: Any, limit: int) -> list[dict[str, Any]]:
-    ranked = sorted(
-        record.node_states.items(),
-        key=lambda item: float(item[1].K),
-        reverse=True,
-    )
-    result: list[dict[str, Any]] = []
-    for neuron_id, state in ranked[:limit]:
-        result.append(
-            {
-                "neuron_id": int(neuron_id),
-                "K": round(float(state.K), 6),
-                "stim_vec": _jsonable_vec(state.stim_vec),
-            }
-        )
-    return result
+def branch_log_for(outputs: dict[str, Any]) -> list[Any]:
+    # Match the exporter: prefer the pruned log used to construct activation.
+    return list(outputs.get("pruned_branch_log") or outputs.get("branch_log") or [])
 
 
-def build_tick_report(outputs: dict[str, Any], *, top_nodes: int) -> list[dict[str, Any]]:
-    branch_log = list(outputs.get("branch_log") or [])
+def top_node_states(record: Any, limit: int) -> list[dict[str, Any]]:
+    states = getattr(record, "node_states", {}) or {}
+    ranked = sorted(states.items(), key=lambda item: float(item[1].K), reverse=True)
+    return [
+        {
+            "neuron_id": int(node_id),
+            "K": round(float(state.K), 6),
+            "stim_vec": json_vec(state.stim_vec),
+        }
+        for node_id, state in ranked[:limit]
+    ]
+
+
+def build_tick_report(outputs: dict[str, Any], top_n: int) -> list[dict[str, Any]]:
     ticks: list[dict[str, Any]] = []
-
     previous_k: dict[int, float] = {}
     previous_active: set[int] = set()
 
-    for record in branch_log:
-        active = [int(node_id) for node_id in record.active_nodes]
+    for record in branch_log_for(outputs):
+        active = [int(x) for x in (getattr(record, "active_nodes", []) or [])]
         active_set = set(active)
-        ranked = _top_node_states(record, top_nodes)
-        dominant = ranked[0] if ranked else None
+        ranked = top_node_states(record, top_n)
+        states = getattr(record, "node_states", {}) or {}
 
-        k_delta: list[dict[str, Any]] = []
-        for node_id, state in record.node_states.items():
+        changes: list[dict[str, Any]] = []
+        for node_id, state in states.items():
+            node_id = int(node_id)
             current = float(state.K)
-            before = previous_k.get(int(node_id), 0.0)
+            before = previous_k.get(node_id, 0.0)
             delta = current - before
             if abs(delta) > 1e-9:
-                k_delta.append(
+                changes.append(
                     {
-                        "neuron_id": int(node_id),
+                        "neuron_id": node_id,
                         "previous_K": round(before, 6),
                         "current_K": round(current, 6),
                         "delta_K": round(delta, 6),
                     }
                 )
-        k_delta.sort(key=lambda item: abs(float(item["delta_K"])), reverse=True)
+        changes.sort(key=lambda x: abs(float(x["delta_K"])), reverse=True)
 
+        fired = getattr(record, "edges_fired", []) or []
         ticks.append(
             {
-                "tick": int(record.tick),
+                "tick": int(getattr(record, "tick", len(ticks))),
                 "active_count": len(active),
                 "active_nodes": active,
                 "newly_active_nodes": sorted(active_set - previous_active),
                 "deactivated_nodes": sorted(previous_active - active_set),
-                "dominant_node": dominant,
+                "dominant_node": ranked[0] if ranked else None,
                 "top_nodes": ranked,
-                "largest_K_changes": k_delta[:top_nodes],
-                "edges_fired": [
-                    [int(src), int(dst)] for src, dst in record.edges_fired
-                ],
+                "largest_K_changes": changes[:top_n],
+                "edges_fired": [[int(src), int(dst)] for src, dst in fired],
             }
         )
 
-        previous_k = {
-            int(node_id): float(state.K)
-            for node_id, state in record.node_states.items()
-        }
+        previous_k = {int(node_id): float(state.K) for node_id, state in states.items()}
         previous_active = active_set
 
     return ticks
 
 
-def make_markdown(report: dict[str, Any]) -> str:
+def markdown_report(report: dict[str, Any]) -> str:
     row = report["input"]
+    route = " -> ".join(map(str, report["run"]["dominant_route"])) or "(none)"
     lines = [
         "# Single-Sentence TRACE Formation Report",
         "",
@@ -198,53 +178,46 @@ def make_markdown(report: dict[str, Any]) -> str:
         f"- target/control: `{row.get('target', '')}` / `{row.get('control_state', '')}`",
         f"- social/action: `{row.get('social_orientation', '')}` / `{row.get('action_tendency_class', '')}`",
         "",
-        "## What this report shows",
-        "",
-        "This report follows one sentence through EmoNet tick by tick. It shows the",
-        "active neurons, dominant neuron, fired edges, activation-strength changes,",
-        "and persistent fatigue/rewiring changes that remain after the sample.",
-        "",
-        "> Important: `delta_K` is an observed state change, not an exact additive",
-        "> causal attribution. The current core does not separately log every internal",
-        "> contribution before thresholding.",
-        "",
         "## Run summary",
         "",
+        f"- stimulus vector: `{report['run']['stim_vec']}`",
         f"- ticks_run: `{report['run']['ticks_run']}`",
-        f"- dominant_route: `{' -> '.join(map(str, report['run']['dominant_route']))}`",
-        f"- added_edges: `{len(report['persistent_changes']['added_edges'])}`",
-        f"- removed_edges: `{len(report['persistent_changes']['removed_edges'])}`",
-        f"- neurons_with_fatigue_increase: `{report['persistent_changes']['fatigue_changed_count']}`",
+        f"- dominant route: `{route}`",
+        f"- added edges after sentence: `{len(report['persistent_changes']['added_edges'])}`",
+        f"- removed edges after sentence: `{len(report['persistent_changes']['removed_edges'])}`",
+        f"- neurons with fatigue increase: `{report['persistent_changes']['fatigue_changed_count']}`",
+        "",
+        "> `delta_K` below is an observed tick-to-tick state change, not an exact",
+        "> causal attribution to memory/inhibition/fatigue/etc.",
         "",
         "## Tick-by-tick formation",
         "",
     ]
 
     for tick in report["ticks"]:
-        dominant = tick.get("dominant_node") or {}
+        dom = tick["dominant_node"] or {}
         lines.extend(
             [
                 f"### Tick {tick['tick']}",
                 "",
-                f"- active neurons: `{tick['active_count']}`",
+                f"- active count: `{tick['active_count']}`",
                 f"- newly active: `{tick['newly_active_nodes']}`",
                 f"- deactivated: `{tick['deactivated_nodes']}`",
-                f"- dominant: neuron `{dominant.get('neuron_id', '')}` with K=`{dominant.get('K', '')}`",
+                f"- dominant: neuron `{dom.get('neuron_id', '')}`; K=`{dom.get('K', '')}`",
                 f"- fired edges: `{tick['edges_fired']}`",
                 "- largest K changes:",
             ]
         )
         for change in tick["largest_K_changes"]:
             lines.append(
-                "  - neuron "
-                f"{change['neuron_id']}: {change['previous_K']} -> "
+                f"  - neuron {change['neuron_id']}: {change['previous_K']} -> "
                 f"{change['current_K']} (delta {change['delta_K']:+.6f})"
             )
         lines.append("")
 
     lines.extend(
         [
-            "## Persistent state changes after this sentence",
+            "## Persistent state changes",
             "",
             f"- added edges: `{report['persistent_changes']['added_edges']}`",
             f"- removed edges: `{report['persistent_changes']['removed_edges']}`",
@@ -252,19 +225,17 @@ def make_markdown(report: dict[str, Any]) -> str:
         ]
     )
     for item in report["persistent_changes"]["top_fatigue_increases"]:
-        lines.append(
-            f"  - neuron {item['neuron_id']}: +{item['delta']:.6f}"
-        )
+        lines.append(f"  - neuron {item['neuron_id']}: +{item['delta']:.6f}")
 
     lines.extend(
         [
             "",
-            "## How to read it",
+            "## What to look for next",
             "",
-            "Look for the first tick where two otherwise similar inputs would diverge:",
-            "a different neuron becomes dominant, a different edge fires, or a different",
-            "set of neurons survives. That is the natural candidate point for a later",
-            "causal ablation/perturbation experiment.",
+            "The first tick where a matched comparison sentence chooses a different",
+            "dominant neuron, fires a different edge, or keeps a different active set is",
+            "a candidate TRACE-formation divergence point. That point can then be tested",
+            "causally by ablating the neuron/edge or changing one dynamics component.",
             "",
         ]
     )
@@ -275,36 +246,27 @@ def run(args: argparse.Namespace) -> tuple[Path, Path]:
     rows = read_rows(args.input)
     if not rows:
         raise ValueError(f"no rows in {args.input}")
-    if args.row_index < 0 or args.row_index >= len(rows):
-        raise IndexError(
-            f"row-index {args.row_index} outside [0, {len(rows) - 1}]"
-        )
+    if not 0 <= args.row_index < len(rows):
+        raise IndexError(f"row-index must be within 0..{len(rows) - 1}")
 
     row = rows[args.row_index]
-    dynamics = load_dynamics(args.config)
-    model_args = make_model_args(args, dynamics)
+    model_args = make_model_args(args, load_dynamics(args.config))
     model = exporter.build_model(model_args)
+    model_input = exporter.model_input_for_row(row, model_args)
 
     before_edges = edge_set(model)
     before_fatigue = fatigue_vector(model)
-
-    outputs = model.forward(exporter.model_input_for_row(row, model_args))
-
+    outputs = model.forward(model_input)
     after_edges = edge_set(model)
     after_fatigue = fatigue_vector(model)
+
+    ticks = build_tick_report(outputs, args.top_nodes)
     fatigue_delta = after_fatigue - before_fatigue
-
-    dominant_route = [int(x) for x in exporter.dominant_branch_ids(outputs)]
-    ticks = build_tick_report(outputs, top_nodes=args.top_nodes)
-
-    top_fatigue_ids = np.argsort(fatigue_delta)[::-1]
+    ranked_fatigue = np.argsort(fatigue_delta)[::-1]
     top_fatigue = [
-        {
-            "neuron_id": int(idx),
-            "delta": round(float(fatigue_delta[idx]), 6),
-        }
-        for idx in top_fatigue_ids[: args.top_nodes]
-        if float(fatigue_delta[idx]) > 1e-9
+        {"neuron_id": int(i), "delta": round(float(fatigue_delta[i]), 6)}
+        for i in ranked_fatigue[: args.top_nodes]
+        if float(fatigue_delta[i]) > 1e-9
     ]
 
     report = {
@@ -318,81 +280,45 @@ def run(args: argparse.Namespace) -> tuple[Path, Path]:
         },
         "run": {
             "ticks_run": int(outputs.get("ticks_run", len(ticks))),
-            "dominant_route": dominant_route,
-            "stim_vec": _jsonable_vec(
-                outputs.get("stim_vec", exporter.model_input_for_row(row, model_args))
-            ),
-            "final_z": _jsonable_vec(outputs.get("z", [])),
+            "termination_reason": str(outputs.get("termination_reason", "")),
+            "stim_vec": json_vec(outputs.get("stim_vec", model_input)),
+            "dominant_route": [int(x) for x in exporter.dominant_branch_ids(outputs)],
+            "final_z": json_vec(outputs.get("z", np.zeros((0,), dtype=np.float32))),
         },
         "ticks": ticks,
         "persistent_changes": {
-            "added_edges": [
-                [int(src), int(dst)] for src, dst in sorted(after_edges - before_edges)
-            ],
-            "removed_edges": [
-                [int(src), int(dst)] for src, dst in sorted(before_edges - after_edges)
-            ],
+            "added_edges": [[int(a), int(b)] for a, b in sorted(after_edges - before_edges)],
+            "removed_edges": [[int(a), int(b)] for a, b in sorted(before_edges - after_edges)],
             "fatigue_changed_count": int(np.count_nonzero(fatigue_delta > 1e-9)),
             "top_fatigue_increases": top_fatigue,
         },
     }
 
     args.output_json.parent.mkdir(parents=True, exist_ok=True)
-    args.output_json.write_text(
-        json.dumps(report, ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
-
-    markdown = make_markdown(report)
+    args.output_json.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     args.output_md.parent.mkdir(parents=True, exist_ok=True)
-    args.output_md.write_text(markdown, encoding="utf-8")
+    args.output_md.write_text(markdown_report(report), encoding="utf-8")
     return args.output_json, args.output_md
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--input",
-        type=Path,
-        default=Path("v3.1/outputs/targeted_records_trace_normalized.csv"),
-    )
-    parser.add_argument(
-        "--config",
-        type=Path,
-        default=Path("v3.1/configs/final_dynamics_v1.json"),
-    )
+    parser.add_argument("--input", type=Path, default=Path("v3.1/outputs/targeted_records_trace_normalized.csv"))
+    parser.add_argument("--config", type=Path, default=Path("v3.1/configs/final_dynamics_v1.json"))
     parser.add_argument("--row-index", type=int, default=0)
     parser.add_argument("--n-neurons", type=int, default=256)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument(
-        "--stim-source",
-        choices=["auto", "text", "proxy"],
-        default="auto",
-    )
+    parser.add_argument("--stim-source", choices=["auto", "text", "proxy"], default="auto")
     parser.add_argument("--max-ticks", type=int, default=64)
     parser.add_argument("--top-nodes", type=int, default=12)
-    parser.add_argument(
-        "--output-json",
-        type=Path,
-        default=Path("v3.1/outputs/single_trace_formation/sample_000.json"),
-    )
-    parser.add_argument(
-        "--output-md",
-        type=Path,
-        default=Path("v3.1/outputs/single_trace_formation/sample_000.md"),
-    )
+    parser.add_argument("--output-json", type=Path, default=Path("v3.1/outputs/single_trace_formation/sample_000.json"))
+    parser.add_argument("--output-md", type=Path, default=Path("v3.1/outputs/single_trace_formation/sample_000.md"))
     return parser.parse_args()
 
 
 def main() -> None:
     json_path, md_path = run(parse_args())
-    print(
-        json.dumps(
-            {"json": str(json_path), "markdown": str(md_path)},
-            ensure_ascii=False,
-            indent=2,
-        )
-    )
+    print(json.dumps({"json": str(json_path), "markdown": str(md_path)}, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

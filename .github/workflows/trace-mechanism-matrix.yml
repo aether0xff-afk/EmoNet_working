@@ -1,0 +1,55 @@
+name: TRACE Mechanism Matrix
+
+on:
+  pull_request:
+    paths:
+      - "v3.1/scripts/run_trace_mechanism_condition.py"
+      - ".github/workflows/trace-mechanism-matrix.yml"
+  workflow_dispatch:
+
+jobs:
+  condition:
+    strategy:
+      fail-fast: false
+      matrix:
+        condition:
+          - baseline
+          - no_recurrence
+          - no_alignment
+          - no_memory
+          - no_inhibition
+          - no_fatigue
+          - no_modulation
+          - no_rewiring
+          - shuffled_stimulus
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            v3/emonet
+            v3.1/scripts/export_neural_activation_traces.py
+            v3.1/scripts/analyze_trace_mechanism.py
+            v3.1/scripts/analyze_trace_mechanism_fast.py
+            v3.1/scripts/run_trace_mechanism_condition.py
+            v3.1/configs/final_dynamics_v1.json
+            v3.1/outputs/neural_trace_final_candidate_thr064_topk2_clip15_inh018_full80/neural_trace_summary.csv
+          lfs: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install numpy
+      - name: Run condition
+        run: |
+          python -u v3.1/scripts/run_trace_mechanism_condition.py \
+            --condition "${{ matrix.condition }}" \
+            --output-dir v3.1/outputs/trace_mechanism_matrix
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trace-condition-${{ matrix.condition }}
+          path: v3.1/outputs/trace_mechanism_matrix/
+          if-no-files-found: warn

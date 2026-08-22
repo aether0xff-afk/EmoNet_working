@@ -11,18 +11,16 @@ sequence:
 ```text
 sentence
   -> stimulus vector
-  -> tick 0 active neurons
-  -> tick 1 propagation / fired edges
-  -> tick 2 changed activation strengths
-  -> ...
-  -> dominant route
+  -> tick-by-tick active neurons
+  -> fired edges / K changes
+  -> observed max-K route
   -> persistent fatigue / rewiring changes
   -> final TRACE summary
 ```
 
 ## Example input
 
-The repository includes one clean example sentence:
+The repository includes one clean, label-free example sentence:
 
 ```text
 친구가 내 발표를 공개적으로 비웃어서 화가 났다.
@@ -34,8 +32,8 @@ at:
 v3.1/experiments/single_trace_example.csv
 ```
 
-Its appraisal labels are kept only for interpretation/reporting. Run with
-`--stim-source text` so those labels are not used to construct the input vector.
+The CSV contains only `record_id,text`. It deliberately contains no valence,
+arousal, target, control or other appraisal labels.
 
 ## Script
 
@@ -46,7 +44,11 @@ v3.1/scripts/inspect_single_trace_formation.py
 The script reuses the existing v3.1 runtime and does not change the neural
 dynamics.
 
-## Run
+## Lightweight smoke run
+
+The GitHub Actions smoke test uses `--stim-source proxy` so the experiment is
+self-contained and can exercise the neural-dynamics/TRACE observability path
+without downloading or fitting the learned text encoder.
 
 From the repository root in PowerShell:
 
@@ -56,33 +58,45 @@ python -u v3.1/scripts/inspect_single_trace_formation.py `
   --row-index 0 `
   --config v3.1/configs/final_dynamics_v1.json `
   --seed 42 `
-  --stim-source text `
+  --stim-source proxy `
   --output-json v3.1/outputs/single_trace_formation/sample_000.json `
   --output-md v3.1/outputs/single_trace_formation/sample_000.md
 ```
 
+This smoke run proves that we can observe the internal formation process. It is
+**not** evidence that the sentence semantics alone produced a particular
+emotion TRACE. A semantic experiment should repeat the same inspector with the
+learned text stimulus encoder (or another frozen semantic encoder).
+
 ## What is recorded
 
-For every recorded tick the JSON/Markdown report stores:
+For every recorded tick the JSON report stores:
 
 - active neuron IDs
 - newly activated/deactivated neurons
-- dominant neuron and its `K`
-- top neuron `K` and stimulus state
-- largest observed tick-to-tick `K` changes
-- edges that fired
-- dominant route
+- max-K (observed dominant) neuron and its `K`
+- top neuron `K` and local stimulus state
+- comparable tick-to-tick `K` changes
+- all fired edges
+- an observed max-K route reconstructed from TickRecord
+- the existing exporter dominant route for comparison
 - edge additions/removals after the sentence
 - largest fatigue increases
 
-This lets us read the TRACE as a chronological process instead of only a final
-vector.
+The Markdown report renders a compact subset so a person can read the process
+without dumping thousands of fired edges per tick.
 
-## Important limitation
+## Important limitations found by the first run
 
-`delta_K` is an **observed state change**, not an exact causal decomposition.
-The current core does not separately log every contribution from memory,
-intrinsic alignment, inhibition, fatigue and parent input before thresholding.
+1. `delta_K` is an **observed state change**, not an exact causal decomposition.
+   The current core does not separately log every contribution from memory,
+   intrinsic alignment, inhibition, fatigue and parent input before thresholding.
+2. In the first smoke run, the existing `dominant_branch_ids()` helper returned
+   only `-1`. The raw TickRecord still contained clear max-K neurons, so the
+   inspector now reports both the exporter route and a direct observed max-K
+   route. This is a useful diagnostic finding, not something to hide.
+3. The smoke run uses `proxy` stimulus generation. Use a frozen semantic text
+   encoder before making claims about the meaning of a particular sentence.
 
 Therefore this first experiment answers:
 
@@ -90,12 +104,13 @@ Therefore this first experiment answers:
 
 It does not yet fully answer:
 
-> Exactly which internal term caused each neuron to fire?
+> Exactly which internal term caused each neuron to fire, and did the sentence's
+> semantic meaning specifically cause that route?
 
 ## Next causal experiment
 
 After locating a candidate divergence point or high-contribution neuron, repeat
-the same input while perturbing one component at a time:
+a matched pair from the same initial seed and perturb one component at a time:
 
 1. disable one candidate neuron;
 2. remove one candidate edge;
